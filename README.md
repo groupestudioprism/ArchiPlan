@@ -8,11 +8,13 @@ Modeleur 3D multi-appareil (téléphone, tablette, ordinateur) pour le bâtiment
 
 | Fichier | Rôle |
 | --- | --- |
-| `index.html` | L'application complète : intro de chargement, connexion Studio Prism, fiche client, code PIN / Face ID / Touch ID, licence, modeleur 3D (Three.js 0.160), exports Archi Vision (ZIP), IFC4, GLB, CSV et projet JSON |
+| `src/archiplan.html` | **Source** de l'application (fichier unique). Ouvert seul, il fonctionne en mode démo (comptes et cloud dans le navigateur) |
+| `tools/build.py` | Construit `index.html` à partir de la source : branche Firebase et précharge ses scripts. `python3 tools/build.py` |
+| `index.html` | **Version en ligne** (générée, ne pas modifier à la main) : intro, connexion Studio Prism, fiche client, code PIN, accueil cloud, licence, modeleur 3D (Three.js 0.160), exports Archi Vision (ZIP), IFC4, GLB, CSV, JSON |
 | `firebase/firestore.rules` | Copie de référence des règles Firestore : celles du site Studio Prism **plus** le bloc `clientProfiles` d'ARCHIPLAN |
 | `.nojekyll` | Publication telle quelle par GitHub Pages |
 
-Aucun outil de build : on modifie `index.html`, on enregistre (commit) sur `main`, et GitHub Pages met le site à jour en une minute environ.
+On modifie `src/archiplan.html`, on lance `python3 tools/build.py`, on enregistre (commit) sur `main` : GitHub Pages met le site à jour en une minute environ.
 
 ## Comptes Studio Prism
 
@@ -20,9 +22,20 @@ ARCHIPLAN utilise **le même projet Firebase que le site Studio Prism** (`archiv
 
 - **Profil** : `users/{uid}`, le même document que le site (prénom, nom, e-mail, type de compte, abonnement, rôle, statut). Un compte désactivé sur le site est refusé dans ARCHIPLAN.
 - **Fiche client** : `clientProfiles/{uid}` (téléphone, profil, société, adresse), demandée une seule fois.
-- **Code PIN** : uniquement sur l'appareil, haché (PBKDF2), jamais envoyé.
+- **Code PIN du compte** : haché (PBKDF2, 200 000 itérations), enregistré dans `userSecrets/{uid}` (lisible par le seul titulaire, jamais en clair, jamais envoyé par email). Le même code sur tous les appareils ; il confirme aussi la suppression du compte. Empreinte / visage (Face ID, Touch ID, Windows Hello) : **facultatif**, par appareil.
+- **Ouverture rapide** : la session reste ouverte après fermeture du navigateur ; au retour, l'écran du code PIN s'affiche sans attendre le réseau (profil mémorisé, revérifié en arrière-plan). Délais maximum et bouton « Réessayer » si le réseau bloque.
+- **Suppression du compte** : menu du compte → « Supprimer mon compte » → page `compte-suppression.html` du site Studio Prism → lien de confirmation par email → code PIN → suppression (profil, licences, fiche client, code PIN, projets ARCHIPLAN et partages).
 
 La configuration Firebase écrite dans `index.html` est publique par conception ; la sécurité repose sur les règles Firestore. **Ne jamais ajouter de clé privée ni de compte de service dans ce dépôt.**
+
+## Accueil et cloud
+
+Après le code PIN, ARCHIPLAN s'ouvre sur **l'accueil** : *Mes projets* (avec dossiers) et *Partagés avec moi*.
+
+- **Enregistrement automatique** dans le cloud à chaque modification (moins de 2 secondes après, miniature régulière). État affiché dans l'en-tête : « Enregistré · 14:32 », « Lecture seule »…
+- **Menu ⋮** d'un projet : ouvrir, renommer, dupliquer (sauvegarde), télécharger une sauvegarde `.json`, déplacer vers un dossier, partager, supprimer. Dossier : ouvrir, renommer, supprimer (son contenu remonte d'un niveau).
+- **Partage** comme Google Drive : par email (Lecture ou Modification), ou par lien (Lecture ou Modification), **avec ou sans mot de passe**. Les invités se connectent avec un compte Studio Prism **vérifié**. Leurs droits dépendent aussi de **leur propre licence** : un invité sans licence ne peut que consulter, même si l'hôte a une licence Pro.
+- Données Firestore : `apProjects/{id}` (+ `content/main`), `apFolders`, `apShares/{id}__{email}`, `apGrants/{id}__{uid}`. Les règles imposent tous ces droits côté serveur.
 
 ## Licence ARCHIPLAN
 
@@ -32,7 +45,7 @@ Au moment de la connexion, ARCHIPLAN lit `licenses/{uid}_archiplan`, la licence 
 | --- | --- |
 | Administrateur actif (`role = admin`) | Tous les droits |
 | Licence `active`, sans date de fin ou non expirée | Tous les droits |
-| Aucune licence, licence expirée ou suspendue | **Mode découverte** : modélisation libre, mais export désactivé et maquette non conservée |
+| Aucune licence, licence expirée ou suspendue | **Mode découverte** : modélisation libre et projets partagés en lecture, mais pas de cloud personnel ni d'export |
 
 Hors ligne, les derniers droits vérifiés restent valables 7 jours.
 

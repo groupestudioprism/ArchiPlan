@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style></head><body>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="ARCHIPLAN · Studio Prism : conception de plans et modélisation 3D sur téléphone, tablette et ordinateur."><link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com"><link rel="preconnect" href="https://identitytoolkit.googleapis.com"><link rel="preconnect" href="https://securetoken.googleapis.com"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"><style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style></head><body>
 <title>ARCHIPLAN · Studio Prism</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -313,6 +313,100 @@ button{cursor:pointer}
 @media (max-width:380px){.ap-grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion: reduce){.ap-dots.shake,.ap-spin{animation:none}}
 /* bouton et menu du compte dans l'app */
+/* ===== Accueil cloud ===== */
+#home{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#home[hidden]{display:none!important}
+.h-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.h-top .brand{display:flex;align-items:center;gap:10px}
+.h-acts{display:flex;align-items:center;gap:8px}
+.h-lic{height:26px;padding:0 10px;border-radius:13px;border:1px solid #E0A526;background:#FFF6E0;color:#7A5200;font:600 11px "Montserrat",var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+#homeUser{border-radius:50%;width:34px;min-width:34px;padding:0;background:var(--accent);border-color:var(--accent);color:#fff;font:700 12px "Montserrat",var(--f-display)}
+.h-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px 6px;max-width:1240px;width:100%;margin:0 auto}
+.h-tabs{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.h-tabs button{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-weight:600;font-size:13px;color:var(--mut)}
+.h-tabs button[aria-selected="true"]{background:var(--nuit);color:#fff}
+:root[data-theme="dark"] .h-tabs button[aria-selected="true"]{color:#07112A}
+.h-tools{display:flex;gap:8px;flex-wrap:wrap}
+.ib.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.h-body{flex:1;overflow:auto;padding:8px 16px 40px;max-width:1240px;width:100%;margin:0 auto;-webkit-overflow-scrolling:touch}
+.hcrumbs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 12px;font-size:13px;color:var(--mut)}
+.hcrumbs button{border:0;background:transparent;font-weight:600;color:var(--accent);padding:2px 4px;border-radius:5px;font-size:13px}
+.hcrumbs button:last-child{color:var(--ink)}
+.hfolders{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
+.hfold{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 6px 10px 12px;cursor:pointer;min-width:0}
+.hfold:hover,.hfold:focus-visible{border-color:var(--accent)}
+.hfold svg{width:20px;height:20px;color:var(--accent);flex:none}
+.hfold b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.hcard{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
+.hcard:hover,.hcard:focus-visible{border-color:var(--accent);box-shadow:0 6px 18px rgb(5 15 40 / .10)}
+.hthumb{position:relative;aspect-ratio:16/10;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--panel)),color-mix(in srgb,var(--accent-2) 8%,var(--panel)));display:grid;place-items:center;color:var(--accent)}
+.hthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.hthumb>svg{width:54px;height:54px;opacity:.65}
+.hb{position:absolute;left:8px;top:8px;width:24px;height:24px;border-radius:12px;background:var(--panel);display:grid;place-items:center;box-shadow:0 1px 3px rgb(0 0 0 / .15)}
+.hb svg{width:13px;height:13px;color:var(--accent)}
+.hmeta{padding:10px 40px 12px 12px;min-width:0}
+.hmeta b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hmeta span{display:block;font-size:12px;color:var(--mut);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdots{position:absolute;right:4px;bottom:8px;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--mut);display:grid;place-items:center}
+.hfold .hdots{position:static}
+.hdots:hover,.hdots:focus-visible{background:var(--chip,#EEF3F7);color:var(--ink)}
+.hdots svg{width:18px;height:18px}
+.hcard.locked .hthumb{color:var(--mut)}
+.hcard.sk{pointer-events:none}.hcard.sk .hthumb{animation:hsk 1.2s ease-in-out infinite alternate}
+.hcard.sk b,.hcard.sk span{height:10px;border-radius:5px;background:var(--line);width:70%}.hcard.sk span{width:45%;margin-top:8px}
+@keyframes hsk{from{opacity:.55}to{opacity:1}}
+.hempty{max-width:520px;margin:48px auto;text-align:center;color:var(--mut)}
+.hempty h3{color:var(--ink);font-size:18px;margin:10px 0 6px}
+.hempty p{line-height:1.5;margin:0 0 18px}
+.hempty .ap-btn{width:auto;padding:0 22px;display:inline-flex}
+.hic svg{width:64px;height:64px;color:var(--accent);opacity:.7}
+.hrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.hrow .ap-btn{text-decoration:none}
+.hlocal{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:color-mix(in srgb,var(--accent) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:10px;padding:10px 12px;margin-bottom:14px}
+.hlocal div{flex:1;min-width:200px}.hlocal b{display:block;font-size:13.5px}.hlocal span{font-size:12px;color:var(--mut)}
+.hlocal .ap-btn{width:auto;height:38px;padding:0 14px;font-size:13px}
+.h-busy{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 70%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-weight:600;color:var(--ink);z-index:5}
+.h-busy[hidden]{display:none}
+#homeMenu{z-index:60}
+#homeMenu button.danger b,#userMenu button.danger b{color:#B4232A}
+#homeMenu button[disabled]{opacity:.5;cursor:not-allowed}
+/* Dialogues */
+#apDlg{position:fixed;inset:0;z-index:70;background:rgb(7 17 42 / .45);display:grid;place-items:center;padding:16px}
+#apDlg[hidden]{display:none}
+.dlg-card{background:#fff;color:#0C1A3A;border-radius:14px;box-shadow:0 20px 60px rgb(5 15 40 / .35);width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:20px 20px 16px}
+.dlg-card h3{margin:0 0 10px;font-size:18px;color:#071A45}
+.dlg-p{color:#56637C;font-size:13.5px;line-height:1.5;margin:0 0 12px}.dlg-p.small{font-size:12px;margin-top:8px}
+.dlg-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.dlg-acts .ap-btn{width:auto;padding:0 18px;height:42px}
+.ap-btn.danger{background:#B4232A;border-color:#B4232A}.ap-btn.danger:hover{background:#951C22}
+.dlg-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.dlg-row input,.dlg-row select{flex:1;min-width:140px;height:40px;border:1px solid #CBD6DF;border-radius:9px;padding:0 10px;font:inherit;font-size:14px;background:#fff;color:#0C1A3A}
+.dlg-row .ap-btn{width:auto;height:40px;padding:0 16px}
+.dlg-people{list-style:none;margin:8px 0;padding:0;border:1px solid #E1E8EE;border-radius:10px}
+.dlg-people li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #E1E8EE;flex-wrap:wrap}
+.dlg-people li:first-child{border-top:0}.dlg-people li.none{color:#56637C;font-size:13px}
+.dlg-people .av{width:28px;height:28px;border-radius:14px;background:#0A5E8E;color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.dlg-people .em{flex:1;min-width:140px;font-size:13.5px;overflow:hidden;text-overflow:ellipsis}
+.dlg-people select{height:32px;border:1px solid #CBD6DF;border-radius:7px;font:inherit;font-size:13px;background:#fff}
+.ap-link.danger{color:#B4232A}
+.dlg-sec{border-top:1px solid #E1E8EE;margin-top:14px;padding-top:12px}.dlg-sec>b{font-size:14px;color:#071A45}
+.dlg-list{display:flex;flex-direction:column;gap:4px;max-height:50vh;overflow:auto}
+.dlg-list button{display:flex;align-items:center;gap:10px;border:1px solid transparent;background:transparent;border-radius:8px;padding:9px 10px;text-align:left;font:inherit;font-size:14px;color:#0C1A3A}
+.dlg-list button:hover{background:#EEF3F7}.dlg-list button.cur{border-color:#0A5E8E;background:#EEF6FB}
+.dlg-list svg{width:18px;height:18px;color:#0A5E8E;flex:none}
+/* En-tête de la maquette : retour à l'accueil, nom du projet, état d'enregistrement */
+#homeBtn svg{width:16px;height:16px}
+.projn{font-size:12px;color:var(--mut);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;margin-top:3px;letter-spacing:.02em}
+.cs{font-size:11.5px;font-weight:600;color:var(--mut);white-space:nowrap;padding:0 4px}
+.cs[hidden]{display:none}
+.cs.saved{color:#0B6B3A}.cs.error,.cs.denied,.cs.big{color:#B4232A}.cs.ro{color:#7A5200}
+@media (max-width:430px){ .top .brand{display:none!important} }
+@media (max-width:560px){ .top .brand{flex:none} .top .brand>div{display:none} #redo,#licBadge{display:none} #fileBtn{padding:0 9px} #userBtn.disc{box-shadow:0 0 0 2px var(--panel),0 0 0 4px #E0A526} }
+@media (max-width:700px){ .cs{display:none} .projn{max-width:120px} .h-bar{padding:10px 12px 4px} .h-body{padding:6px 12px 32px} .hgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px} .hmeta{padding:8px 36px 10px 10px} .h-tools .ib{padding:0 10px} }
+/* Écran de chargement : lenteur et nouvel essai */
+.ap-slow{margin-top:14px;font-size:13px;color:#56637C;text-align:center;line-height:1.5}
+.ap-slow .ap-btn{margin-top:12px}
+
 #licBadge{height:26px;padding:0 10px;border-radius:13px;border:1px solid #E0A526;background:#FFF6E0;color:#7A5200;font:600 11px "Montserrat",var(--f-display);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 #licBadge:hover{background:#FFEDC2}
 a.ap-link{text-decoration:none}
@@ -355,13 +449,15 @@ a.ap-link{text-decoration:none}
   <header class="top">
     <div class="brand">
       <span class="brand-mark"><img src="data:image/webp;base64,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" alt="" width="30" height="30"></span>
-      <div><b>ARCHI<span class="plan">PLAN</span></b><small>Studio Prism · Prism App · v0.1</small></div>
+      <div><b>ARCHI<span class="plan">PLAN</span></b><small id="projName">Studio Prism · Prism App · v0.1</small></div>
     </div>
     <div class="seg" role="group" aria-label="Vue">
       <button id="v2d" aria-pressed="false">Plan 2D</button>
       <button id="v3d" aria-pressed="true">3D</button>
     </div>
     <div class="acts">
+      <span id="cloudState" class="cs" hidden></span>
+      <button class="ib" id="homeBtn" title="Accueil · mes projets" aria-label="Accueil, mes projets"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 7.5 8 3l5.5 4.5"/><path d="M4 6.5V13h3v-3.5h2V13h3V6.5"/></svg></button>
       <button class="ib" id="undo" title="Annuler (Ctrl+Z)" aria-label="Annuler"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3 2 6l3 3"/><path d="M2 6h7.5a4 4 0 0 1 0 8H6"/></svg></button>
       <button class="ib" id="redo" title="Rétablir (Ctrl+Y)" aria-label="Rétablir"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m11 3 3 3-3 3"/><path d="M14 6H6.5a4 4 0 0 0 0 8H10"/></svg></button>
       <button class="ib" id="fileBtn" aria-haspopup="true">Fichier</button>
@@ -431,10 +527,34 @@ a.ap-link{text-decoration:none}
   <div class="who"><b id="umName"></b><span id="umMail"></span></div><span class="lic" id="umLic"></span><hr>
   <button data-um="licence"><b>Ma licence ARCHIPLAN</b><span>Droits liés à votre compte Studio Prism</span></button>
   <button data-um="fiche"><b>Fiche client</b><span>Coordonnées partagées entre les apps Studio Prism</span></button>
-  <button data-um="security"><b>Sécurité de cet appareil</b><span>Code PIN et déverrouillage biométrique</span></button>
+  <button data-um="home"><b>Accueil</b><span>Mes projets et projets partagés</span></button>
+  <button data-um="security"><b>Code PIN et sécurité</b><span>Code PIN du compte, empreinte ou visage (facultatif)</span></button>
   <button data-um="lock" id="umLock"><b>Verrouiller</b><span>Le code PIN sera demandé pour revenir</span></button>
   <hr><button data-um="logout"><b>Se déconnecter</b><span>Sur cet appareil</span></button>
+  <button data-um="delete" class="danger"><b>Supprimer mon compte</b><span>Sur le site Studio Prism, confirmation par email et code PIN</span></button>
 </div>
+<section id="home" hidden aria-label="Accueil ARCHIPLAN">
+  <header class="h-top">
+    <div class="brand" id="homeBrand"><div><b>ARCHI<span class="plan">PLAN</span></b><small>Mes projets · Studio Prism</small></div></div>
+    <div class="h-acts">
+      <button type="button" id="homeLic" class="h-lic" hidden>Découverte</button>
+      <button type="button" class="ib" id="homeUser" aria-haspopup="true" aria-label="Mon compte"></button>
+    </div>
+  </header>
+  <div class="h-bar">
+    <div class="h-tabs" id="homeTabs" role="tablist"><button type="button" role="tab" data-htab="mine" aria-selected="true">Mes projets</button><button type="button" role="tab" data-htab="shared" aria-selected="false">Partagés avec moi</button></div>
+    <div class="h-tools">
+      <button type="button" class="ib" id="homeImport" hidden title="Importer un fichier projet .json">Importer</button>
+      <button type="button" class="ib" id="homeNewF" hidden>+ Dossier</button>
+      <button type="button" class="ib primary" id="homeNewP" hidden>+ Nouveau projet</button>
+    </div>
+  </div>
+  <main class="h-body" id="homeBody"></main>
+  <div class="h-busy" id="homeBusy" hidden><div class="ap-spin" aria-hidden="true"></div><span></span></div>
+  <input type="file" id="homeFile" accept=".json,application/json" hidden>
+</section>
+<div class="menu" id="homeMenu" hidden></div>
+<div id="apDlg" hidden role="dialog" aria-modal="true"><div class="dlg-card"></div></div>
 <div id="toast" hidden></div>
 <input type="file" id="fileIn" accept=".json,application/json" hidden>
 
@@ -464,6 +584,7 @@ const LICENSE_PRODUCT = 'archiplan';
 const SITE_URL = 'https://groupestudioprism.github.io/Studio-Prism/';
 const OFFERS_URL = SITE_URL + '#/produits/' + LICENSE_PRODUCT;
 const ACCOUNT_URL = SITE_URL + '#/compte';
+const DELETE_URL = SITE_URL + 'compte-suppression.html';
 const LIC_LABEL = {free:'Gratuite', pro:'Pro', pro_entreprise:'Pro Entreprise', trial:'Essai', demo:'Démo', education:'Éducation', standard:'Standard'};
 const licLabel = t => LIC_LABEL[t] || String(t || '—').replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
 window.SPAccess = Object.freeze({level:'pending', canSave:false, canExport:false});
@@ -487,6 +608,13 @@ async function pbkdf2(secret, saltB64, iter = 150000){
   const bits = await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt:unb64(saltB64), iterations:iter}, key, 256);
   return b64(bits);
 }
+
+/* Profil mémorisé sur l'appareil : l'écran du code PIN s'affiche sans attendre le réseau ; le profil est revérifié en arrière-plan. */
+const profCache = {
+  key: uid => 'sp.prof.' + uid,
+  get(uid){ return store.get(this.key(uid)); },
+  set(uid, v){ store.set(this.key(uid), {...(this.get(uid) || {}), ...v, at:Date.now()}); },
+};
 
 /* ---------- Mode démo : même interface que Firebase, données dans ce navigateur ---------- */
 const DemoAuth = {
@@ -525,6 +653,8 @@ const DemoAuth = {
   async reload(u){ return u; },
   async resendVerification(){},
   async getProfile(u){ return (store.get('sp.demo.profiles') || {})[u.uid] || null; },
+  async getPin(uid){ await sleep(80); return (store.get('sp.demo.pins') || {})[uid] || null; },
+  async setPin(uid, r){ await sleep(80); const a = store.get('sp.demo.pins') || {}; a[uid] = r; store.set('sp.demo.pins', a); },
   // Démo : licence fictive active ; un email contenant « decouverte » montre le mode découverte.
   async getAccess(u){
     await sleep(200); const info = {accountKind:'individual', subscription:'free', role:'user', companyName:''};
@@ -550,13 +680,16 @@ const FirebaseAuth = {
   mode:'firebase', resetMode:'link', canGoogle:false,
   async boot(){
     const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/`;
+    // app d'abord (les deux autres en dépendent), puis Authentication et Firestore en parallèle (préchargés dans <head>)
     await loadScript(base + 'firebase-app-compat.js');
-    await loadScript(base + 'firebase-auth-compat.js');
-    await loadScript(base + 'firebase-firestore-compat.js');
+    await Promise.all([loadScript(base + 'firebase-auth-compat.js'), loadScript(base + 'firebase-firestore-compat.js')]);
     firebase.initializeApp(FIREBASE_CONFIG);
     this.fa = firebase.auth(); this.fa.languageCode = 'fr';
-    await this.fa.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    this.db = firebase.firestore(); this.ts = () => firebase.firestore.FieldValue.serverTimestamp();
+    this.fa.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});   // session gardée après fermeture du navigateur
+    this.db = firebase.firestore();
+    // Réseaux d'entreprise, antivirus ou proxys qui bloquent le flux temps réel : bascule automatique (évite les attentes de plusieurs minutes)
+    try { this.db.settings({experimentalAutoDetectLongPolling:true, merge:true}); } catch(e){}
+    this.ts = () => firebase.firestore.FieldValue.serverTimestamp();
   },
   norm(u){ if (!u) return null; const [f, ...l] = (u.displayName || '').split(' '); return {uid:u.uid, email:u.email, firstName:f || '', lastName:l.join(' '), verified:u.emailVerified}; },
   userRef(uid){ return this.db.collection('users').doc(uid); },
@@ -583,7 +716,19 @@ const FirebaseAuth = {
     this.userRef(user.uid).update({lastLogin:this.ts()}).catch(() => {});
     return {...this.norm(user), firstName:d.firstName || '', lastName:d.lastName || ''};
   },
-  async init(){ await this.boot(); const u = await new Promise(res => { const un = this.fa.onAuthStateChanged(x => { un(); res(x); }); }); return u ? this.after(u) : null; },
+  // Ouverture rapide : la session locale suffit pour afficher l'écran du code PIN ; le profil est vérifié en arrière-plan (this.verifying).
+  async init(){
+    await withTimeout(this.boot(), 20000);
+    const u = await withTimeout(new Promise(res => { const un = this.fa.onAuthStateChanged(x => { un(); res(x); }); }), 12000);
+    if (!u) return null;
+    const n = this.norm(u), c = profCache.get(u.uid) || {};
+    this.verifying = withTimeout(this.after(u), 15000);
+    this.verifying.then(v => profCache.set(u.uid, {firstName:v.firstName, lastName:v.lastName})).catch(() => {});
+    return {...n, firstName:c.firstName || n.firstName, lastName:c.lastName ?? n.lastName};
+  },
+  // Code PIN du compte (haché PBKDF2, jamais en clair) : userSecrets/{uid}, lisible par le seul titulaire.
+  async getPin(uid){ const s = await this.db.collection('userSecrets').doc(uid).get(); return s.exists ? s.data() : null; },
+  async setPin(uid, r){ await this.db.collection('userSecrets').doc(uid).set({pinHash:r.pinHash, pinSalt:r.pinSalt, pinIter:r.pinIter, updatedAt:this.ts()}); },
   async signIn(e, p){ const c = await this.fa.signInWithEmailAndPassword(e.trim(), p); try { return await this.after(c.user); } catch(err){ if (err.code !== 'app/suspended') await this.fa.signOut().catch(() => {}); throw err; } },
   async signInGoogle(){ const c = await this.fa.signInWithPopup(new firebase.auth.GoogleAuthProvider()); return this.after(c.user); },
   async signUp({firstName, lastName, email, password}){
@@ -654,6 +799,11 @@ const ERR = {
   'app/profile-missing':'Votre profil Studio Prism n\'a pas pu être créé. Réessayez dans un instant.',
   'app/profile-invalid':'Votre profil Studio Prism est incomplet. Contactez Studio Prism.',
   'permission-denied':'Accès refusé. Vérifiez que votre email est bien confirmé.',
+  'app/timeout':'Le service Studio Prism met trop de temps à répondre. Vérifiez votre connexion, puis réessayez.',
+  'app/not-found':'Ce projet n\'existe plus.',
+  'app/too-big':'Projet trop volumineux pour le cloud.',
+  'app/engine':'Le moteur 3D n\'est pas encore chargé. Réessayez dans un instant.',
+  'unavailable':'Connexion au cloud impossible pour le moment. Réessayez dans un instant.',
 };
 const errMsg = e => ERR[e?.code] || 'Une erreur est survenue. Réessayez dans un instant.';
 
@@ -663,7 +813,7 @@ const Lock = {
   get(uid){ return store.get(this.key(uid)); },
   set(uid, v){ store.set(this.key(uid), v); },
   clear(uid){ store.del(this.key(uid)); },
-  async setPin(uid, pin){ const salt = randB64(16); const prev = this.get(uid) || {}; this.set(uid, {...prev, declined:false, salt, iter:200000, pin:await pbkdf2(pin, salt, 200000), failed:0}); },
+  async setPin(uid, pin){ const salt = randB64(16); const prev = this.get(uid) || {}; const rec = {...prev, declined:false, salt, iter:200000, pin:await pbkdf2(pin, salt, 200000), failed:0}; delete rec.rpin; this.set(uid, rec); return rec; },
   async check(uid, pin){ const l = this.get(uid); if (!l?.pin) return false; const ok = await pbkdf2(pin, l.salt, l.iter) === l.pin; l.failed = ok ? 0 : (l.failed || 0) + 1; this.set(uid, l); return ok; },
 };
 const Bio = {
@@ -717,7 +867,11 @@ function busy(btn, on, label){ if (!btn) return; if (on){ btn.dataset.l = btn.te
 let tt; function toastA(msg){ const t = $a('#toast'); if (!t) return; t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2800); }
 
 const SCREENS = {
-  loading:() => `<div class="ap-center" style="padding:48px 0"><div class="ap-spin" aria-hidden="true"></div><p class="ap-sub">${esc(view.text || 'Vérification de votre session…')}</p></div>`,
+  loading:() => `<div class="ap-center" style="padding:48px 0"><div class="ap-spin" aria-hidden="true"></div><p class="ap-sub">${esc(view.text || 'Connexion à votre compte Studio Prism…')}</p><div class="ap-slow" id="apSlow" hidden></div></div>`,
+
+  neterr:() => `<h2>Service injoignable</h2><p class="ap-sub">Impossible de joindre Studio Prism pour charger votre compte. Vérifiez votre connexion (ou un bloqueur de contenu), puis réessayez.</p>
+    <button class="ap-btn" type="button" id="apRetry">Réessayer</button>
+    <div class="ap-links"><button type="button" class="ap-link" data-act="logout">Se déconnecter</button></div>`,
 
   login:() => `${tabs('login')}<h2>Bon retour</h2><p class="ap-sub">Votre compte Studio Prism vous connecte à ARCHIPLAN, à Archi Vision et aux prochaines apps du studio.</p>
     ${note(view.msg, view.msgCls)}
@@ -801,20 +955,21 @@ const SCREENS = {
 
   'pin-offer':() => `${steps(2)}<h2>Protéger l'accès sur cet appareil</h2>
     <p class="ap-sub">Avec un code PIN, ARCHIPLAN s'ouvre sans retaper votre mot de passe, et personne d'autre ne peut l'ouvrir sur cet appareil.</p>
-    <ul class="ap-list"><li>Le code est enregistré chiffré, sur cet appareil uniquement. Il n'est jamais envoyé par email ni par SMS.</li>
-    ${bioOK ? `<li>Vous pourrez ensuite utiliser ${Bio.label()} à la place.</li>` : ''}
+    <ul class="ap-list"><li>Un seul code pour votre compte : il vous sera demandé sur vos autres appareils et pour confirmer une suppression de compte.</li>
+    <li>Il est enregistré chiffré (haché), jamais en clair, et n'est jamais envoyé par email ni par SMS.</li>
+    ${bioOK ? `<li>Empreinte ou visage : facultatif, vous pourrez l'activer ensuite.</li>` : ''}
     <li>Code oublié : reconnectez-vous avec votre mot de passe, puis choisissez-en un nouveau.</li></ul>
     <button class="ap-btn" type="button" id="apPinNew">Créer un code PIN</button>
     <div class="ap-links"><button type="button" class="ap-link" id="apSkip">Pas maintenant</button></div>`,
 
-  'pin-setup':() => `${view.settings ? '' : steps(2)}<div class="ap-center"><h2>${view.stage === 2 ? 'Confirmez votre code PIN' : 'Choisissez un code PIN'}</h2>
+  'pin-setup':() => `${view.settings || view.reset ? '' : steps(2)}<div class="ap-center"><h2>${view.stage === 2 ? 'Confirmez votre code PIN' : view.reset ? 'Choisissez un nouveau code PIN' : 'Choisissez un code PIN'}</h2>
     <p class="ap-sub">${view.stage === 2 ? 'Saisissez le même code une seconde fois.' : `${PIN_LEN} chiffres, faciles à retenir pour vous, difficiles à deviner pour les autres.`}</p></div>
     ${pinPad()}${view.settings ? '<div class="ap-links"><button type="button" class="ap-link" data-go="security">Annuler</button></div>' : ''}`,
 
   'bio-offer':() => `${view.settings ? '' : steps(2)}<h2>Utiliser ${Bio.label()} ?</h2>
-    <p class="ap-sub">Déverrouillez ARCHIPLAN en un geste. Le code PIN reste disponible en secours.</p>${errBox()}
+    <p class="ap-sub">Facultatif : déverrouillez ARCHIPLAN en un geste sur cet appareil. Votre code PIN reste toujours disponible.</p>${errBox()}
     <button class="ap-btn" type="button" id="apBio">Activer ${Bio.label()}</button>
-    <div class="ap-links"><button type="button" class="ap-link" id="apSkip">${view.settings ? 'Annuler' : 'Plus tard'}</button></div>`,
+    <button class="ap-btn alt" type="button" id="apSkip" style="margin-top:10px">${view.settings ? 'Annuler' : 'Non merci, le code PIN suffit'}</button>`,
 
   lock:() => { const l = Lock.get(me.uid) || {}; return `<div class="ap-center"><div class="ap-avatar" aria-hidden="true">${esc(initials())}</div>
     <h2>Bonjour ${esc(me.firstName || '')}</h2><p class="ap-sub">Saisissez votre code PIN pour ouvrir ARCHIPLAN.</p></div>
@@ -822,19 +977,28 @@ const SCREENS = {
     ${l.bio && bioOK ? `<button class="ap-btn alt" type="button" id="apBio">Utiliser ${Bio.label()}</button>` : ''}
     <div class="ap-links"><button type="button" class="ap-link" id="apForgot">Code PIN oublié ?</button><button type="button" class="ap-link" data-act="logout">Changer de compte</button></div>`; },
 
-  security:() => { const l = Lock.get(me.uid) || {}; return `<h2>Sécurité de cet appareil</h2>
-    <p class="ap-sub">Ces réglages ne concernent que cet appareil. Votre mot de passe reste valable partout.</p>${note(view.msg, 'ok')}
+  security:() => { const l = Lock.get(me.uid) || {}, has = !!(l.pin || l.rpin); return `<h2>Code PIN et sécurité</h2>
+    <p class="ap-sub">Le code PIN est celui de votre compte Studio Prism : le même sur tous vos appareils, et demandé pour confirmer une suppression de compte. Votre mot de passe reste valable partout.</p>${note(view.msg, 'ok')}
     <div class="ap-sec">
-      <div><b>Code PIN</b><p>${l.pin ? 'Activé : demandé à chaque ouverture d\'ARCHIPLAN.' : 'Désactivé : l\'app s\'ouvre directement tant que vous restez connecté.'}</p>
-        <span class="acts2">${l.pin ? '<button type="button" class="ap-chip-btn" data-sec="pin">Modifier</button><button type="button" class="ap-chip-btn danger" data-sec="pin-off">Désactiver</button>' : '<button type="button" class="ap-chip-btn" data-sec="pin">Créer</button>'}</span></div>
-      ${bioOK ? `<div><b>${cap(Bio.label())}</b><p>${l.bio ? 'Activé, en remplacement du code PIN.' : l.pin ? 'Désactivé.' : 'Créez d\'abord un code PIN, qui sert de secours.'}</p>
+      <div><b>Code PIN du compte</b><p>${l.pin ? 'Demandé à chaque ouverture d\'ARCHIPLAN sur cet appareil.' : has ? 'Non demandé sur cet appareil : l\'app s\'ouvre directement tant que vous restez connecté.' : 'Aucun code PIN pour l\'instant.'}</p>
+        <span class="acts2">${has ? '<button type="button" class="ap-chip-btn" data-sec="pin">Modifier</button>' : '<button type="button" class="ap-chip-btn" data-sec="pin">Créer</button>'}${l.pin ? '<button type="button" class="ap-chip-btn danger" data-sec="pin-off">Ne plus le demander ici</button>' : l.rpin ? '<button type="button" class="ap-chip-btn" data-sec="pin-on">Le demander ici</button>' : ''}</span></div>
+      ${bioOK ? `<div><b>${cap(Bio.label())} <small style="font-weight:500;color:#5B6B7F">· facultatif</small></b><p>${l.bio ? 'Activé sur cet appareil. Le code PIN reste disponible.' : l.pin ? 'Désactivé : seul le code PIN est demandé.' : 'Demandez d\'abord le code PIN sur cet appareil.'}</p>
         <span class="acts2">${l.bio ? '<button type="button" class="ap-chip-btn danger" data-sec="bio-off">Désactiver</button>' : l.pin ? '<button type="button" class="ap-chip-btn" data-sec="bio-on">Activer</button>' : ''}</span></div>`
       : '<div><b>Biométrie</b><p>Non disponible sur cet appareil ou dans ce navigateur.</p></div>'}
     </div>
     <button class="ap-btn" type="button" data-act="toapp">Retour à ARCHIPLAN</button>`; },
 };
 
+let loadSeq = 0;
 const WIRE = {
+  loading(){
+    const id = ++loadSeq, still = () => current === 'loading' && loadSeq === id;
+    setTimeout(() => { if (still()){ const sl = $a('#apSlow'); sl.hidden = false; sl.textContent = 'La connexion est plus lente que d\'habitude…'; } }, 6000);
+    setTimeout(() => { if (!still()) return; const sl = $a('#apSlow'); sl.hidden = false;
+      sl.innerHTML = 'Toujours rien ? Votre réseau, un VPN ou un bloqueur de contenu empêche peut-être la connexion à Studio Prism.<button class="ap-btn alt" type="button" id="apRetry">Réessayer</button>';
+      $a('#apRetry').onclick = () => location.reload(); }, 15000);
+  },
+  neterr(){ $a('#apRetry').onclick = () => location.reload(); },
   login(){
     $a('#apForm').onsubmit = async e => {
       e.preventDefault(); const em = $a('#ap-email').value, pw = $a('#ap-pw').value; ctx.email = em.trim();
@@ -912,9 +1076,12 @@ const WIRE = {
         if (weakPin(pin)){ shake(); return setErr('Évitez les suites et les répétitions (123456, 000000…).'); }
         return show('pin-setup', {...view, stage:2, first:pin, err:''});
       }
-      if (pin !== view.first) return show('pin-setup', {settings:view.settings, stage:1, err:'Les deux codes ne correspondent pas. Recommencez.'});
-      await Lock.setPin(me.uid, pin);
-      if (view.settings) return show('security', {msg:'Code PIN enregistré.'});
+      if (pin !== view.first) return show('pin-setup', {settings:view.settings, reset:view.reset, stage:1, err:'Les deux codes ne correspondent pas. Recommencez.'});
+      const rec = await Lock.setPin(me.uid, pin); ctx.forcePinReset = false;
+      try { await withTimeout(Auth.setPin(me.uid, {pinHash:rec.pin, pinSalt:rec.salt, pinIter:rec.iter}), 10000); }
+      catch(e){ Lock.set(me.uid, {...rec, unsynced:true}); toastA('Code enregistré sur cet appareil ; il sera lié à votre compte dès que possible.'); }
+      if (view.settings) return show('security', {msg:'Code PIN enregistré pour votre compte.'});
+      if (view.reset) return afterClient(true);
       if (bioOK) return show('bio-offer');
       enterApp('Code PIN activé');
     };
@@ -931,19 +1098,20 @@ const WIRE = {
     pinHandler = async pin => {
       if (await Lock.check(me.uid, pin)) return afterLogin(me, true);
       const left = PIN_TRIES - (Lock.get(me.uid)?.failed || 0);
-      if (left <= 0){ Lock.clear(me.uid); ctx.email = me.email; await Auth.signOut(); me = null; return show('login', {msg:'Trop de codes incorrects. Pour votre sécurité, reconnectez-vous avec votre mot de passe.', msgCls:'warn'}); }
+      if (left <= 0){ Lock.clear(me.uid); ctx.email = me.email; ctx.forcePinReset = true; await Auth.signOut(); me = null; return show('login', {msg:'Trop de codes incorrects. Pour votre sécurité, reconnectez-vous avec votre mot de passe, puis choisissez un nouveau code PIN.', msgCls:'warn'}); }
       shake(); setErr(`Code incorrect. ${left} essai${left > 1 ? 's' : ''} restant${left > 1 ? 's' : ''}.`);
     };
     const l = Lock.get(me.uid) || {}, bb = $a('#apBio');
     const tryBio = async silent => { try { if (await Bio.verify(l.bio)) afterLogin(me, true); } catch(e){ if (!silent) setErr('Déverrouillage annulé. Utilisez votre code PIN.'); } };
     if (bb){ bb.onclick = () => tryBio(false); if (!view.noAuto) setTimeout(() => current === 'lock' && tryBio(true), 450); }
-    $a('#apForgot').onclick = async () => { Lock.clear(me.uid); ctx.email = me.email; await Auth.signOut(); me = null; show('login', {msg:'Reconnectez-vous avec votre mot de passe. Vous pourrez ensuite choisir un nouveau code PIN.'}); };
+    $a('#apForgot').onclick = async () => { Lock.clear(me.uid); ctx.email = me.email; ctx.forcePinReset = true; await Auth.signOut(); me = null; show('login', {msg:'Reconnectez-vous avec votre mot de passe. Vous choisirez ensuite un nouveau code PIN.'}); };
   },
   security(){
     card().querySelectorAll('[data-sec]').forEach(b => b.onclick = () => {
       const l = Lock.get(me.uid) || {}, k = b.dataset.sec;
       if (k === 'pin') show('pin-setup', {stage:1, settings:true});
-      else if (k === 'pin-off'){ Lock.set(me.uid, {declined:true}); show('security', {msg:'Code PIN désactivé.'}); }
+      else if (k === 'pin-off'){ Lock.set(me.uid, {declined:true, rpin:l.pin, rsalt:l.salt, riter:l.iter}); show('security', {msg:'Le code PIN ne sera plus demandé sur cet appareil.'}); }
+      else if (k === 'pin-on'){ Lock.set(me.uid, {...l, declined:false, pin:l.rpin, salt:l.rsalt, iter:l.riter, failed:0, rpin:undefined}); show('security', {msg:'Le code PIN sera demandé à chaque ouverture.'}); }
       else if (k === 'bio-on') show('bio-offer', {settings:true});
       else if (k === 'bio-off'){ delete l.bio; Lock.set(me.uid, l); show('security', {msg:'Biométrie désactivée.'}); }
     });
@@ -963,7 +1131,7 @@ function hideSplashSoon(){ // l'écran de compte n'attend pas le moteur 3D
 function show(name, opts = {}){
   if (name !== 'loading') hideSplashSoon();
   current = name; view = opts; pinBuf = ''; pinHandler = null;
-  const r = root(); r.hidden = false; const app = $a('#app'); if (app) app.inert = true;
+  const r = root(); r.hidden = false; const app = $a('#app'); if (app) app.inert = true; const hh = $a('#home'); if (hh) hh.inert = true;
   card().innerHTML = SCREENS[name]() + (Auth.mode === 'demo' && name !== 'loading' ? '<p class="ap-mode">Mode démo · comptes enregistrés dans ce navigateur, emails simulés</p>' : '');
   card().querySelectorAll('[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
   card().querySelectorAll('[data-act="toapp"]').forEach(b => b.onclick = () => enterApp());
@@ -986,12 +1154,36 @@ async function pinKey(k){
 
 async function afterLogin(u, unlocked){
   me = {...me, ...u};
-  let prof = null; try { prof = await Auth.getProfile(me); } catch(e){}
+  const cached = profCache.get(me.uid);
+  let prof = null;
+  if (unlocked && cached?.clientDone){
+    prof = cached;   // déjà vérifié sur cet appareil : on ouvre tout de suite, et on rafraîchit en arrière-plan
+    const uid = me.uid; Auth.getProfile(me).then(p => p && profCache.set(uid, {firstName:p.firstName, lastName:p.lastName, clientDone:!!p.clientDone})).catch(() => {});
+    syncPin();
+  } else {
+    show('loading', {text:'Chargement de votre compte…'});
+    try { prof = await withTimeout(Auth.getProfile(me), 12000); if (prof) profCache.set(me.uid, {firstName:prof.firstName, lastName:prof.lastName, clientDone:!!prof.clientDone}); }
+    catch(e){ prof = cached || null; if (!prof) return show('neterr'); }
+    await syncPin();
+  }
   if (prof?.firstName){ me.firstName = prof.firstName; me.lastName = prof.lastName || ''; }
   if (!prof?.clientDone) return openClient(false);
   return afterClient(unlocked);
 }
+/* Code PIN du compte : enregistré (haché) sur le compte, repris sur chaque appareil après connexion par mot de passe. */
+async function syncPin(){
+  if (!me || ctx.forcePinReset) return; const uid = me.uid;
+  try {
+    const l = Lock.get(uid) || {};
+    if (l.unsynced && l.pin){ await withTimeout(Auth.setPin(uid, {pinHash:l.pin, pinSalt:l.salt, pinIter:l.iter}), 8000); delete l.unsynced; Lock.set(uid, l); return; }
+    const r = await withTimeout(Auth.getPin(uid), 8000); if (!r || me?.uid !== uid) return;
+    const cur = Lock.get(uid) || {};
+    if (cur.declined && !cur.pin) Lock.set(uid, {...cur, rpin:r.pinHash, rsalt:r.pinSalt, riter:r.pinIter});
+    else if (cur.pin !== r.pinHash) Lock.set(uid, {...cur, declined:false, pin:r.pinHash, salt:r.pinSalt, iter:r.pinIter, failed:0});
+  } catch(e){}
+}
 function afterClient(unlocked){
+  if (ctx.forcePinReset) return show('pin-setup', {stage:1, reset:true});
   const l = Lock.get(me.uid);
   if (!l) return show('pin-offer');
   enterApp(unlocked ? '' : `Bienvenue ${me.firstName || ''}`.trim());
@@ -1003,13 +1195,16 @@ async function openClient(edit){
   show('client', {edit, fiche:mine, found:!!mine && !mine.uid, clientId:mine?.id});
 }
 /* ---------- Droits ARCHIPLAN (licence) ---------- */
-let access = {level:'pending'};
+let access = {level:'pending'}, accessReady = Promise.resolve(access);
 const accessKey = uid => `sp.access.${uid}`;
 function publishAccess(a){
   access = a; const full = a.level === 'admin' || a.level === 'licensed';
   window.SPAccess = Object.freeze({level:a.level, canSave:full, canExport:full});
   window.dispatchEvent(new CustomEvent('sp:access', {detail:window.SPAccess}));
   const b = $a('#licBadge'); if (b) b.hidden = full || a.level === 'pending' || !me;
+  const ubd = $a('#userBtn'); if (ubd) ubd.classList.toggle('disc', a.level === 'discovery');
+  if (ctx.where === 'home' && !$a('#home').hidden) renderHome();
+  if (Save.pid) Save.set(Save.canWrite() ? 'saved' : 'ro');
 }
 async function refreshAccess(){
   if (!me) return access;
@@ -1041,22 +1236,531 @@ function licSummary(a = access){
 window.SPLicense = {prompt(reason){ if (me) show('licence', {reason}); }};
 
 function enterApp(msg){
-  root().hidden = true; const app = $a('#app'); if (app) app.inert = false; ctx.onboarding = false;
+  root().hidden = true; const app = $a('#app'); if (app) app.inert = false; const hh = $a('#home'); if (hh) hh.inert = false; ctx.onboarding = false;
   const ub = $a('#userBtn'); if (ub){ ub.hidden = false; ub.textContent = initials(); ub.title = `${me.firstName || ''} ${me.lastName || ''}`.trim() || me.email; }
   if (msg) toastA(msg);
   const wasPending = access.level === 'pending';
-  refreshAccess().then(a => { if (wasPending && a.level === 'discovery' && !ctx.discShown && root().hidden){ ctx.discShown = true; show('licence', {reason:'welcome'}); } });
+  accessReady = refreshAccess();
+  accessReady.then(a => { if (wasPending && a.level === 'discovery' && !ctx.discShown && root().hidden && !ctx.pendingLink){ ctx.discShown = true; show('licence', {reason:'welcome'}); } });
+  // Après le code PIN : l'accueil (mes projets) ; retour direct à la maquette si on y était (verrouillage, réglages…)
+  if (ctx.where === 'app'){ const hh = $a('#home'); if (hh) hh.inert = false; return; }
+  showHome();
+  if (ctx.pendingLink) accessReady.then(() => openPendingLink());
 }
 async function signOutAll(){
+  try { if (Save.pending()) await withTimeout(Save.flush(true), 8000); } catch(e){}
+  Save.end(); ctx.where = ''; H.mine = H.shared = null; H.folder = ''; H.tab = 'mine'; $a('#home').hidden = true; window.APCloudActive = false;
   ctx.email = me?.email || ctx.email; try { await Auth.signOut(); } catch(e){}
   me = null; ctx.discShown = false; const ub = $a('#userBtn'); if (ub) ub.hidden = true; $a('#userMenu').hidden = true;
   publishAccess({level:'pending'});
   show('login', {msg:'Vous êtes déconnecté.'});
 }
 
+/* =====================================================================
+   Cloud ARCHIPLAN : projets enregistrés automatiquement, dossiers, partage (email ou lien, avec ou sans mot de passe).
+   Firestore : apProjects/{id} (fiche du projet) + apProjects/{id}/content/main (maquette), apFolders/{id},
+   apShares/{id}__{email} (partage par email), apGrants/{id}__{uid} (accès par lien). Les règles Firestore imposent les droits :
+   le propriétaire et les invités « Modification » n'enregistrent que s'ils ont eux-mêmes une licence ARCHIPLAN (ou sont admin).
+   ===================================================================== */
+const APP_URL = location.origin + location.pathname;
+const MAX_DATA = 950000;
+const emailKey = e => String(e || '').trim().toLowerCase();
+const withTimeout = (p, ms, code = 'app/timeout') => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({code}), ms))]);
+async function sha256hex(s){ const h = await crypto.subtle.digest('SHA-256', enc.encode(s)); return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, '0')).join(''); }
+const randTok = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
+const fullName = () => `${me?.firstName || ''} ${me?.lastName || ''}`.trim() || me?.email || '';
+const ms = t => (t && typeof t.toMillis === 'function') ? t.toMillis() : (typeof t === 'number' ? t : Date.now());
+
+/* ---------- Démo : même interface, données dans ce navigateur (partage entre comptes démo du même navigateur) ---------- */
+const DemoCloud = {
+  db(){ return store.get('sp.demo.cloud') || {projects:{}, content:{}, folders:{}, shares:{}, grants:{}}; },
+  put(d){ store.set('sp.demo.cloud', d); },
+  uid(){ return me.uid; }, email(){ return emailKey(me.email); },
+  async listMine(){ await sleep(150); const d = this.db(), u = this.uid();
+    return {projects:Object.values(d.projects).filter(p => p.ownerUid === u), folders:Object.values(d.folders).filter(f => f.ownerUid === u)}; },
+  async listShared(){ await sleep(150); const d = this.db(), out = [], seen = new Set();
+    Object.values(d.shares).filter(s => s.email === this.email()).forEach(s => { const p = d.projects[s.pid]; if (p){ seen.add(p.id); out.push({...p, role:s.role, via:'email'}); } });
+    Object.values(d.grants).filter(g => g.uid === this.uid()).forEach(g => { const p = d.projects[g.pid]; if (p && !seen.has(p.id) && p.linkMode !== 'off' && p.linkKey === g.key) out.push({...p, role:p.linkMode, via:'link'}); });
+    return out; },
+  roleOf(p){ if (p.ownerUid === this.uid()) return 'owner'; const d = this.db(), s = d.shares[p.id + '__' + this.email()]; if (s) return s.role;
+    const g = d.grants[p.id + '__' + this.uid()]; return g && p.linkMode !== 'off' && g.key === p.linkKey ? p.linkMode : ''; },
+  async open(pid){ await sleep(120); const d = this.db(), p = d.projects[pid]; if (!p) throw {code:'app/not-found'};
+    const role = this.roleOf(p); if (!role) throw {code:'permission-denied'}; return {meta:{...p}, data:d.content[pid] || '{"els":[]}', role}; },
+  async create({name, folderId = '', data, thumb = ''}){ await sleep(120); const d = this.db(), id = randId('p'), now = Date.now();
+    d.projects[id] = {id, ownerUid:this.uid(), ownerEmail:this.email(), ownerName:fullName(), name, folderId, size:data.length, thumb, linkMode:'off', linkKey:'', linkToken:'', linkPw:false, createdAt:now, updatedAt:now, updatedBy:this.uid(), updatedByName:fullName()};
+    d.content[id] = data; this.put(d); return {...d.projects[id]}; },
+  async save(pid, data, extra = {}){ await sleep(80); const d = this.db(), p = d.projects[pid]; if (!p) throw {code:'app/not-found'};
+    const r = this.roleOf(p); if (!(r === 'owner' || r === 'edit') || !(access.level === 'admin' || access.level === 'licensed')) throw {code:'permission-denied'};
+    d.content[pid] = data; Object.assign(p, {size:data.length, updatedAt:Date.now(), updatedBy:this.uid(), updatedByName:fullName()}, extra); this.put(d); },
+  async update(pid, fields){ const d = this.db(), p = d.projects[pid]; if (!p || p.ownerUid !== this.uid()) throw {code:'permission-denied'}; Object.assign(p, fields, {updatedAt:Date.now()}); this.put(d); },
+  async remove(pid){ const d = this.db(); if (d.projects[pid]?.ownerUid !== this.uid()) throw {code:'permission-denied'};
+    delete d.projects[pid]; delete d.content[pid];
+    Object.keys(d.shares).forEach(k => d.shares[k].pid === pid && delete d.shares[k]); Object.keys(d.grants).forEach(k => d.grants[k].pid === pid && delete d.grants[k]); this.put(d); },
+  async leave(p){ const d = this.db(); delete d.shares[p.id + '__' + this.email()]; delete d.grants[p.id + '__' + this.uid()]; this.put(d); },
+  async createFolder(name, parentId = ''){ const d = this.db(), id = randId('f'); d.folders[id] = {id, ownerUid:this.uid(), name, parentId, createdAt:Date.now(), updatedAt:Date.now()}; this.put(d); return d.folders[id]; },
+  async updateFolder(fid, fields){ const d = this.db(); Object.assign(d.folders[fid], fields, {updatedAt:Date.now()}); this.put(d); },
+  async removeFolder(fid){ const d = this.db(), f = d.folders[fid]; if (!f) return;
+    Object.values(d.projects).forEach(p => { if (p.ownerUid === this.uid() && p.folderId === fid) p.folderId = f.parentId || ''; });
+    Object.values(d.folders).forEach(x => { if (x.parentId === fid) x.parentId = f.parentId || ''; });
+    delete d.folders[fid]; this.put(d); },
+  async listShares(pid){ return Object.values(this.db().shares).filter(s => s.pid === pid); },
+  async addShare(p, email, role){ const d = this.db(), e = emailKey(email); d.shares[p.id + '__' + e] = {pid:p.id, email:e, role, ownerUid:this.uid(), name:p.name, ownerName:fullName(), createdAt:Date.now()}; this.put(d); },
+  async removeShare(pid, email){ const d = this.db(); delete d.shares[pid + '__' + emailKey(email)]; this.put(d); },
+  async setLink(p, mode, password){ const token = mode === 'off' ? '' : randTok(); const key = mode === 'off' ? '' : password ? await sha256hex(token + ':' + password) : token;
+    await this.update(p.id, {linkMode:mode, linkKey:key, linkToken:token, linkPw:!!password && mode !== 'off'}); return token; },
+  async claimLink(pid, token, password){ const d = this.db(), p = d.projects[pid]; const key = password ? await sha256hex(token + ':' + password) : token;
+    if (!p || p.linkMode === 'off' || p.linkKey !== key) throw {code:'permission-denied'};
+    d.grants[pid + '__' + this.uid()] = {pid, uid:this.uid(), key, createdAt:Date.now()}; this.put(d); },
+  async isVerified(){ return true; },
+};
+
+/* ---------- Firebase ---------- */
+const FirebaseCloud = {
+  get db(){ return FirebaseAuth.db; },
+  ts(){ return FirebaseAuth.ts(); },
+  user(){ return FirebaseAuth.fa.currentUser; },
+  uid(){ return this.user().uid; }, email(){ return emailKey(this.user().email); },
+  P(pid){ return this.db.collection('apProjects').doc(pid); },
+  C(pid){ return this.P(pid).collection('content').doc('main'); },
+  meta(d){ const x = d.data(); return {...x, id:d.id, updatedAt:ms(x.updatedAt), createdAt:ms(x.createdAt)}; },
+  async listMine(){
+    const u = this.uid();
+    const [p, f] = await Promise.all([this.db.collection('apProjects').where('ownerUid', '==', u).get(), this.db.collection('apFolders').where('ownerUid', '==', u).get()]);
+    return {projects:p.docs.map(d => this.meta(d)), folders:f.docs.map(d => ({...d.data(), id:d.id}))};
+  },
+  async listShared(){
+    const [s, g] = await Promise.all([
+      this.db.collection('apShares').where('email', '==', this.email()).get(),
+      this.db.collection('apGrants').where('uid', '==', this.uid()).get()]);
+    const via = new Map();
+    s.docs.forEach(d => via.set(d.data().pid, {role:d.data().role, via:'email', name:d.data().name, ownerName:d.data().ownerName}));
+    g.docs.forEach(d => { if (!via.has(d.data().pid)) via.set(d.data().pid, {role:'link', via:'link'}); });
+    const out = [];
+    await Promise.all([...via].map(async ([pid, v]) => {
+      try { const d = await this.P(pid).get(); if (d.exists){ const m = this.meta(d); out.push({...m, role:v.role === 'link' ? m.linkMode : v.role, via:v.via}); } }
+      catch(e){ if (v.via === 'email') out.push({id:pid, name:v.name || 'Projet partagé', ownerName:v.ownerName || '', role:v.role, via:'email', locked:true, updatedAt:0}); }
+    }));
+    return out;
+  },
+  async roleOf(m){
+    if (m.ownerUid === this.uid()) return 'owner';
+    try { const s = await this.db.collection('apShares').doc(m.id + '__' + this.email()).get(); if (s.exists) return s.data().role; } catch(e){}
+    return m.linkMode && m.linkMode !== 'off' ? m.linkMode : 'view';
+  },
+  async open(pid){
+    const p = await this.P(pid).get(); if (!p.exists) throw {code:'app/not-found'};
+    const m = this.meta(p); const [c, role] = await Promise.all([this.C(pid).get(), this.roleOf(m)]);
+    return {meta:m, data:c.exists ? c.data().data : '{"els":[]}', role};
+  },
+  async create({name, folderId = '', data, thumb = ''}){
+    if (data.length > MAX_DATA) throw {code:'app/too-big'};
+    const ref = this.db.collection('apProjects').doc(), u = this.user();
+    const meta = {ownerUid:u.uid, ownerEmail:this.email(), ownerName:fullName().slice(0, 160), name:name.slice(0, 120), folderId, size:data.length, thumb,
+      linkMode:'off', linkKey:'', linkToken:'', linkPw:false, createdAt:this.ts(), updatedAt:this.ts(), updatedBy:u.uid, updatedByName:fullName().slice(0, 160)};
+    const b = this.db.batch(); b.set(ref, meta); b.set(ref.collection('content').doc('main'), {data, updatedAt:this.ts()}); await b.commit();
+    return {...meta, id:ref.id, createdAt:Date.now(), updatedAt:Date.now()};
+  },
+  async save(pid, data, extra = {}){
+    if (data.length > MAX_DATA) throw {code:'app/too-big'};
+    const b = this.db.batch();
+    b.set(this.C(pid), {data, updatedAt:this.ts()});
+    b.update(this.P(pid), {size:data.length, updatedAt:this.ts(), updatedBy:this.uid(), updatedByName:fullName().slice(0, 160), ...extra});
+    await b.commit();
+  },
+  async update(pid, fields){ await this.P(pid).update({...fields, updatedAt:this.ts()}); },
+  async remove(pid){
+    const sh = await this.db.collection('apShares').where('ownerUid', '==', this.uid()).where('pid', '==', pid).get();
+    const b = this.db.batch(); sh.docs.forEach(d => b.delete(d.ref)); b.delete(this.C(pid)); b.delete(this.P(pid)); await b.commit();
+  },
+  async leave(p){
+    await Promise.all([this.db.collection('apShares').doc(p.id + '__' + this.email()).delete().catch(() => {}),
+      this.db.collection('apGrants').doc(p.id + '__' + this.uid()).delete().catch(() => {})]);
+  },
+  async createFolder(name, parentId = ''){
+    const ref = this.db.collection('apFolders').doc(), f = {ownerUid:this.uid(), name:name.slice(0, 80), parentId, createdAt:this.ts(), updatedAt:this.ts()};
+    await ref.set(f); return {...f, id:ref.id};
+  },
+  async updateFolder(fid, fields){ await this.db.collection('apFolders').doc(fid).update({...fields, updatedAt:this.ts()}); },
+  async removeFolder(fid, all){
+    const f = all.folders.find(x => x.id === fid); const parent = f?.parentId || '';
+    const b = this.db.batch();
+    all.projects.filter(p => p.folderId === fid).forEach(p => b.update(this.P(p.id), {folderId:parent, updatedAt:this.ts()}));
+    all.folders.filter(x => x.parentId === fid).forEach(x => b.update(this.db.collection('apFolders').doc(x.id), {parentId:parent, updatedAt:this.ts()}));
+    b.delete(this.db.collection('apFolders').doc(fid)); await b.commit();
+  },
+  async listShares(pid){ const s = await this.db.collection('apShares').where('ownerUid', '==', this.uid()).where('pid', '==', pid).get(); return s.docs.map(d => d.data()); },
+  async addShare(p, email, role){
+    const e = emailKey(email);
+    await this.db.collection('apShares').doc(p.id + '__' + e).set({pid:p.id, email:e, role, ownerUid:this.uid(), name:p.name.slice(0, 120), ownerName:fullName().slice(0, 160), createdAt:this.ts()});
+  },
+  async removeShare(pid, email){ await this.db.collection('apShares').doc(pid + '__' + emailKey(email)).delete(); },
+  async setLink(p, mode, password){
+    const token = mode === 'off' ? '' : randTok();
+    const key = mode === 'off' ? '' : password ? await sha256hex(token + ':' + password) : token;
+    await this.update(p.id, {linkMode:mode, linkKey:key, linkToken:token, linkPw:!!password && mode !== 'off'});
+    return token;
+  },
+  async claimLink(pid, token, password){
+    const key = password ? await sha256hex(token + ':' + password) : token;
+    await this.db.collection('apGrants').doc(pid + '__' + this.uid()).set({pid, uid:this.uid(), key, createdAt:this.ts()});
+  },
+  async isVerified(){ const u = this.user(); if (u.emailVerified) return true; await u.reload(); if (u.emailVerified){ await u.getIdToken(true); return true; } return false; },
+};
+const Cloud = () => (Auth.mode === 'demo' ? DemoCloud : FirebaseCloud);
+
+/* ---------- Enregistrement automatique du projet ouvert ---------- */
+const Save = {
+  pid:null, role:'', meta:null, last:'', timer:0, first:0, busy:false, again:false, state:'', lastThumb:0, err:0,
+  canWrite(){ return !!this.pid && (this.role === 'owner' || this.role === 'edit') && (access.level === 'admin' || access.level === 'licensed'); },
+  begin(meta, role, data){ window.APCloudActive = true; this.pid = meta.id; this.meta = meta; this.role = role; this.last = data; this.lastThumb = 0; this.err = 0; clearTimeout(this.timer); this.first = 0;
+    this.set(this.canWrite() ? 'saved' : 'ro'); },
+  end(){ window.APCloudActive = false; clearTimeout(this.timer); this.pid = null; this.meta = null; this.role = ''; this.set(''); },
+  changed(){
+    if (!this.pid) return;
+    if (!this.canWrite()){ this.set('ro'); return; }
+    if (!this.first) this.first = Date.now();
+    this.set('dirty'); clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.flush(), Date.now() - this.first > 12000 ? 0 : 1800);
+  },
+  async flush(force){
+    if (!this.pid || !this.canWrite() || !window.APModel) return;
+    if (this.busy){ this.again = true; return; }
+    clearTimeout(this.timer); this.first = 0;
+    const data = window.APModel.get(), pid = this.pid;
+    const wantThumb = force || Date.now() - this.lastThumb > 45000;
+    if (data === this.last && !wantThumb){ this.set('saved'); return; }
+    if (data.length > MAX_DATA){ this.set('big'); return; }
+    this.busy = true; this.set('saving');
+    try {
+      const extra = {}; if (wantThumb){ const t = window.APModel.thumb(); if (t && t.length < 88000) extra.thumb = t; }
+      await withTimeout(Cloud().save(pid, data, extra), 20000);
+      if (this.pid === pid){ this.last = data; this.err = 0; if (extra.thumb) this.lastThumb = Date.now(); this.set('saved'); }
+    } catch(e){
+      if (this.pid === pid){ this.err++; this.set(e?.code === 'permission-denied' ? 'denied' : 'error'); if (e?.code !== 'permission-denied') this.timer = setTimeout(() => this.flush(), Math.min(60000, 5000 * this.err)); }
+    } finally { this.busy = false; if (this.again){ this.again = false; this.flush(); } }
+  },
+  pending(){ return !!this.pid && this.canWrite() && (this.state === 'dirty' || this.state === 'saving' || this.state === 'error'); },
+  set(s){
+    this.state = s; const el = $a('#cloudState'); if (!el) return;
+    const hm = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    const T = {saved:`Enregistré · ${hm}`, saving:'Enregistrement…', dirty:'Modifications en cours…', error:'Hors ligne · nouvel essai…', denied:'Enregistrement refusé',
+      big:'Projet trop volumineux pour le cloud', ro:access.level === 'discovery' ? 'Lecture seule · sans licence' : 'Lecture seule'};
+    el.hidden = !s; el.textContent = T[s] || ''; el.className = 'cs ' + s;
+    el.title = s === 'ro' ? 'Vos modifications ne sont pas enregistrées : ' + (this.role === 'view' ? 'ce projet vous est partagé en lecture.' : 'une licence ARCHIPLAN est nécessaire pour enregistrer.') : '';
+  },
+};
+window.addEventListener('ap:changed', () => Save.changed());
+window.addEventListener('beforeunload', e => { if (Save.pending()){ Save.flush(); e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && Save.pending()) Save.flush(); });
+
+/* ---------- Pont avec la maquette (module 3D) ---------- */
+let modelReady = window.APModel ? Promise.resolve() : new Promise(res => window.addEventListener('ap:ready', res, {once:true}));
+async function openInModel(project, meta, role){
+  await withTimeout(modelReady, 20000, 'app/engine');
+  let s; try { s = typeof project === 'string' ? JSON.parse(project) : project; } catch(e){ s = {els:[]}; }
+  if (Save.pending()) try { await withTimeout(Save.flush(true), 8000); } catch(e){}
+  Save.end(); window.APCloudActive = !!meta;
+  window.APModel.load({...s, name:meta ? meta.name : (s.name || 'Maquette')});
+  if (meta) Save.begin(meta, role, window.APModel.get()); else Save.end();
+  const nm = $a('#projName'); if (nm){ nm.textContent = meta ? meta.name : (s.name || 'Maquette d\'essai'); nm.title = meta ? (role === 'owner' ? 'Mon projet' : `Partagé par ${meta.ownerName || meta.ownerEmail || '—'}`) : ''; }
+  ctx.where = 'app'; hideHome();
+}
+async function downloadText(filename, text){
+  try { const dl = window.claude?.use ? await window.claude.use('downloads') : null; if (dl){ await dl.save({filename, data:text}); return; } } catch(e){ if (e?.code === 'declined') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type:'application/json'})); a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+const safeName = s => (String(s || 'projet').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '') || 'projet').slice(0, 60);
+const fullAccess = () => access.level === 'admin' || access.level === 'licensed';
+
+/* ---------- Accueil ---------- */
+const H = {tab:'mine', folder:'', mine:null, shared:null, loading:false, err:''};
+const ago = t => { if (!t) return ''; const s = (Date.now() - t) / 1000; if (s < 60) return 'à l\'instant'; if (s < 3600) return `il y a ${Math.round(s / 60)} min`; if (s < 86400) return `il y a ${Math.round(s / 3600)} h`;
+  return new Date(t).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:new Date(t).getFullYear() === new Date().getFullYear() ? undefined : 'numeric'}); };
+const kb = n => n > 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round((n || 0) / 1000)) + ' Ko';
+const ROLE = {owner:'Propriétaire', edit:'Modification', view:'Lecture'};
+const ICON = {
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  dots:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>',
+  plan:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 38V14l16-8 16 8v24"/><path d="M8 38h32M18 38V24h12v14"/><path d="M8 14h32" opacity=".5"/></svg>',
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+};
+
+function showHome(){
+  Save.flush(true); Save.end();
+  ctx.where = 'home'; const h = $a('#home'); h.hidden = false; $a('#app').inert = true;
+  const hb = $a('#homeBrand'); if (hb && !hb.querySelector('.brand-mark')){ const mk = document.querySelector('.top .brand-mark'); if (mk) hb.prepend(mk.cloneNode(true)); }
+  const hu = $a('#homeUser'); hu.textContent = initials(); hu.title = fullName();
+  renderHome(); loadHome();
+}
+function hideHome(){ $a('#home').hidden = true; const app = $a('#app'); if (app) app.inert = false; }
+async function loadHome(){
+  H.loading = true; H.err = ''; renderHome();
+  try {
+    await accessReady;
+    const [mine, shared] = await withTimeout(Promise.all([fullAccess() ? Cloud().listMine() : Promise.resolve({projects:[], folders:[]}), Cloud().listShared()]), 15000);
+    H.mine = mine; H.shared = shared;
+  } catch(e){ H.err = e?.code === 'app/timeout' ? 'Le cloud ne répond pas. Vérifiez votre connexion.' : errMsg(e); }
+  H.loading = false; renderHome();
+}
+function crumbs(){
+  const fs = H.mine?.folders || [], out = []; let f = fs.find(x => x.id === H.folder), guard = 0;
+  while (f && guard++ < 20){ out.unshift(f); f = fs.find(x => x.id === f.parentId); }
+  return out;
+}
+function cardHtml(p, shared){
+  const thumb = p.thumb ? `<img src="${esc(p.thumb)}" alt="" loading="lazy">` : ICON.plan;
+  const sub = shared ? `${esc(p.ownerName || p.ownerEmail || '')} · ${ROLE[p.role] || 'Lecture'}` : `${ago(p.updatedAt)}${p.updatedBy && p.updatedBy !== me.uid && p.updatedByName ? ' par ' + esc(p.updatedByName) : ''}`;
+  const badges = !shared && (p.linkMode && p.linkMode !== 'off') ? `<span class="hb" title="Partagé par lien">${ICON.share}</span>` : '';
+  return `<article class="hcard${p.locked ? ' locked' : ''}" data-open="${esc(p.id)}" data-shared="${shared ? 1 : ''}" tabindex="0" aria-label="Ouvrir ${esc(p.name)}">
+    <div class="hthumb">${p.locked ? ICON.lock : thumb}${badges}</div>
+    <div class="hmeta"><b title="${esc(p.name)}">${esc(p.name)}</b><span>${p.locked ? 'Confirmez votre email pour l\'ouvrir' : sub}</span></div>
+    <button type="button" class="hdots" data-menu="${esc(p.id)}" data-shared="${shared ? 1 : ''}" aria-label="Gérer ${esc(p.name)}">${ICON.dots}</button></article>`;
+}
+function renderHome(){
+  const body = $a('#homeBody'); if (!body) return;
+  $a('#homeTabs').querySelectorAll('[data-htab]').forEach(b => b.setAttribute('aria-selected', b.dataset.htab === H.tab));
+  const full = fullAccess(), mineTab = H.tab === 'mine';
+  $a('#homeNewP').hidden = $a('#homeNewF').hidden = $a('#homeImport').hidden = !mineTab || !full || access.level === 'pending';
+  const lb = $a('#homeLic'); if (lb) lb.hidden = !(access.level === 'discovery');
+  if (H.loading && !(mineTab ? H.mine : H.shared)){ body.innerHTML = `<div class="hgrid">${'<div class="hcard sk"><div class="hthumb"></div><div class="hmeta"><b></b><span></span></div></div>'.repeat(4)}</div>`; return; }
+  if (H.err){ body.innerHTML = `<div class="hempty"><p>${esc(H.err)}</p><button type="button" class="ap-btn alt" data-hact="reload">Réessayer</button></div>`; return; }
+  if (mineTab){
+    if (access.level === 'discovery'){
+      body.innerHTML = `<div class="hempty hup"><div class="hic">${ICON.plan}</div><h3>Le cloud ARCHIPLAN est inclus avec une licence</h3>
+        <p>Vos projets s'enregistrent automatiquement, se rangent en dossiers et se partagent. En mode découverte, vous pouvez essayer la maquette et ouvrir les projets partagés avec vous.</p>
+        <div class="hrow"><button type="button" class="ap-btn" data-hact="sample">Essayer une maquette</button><a class="ap-btn alt" href="${OFFERS_URL}" target="_blank" rel="noopener">Voir les offres</a></div></div>`;
+      return;
+    }
+    const fs = (H.mine?.folders || []).filter(f => (f.parentId || '') === H.folder).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    const ps = (H.mine?.projects || []).filter(p => (p.folderId || '') === H.folder).sort((a, b) => b.updatedAt - a.updatedAt);
+    const cr = crumbs();
+    const local = !H.folder ? localDraft() : null;
+    let h = `<nav class="hcrumbs" aria-label="Dossiers"><button type="button" data-folder="">Mes projets</button>${cr.map(f => `<span>›</span><button type="button" data-folder="${esc(f.id)}">${esc(f.name)}</button>`).join('')}</nav>`;
+    if (local) h += `<div class="hlocal"><div><b>Une maquette est enregistrée sur cet appareil</b><span>${esc(local.name || 'Sans titre')} · ${local.els.length} éléments</span></div><button type="button" class="ap-btn alt" data-hact="import-local">Enregistrer dans le cloud</button><button type="button" class="ap-link" data-hact="dismiss-local">Ignorer</button></div>`;
+    if (fs.length) h += `<div class="hfolders">${fs.map(f => `<div class="hfold" data-folder="${esc(f.id)}" tabindex="0">${ICON.folder}<b>${esc(f.name)}</b><button type="button" class="hdots" data-fmenu="${esc(f.id)}" aria-label="Gérer le dossier ${esc(f.name)}">${ICON.dots}</button></div>`).join('')}</div>`;
+    h += ps.length ? `<div class="hgrid">${ps.map(p => cardHtml(p, false)).join('')}</div>`
+      : `<div class="hempty"><div class="hic">${ICON.plan}</div><h3>${H.folder ? 'Ce dossier est vide' : 'Aucun projet pour l\'instant'}</h3><p>Créez un projet : il s'enregistre tout seul dans le cloud, à chaque modification.</p><button type="button" class="ap-btn" data-hact="new">Nouveau projet</button></div>`;
+    body.innerHTML = h;
+  } else {
+    const ps = (H.shared || []).sort((a, b) => b.updatedAt - a.updatedAt);
+    body.innerHTML = ps.length ? `${ps.some(p => p.locked) ? `<div class="hlocal"><div><b>Confirmez votre adresse email</b><span>Les projets partagés ne s'ouvrent qu'avec un compte Studio Prism vérifié.</span></div><button type="button" class="ap-btn alt" data-hact="verify">Vérifier mon email</button></div>` : ''}<div class="hgrid">${ps.map(p => cardHtml(p, true)).join('')}</div>`
+      : `<div class="hempty"><div class="hic">${ICON.share}</div><h3>Rien de partagé avec vous</h3><p>Quand quelqu'un vous partage un projet ARCHIPLAN avec l'adresse ${esc(me.email)}, ou vous envoie un lien, il apparaît ici.</p></div>`;
+  }
+}
+function localDraft(){
+  try { if (store.get('ap.localDismissed.' + me.uid)) return null; const s = JSON.parse(localStorage.getItem('archiplan.v1')); return s && Array.isArray(s.els) && s.els.length && !s.isSample ? s : null; } catch(e){ return null; }
+}
+const findP = (id, shared) => (shared ? H.shared : H.mine?.projects || []).find(p => p.id === id);
+async function openProject(p){
+  if (p.locked) return verifyEmailFlow();
+  showBusy(`Ouverture de « ${p.name} »…`);
+  try { const r = await withTimeout(Cloud().open(p.id), 20000); hideBusy(); await openInModel(r.data, r.meta, r.role); toastA(r.role === 'owner' || (r.role === 'edit' && fullAccess()) ? 'Enregistrement automatique activé' : 'Ouvert en lecture seule'); }
+  catch(e){ hideBusy(); toastA(e?.code === 'app/engine' ? 'Le moteur 3D n\'est pas encore chargé. Réessayez.' : e?.code === 'permission-denied' ? 'Accès refusé à ce projet.' : errMsg(e)); }
+}
+async function newProject(name, data){
+  if (!fullAccess()) return show('licence', {reason:'cloud'});
+  showBusy('Création du projet…');
+  try { const m = await withTimeout(Cloud().create({name, folderId:H.folder, data:data || JSON.stringify({name, els:[], nextId:1})}), 20000); hideBusy(); H.mine?.projects.push(m); await openInModel(data || {name, els:[], nextId:1}, m, 'owner'); }
+  catch(e){ hideBusy(); toastA(e?.code === 'app/too-big' ? 'Projet trop volumineux pour le cloud.' : e?.code === 'permission-denied' ? 'Enregistrement refusé : licence ARCHIPLAN requise.' : errMsg(e)); }
+}
+function showBusy(t){ const b = $a('#homeBusy'); b.querySelector('span').textContent = t; b.hidden = false; }
+function hideBusy(){ $a('#homeBusy').hidden = true; }
+
+/* Boîte de dialogue */
+function dlg(html, wire){
+  const d = $a('#apDlg'); d.querySelector('.dlg-card').innerHTML = html; d.hidden = false;
+  d.querySelectorAll('[data-dlg="close"]').forEach(b => b.onclick = closeDlg);
+  const f = d.querySelector('input:not([type=checkbox]),select'); if (f) setTimeout(() => f.focus(), 40);
+  wire && wire(d);
+}
+function closeDlg(){ $a('#apDlg').hidden = true; }
+$a('#apDlg').addEventListener('click', e => { if (e.target.id === 'apDlg') closeDlg(); });
+function askText(title, label, value, okLabel, onOk){
+  dlg(`<h3>${esc(title)}</h3><form id="dlgF"><label class="ap-field"><span>${esc(label)}</span><span class="ap-in"><input id="dlgIn" maxlength="120" value="${esc(value || '')}"></span></label><p class="ap-err" id="dlgErr"></p>
+    <div class="dlg-acts"><button type="button" class="ap-btn alt" data-dlg="close">Annuler</button><button class="ap-btn" type="submit">${esc(okLabel)}</button></div></form>`, d => {
+    const i = d.querySelector('#dlgIn'); i.select();
+    d.querySelector('#dlgF').onsubmit = async e => { e.preventDefault(); const v = i.value.trim(); if (!v) return d.querySelector('#dlgErr').textContent = 'Indiquez un nom.';
+      const b = d.querySelector('[type=submit]'); busy(b, true); try { await onOk(v); closeDlg(); } catch(err){ busy(b, false); d.querySelector('#dlgErr').textContent = errMsg(err); } };
+  });
+}
+function confirmDlg(title, text, okLabel, onOk){
+  dlg(`<h3>${esc(title)}</h3><p class="dlg-p">${text}</p><p class="ap-err" id="dlgErr"></p><div class="dlg-acts"><button type="button" class="ap-btn alt" data-dlg="close">Annuler</button><button type="button" class="ap-btn danger" id="dlgOk">${esc(okLabel)}</button></div>`, d => {
+    d.querySelector('#dlgOk').onclick = async e => { busy(e.currentTarget, true); try { await onOk(); closeDlg(); } catch(err){ busy(e.currentTarget, false); d.querySelector('#dlgErr').textContent = errMsg(err); } };
+  });
+}
+function moveDlg(p){
+  const fs = H.mine.folders, path = f => { const n = []; let x = f, g = 0; while (x && g++ < 20){ n.unshift(x.name); x = fs.find(y => y.id === x.parentId); } return n.join(' › '); };
+  const opts = [{id:'', label:'Mes projets (racine)'}, ...fs.map(f => ({id:f.id, label:path(f)})).sort((a, b) => a.label.localeCompare(b.label, 'fr'))];
+  dlg(`<h3>Déplacer « ${esc(p.name)} »</h3><div class="dlg-list">${opts.map(o => `<button type="button" data-to="${esc(o.id)}" class="${(p.folderId || '') === o.id ? 'cur' : ''}">${ICON.folder}<span>${esc(o.label)}</span></button>`).join('')}</div>
+    <div class="dlg-acts"><button type="button" class="ap-btn alt" data-dlg="close">Annuler</button></div>`, d => {
+    d.querySelectorAll('[data-to]').forEach(b => b.onclick = async () => { try { await Cloud().update(p.id, {folderId:b.dataset.to}); p.folderId = b.dataset.to; closeDlg(); renderHome(); toastA('Projet déplacé'); } catch(e){ toastA(errMsg(e)); } });
+  });
+}
+function linkUrl(p){ return p.linkToken ? `${APP_URL}#/p/${encodeURIComponent(p.id)}?k=${p.linkToken}${p.linkPw ? '&pw=1' : ''}` : ''; }
+async function shareDlg(p){
+  let shares = []; try { shares = await Cloud().listShares(p.id); } catch(e){}
+  const render = () => `<h3>Partager « ${esc(p.name)} »</h3>
+    <p class="dlg-p">Les invités ouvrent le projet avec leur compte Studio Prism vérifié. Leurs droits dépendent aussi de leur propre licence : sans licence ARCHIPLAN, un invité peut seulement consulter.</p>
+    <form id="shF" class="dlg-row"><input id="shEmail" type="email" placeholder="email@exemple.fr" autocomplete="off" aria-label="Email de la personne"><select id="shRole" aria-label="Droits"><option value="view">Lecture</option><option value="edit">Modification</option></select><button class="ap-btn" type="submit">Inviter</button></form>
+    <p class="ap-err" id="dlgErr"></p>
+    <ul class="dlg-people">${shares.length ? shares.map(s => `<li><span class="av">${esc(s.email.charAt(0).toUpperCase())}</span><span class="em">${esc(s.email)}</span>
+      <select data-role="${esc(s.email)}" aria-label="Droits de ${esc(s.email)}"><option value="view"${s.role === 'view' ? ' selected' : ''}>Lecture</option><option value="edit"${s.role === 'edit' ? ' selected' : ''}>Modification</option></select>
+      <a class="ap-link" href="mailto:${esc(s.email)}?subject=${encodeURIComponent('Projet ARCHIPLAN partagé : ' + p.name)}&body=${encodeURIComponent(`Bonjour,\n\nJe vous ai partagé le projet ARCHIPLAN « ${p.name} ». Ouvrez-le avec votre compte Studio Prism (${s.email}) :\n${APP_URL}#/p/${p.id}\n\n${fullName()}`)}" title="Prévenir par email">Prévenir</a>
+      <button type="button" class="ap-link danger" data-rm="${esc(s.email)}" aria-label="Retirer ${esc(s.email)}">Retirer</button></li>`).join('') : '<li class="none">Personne pour l\'instant.</li>'}</ul>
+    <div class="dlg-sec"><b>Accès par lien</b>
+      <div class="dlg-row"><select id="lkMode" aria-label="Accès par lien"><option value="off"${p.linkMode === 'off' || !p.linkMode ? ' selected' : ''}>Désactivé</option><option value="view"${p.linkMode === 'view' ? ' selected' : ''}>Toute personne avec le lien · Lecture</option><option value="edit"${p.linkMode === 'edit' ? ' selected' : ''}>Toute personne avec le lien · Modification</option></select></div>
+      <label class="ap-check"><input type="checkbox" id="lkPwOn"${p.linkPw ? ' checked' : ''}><span>Protéger par un mot de passe</span></label>
+      <div class="dlg-row" id="lkPwRow"${p.linkPw ? '' : ' hidden'}><input id="lkPw" type="text" placeholder="${p.linkPw ? 'Nouveau mot de passe (laisser vide pour garder le lien actuel)' : 'Mot de passe du lien'}" autocomplete="off"></div>
+      <div class="dlg-row"><input id="lkUrl" readonly value="${esc(linkUrl(p))}" placeholder="Aucun lien actif" aria-label="Lien de partage"><button type="button" class="ap-btn alt" id="lkCopy"${p.linkToken ? '' : ' disabled'}>Copier</button></div>
+      <div class="dlg-row"><button type="button" class="ap-btn" id="lkApply">Appliquer</button></div>
+      <p class="dlg-p small">Changer le mode ou le mot de passe crée un nouveau lien : l'ancien cesse de fonctionner. Les personnes ayant le lien doivent être connectées avec un compte Studio Prism vérifié.</p></div>
+    <div class="dlg-acts"><button type="button" class="ap-btn alt" data-dlg="close">Terminé</button></div>`;
+  const wire = d => {
+    const err = t => d.querySelector('#dlgErr').textContent = t || '';
+    d.querySelector('#shF').onsubmit = async e => {
+      e.preventDefault(); const em = d.querySelector('#shEmail').value.trim().toLowerCase(), role = d.querySelector('#shRole').value;
+      if (!emailOK(em) || em.includes('/')) return err('Entrez une adresse email valide.');
+      if (em === emailKey(me.email)) return err('C\'est votre propre adresse.');
+      try { await Cloud().addShare(p, em, role); shares = shares.filter(s => s.email !== em).concat([{email:em, role}]); dlg(render(), wire); toastA(`Partagé avec ${em}`); } catch(x){ err(errMsg(x)); }
+    };
+    d.querySelectorAll('[data-role]').forEach(s => s.onchange = async () => { try { await Cloud().addShare(p, s.dataset.role, s.value); shares.find(x => x.email === s.dataset.role).role = s.value; toastA('Droits modifiés'); } catch(x){ err(errMsg(x)); } });
+    d.querySelectorAll('[data-rm]').forEach(b => b.onclick = async () => { try { await Cloud().removeShare(p.id, b.dataset.rm); shares = shares.filter(s => s.email !== b.dataset.rm); dlg(render(), wire); } catch(x){ err(errMsg(x)); } });
+    const pwOn = d.querySelector('#lkPwOn'); pwOn.onchange = () => d.querySelector('#lkPwRow').hidden = !pwOn.checked;
+    d.querySelector('#lkCopy').onclick = async () => { const u = d.querySelector('#lkUrl').value; if (!u) return; try { await navigator.clipboard.writeText(u); toastA('Lien copié'); } catch(e){ d.querySelector('#lkUrl').select(); document.execCommand('copy'); toastA('Lien copié'); } };
+    d.querySelector('#lkApply').onclick = async e => {
+      const mode = d.querySelector('#lkMode').value, pw = pwOn.checked ? d.querySelector('#lkPw').value : '';
+      if (mode !== 'off' && pwOn.checked && !pw && !(p.linkPw && p.linkMode === mode)) return err('Choisissez le mot de passe du lien.');
+      if (mode !== 'off' && pwOn.checked && !pw && p.linkPw && p.linkMode === mode) return err('');
+      if (pw && pw.length < 4) return err('Mot de passe trop court (4 caractères minimum).');
+      busy(e.currentTarget, true, 'Création du lien…');
+      try { const tok = await Cloud().setLink(p, mode, pw); Object.assign(p, {linkMode:mode, linkToken:tok, linkPw:!!pw && mode !== 'off'}); dlg(render(), wire); renderHome(); toastA(mode === 'off' ? 'Lien désactivé' : 'Nouveau lien prêt à copier'); }
+      catch(x){ busy(e.currentTarget, false); err(errMsg(x)); }
+    };
+  };
+  dlg(render(), wire);
+}
+
+/* Menus ⋮ */
+const hm = () => $a('#homeMenu');
+function openMenu(anchor, items){
+  const m = hm(); m.innerHTML = items.map(i => i === '-' ? '<hr>' : `<button type="button" data-mi="${i.k}" class="${i.danger ? 'danger' : ''}"${i.off ? ' disabled' : ''}><b>${esc(i.t)}</b>${i.s ? `<span>${esc(i.s)}</span>` : ''}</button>`).join('');
+  m.hidden = false; const r = anchor.getBoundingClientRect();
+  m.style.top = Math.min(r.bottom + 4, innerHeight - m.offsetHeight - 12) + 'px';
+  m.style.left = Math.max(12, Math.min(r.right - m.offsetWidth, innerWidth - m.offsetWidth - 12)) + 'px';
+  return new Promise(res => { m.onclick = e => { const b = e.target.closest('[data-mi]'); if (!b) return; m.hidden = true; res(b.dataset.mi); }; menuCancel = () => res(null); });
+}
+let menuCancel = null;
+document.addEventListener('click', e => { const m = hm(); if (m && !m.hidden && !m.contains(e.target) && !e.target.closest('[data-menu],[data-fmenu]')){ m.hidden = true; menuCancel && menuCancel(); } });
+
+async function projectMenu(btn, p, shared){
+  const full = fullAccess();
+  const items = shared ? [
+    {k:'open', t:'Ouvrir'},
+    {k:'copy', t:'Faire une copie', s:full ? 'Dans mes projets' : 'Licence ARCHIPLAN requise', off:!full || p.locked},
+    '-', {k:'leave', t:'Retirer de ma liste', danger:true}] : [
+    {k:'open', t:'Ouvrir'}, {k:'rename', t:'Renommer'}, {k:'dup', t:'Dupliquer', s:'Crée une copie de sauvegarde'},
+    {k:'backup', t:'Télécharger une sauvegarde', s:'Fichier .json, à garder sur votre appareil'}, {k:'move', t:'Déplacer vers…'},
+    {k:'share', t:'Partager…', s:p.linkMode && p.linkMode !== 'off' ? 'Lien actif' : ''}, '-', {k:'del', t:'Supprimer', danger:true}];
+  const k = await openMenu(btn, items); if (!k) return;
+  if (k === 'open') return openProject(p);
+  if (k === 'rename') return askText('Renommer le projet', 'Nom du projet', p.name, 'Renommer', async v => { await Cloud().update(p.id, {name:v}); p.name = v; renderHome(); });
+  if (k === 'dup' || k === 'copy') return askText(k === 'dup' ? 'Dupliquer le projet' : 'Faire une copie', 'Nom de la copie', `${p.name} (${k === 'dup' ? 'sauvegarde du ' + new Date().toLocaleDateString('fr-FR') : 'copie'})`, 'Créer la copie', async v => {
+    const r = await Cloud().open(p.id); const m = await Cloud().create({name:v, folderId:k === 'dup' ? (p.folderId || '') : '', data:r.data, thumb:p.thumb || ''}); H.mine?.projects.push(m); renderHome(); toastA('Copie créée');
+  });
+  if (k === 'backup'){
+    if (!full) return show('licence', {reason:'export'});
+    try { const r = await Cloud().open(p.id); await downloadText(`${safeName(p.name)}-${new Date().toISOString().slice(0, 10)}.archiplan.json`, r.data); toastA('Sauvegarde téléchargée'); } catch(e){ toastA(errMsg(e)); }
+    return;
+  }
+  if (k === 'move') return moveDlg(p);
+  if (k === 'share') return shareDlg(p);
+  if (k === 'del') return confirmDlg('Supprimer le projet', `« <b>${esc(p.name)}</b> » sera supprimé définitivement, pour vous et pour les personnes avec qui il est partagé. Pensez à télécharger une sauvegarde si besoin.`, 'Supprimer', async () => {
+    await Cloud().remove(p.id); H.mine.projects = H.mine.projects.filter(x => x.id !== p.id); renderHome(); toastA('Projet supprimé');
+  });
+  if (k === 'leave') return confirmDlg('Retirer de ma liste', `Vous n'aurez plus accès à « <b>${esc(p.name)}</b> », sauf si on vous le partage à nouveau.`, 'Retirer', async () => {
+    await Cloud().leave(p); H.shared = H.shared.filter(x => x.id !== p.id); renderHome();
+  });
+}
+async function folderMenu(btn, f){
+  const k = await openMenu(btn, [{k:'open', t:'Ouvrir'}, {k:'rename', t:'Renommer'}, '-', {k:'del', t:'Supprimer le dossier', s:'Son contenu remonte d\'un niveau', danger:true}]); if (!k) return;
+  if (k === 'open'){ H.folder = f.id; return renderHome(); }
+  if (k === 'rename') return askText('Renommer le dossier', 'Nom du dossier', f.name, 'Renommer', async v => { await Cloud().updateFolder(f.id, {name:v}); f.name = v; renderHome(); });
+  if (k === 'del') return confirmDlg('Supprimer le dossier', `Le dossier « <b>${esc(f.name)}</b> » sera supprimé. Les projets et sous-dossiers qu'il contient ne sont pas supprimés : ils remontent d'un niveau.`, 'Supprimer le dossier', async () => {
+    await Cloud().removeFolder(f.id, H.mine); const parent = f.parentId || '';
+    H.mine.projects.forEach(p => { if (p.folderId === f.id) p.folderId = parent; }); H.mine.folders.forEach(x => { if (x.parentId === f.id) x.parentId = parent; });
+    H.mine.folders = H.mine.folders.filter(x => x.id !== f.id); if (H.folder === f.id) H.folder = parent; renderHome();
+  });
+}
+async function verifyEmailFlow(){
+  dlg(`<h3>Confirmez votre adresse email</h3><p class="dlg-p">Pour ouvrir un projet partagé, votre compte Studio Prism doit être vérifié. Ouvrez le lien reçu à <b>${esc(me.email)}</b>, puis touchez « J'ai confirmé ».</p><p class="ap-err" id="dlgErr"></p>
+    <div class="dlg-acts"><button type="button" class="ap-btn alt" id="vfSend">Renvoyer l'email</button><button type="button" class="ap-btn" id="vfOk">J'ai confirmé</button></div>`, d => {
+    d.querySelector('#vfSend').onclick = async e => { busy(e.currentTarget, true, 'Envoi…'); try { await Auth.resendVerification(); busy(e.currentTarget, false); toastA('Email envoyé'); } catch(x){ busy(e.currentTarget, false); d.querySelector('#dlgErr').textContent = errMsg(x); } };
+    d.querySelector('#vfOk').onclick = async e => { busy(e.currentTarget, true, 'Vérification…'); try { if (await Cloud().isVerified()){ closeDlg(); toastA('Email confirmé'); loadHome(); } else { busy(e.currentTarget, false); d.querySelector('#dlgErr').textContent = 'Pas encore confirmé. Ouvrez le lien reçu par email, puis réessayez.'; } } catch(x){ busy(e.currentTarget, false); d.querySelector('#dlgErr').textContent = errMsg(x); } };
+  });
+}
+
+/* Lien de partage : #/p/<id>?k=<jeton>&pw=1 */
+function readLinkFromUrl(){
+  const m = location.hash.match(/^#\/p\/([\w-]{4,60})(?:\?(.*))?$/); if (!m) return null;
+  const q = new URLSearchParams(m[2] || ''); return {pid:decodeURIComponent(m[1]), token:q.get('k') || '', pw:q.get('pw') === '1'};
+}
+async function openPendingLink(){
+  const L = ctx.pendingLink; if (!L) return false; ctx.pendingLink = null;
+  try { sessionStorage.removeItem('ap.pendingLink'); history.replaceState(null, '', location.pathname + location.search); } catch(e){}
+  const tryOpen = async () => { const r = await withTimeout(Cloud().open(L.pid), 20000); await openInModel(r.data, r.meta, r.role); toastA(r.role === 'owner' || (r.role === 'edit' && fullAccess()) ? 'Projet partagé ouvert · enregistrement automatique' : 'Projet partagé ouvert en lecture seule'); };
+  showBusy('Ouverture du projet partagé…');
+  try { await tryOpen(); hideBusy(); return true; }
+  catch(e){
+    hideBusy();
+    if (e?.code === 'app/not-found'){ toastA('Ce projet n\'existe plus.'); return false; }
+    if (!(await Cloud().isVerified().catch(() => false))){ verifyEmailFlow(); return false; }
+    if (!L.token){ toastA('Vous n\'avez pas accès à ce projet. Demandez à son propriétaire de vous le partager.'); return false; }
+    const claim = async pw => { await Cloud().claimLink(L.pid, L.token, pw); await tryOpen(); };
+    if (!L.pw){ try { await claim(''); return true; } catch(x){ toastA('Ce lien n\'est plus valide. Demandez un nouveau lien.'); return false; } }
+    dlg(`<h3>Projet protégé</h3><p class="dlg-p">Ce lien est protégé par un mot de passe. Saisissez celui que le propriétaire vous a communiqué.</p>
+      <form id="dlgF"><label class="ap-field"><span>Mot de passe du lien</span><span class="ap-in"><input id="dlgIn" type="password" autocomplete="off"></span></label><p class="ap-err" id="dlgErr"></p>
+      <div class="dlg-acts"><button type="button" class="ap-btn alt" data-dlg="close">Annuler</button><button class="ap-btn" type="submit">Ouvrir</button></div></form>`, d => {
+      d.querySelector('#dlgF').onsubmit = async ev => { ev.preventDefault(); const b = d.querySelector('[type=submit]'); busy(b, true, 'Vérification…');
+        try { await claim(d.querySelector('#dlgIn').value); closeDlg(); } catch(x){ busy(b, false); d.querySelector('#dlgErr').textContent = 'Mot de passe incorrect, ou lien qui n\'est plus valide.'; } };
+    });
+    return false;
+  }
+}
+
+/* Câblage de l'accueil */
+$a('#homeTabs').addEventListener('click', e => { const b = e.target.closest('[data-htab]'); if (!b) return; H.tab = b.dataset.htab; renderHome(); });
+$a('#homeNewP').addEventListener('click', () => askText('Nouveau projet', 'Nom du projet', 'Nouveau projet', 'Créer', async v => { closeDlg(); await newProject(v); }));
+$a('#homeNewF').addEventListener('click', () => askText('Nouveau dossier', 'Nom du dossier', 'Nouveau dossier', 'Créer', async v => { const f = await Cloud().createFolder(v, H.folder); H.mine.folders.push(f); renderHome(); }));
+$a('#homeImport').addEventListener('click', () => $a('#homeFile').click());
+$a('#homeFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return; const rd = new FileReader();
+  rd.onload = async () => { e.target.value = ''; try { const s = JSON.parse(rd.result); if (!Array.isArray(s.els)) throw 0; await newProject(s.name || f.name.replace(/\.(archiplan\.)?json$/i, ''), JSON.stringify(s)); } catch(x){ toastA('Ce fichier n\'est pas un projet ARCHIPLAN valide.'); } };
+  rd.readAsText(f);
+});
+$a('#homeLic').addEventListener('click', () => show('licence'));
+$a('#homeBody').addEventListener('click', async e => {
+  const t = e.target;
+  const pm = t.closest('[data-menu]'); if (pm){ e.stopPropagation(); const p = findP(pm.dataset.menu, !!pm.dataset.shared); if (p) projectMenu(pm, p, !!pm.dataset.shared); return; }
+  const fm = t.closest('[data-fmenu]'); if (fm){ e.stopPropagation(); const f = H.mine.folders.find(x => x.id === fm.dataset.fmenu); if (f) folderMenu(fm, f); return; }
+  const fo = t.closest('[data-folder]'); if (fo){ H.folder = fo.dataset.folder; return renderHome(); }
+  const op = t.closest('[data-open]'); if (op){ const p = findP(op.dataset.open, !!op.dataset.shared); if (p) openProject(p); return; }
+  const a = t.closest('[data-hact]'); if (!a) return;
+  const k = a.dataset.hact;
+  if (k === 'reload') loadHome();
+  else if (k === 'new') $a('#homeNewP').click();
+  else if (k === 'sample'){ try { await openInModel(window.APModel?.sample() || {els:[]}, null, ''); $a('#projName').textContent = 'Maquette d\'essai'; } catch(x){ toastA('Le moteur 3D n\'est pas encore chargé. Réessayez.'); } }
+  else if (k === 'verify') verifyEmailFlow();
+  else if (k === 'import-local'){ const s = localDraft(); if (s){ await newProject(s.name && s.name !== 'Nouveau projet' ? s.name : 'Maquette importée', JSON.stringify(s)); if (Save.pid) try { localStorage.removeItem('archiplan.v1'); } catch(e){} } }
+  else if (k === 'dismiss-local'){ store.set('ap.localDismissed.' + me.uid, true); renderHome(); }
+});
+$a('#homeBody').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.target.matches('[data-open]') || e.target.matches('[data-folder]'))) e.target.click(); });
+$a('#homeBtn').addEventListener('click', () => showHome());
+
 /* Menu du compte dans l'en-tête de l'app */
 const um = $a('#userMenu');
-$a('#userBtn').addEventListener('click', e => {
+const openUM = e => {
   e.stopPropagation(); if (!um.hidden){ um.hidden = true; return; }
   $a('#umName').textContent = `${me.firstName || ''} ${me.lastName || ''}`.trim() || 'Mon compte';
   $a('#umMail').textContent = me.email + (Auth.mode === 'demo' ? ' · mode démo' : '');
@@ -1064,17 +1768,29 @@ $a('#userBtn').addEventListener('click', e => {
   const ls = licSummary(), ul = $a('#umLic'); ul.className = 'lic ' + ls.cls; ul.textContent = ls.short;
   const r = e.currentTarget.getBoundingClientRect(); um.hidden = false;
   um.style.top = (r.bottom + 6) + 'px'; um.style.left = Math.max(16, Math.min(r.right - um.offsetWidth, innerWidth - um.offsetWidth - 16)) + 'px';
-});
+};
+$a('#userBtn').addEventListener('click', openUM); $a('#homeUser').addEventListener('click', openUM);
 document.addEventListener('click', e => { if (!um.hidden && !um.contains(e.target)) um.hidden = true; });
 $a('#licBadge').addEventListener('click', () => show('licence'));
 um.addEventListener('click', e => {
   const b = e.target.closest('[data-um]'); if (!b) return; um.hidden = true;
-  ({fiche:() => openClient(true), licence:() => show('licence'), security:() => show('security'), lock:() => show('lock', {noAuto:false}), logout:signOutAll})[b.dataset.um]();
+  ({fiche:() => openClient(true), licence:() => show('licence'), home:() => showHome(), security:() => show('security'), lock:() => show('lock', {noAuto:false}), logout:signOutAll, delete:deleteAccount})[b.dataset.um]();
 });
 
-/* Tant que l'écran de compte est affiché, le clavier ne pilote pas la maquette */
+/* Suppression du compte : sur le site Studio Prism (même compte), avec confirmation par lien email puis code PIN */
+function deleteAccount(){
+  if (Auth.mode === 'demo') return dlg(`<h3>Supprimer mon compte</h3><p class="dlg-p">Avec un vrai compte, ce bouton ouvre la page de suppression du site Studio Prism : un lien de confirmation est envoyé par email, puis votre code PIN est demandé.</p><div class="dlg-acts"><button type="button" class="ap-btn" data-dlg="close">Compris</button></div>`);
+  confirmDlg('Supprimer mon compte Studio Prism', 'La suppression se fait sur le site Studio Prism, pour toutes les apps (ARCHIPLAN, Archi Vision…). Vous recevrez un lien de confirmation par email, puis votre code PIN vous sera demandé. Vos projets ARCHIPLAN seront supprimés avec le compte.', 'Continuer sur le site', async () => {
+    try { if (Save.pending()) await withTimeout(Save.flush(true), 8000); } catch(e){}
+    location.href = DELETE_URL + '?from=archiplan';
+  });
+}
+window.APHome = {newProject(){ askText('Nouveau projet', 'Nom du projet', 'Nouveau projet', 'Créer', async v => { closeDlg(); await newProject(v); }); }};
+
+/* Tant que l'écran de compte, l'accueil ou une fenêtre est affiché, le clavier ne pilote pas la maquette */
 window.addEventListener('keydown', e => {
-  if (root().hidden) return;
+  if (!$a('#apDlg').hidden && e.key === 'Escape'){ closeDlg(); e.stopPropagation(); return; }
+  if (root().hidden && $a('#home').hidden && $a('#apDlg').hidden) return;
   if (e.target.closest && e.target.closest('input,select,textarea')) return;
   if (pinHandler){
     if (/^\d$/.test(e.key)){ pinKey(e.key); e.preventDefault(); }
@@ -1084,16 +1800,22 @@ window.addEventListener('keydown', e => {
 }, true);
 
 (async function start(){
+  // Lien de partage (#/p/<projet>?k=…) : gardé pendant la connexion
+  const L = readLinkFromUrl();
+  try { if (L) sessionStorage.setItem('ap.pendingLink', JSON.stringify(L)); ctx.pendingLink = L || JSON.parse(sessionStorage.getItem('ap.pendingLink') || 'null'); } catch(e){ ctx.pendingLink = L; }
   show('loading');
-  bioOK = await Bio.available();
+  bioOK = await withTimeout(Bio.available(), 1500).catch(() => false);
   try {
     const u = await Auth.init();
     if (!u) return show('login');
     me = u;
+    // Profil vérifié en arrière-plan : un compte désactivé entre-temps est déconnecté
+    Auth.verifying?.then(v => { if (me?.uid === v.uid && v.firstName){ me.firstName = v.firstName; me.lastName = v.lastName; } })
+      .catch(async e => { if (e?.code === 'app/suspended' && me){ Save.end(); $a('#home').hidden = true; ctx.where = ''; me = null; show('login', {err:errMsg(e)}); } });
     if (Lock.get(u.uid)?.pin) return show('lock');
     return afterLogin(u);
   } catch(e){
-    show('login', {err: FIREBASE_CONFIG ? 'Le service de comptes ne répond pas. Vérifiez votre connexion, puis rechargez la page.' : errMsg(e)});
+    show('login', {err: e?.code === 'app/timeout' ? errMsg(e) : FIREBASE_CONFIG ? 'Le service de comptes ne répond pas. Vérifiez votre connexion, puis réessayez.' : errMsg(e)});
   }
 })();
 })();
@@ -1168,7 +1890,11 @@ function loadState(){
   try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && Array.isArray(s.els)) return s; } catch(e) {}
   return sample();
 }
-function save(){ if (!window.SPAccess?.canSave) return; try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e) {} }
+let quiet = false;
+function save(){
+  if (!quiet) window.dispatchEvent(new Event('ap:changed'));   // projet cloud ouvert : enregistrement automatique (voir Save)
+  // Plus de copie locale : les projets vivent dans le cloud (une ancienne maquette locale est proposée à l'import depuis l'accueil).
+}
 window.addEventListener('sp:access', e => { if (e.detail.canSave) save(); });
 const snapshot = () => JSON.stringify(state);
 function pushHist(){ hist.push(snapshot()); if (hist.length > 150) hist.shift(); redoS.length = 0; updUndo(); }
@@ -1868,6 +2594,7 @@ document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.t
 let armT;
 menu.addEventListener('click', e => {
   const b = e.target.closest('button[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (act === 'new' && window.APCloudActive && window.APHome){ menu.hidden = true; window.APHome.newProject(); return; }
   if (act === 'new'){
     if (!b.classList.contains('armed')){ b.classList.add('armed'); b.querySelector('b').textContent = 'Confirmer : tout effacer'; clearTimeout(armT); armT = setTimeout(() => { b.classList.remove('armed'); b.querySelector('b').textContent = 'Nouveau projet'; }, 4000); return; }
     pushHist(); state = {name:'Nouveau projet', els:[], nextId:1}; sel = null; menu.hidden = true; rebuild(); fit(); toast('Nouveau projet créé (Ctrl+Z pour revenir)');
@@ -1946,6 +2673,28 @@ state = loadState();
 applyThemeToScene(); resize(); rebuild(); fit(); setTool('select'); setView('3d');
 if (isNarrow.matches) setView('3d');
 loop();
+window.APModel = {
+  get: () => JSON.stringify(state),
+  name: () => state.name,
+  sample: () => sample(),
+  load(s){
+    quiet = true;
+    try {
+      const els = (Array.isArray(s?.els) ? s.els : []).filter(el => KIND_NAME[el.kind] && (el.kind !== 'wall' || WALL_TYPES[el.type]) && (el.kind !== 'slab' || SLAB_TYPES[el.type]) && (!el.mat || MATS[el.mat]));
+      state = {name:s?.name || 'Projet', els, nextId:Math.max(0, ...els.map(x => x.id || 0)) + 1};
+      hist.length = 0; redoS.length = 0; sel = null; cancelDraw(); setTool('select'); rebuild(); fit();
+    } finally { quiet = false; }
+  },
+  thumb(){
+    try {
+      renderer.render(scene, cam()); const src = renderer.domElement; if (!src.width || !src.height) return '';
+      const c = document.createElement('canvas'); c.width = 320; c.height = Math.max(120, Math.round(320 * src.height / src.width));
+      const g = c.getContext('2d'); g.fillStyle = getComputedStyle(document.body).backgroundColor || '#fff'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.72);
+    } catch(e){ return ''; }
+  },
+};
+window.dispatchEvent(new Event('ap:ready'));
 window.__apReady = true;
 (() => { const sp = document.getElementById('splash'); if (!sp) return;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
