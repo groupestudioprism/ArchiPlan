@@ -1536,7 +1536,7 @@ const WIRE = {
     };
     const l = Lock.get(me.uid) || {}, bb = $a('#apBio');
     const tryBio = async silent => { try { if (await Bio.verify(l.bio)) afterLogin(me, true); } catch(e){ if (!silent) setErr('Déverrouillage annulé. Utilisez votre code PIN.'); } };
-    if (bb){ bb.onclick = () => tryBio(false); if (!view.noAuto) setTimeout(() => current === 'lock' && tryBio(true), 450); }
+    if (bb){ bb.onclick = () => tryBio(false); if (!view.noAuto) afterIntro().then(() => current === 'lock' && tryBio(true)); }   // biométrie demandée seulement après l'intro et le chargement
     $a('#apForgot').onclick = async () => { Lock.clear(me.uid); ctx.email = me.email; ctx.forcePinReset = true; await Auth.signOut(); me = null; show('login', {msg:'Reconnectez-vous avec votre mot de passe. Vous choisirez ensuite un nouveau code PIN.'}); };
   },
   security(){
@@ -1556,6 +1556,9 @@ function wireRules(){
   pw.addEventListener('input', () => { const r = pwRules(pw.value); ul.querySelectorAll('li').forEach(li => li.classList.toggle('ok', !!r[li.dataset.r])); });
 }
 let splashT = 0;
+/* attend la fin complète de l'intro (écran d'accueil animé retiré) et du chargement du moteur, pour ne pas saccader l'animation */
+function afterIntro(){ return new Promise(res => { const t0 = performance.now(); const tick = () => { const sp = $a('#splash'), ready = window.__apReady === true || performance.now() - t0 > 15000;
+  if ((!sp || sp.classList.contains('done')) && ready) setTimeout(res, sp ? 700 : 250); else setTimeout(tick, 120); }; tick(); }); }
 function hideSplashSoon(){ // l'écran de compte n'attend pas le moteur 3D
   if (splashT) return; const sp = $a('#splash'); if (!sp) return;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
