@@ -35,9 +35,10 @@ function layerTable(layers, area2d, isWall){
 function perfCards(el){
   const L = layersInToOut(el), ctx = elUse(el), r = wallReport(L, ctx), g = uGrade(r.th.U, ctx);
   const cond = r.gl.risk.length ? `<b class="bad">Risque de condensation</b>` : `<b class="ok">Pas de condensation</b>`;
-  return `<div class="perf">
-    <div class="pc"><span>Coefficient U</span><b>${nf(r.th.U, 3)}</b><em>W/m²·K</em><i class="gr g${g.g}" title="${esc(g.t)}">${g.g}</i></div>
-    <div class="pc"><span>Résistance R</span><b>${nf(r.th.R, 2)}</b><em>m²·K/W</em></div>
+  const f = forcedPerf(el), rs = RS[ctx] || RS.mur, U = f ? (f.U || 1 / (f.R + rs.si + rs.se)) : r.th.U, Rp = f ? (f.R || 1 / f.U - rs.si - rs.se) : r.th.Rp, gf = uGrade(U, ctx);
+  return `${f ? `<p class="forced">Valeurs forcées${el.forceNote ? ' · ' + esc(el.forceNote) : ''} <span>(calcul : U ${nf(r.th.U, 3)})</span></p>` : ''}<div class="perf">
+    <div class="pc${f ? ' fz' : ''}"><span>Coefficient U${f ? ' (forcé)' : ''}</span><b>${nf(U, 3)}</b><em>W/m²·K</em><i class="gr g${gf.g}" title="${esc(gf.t)}">${gf.g}</i></div>
+    <div class="pc${f ? ' fz' : ''}"><span>Résistance R paroi</span><b>${nf(Rp, 2)}</b><em>m²·K/W</em></div>
     <div class="pc"><span>Déphasage</span><b>${nf(r.dyn.phase, 1)}</b><em>heures</em></div>
     <div class="pc"><span>Isolement acoustique</span><b>≈ ${r.ac.Rw}</b><em>dB (Rw)</em></div>
     <div class="pc"><span>Hygrométrie</span>${cond}<em>Glaser, hiver</em></div>
@@ -55,16 +56,15 @@ function renderProps(){
     const counts = {}; state.els.forEach(e => counts[e.kind] = (counts[e.kind] || 0) + 1);
     return `<div class="ph"><h2>${esc(state.name)}</h2>${state.isSample ? '<span class="tag">Exemple</span>' : ''}</div>
       <div class="fields"><label class="f wide"><span>Nom du projet</span><span class="in"><input id="f-pname" data-f="pname" type="text" value="${esc(state.name)}" style="font-family:var(--f-body)"></span></label></div>
-      <div class="grp"><h3>Contenu</h3><dl class="kv">${Object.entries({wall:'Murs', slab:'Dalles', vol:'Volumes', col:'Poteaux', inst:'Composants'}).map(([k, n]) => `<dt>${n}</dt><dd>${counts[k] || 0}</dd>`).join('')}</dl></div>
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button></div></div>
-      <div class="grp"><h3>Saisie précise</h3><dl class="syntax">
+      <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
         <dt><code>4,20</code></dt><dd>Longueur dans la direction du curseur</dd>
         <dt><code>4,2&lt;90</code></dt><dd>Longueur et angle (0° = est)</dd>
         <dt><code>@5;3</code></dt><dd>Déplacement relatif, ou côtés L ; l</dd>
         <dt><code>2;3</code></dt><dd>Point en coordonnées absolues</dd>
         <dt><code>MUR · DEP · CO</code></dt><dd>Commandes : mur, déplacer, copier, RO rotation, PP pousser/tirer, ZE zoom étendu</dd></dl></div>
-      <div class="grp"><h3>Raccourcis</h3><p class="hint"><kbd>V</kbd> sélection · <kbd>M</kbd> mur · <kbd>D</kbd> dalle · <kbd>P</kbd> poteau · <kbd>B</kbd> volume · <kbd>F</kbd> composant · <kbd>U</kbd> pousser/tirer · <kbd>G</kbd> déplacer · <kbd>C</kbd> copier · <kbd>O</kbd> rotation · <kbd>R</kbd> mesure · <kbd>F3</kbd> accroches · <kbd>F8</kbd> ortho · <kbd>F10</kbd> polaire · <kbd>F9</kbd> grille · <kbd>Z</kbd> zoom étendu.</p></div>`;
+      <div class="grp"><h3>Raccourcis</h3><p class="hint"><kbd>V</kbd> sélection · <kbd>M</kbd> mur · <kbd>D</kbd> dalle · <kbd>P</kbd> poteau · <kbd>B</kbd> volume · <kbd>F</kbd> composant · <kbd>U</kbd> pousser/tirer · <kbd>G</kbd> déplacer · <kbd>C</kbd> copier · <kbd>O</kbd> rotation · <kbd>R</kbd> mesure · <kbd>F3</kbd> accroches · <kbd>F8</kbd> ortho · <kbd>F10</kbd> polaire · <kbd>F9</kbd> grille · <kbd>Z</kbd> zoom étendu.</p></div></details>`;
   }
   const {v, m} = elStats(el);
   const lot = el.kind === 'wall' || el.kind === 'slab' ? compo(el.type).lot : el.kind === 'inst' ? famLot(fam(el.fam)) : el.kind === 'vol' ? 'Industrie' : 'Gros œuvre';
@@ -76,7 +76,7 @@ function renderProps(){
     h += field('Longueur', 'len', L, 'm') + field('Hauteur', 'h', el.h, 'm');
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage base', 'off', el.off, 'm');
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
-    h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<button class="btn wide-btn" data-act="compose">Fiche complète et modification de la composition</button></div>
+    h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(T * 100, 1)} cm</dd><dt>Surface brute</dt><dd>${nf(L * el.h)} m²</dd><dt>Ouvertures</dt><dd>${ops.length}</dd><dt>Volume net</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, L * el.h, true)}</div>
       <div class="btns"><button class="btn" data-act="flip">Inverser les faces</button><button class="btn" data-act="add-opening">+ Ouverture</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
@@ -86,7 +86,7 @@ function renderProps(){
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
     h += field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Arase supérieure', 'off', el.off, 'm');
-    h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<button class="btn wide-btn" data-act="compose">Fiche complète et modification de la composition</button></div>
+    h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(Lx * Ly)} m²</dd><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Lx * Ly, false)}</div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
@@ -193,8 +193,10 @@ function renderPanel(){
   if (view === 'render' && activeTab === 'props' && !sel) activeTab = 'render';
   $$('.tabs button').forEach(b => { b.setAttribute('aria-selected', b.dataset.tab === activeTab); if (b.dataset.tab === 'render') b.hidden = view !== 'render' && activeTab !== 'render'; });
   const body = $('#pbody'); const st = body.scrollTop;
-  body.innerHTML = activeTab === 'props' ? renderProps() : activeTab === 'qty' ? renderQty() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
-  body.scrollTop = st;
+  const tp = body.querySelector('.tree-pane'), pp = body.querySelector('.prop-pane'), tst = tp?.scrollTop, pst = pp?.scrollTop;
+  body.classList.toggle('splitmode', activeTab === 'props');
+  body.innerHTML = activeTab === 'props' ? renderProjectTab() : activeTab === 'qty' ? renderQty() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
+  body.scrollTop = st; if (tst != null){ const a = body.querySelector('.tree-pane'), b = body.querySelector('.prop-pane'); if (a) a.scrollTop = tst; if (b) b.scrollTop = pst; }
 }
 $('#pbody').addEventListener('input', e => {
   if (e.target.matches('[data-libq]')){ libQuery = e.target.value; const pos = e.target.selectionStart; renderPanel(); const i = $('#pbody [data-libq]'); if (i){ i.focus(); i.setSelectionRange(pos, pos); } }
@@ -251,6 +253,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'irot90' && el){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); }
   else if (act === 'add-opening' && el){ libTab = 'fams'; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
+  else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'fam-edit' && el) openFamEditor(el.fam, el.id);
   else if (act === 'fam-new') openFamEditor(null);
   else if (act === 'compo-new') openComposer({id:null});

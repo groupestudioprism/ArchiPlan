@@ -34,7 +34,7 @@ function syncStatus(){
 }
 $$('[data-snap]').forEach(b => b.addEventListener('click', () => toggleSnap(b.dataset.snap)));
 function toggleSnap(k){
-  SNAP[k] = !SNAP[k]; if (k === 'ortho' && SNAP.ortho) SNAP.polar = false; if (k === 'polar' && SNAP.polar) SNAP.ortho = false;
+  SNAP[k] = !SNAP[k]; if (k === 'grid'){ DISPLAY.grid = SNAP.grid; saveDisplay(); } if (k === 'ortho' && SNAP.ortho) SNAP.polar = false; if (k === 'polar' && SNAP.polar) SNAP.ortho = false;
   saveSnap(); syncStatus(); positionGrid(); toast(`${{osnap:'Accroches aux objets', ortho:'Mode ortho', polar:'Repérage polaire', grid:'Grille et pas', track:'Repérage d\'objets', surf:'Accroche aux surfaces 3D'}[k] || k} : ${SNAP[k] ? 'activé' : 'désactivé'}`);
 }
 $('#polarInc').addEventListener('change', e => { SNAP.polarInc = +e.target.value; saveSnap(); });
@@ -144,3 +144,29 @@ window.__apReady = true;
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
 window.APDebug = {state: () => state, sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};
+
+/* ---------- Paramètres d'affichage : couleur de fond, grille, cotes, arêtes, ombres ---------- */
+const BG_PRESETS = [['', 'Blanc (défaut)'], ['#F1F2F4', 'Gris clair'], ['#F6F2E8', 'Papier'], ['#C9CDD2', 'Gris moyen'], ['#2B2F36', 'Anthracite'], ['#0F1115', 'Noir']];
+function renderViewMenu(){
+  const m = $('#viewMenu'), cur = DISPLAY.bg || '';
+  m.innerHTML = `<div class="lbl">Couleur du fond</div><div class="bgsw">${BG_PRESETS.map(([c, n]) => `<button type="button" class="bgs${c === cur ? ' on' : ''}" data-bg="${c}" title="${n}" style="background:${c || '#FFFFFF'}" aria-label="${n}"></button>`).join('')}
+    <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
+    <hr><div class="lbl">Afficher</div>
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
+}
+function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }
+$('#viewSet').addEventListener('click', e => {
+  e.stopPropagation(); const m = $('#viewMenu'); if (!m.hidden){ m.hidden = true; return; }
+  renderViewMenu(); m.hidden = false; const r = e.currentTarget.getBoundingClientRect();
+  m.style.width = '250px'; m.style.left = Math.max(12, Math.min(r.right - 250, innerWidth - 262)) + 'px'; m.style.top = Math.min(r.bottom + 6, innerHeight - m.offsetHeight - 12) + 'px';
+});
+$('#viewMenu').addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-bg]'); if (b){ DISPLAY.bg = b.dataset.bg; applyDisplay(); renderViewMenu(); } });
+$('#viewMenu').addEventListener('input', e => { if (e.target.matches('[data-bgc]')){ DISPLAY.bg = e.target.value; applyDisplay(); } });
+$('#viewMenu').addEventListener('change', e => {
+  const k = e.target.dataset.vopt; if (!k) return;
+  if (k === 'grid'){ DISPLAY.grid = e.target.checked; SNAP.grid = e.target.checked; saveSnap(); syncStatus(); }
+  else DISPLAY[k] = e.target.checked;
+  applyDisplay();
+});
+document.addEventListener('click', e => { const m = $('#viewMenu'); if (!m.hidden && !m.contains(e.target)) m.hidden = true; });

@@ -57,6 +57,7 @@
     <div class="vtools" role="toolbar" aria-label="Affichage">
       <div class="vgrp"><button data-style="shaded" title="Ombré" aria-pressed="false"><i class="sw-shaded"></i><span>Ombré</span></button><button data-style="textured" title="Matériaux" aria-pressed="false"><i class="sw-textured"></i><span>Matériaux</span></button><button data-style="realistic" title="Réaliste" aria-pressed="false"><i class="sw-realistic"></i><span>Réaliste</span></button><button data-style="sketch" title="Croquis" aria-pressed="false"><i class="sw-sketch"></i><span>Croquis</span></button><button data-style="wire" title="Filaire" aria-pressed="false"><i class="sw-wire"></i><span>Filaire</span></button><button data-style="xray" title="Rayons X" aria-pressed="false"><i class="sw-xray"></i><span>Rayons X</span></button></div>
       <div class="vgrp cams"><button data-cam="iso" title="ISO">ISO</button><button data-cam="top" title="Dessus">Dessus</button><button data-cam="front" title="Face">Face</button><button data-cam="right" title="Droite">Droite</button><button data-cam="fit" title="Tout voir">Tout voir</button></div>
+      <div class="vgrp vset"><button id="viewSet" title="Paramètres d'affichage" aria-haspopup="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Affichage</span></button></div>
     </div>
     <div class="badge" id="coords">x 0,00 · y 0,00</div>
     <div class="compass" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17"/><path d="M20 6l5 14h-10z"/><text x="20" y="35" text-anchor="middle">N</text></svg></div>
@@ -79,7 +80,7 @@
   </footer>
   <section class="panel" id="panel">
     <div class="sheethead"><i></i></div>
-    <div class="tabs" role="tablist"><button data-tab="props" aria-selected="true">Propriétés</button><button data-tab="lib" aria-selected="false">Bibliothèque</button><button data-tab="qty" aria-selected="false">Métré</button><button data-tab="render" aria-selected="false" hidden>Rendu</button></div>
+    <div class="tabs" role="tablist"><button data-tab="props" aria-selected="true">Projet</button><button data-tab="lib" aria-selected="false">Bibliothèque</button><button data-tab="qty" aria-selected="false">Métré</button><button data-tab="render" aria-selected="false" hidden>Rendu</button></div>
     <div class="pbody" id="pbody"></div>
   </section>
   <div id="scrim"></div>
@@ -138,6 +139,8 @@
   <div class="h-busy" id="homeBusy" hidden><div class="ap-spin" aria-hidden="true"></div><span></span></div>
   <input type="file" id="homeFile" accept=".json,application/json" hidden>
 </section>
+<div class="menu" id="viewMenu" hidden></div>
+<div class="menu" id="treeMenu" hidden></div>
 <div class="menu" id="homeMenu" hidden></div>
 <div id="apDlg" hidden role="dialog" aria-modal="true"><div class="dlg-card"></div></div>
 <div id="engDlg" hidden role="dialog" aria-modal="true"><div class="edlg-card"></div></div>

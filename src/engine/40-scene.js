@@ -37,9 +37,12 @@ const modelGroup = new THREE.Group(), previewGroup = new THREE.Group(), markGrou
 scene.add(modelGroup, previewGroup, markGroup);
 
 /* Réglages d'affichage (enregistrés par appareil) */
-const DISPLAY = {style:'shaded', sunAz:215, sunEl:42, exposure:1.0, shadows:true, edges:true};
+const DISPLAY = {style:'shaded', sunAz:215, sunEl:42, exposure:1.0, shadows:true, edges:true, bg:'', grid:true, dims:true};
 try { Object.assign(DISPLAY, JSON.parse(localStorage.getItem('ap.display') || '{}')); } catch(e){}
 const STYLES = {shaded:'Ombré', textured:'Matériaux', realistic:'Réaliste', sketch:'Croquis', wire:'Filaire', xray:'Rayons X'};
+const isDarkUI = () => (cssVar('--panel') || '#fff').toLowerCase() !== '#ffffff';
+const bgColor = () => DISPLAY.bg || (isDarkUI() ? '#16191E' : '#FFFFFF');
+const bgLight = () => new THREE.Color(bgColor()).getHSL({}).l > 0.5;
 function saveDisplay(){ try { localStorage.setItem('ap.display', JSON.stringify(DISPLAY)); } catch(e){} }
 
 /* ---------- textures procédurales (motifs en mètres, répétées sur les UV « monde ») ---------- */
@@ -122,6 +125,10 @@ function matFor(id, selected, light = 0){
   else if (st === 'sketch') M = new THREE.MeshLambertMaterial({color:transp ? 0xDCEFF6 : 0xF7F6F2, transparent:transp, opacity:transp ? 0.45 : 1});
   else if (st === 'xray') M = new THREE.MeshStandardMaterial({color:m.color, roughness:.8, transparent:true, opacity:0.22, depthWrite:false});
   else if (st === 'wire') M = new THREE.MeshBasicMaterial({visible:false});
+  else if (st === 'shaded'){ // ombré façon SketchUp : couleurs adoucies, pas de noirs francs
+    const c = new THREE.Color(m.color), hsl = {}; c.getHSL(hsl); c.setHSL(hsl.h, hsl.s * 0.8, Math.max(0.42, hsl.l * 0.82 + 0.16));
+    M = new THREE.MeshStandardMaterial({color:c, roughness:0.95, metalness:0, transparent:transp, opacity:m.opacity ?? 1, depthWrite:!transp, envMapIntensity:0.3});
+  }
   else {
     const textured = st === 'textured' || st === 'realistic';
     M = new THREE.MeshStandardMaterial({color:textured && m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:textured && m.tex && m.tex !== 'glass' ? texFor(id) : null,
@@ -200,16 +207,17 @@ function applyThemeToScene(){
     if (!pmrem){ pmrem = new THREE.PMREMGenerator(renderer); envTex = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture; }
     if (!skyTex) skyTex = skyTexture();
     scene.environment = envTex; scene.background = skyTex;
-  } else { scene.environment = null; scene.background = new THREE.Color(st === 'sketch' || plan ? (plan && document.documentElement.dataset.theme === 'dark' ? '#0A1733' : '#FFFFFF') : (cssVar('--vp') || '#E6EDF3')); }
+  } else { scene.environment = null; scene.background = new THREE.Color(bgColor()); }
+  vpEl.style.setProperty('--vp', bgColor()); vpEl.classList.toggle('dark-bg', !bgLight());
   groundReal.visible = real; groundShadow.visible = !real && !plan && st !== 'wire' && st !== 'xray';
   renderer.toneMappingExposure = real ? DISPLAY.exposure : 1.0;
   renderer.shadowMap.enabled = DISPLAY.shadows && st !== 'wire' && st !== 'xray' && !planOn();
   hemi.intensity = real ? 0.3 : st === 'sketch' ? 1.6 : 1.0;
   sun.color.set(real ? 0xFFF1DC : 0xffffff); sun.intensity = real ? 3.2 : st === 'sketch' ? 0.6 : 1.9;
   sun.castShadow = renderer.shadowMap.enabled;
-  const dark = (cssVar('--vp') || '').toLowerCase() === '#0a1733';
+  const dark = !bgLight();
   edgeMat.color.set(st === 'sketch' || st === 'wire' ? (st === 'wire' ? cssVar('--accent') || '#0877B9' : '#1B2333') : (cssVar('--edge') || '#24324F'));
-  if (plan) edgeMat.color.set(dark ? '#C9D8F2' : '#1B2333');
+  if (plan || (st !== 'wire' && dark)) edgeMat.color.set(dark ? '#D5D9DF' : '#1B2333');
   edgeMat.opacity = plan ? 0.9 : st === 'sketch' ? 0.95 : st === 'wire' ? 0.9 : st === 'realistic' ? 0.18 : dark ? 0.75 : 0.5;
   selEdgeMat.color.set(cssVar('--sel') || '#E2861B');
   const ac = new THREE.Color(cssVar('--accent') || '#0877B9'); ghostMat.color.copy(ac); ghostEdge.color.copy(ac);
@@ -221,14 +229,15 @@ function setStyle(st){
 }
 function buildGrid(){
   if (gridMajor){ scene.remove(gridMajor, gridMinor); gridMajor.geometry.dispose(); gridMinor.geometry.dispose(); }
-  gridMinor = new THREE.GridHelper(60, 600, cssVar('--grid-minor') || '#D6E1EA', cssVar('--grid-minor') || '#D6E1EA');
-  gridMajor = new THREE.GridHelper(200, 200, cssVar('--grid-major') || '#B9C9D6', cssVar('--grid-major') || '#B9C9D6');
+  const b = bgColor(), L = bgLight(), gMin = shade(b, L ? -0.06 : 0.07), gMaj = shade(b, L ? -0.14 : 0.15);
+  gridMinor = new THREE.GridHelper(60, 600, gMin, gMin);
+  gridMajor = new THREE.GridHelper(200, 200, gMaj, gMaj);
   [gridMinor, gridMajor].forEach(g => { g.material.transparent = true; g.material.depthWrite = false; g.renderOrder = -1; scene.add(g); });
   gridMinor.material.opacity = 0.7; positionGrid();
 }
 function positionGrid(){
-  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || !SNAP.grid && view !== '2d';
-  gridMajor.position.y = y + 0.0005; gridMinor.position.y = y; gridMajor.visible = !hide; gridMinor.visible = !hide && (view === '2d' || step <= 0.1);
+  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || !SNAP.grid || !DISPLAY.grid;
+  gridMajor.position.y = y + 0.0005; gridMinor.position.y = y; gridMajor.visible = !hide; gridMinor.visible = !hide && (view === '2d' || step <= 0.1); dirty = true;
 }
 
 /* ---------- reconstruction ---------- */
@@ -238,6 +247,7 @@ function rebuild(opts = {}){
   const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
   for (const el of state.els){
     if (plan && el.lvl !== curLvl) continue; // plan : seulement le niveau courant
+    if (isHidden(el)) continue;
     const g = new THREE.Group(); g.userData.id = el.id;
     const F = el.kind === 'inst' ? fam(el.fam) : null;
     const light = plan ? (el.kind === 'inst' && el.host ? PLAN_LIGHT.host : PLAN_LIGHT[el.kind] ?? 0) : 0;
@@ -273,6 +283,15 @@ function positionSun(){
   sun.position.set(t.x + d * Math.cos(el) * Math.sin(az), t.y + d * Math.sin(el), t.z - d * Math.cos(el) * Math.cos(az));
   dirty = true;
 }
+function frameEl(ids){ // centrer la vue sur des éléments
+  const set = new Set([].concat(ids)), b = new THREE.Box3();
+  for (const g of modelGroup.children) if (set.has(g.userData.id)) b.expandByObject(g);
+  if (b.isEmpty()) return toast('Élément masqué ou hors du niveau affiché');
+  const c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3()), r = Math.max(s.x, s.y, s.z, 1.2) * 1.4 + 1.5;
+  if (view === '2d'){ c2.target.set(c.x, 0, c.z); ortho.position.set(c.x, 200, c.z); const w = vpEl.clientWidth || 800, h = vpEl.clientHeight || 600; ortho.zoom = Math.min(20 / (s.z + 2), 20 * (w / h) / (s.x + 2)); ortho.updateProjectionMatrix(); c2.update(); }
+  else { const dir = persp.position.clone().sub(c3.target).normalize(); c3.target.copy(c); persp.position.copy(c).add(dir.multiplyScalar(r)); c3.update(); }
+  dirty = true;
+}
 function fit(){
   const b = bbox(), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3());
   const r = Math.max(s.x, s.z, 4) * 0.62 + 1;
@@ -299,14 +318,15 @@ function resize(){
 new ResizeObserver(resize).observe(vpEl);
 
 /* ---------- cotes (étiquettes HTML) ---------- */
-let labels = [], showDims = true;
+let labels = [];
+const showDimsOn = () => DISPLAY.dims !== false;
 function buildLabels(){
   const box = $('#labels'); box.textContent = ''; labels = [];
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const el of state.els){
     const isSel = set.has(el.id);
     if (el.lvl !== curLvl && !isSel) continue;
-    if (!(showDims && view === '2d') && !isSel) continue;
+    if (!(showDimsOn() && view === '2d') && !isSel) continue;
     const add = (pos, text) => { const d = document.createElement('div'); d.className = 'dim' + (isSel ? ' sel' : ''); d.textContent = text; box.appendChild(d); labels.push({d, pos}); };
     const y3 = lvlZ(el.lvl) + (el.off || 0) + (view !== '2d' ? (el.h || 0) + 0.15 : 0);
     if (el.kind === 'wall'){

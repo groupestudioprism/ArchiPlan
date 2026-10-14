@@ -1,7 +1,7 @@
 /* ============ Éditeur de compositions (murs, planchers, toitures) et de matériaux ============ */
 const edlg = () => $('#engDlg');
 function openEDlg(html, cls = ''){ const d = edlg(); d.className = cls; d.querySelector('.edlg-card').innerHTML = html; d.hidden = false; d.querySelectorAll('[data-close]').forEach(b => b.onclick = closeEDlg); return d; }
-function closeEDlg(){ const d = edlg(); d.hidden = true; d.querySelector('.edlg-card').innerHTML = ''; if (famPrev){ famPrev.dispose(); famPrev = null; } }
+function closeEDlg(){ if (state?.lib?.mats) delete state.lib.mats.__tmp; const d = edlg(); d.hidden = true; d.querySelector('.edlg-card').innerHTML = ''; if (famPrev){ famPrev.dispose(); famPrev = null; } }
 edlg().addEventListener('click', e => { if (e.target === edlg()) closeEDlg(); });
 function saveUserLib(){ try { window.APLib?.save(JSON.parse(JSON.stringify(USER_LIB))); } catch(e){} }
 const PATTERNS = {plain:'Uni', concrete:'Béton', plaster:'Enduit / plâtre', brick:'Brique', brickbig:'Bloc alvéolaire', block:'Bloc / parpaing', stone:'Pierre', wood:'Bois', woodpanel:'Panneau bois', cladding:'Bardage', parquet:'Parquet', osb:'OSB', insul:'Isolant fibreux', insulboard:'Isolant en panneau', metal:'Métal', ribbed:'Bac nervuré', tile:'Carrelage', rooftile:'Tuiles', slate:'Ardoises', membrane:'Membrane', gravel:'Gravier', grass:'Végétal', earth:'Terre', fabric:'Textile', glass:'Verre'};

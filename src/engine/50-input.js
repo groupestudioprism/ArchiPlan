@@ -426,5 +426,5 @@ function pick(e){
   activeTab = 'props'; applySel(); buildLabels(); renderPanel();
   if (id && isNarrow.matches) openSheet(true);
 }
-function select(id){ sel = id; multi = []; activeTab = 'props'; applySel(); buildLabels(); renderPanel(); }
+function select(id){ sel = id; multi = []; activeTab = 'props'; if (id) revealInTree(id); applySel(); buildLabels(); renderPanel(); requestAnimationFrame(() => $('#pbody .tree .tr.on')?.scrollIntoView({block:'nearest'})); }
 function deleteSel(){ const ids = selIds(); if (!ids.length) return; pushHist(); removeEls(ids); sel = null; multi = []; rebuild(); toast(ids.length > 1 ? `${ids.length} éléments supprimés` : 'Élément supprimé'); }

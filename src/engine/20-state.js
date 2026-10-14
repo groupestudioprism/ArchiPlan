@@ -11,6 +11,8 @@ let USER_LIB = {mats:{}, compos:{}, fams:{}};
 let state, sel = null, multi = [];
 const hist = [], redoS = [];
 let quiet = false, dirty = true;
+const hiddenIds = new Set(), hiddenLvls = new Set();   // masquage d'affichage (session, non enregistré)
+const isHidden = el => hiddenIds.has(el.id) || hiddenLvls.has(el.lvl) || (el.kind === 'inst' && el.host && hiddenIds.has(el.host));
 
 const libMats = () => ({...MATS, ...USER_LIB.mats, ...(state?.lib?.mats || {})});
 const libCompos = () => ({...COMPOS, ...USER_LIB.compos, ...(state?.lib?.compos || {})});
