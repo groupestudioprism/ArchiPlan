@@ -169,6 +169,8 @@ function pieceGeo(pc){
 function solidGeo(so){
   let g;
   if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
+  else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
+  if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2);
   else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
   else g = boxGeo(so.w, so.d, so.h);
   if (so.rz) g.rotateY(so.rz);

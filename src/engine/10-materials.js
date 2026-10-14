@@ -110,6 +110,10 @@ M('airFV',      'Lame d\'air faiblement ventilée',    "Lames d'air et divers", 
 M('sol',        'Terrain (sol argilo-sableux)',       "Lames d'air et divers", 2000, 2.00, 1000, 50, '#8A7356', 'earth', 0);
 M('eau',        'Eau',                                "Lames d'air et divers", 1000, 0.60, 4190, 1e6, '#5FA8D3', 'glass', 0, {opacity:0.6, rough:0.05});
 M('textile',    'Textile d\'ameublement',             "Lames d'air et divers", 300, 0.06, 1300, 5, '#7A8597', 'fabric', 5.0);
+M('acierLaque', 'Acier laqué gris anthracite',        'Métaux', 7850, 50,  450, 1e6, '#3A3F46', 'metal', 1.8, {rough:0.5, metal:0.5});
+M('aluAnthr',   'Aluminium laqué anthracite',         'Métaux', 2700, 160, 880, 1e6, '#3D4249', 'metal', 6.9, {rough:0.45, metal:0.5});
+M('feuillageC', 'Végétal (conifère)',                 "Lames d'air et divers", 300, 0.10, 1500, 5, '#3F6B45', 'grass', 0);
+M('fleurs',     'Végétal (massif fleuri)',            "Lames d'air et divers", 300, 0.10, 1500, 5, '#B8749A', 'grass', 0);
 M('vegetal',    'Végétal (feuillage)',                "Lames d'air et divers", 300, 0.10, 1500, 5, '#5E8C4A', 'grass', 0);
 
 /* ============ Compositions de base (murs : extérieur → intérieur ; planchers et toitures : haut → bas) ============ */

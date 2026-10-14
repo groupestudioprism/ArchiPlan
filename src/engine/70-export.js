@@ -68,6 +68,7 @@ function buildIFC(){
     if (so.s === 'sph') return E(`IFCSPHERE(${E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(so.c[2] - zRef)}))`)},$,$)`)},${R(so.r)})`);
     const h = so.s === 'cyl' ? so.h : so.h, base = so.c[2] - h / 2 - zRef;
     const pos = E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(base)}))`)},${Z},${ref})`);
+    if (so.s === 'cone') so = {...so, s:'cyl', r:(so.r + (so.r2 || 0)) / 2};
     const prof = so.s === 'cyl' ? E(`IFCCIRCLEPROFILEDEF(.AREA.,$,$,${R(so.r)})`) : E(`IFCRECTANGLEPROFILEDEF(.AREA.,$,$,${R(so.w)},${R(so.d)})`);
     return E(`IFCEXTRUDEDAREASOLID(${prof},${pos},${Z},${R(h)})`);
   };

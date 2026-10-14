@@ -134,7 +134,7 @@ function runTreeAction(k, key){
     case 'compose': return openComposer({id:el.type, apply:el.id});
     case 'unforce': pushHist(); delete el.forceU; delete el.forceR; delete el.forceNote; return re();
     case 'flip': case 'iflip': pushHist(); el.flip = !el.flip; return re();
-    case 'opening': select(el.id); libTab = 'fams'; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); return toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur');
+    case 'opening': select(el.id); libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); return toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur');
     case 'famedit': return openFamEditor(el.fam, el.id);
     case 'rot90': pushHist(); el.rot = ((el.rot || 0) + 90) % 360; return re();
     case 'dup': { pushHist(); const c = dupEl(el); if (!c){ hist.pop(); updUndo(); return toast('Pas assez de place dans le mur pour dupliquer'); } state.isSample = false; sel = c.id; multi = []; rebuild(); return toast('Élément dupliqué'); }

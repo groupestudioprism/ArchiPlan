@@ -463,6 +463,14 @@ details.help summary{cursor:pointer;font-weight:600;font-size:12.5px;color:var(-
 .secbar select{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:0 8px}.secbar .btn{height:32px;padding:0 10px}
 body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .compass{display:none}
 #secMenu{min-width:240px}
+.fcrumb{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1;min-width:0;font-size:12.5px}.fcrumb button{background:none;border:0;padding:4px 6px;border-radius:6px;color:var(--accent);font-weight:600;cursor:pointer}.fcrumb button:last-child{color:var(--ink)}.fcrumb span{color:var(--mut)}
+.fthumb{width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:6px;background:linear-gradient(180deg,color-mix(in srgb,var(--line) 35%,transparent),transparent)}
+.fthumb[src=""]{visibility:hidden}
+.fgrid.fold{margin-bottom:10px}.ffold .fico{position:relative;width:100%}.ffold .fico svg{position:absolute;left:4px;top:4px;width:20px;height:20px;fill:color-mix(in srgb,var(--accent) 18%,var(--panel));stroke:var(--accent)}
+.ffold{background:color-mix(in srgb,var(--accent) 4%,var(--bg))}
+.fdet{display:flex;gap:12px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:12px;margin:8px 0 12px;background:var(--bg)}.fdet .fthumb.big{width:46%;max-width:220px;flex:none}
+.fdet b{display:block;margin-bottom:6px}.ftypes{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}.ftypes .chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--ink)}.ftypes .chip.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.fdet small{color:var(--mut);font-size:11.5px}
 /* intro : le symbole se dessine comme un plan (balayage de bas en haut), puis ARCHIPLAN est tracé de gauche à droite, puis la signature */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;transition:opacity .55s ease,visibility .55s}
 #splash.done{opacity:0;visibility:hidden}
@@ -2549,6 +2557,10 @@ M('airFV',      'Lame d\'air faiblement ventilée',    "Lames d'air et divers", 
 M('sol',        'Terrain (sol argilo-sableux)',       "Lames d'air et divers", 2000, 2.00, 1000, 50, '#8A7356', 'earth', 0);
 M('eau',        'Eau',                                "Lames d'air et divers", 1000, 0.60, 4190, 1e6, '#5FA8D3', 'glass', 0, {opacity:0.6, rough:0.05});
 M('textile',    'Textile d\'ameublement',             "Lames d'air et divers", 300, 0.06, 1300, 5, '#7A8597', 'fabric', 5.0);
+M('acierLaque', 'Acier laqué gris anthracite',        'Métaux', 7850, 50,  450, 1e6, '#3A3F46', 'metal', 1.8, {rough:0.5, metal:0.5});
+M('aluAnthr',   'Aluminium laqué anthracite',         'Métaux', 2700, 160, 880, 1e6, '#3D4249', 'metal', 6.9, {rough:0.45, metal:0.5});
+M('feuillageC', 'Végétal (conifère)',                 "Lames d'air et divers", 300, 0.10, 1500, 5, '#3F6B45', 'grass', 0);
+M('fleurs',     'Végétal (massif fleuri)',            "Lames d'air et divers", 300, 0.10, 1500, 5, '#B8749A', 'grass', 0);
 M('vegetal',    'Végétal (feuillage)',                "Lames d'air et divers", 300, 0.10, 1500, 5, '#5E8C4A', 'grass', 0);
 
 /* ============ Compositions de base (murs : extérieur → intérieur ; planchers et toitures : haut → bas) ============ */
@@ -2844,6 +2856,141 @@ function uGrade(U, ctx){
   return U <= lim[0] ? {g:'A', t:'Très performant (niveau passif)'} : U <= lim[1] ? {g:'B', t:'Performant (neuf RE2020)'} : U <= lim[2] ? {g:'C', t:'Correct (rénovation)'} : {g:'D', t:'Insuffisant : renforcer l\'isolation'};
 }
 
+/* ==== 13-families-plus.js ==== */
+/* ============ Bibliothèque de familles, suite : portes rangées par usage, garage, portails, clôtures, extérieur ============
+   FAM_PATH range chaque famille de base dans des dossiers (catégorie › sous-dossier › …) pour la navigation de la bibliothèque. */
+const leafBox = (m, x, w, h, d = '0.045', y = '-0.022', z = '0.01') => ({s:'box', m, x, y, z, w, d, h});
+Object.assign(FAMS, {
+  /* --- portes d'entrée --- */
+  'porte-entree-pleine': {nom:'Porte d\'entrée pleine à rainures', cat:'Portes', host:'wall', params:{w:P(0.9,'Largeur'), h:P(2.15,'Hauteur'), sill:P(0,'Allège'), fw:P(0.07,'Dormant'), fd:P(0.08,'Profondeur')},
+    types:[{nom:'90 × 215', p:{}}, {nom:'100 × 225', p:{w:1.0, h:2.25}}], cut:{w:'w', h:'h'},
+    parts:[...frameParts('aluAnthr'), leafBox('aluAnthr', '-w/2+fw', 'w-2*fw', 'h-fw-0.01', '0.06', '-0.03'),
+      {s:'box', m:'alu', n:'4', x:'-w/2+fw+0.08', y:'-0.034', z:'0.35+i*(h-0.8)/3', w:'w-2*fw-0.16', d:'0.004', h:'0.012'},
+      {s:'box', m:'inox', x:'w/2-fw-0.1', y:'-0.07', z:'0.6', w:'0.03', d:'0.03', h:'1.2'}]},
+  'porte-entree-tierce': {nom:'Porte d\'entrée avec tierce vitrée', cat:'Portes', host:'wall', params:{w:P(1.3,'Largeur'), h:P(2.15,'Hauteur'), sill:P(0,'Allège'), fw:P(0.07,'Dormant'), fd:P(0.08,'Profondeur'), wt:P(0.35,'Largeur de la tierce')},
+    types:[{nom:'130 × 215 (tierce 35)', p:{}}, {nom:'140 × 225 (tierce 40)', p:{w:1.4, h:2.25, wt:0.4}}], cut:{w:'w', h:'h'},
+    parts:[...frameParts('aluAnthr'), leafBox('aluAnthr', '-w/2+fw', 'w-2*fw-wt-0.06', 'h-fw-0.01', '0.06', '-0.03'), {s:'box', m:'aluAnthr', x:'w/2-fw-wt-0.06', y:'-0.04', z:'0', w:'0.06', d:'0.08', h:'h-fw'},
+      {s:'box', m:'vitrage', x:'w/2-fw-wt', y:'-0.012', z:'0.1', w:'wt', d:'0.024', h:'h-fw-0.1'}, {s:'box', m:'inox', x:'w/2-fw-wt-0.16', y:'-0.07', z:'0.6', w:'0.03', d:'0.03', h:'1.2'}]},
+  'porte-entree-2v': {nom:'Porte d\'entrée 2 vantaux', cat:'Portes', host:'wall', params:{w:P(1.5,'Largeur'), h:P(2.2,'Hauteur'), sill:P(0,'Allège'), fw:P(0.07,'Dormant'), fd:P(0.08,'Profondeur')},
+    types:[{nom:'140 × 215', p:{w:1.4, h:2.15}}, {nom:'150 × 220', p:{}}], cut:{w:'w', h:'h'},
+    parts:[...frameParts('chene'), leafBox('chene', '-w/2+fw', '(w-2*fw)/2-0.003', 'h-fw-0.01', '0.06', '-0.03'), leafBox('chene', '0.003', '(w-2*fw)/2-0.003', 'h-fw-0.01', '0.06', '-0.03'),
+      {s:'box', m:'vitrage', x:'-w/2+fw+0.1', y:'-0.034', z:'1.1', w:'(w-2*fw)/2-0.2', d:'0.07', h:'h-1.3'}, {s:'box', m:'vitrage', x:'0.1', y:'-0.034', z:'1.1', w:'(w-2*fw)/2-0.2', d:'0.07', h:'h-1.3'}]},
+  /* --- portes intérieures --- */
+  'porte-int-vitree': {nom:'Porte intérieure vitrée', cat:'Portes', host:'wall', params:{w:P(0.83,'Largeur'), h:P(2.04,'Hauteur'), sill:P(0,'Allège'), fw:P(0.045,'Dormant'), fd:P(0.07,'Profondeur')},
+    types:[{nom:'73 × 204', p:{w:0.73}}, {nom:'83 × 204', p:{}}, {nom:'93 × 204', p:{w:0.93}}], cut:{w:'w', h:'h'},
+    parts:[...frameParts('bois'), {s:'box', m:'chene', x:'-w/2+fw', y:'-0.02', z:'0.01', w:'0.12', d:'0.04', h:'h-fw-0.01'}, {s:'box', m:'chene', x:'w/2-fw-0.12', y:'-0.02', z:'0.01', w:'0.12', d:'0.04', h:'h-fw-0.01'},
+      {s:'box', m:'chene', x:'-w/2+fw+0.12', y:'-0.02', z:'0.01', w:'w-2*fw-0.24', d:'0.04', h:'0.25'}, {s:'box', m:'chene', x:'-w/2+fw+0.12', y:'-0.02', z:'h-fw-0.13', w:'w-2*fw-0.24', d:'0.04', h:'0.12'},
+      {s:'box', m:'verre', x:'-w/2+fw+0.12', y:'-0.005', z:'0.26', w:'w-2*fw-0.24', d:'0.01', h:'h-fw-0.39'}, {s:'cyl', m:'inox', x:'w/2-fw-0.07', y:'0.04', z:'1.0', r:'0.012', h:'0.12'}]},
+  'porte-atelier': {nom:'Porte vitrée style atelier', cat:'Portes', host:'wall', params:{w:P(0.83,'Largeur'), h:P(2.04,'Hauteur'), sill:P(0,'Allège'), fw:P(0.04,'Dormant'), fd:P(0.06,'Profondeur')},
+    types:[{nom:'83 × 204', p:{}}, {nom:'93 × 204', p:{w:0.93}}], cut:{w:'w', h:'h'},
+    parts:[...frameParts('acierLaque'), {s:'box', m:'verre', x:'-w/2+fw', y:'-0.005', z:'0.01', w:'w-2*fw', d:'0.01', h:'h-fw-0.01'},
+      {s:'box', m:'acierLaque', n:'3', x:'-w/2+fw+(i+1)*(w-2*fw)/4-0.015', y:'-0.015', z:'0.01', w:'0.03', d:'0.03', h:'h-fw-0.01', if:'i==1'},
+      {s:'box', m:'acierLaque', n:'3', x:'-w/2+fw', y:'-0.015', z:'(i+1)*(h-fw)/4-0.015', w:'w-2*fw', d:'0.03', h:'0.03'}]},
+  'porte-coulissante': {nom:'Porte coulissante en applique', cat:'Portes', host:'wall', params:{w:P(0.83,'Largeur'), h:P(2.04,'Hauteur'), sill:P(0,'Allège')},
+    types:[{nom:'83 × 204', p:{}}, {nom:'93 × 204', p:{w:0.93}}], cut:{w:'w', h:'h'},
+    parts:[{s:'box', m:'chene', x:'-w/2-0.03', y:'0.14', z:'0.01', w:'w+0.06', d:'0.04', h:'h+0.02'}, {s:'box', m:'acierLaque', x:'-w/2-0.03', y:'0.13', z:'h+0.05', w:'2*w+0.1', d:'0.03', h:'0.04'}]},
+  /* --- portes de garage --- */
+  'garage-sectionnelle': {nom:'Porte de garage sectionnelle', cat:'Portes', host:'wall', params:{w:P(2.4,'Largeur'), h:P(2.0,'Hauteur'), sill:P(0,'Allège'), np:P(5,'Panneaux', '')},
+    types:[{nom:'240 × 200', p:{}}, {nom:'300 × 212', p:{w:3.0, h:2.125}}, {nom:'500 × 212 (double)', p:{w:5.0, h:2.125}}], cut:{w:'w', h:'h'},
+    parts:[{s:'box', m:'aluAnthr', n:'np', x:'-w/2+0.02', y:'-0.02', z:'i*h/np+0.006', w:'w-0.04', d:'0.04', h:'h/np-0.012'}, {s:'box', m:'aluAnthr', x:'-w/2', y:'-0.03', z:'0', w:'0.06', d:'0.06', h:'h'}, {s:'box', m:'aluAnthr', x:'w/2-0.06', y:'-0.03', z:'0', w:'0.06', d:'0.06', h:'h'}]},
+  'garage-basculante': {nom:'Porte de garage basculante', cat:'Portes', host:'wall', params:{w:P(2.4,'Largeur'), h:P(2.0,'Hauteur'), sill:P(0,'Allège'), fw:P(0.05,'Dormant'), fd:P(0.08,'Profondeur')},
+    types:[{nom:'240 × 200', p:{}}, {nom:'250 × 210', p:{w:2.5, h:2.1}}], cut:{w:'w', h:'h'},
+    parts:[...frameParts('acierLaque').map(p => ({...p})), {s:'box', m:'acierLaque', x:'-w/2+0.05', y:'-0.02', z:'0.02', w:'w-0.1', d:'0.03', h:'h-0.07'},
+      {s:'box', m:'acier', n:'round((w-0.1)/0.12)', x:'-w/2+0.08+i*0.12', y:'-0.03', z:'0.04', w:'0.03', d:'0.01', h:'h-0.11'}]},
+  'garage-enroulable': {nom:'Porte de garage enroulable', cat:'Portes', host:'wall', params:{w:P(2.4,'Largeur'), h:P(2.0,'Hauteur'), sill:P(0,'Allège')},
+    types:[{nom:'240 × 200', p:{}}, {nom:'300 × 220', p:{w:3.0, h:2.2}}], cut:{w:'w', h:'h'},
+    parts:[{s:'box', m:'alu', n:'floor(h/0.077)', x:'-w/2+0.02', y:'-0.01', z:'i*0.077', w:'w-0.04', d:'0.02', h:'0.07'}, {s:'box', m:'aluAnthr', x:'-w/2', y:'0.05', z:'h-0.01', w:'w', d:'0.3', h:'0.3'},
+      {s:'box', m:'aluAnthr', x:'-w/2', y:'-0.03', z:'0', w:'0.04', d:'0.07', h:'h'}, {s:'box', m:'aluAnthr', x:'w/2-0.04', y:'-0.03', z:'0', w:'0.04', d:'0.07', h:'h'}]},
+  'garage-battante': {nom:'Porte de garage battante bois', cat:'Portes', host:'wall', params:{w:P(2.4,'Largeur'), h:P(2.0,'Hauteur'), sill:P(0,'Allège'), fw:P(0.07,'Dormant'), fd:P(0.08,'Profondeur')},
+    types:[{nom:'240 × 200', p:{}}], cut:{w:'w', h:'h'},
+    parts:[...frameParts('meleze'), {s:'box', m:'meleze', n:'round((h-fw)/0.14)', x:'-w/2+fw', y:'-0.025', z:'i*0.14+0.005', w:'(w-2*fw)/2-0.004', d:'0.04', h:'0.13'},
+      {s:'box', m:'meleze', n:'round((h-fw)/0.14)', x:'0.004', y:'-0.025', z:'i*0.14+0.005', w:'(w-2*fw)/2-0.004', d:'0.04', h:'0.13'}]},
+  /* --- portails et portillons (posés librement : x le long de la clôture) --- */
+  'portail-battant': {nom:'Portail battant 2 vantaux', cat:'Portes', host:'free', params:{L:P(3.5,'Passage'), h:P(1.6,'Hauteur'), plein:P(0,'Plein (1) ou ajouré (0)', '')},
+    types:[{nom:'Ajouré 3,50 m', p:{}}, {nom:'Plein 3,50 m', p:{plein:1}}, {nom:'Ajouré 4,00 m', p:{L:4.0}}],
+    parts:[{s:'box', m:'enduit', x:'-0.4', y:'-0.2', z:'0', w:'0.4', d:'0.4', h:'h+0.3'}, {s:'box', m:'enduit', x:'L', y:'-0.2', z:'0', w:'0.4', d:'0.4', h:'h+0.3'},
+      {s:'box', m:'pierreSol', x:'-0.43', y:'-0.23', z:'h+0.3', w:'0.46', d:'0.46', h:'0.05'}, {s:'box', m:'pierreSol', x:'L-0.03', y:'-0.23', z:'h+0.3', w:'0.46', d:'0.46', h:'0.05'},
+      {s:'box', m:'acierLaque', x:'0.02', y:'-0.03', z:'0.08', w:'L-0.04', d:'0.06', h:'0.06'}, {s:'box', m:'acierLaque', x:'0.02', y:'-0.03', z:'h-0.06', w:'L-0.04', d:'0.06', h:'0.06'},
+      {s:'box', m:'acierLaque', x:'L/2-0.03', y:'-0.03', z:'0.08', w:'0.06', d:'0.06', h:'h-0.08'},
+      {s:'box', m:'acierLaque', x:'0.02', y:'-0.015', z:'0.14', w:'L-0.04', d:'0.03', h:'h-0.2', if:'plein>0.5'},
+      {s:'box', m:'acierLaque', n:'floor(L/0.12)', x:'0.06+i*0.12', y:'-0.012', z:'0.14', w:'0.025', d:'0.025', h:'h-0.2', if:'plein<0.5'}]},
+  'portail-coulissant': {nom:'Portail coulissant', cat:'Portes', host:'free', params:{L:P(4.0,'Passage'), h:P(1.6,'Hauteur')},
+    types:[{nom:'4,00 m', p:{}}, {nom:'5,00 m', p:{L:5.0}}],
+    parts:[{s:'box', m:'enduit', x:'-0.4', y:'-0.2', z:'0', w:'0.4', d:'0.4', h:'h+0.3'}, {s:'box', m:'enduit', x:'L', y:'-0.2', z:'0', w:'0.4', d:'0.4', h:'h+0.3'},
+      {s:'box', m:'acier', x:'-L-0.4', y:'-0.03', z:'0', w:'2*L+0.4', d:'0.06', h:'0.03'},
+      {s:'box', m:'aluAnthr', x:'0', y:'-0.025', z:'0.06', w:'L', d:'0.05', h:'h-0.08'}, {s:'box', m:'alu', n:'floor((h-0.2)/0.2)', x:'0.03', y:'-0.03', z:'0.14+i*0.2', w:'L-0.06', d:'0.004', h:'0.01'}]},
+  'portillon': {nom:'Portillon', cat:'Portes', host:'free', params:{L:P(1.0,'Passage'), h:P(1.6,'Hauteur')},
+    types:[{nom:'1,00 m', p:{}}, {nom:'1,20 m', p:{L:1.2}}],
+    parts:[{s:'box', m:'enduit', x:'-0.3', y:'-0.15', z:'0', w:'0.3', d:'0.3', h:'h+0.2'}, {s:'box', m:'enduit', x:'L', y:'-0.15', z:'0', w:'0.3', d:'0.3', h:'h+0.2'},
+      {s:'box', m:'acierLaque', x:'0.02', y:'-0.025', z:'0.08', w:'L-0.04', d:'0.05', h:'h-0.1'}, {s:'box', m:'inox', x:'L-0.15', y:'-0.06', z:'1.0', w:'0.1', d:'0.02', h:'0.02'}]},
+  /* --- clôtures --- */
+  'cloture-rigide': {nom:'Clôture panneaux rigides', cat:'Extérieur', host:'free', params:{L:P(10,'Longueur'), h:P(1.53,'Hauteur'), e:P(2.5,'Entraxe des poteaux')},
+    types:[{nom:'Hauteur 1,53 m', p:{}}, {nom:'Hauteur 1,93 m', p:{h:1.93}}],
+    parts:[{s:'box', m:'acierLaque', n:'floor(L/e)+1', x:'min(i*e, L-0.06)', y:'-0.03', z:'0', w:'0.06', d:'0.06', h:'h+0.05'},
+      {s:'box', m:'acierLaque', n:'floor(L/0.2)', x:'0.08+i*0.2', y:'-0.004', z:'0.05', w:'0.005', d:'0.005', h:'h-0.05'},
+      {s:'box', m:'acierLaque', n:'4', x:'0', y:'-0.004', z:'0.05+i*(h-0.06)/3', w:'L', d:'0.008', h:'0.006'}]},
+  'cloture-bois': {nom:'Palissade bois', cat:'Extérieur', host:'free', params:{L:P(6,'Longueur'), h:P(1.8,'Hauteur')},
+    types:[{nom:'Lames horizontales 1,80 m', p:{}}],
+    parts:[{s:'box', m:'meleze', n:'floor(L/1.8)+1', x:'min(i*1.8, L-0.09)', y:'-0.045', z:'0', w:'0.09', d:'0.09', h:'h'},
+      {s:'box', m:'meleze', n:'floor(h/0.15)', x:'0', y:'0.045', z:'0.03+i*0.15', w:'L', d:'0.021', h:'0.13'}]},
+  'muret': {nom:'Muret enduit avec couvertine', cat:'Extérieur', host:'free', params:{L:P(6,'Longueur'), h:P(0.8,'Hauteur'), e:P(0.2,'Épaisseur')},
+    types:[{nom:'Hauteur 0,80 m', p:{}}, {nom:'Hauteur 1,20 m', p:{h:1.2}}],
+    parts:[{s:'box', m:'enduit', x:'0', y:'-e/2', z:'0', w:'L', d:'e', h:'h'}, {s:'box', m:'pierreSol', x:'-0.02', y:'-e/2-0.03', z:'h', w:'L+0.04', d:'e+0.06', h:'0.05'}]},
+  /* --- végétation --- */
+  'arbre-conifere': {nom:'Conifère', cat:'Extérieur', host:'free', params:{h:P(9,'Hauteur'), r:P(1.8,'Rayon')}, types:[{nom:'9 m', p:{}}, {nom:'15 m', p:{h:15, r:2.6}}, {nom:'Jeune 4 m', p:{h:4, r:1}}],
+    parts:[{s:'cyl', m:'chene', x:'0', y:'0', z:'0', r:'0.08+h/100', h:'h*0.3'}, {s:'cone', m:'feuillageC', x:'0', y:'0', z:'h*0.18', r:'r', h:'h*0.42'}, {s:'cone', m:'feuillageC', x:'0', y:'0', z:'h*0.42', r:'r*0.78', h:'h*0.36'}, {s:'cone', m:'feuillageC', x:'0', y:'0', z:'h*0.64', r:'r*0.55', h:'h*0.36'}]},
+  'arbre-fruitier': {nom:'Arbre fruitier', cat:'Extérieur', host:'free', params:{h:P(4,'Hauteur'), r:P(1.6,'Rayon du houppier')}, types:[{nom:'4 m', p:{}}, {nom:'6 m', p:{h:6, r:2.2}}],
+    parts:[{s:'cyl', m:'chene', x:'0', y:'0', z:'0', r:'0.09', h:'h*0.45'}, {s:'sph', m:'vegetal', x:'0', y:'0', z:'h*0.35', r:'r*0.8'}, {s:'sph', m:'vegetal', x:'r*0.45', y:'r*0.2', z:'h*0.3', r:'r*0.6'}, {s:'sph', m:'vegetal', x:'-r*0.4', y:'-r*0.3', z:'h*0.32', r:'r*0.62'},
+      {s:'sph', m:'fleurs', x:'r*0.5', y:'-r*0.5', z:'h*0.6', r:'0.08'}, {s:'sph', m:'fleurs', x:'-r*0.6', y:'r*0.3', z:'h*0.55', r:'0.08'}, {s:'sph', m:'fleurs', x:'0', y:'r*0.7', z:'h*0.7', r:'0.08'}]},
+  'palmier': {nom:'Palmier', cat:'Extérieur', host:'free', params:{h:P(6,'Hauteur')}, types:[{nom:'6 m', p:{}}, {nom:'9 m', p:{h:9}}],
+    parts:[{s:'cone', m:'chene', x:'0', y:'0', z:'0', r:'0.22', r2:'0.14', h:'h'}, {s:'sph', m:'vegetal', x:'0', y:'0', z:'h-0.5', r:'0.6'},
+      {s:'box', m:'vegetal', x:'0', y:'-0.15', z:'h-0.2', w:'1.9', d:'0.3', h:'0.05'}, {s:'box', m:'vegetal', x:'-1.9', y:'-0.15', z:'h-0.2', w:'1.9', d:'0.3', h:'0.05'},
+      {s:'box', m:'vegetal', x:'-0.15', y:'0', z:'h-0.25', w:'0.3', d:'1.9', h:'0.05'}, {s:'box', m:'vegetal', x:'-0.15', y:'-1.9', z:'h-0.25', w:'0.3', d:'1.9', h:'0.05'}]},
+  'arbuste': {nom:'Arbuste', cat:'Extérieur', host:'free', params:{r:P(0.6,'Rayon')}, types:[{nom:'Ø 1,20 m', p:{}}, {nom:'Ø 2,00 m', p:{r:1.0}}],
+    parts:[{s:'sph', m:'vegetal', x:'0', y:'0', z:'0', r:'r'}, {s:'sph', m:'vegetal', x:'r*0.6', y:'r*0.2', z:'0', r:'r*0.75'}, {s:'sph', m:'vegetal', x:'-r*0.5', y:'-r*0.4', z:'0', r:'r*0.7'}]},
+  'haie': {nom:'Haie taillée', cat:'Extérieur', host:'free', params:{L:P(5,'Longueur'), h:P(1.6,'Hauteur'), d:P(0.7,'Épaisseur')}, types:[{nom:'1,60 m', p:{}}, {nom:'Basse 0,80 m', p:{h:0.8, d:0.5}}],
+    parts:[{s:'box', m:'vegetal', x:'0', y:'-d/2', z:'0', w:'L', d:'d', h:'h'}]},
+  'massif': {nom:'Massif fleuri', cat:'Extérieur', host:'free', params:{L:P(3,'Longueur'), d:P(1.2,'Largeur')}, types:[{nom:'3 × 1,20 m', p:{}}],
+    parts:[{s:'box', m:'terreVeg', x:'0', y:'0', z:'0', w:'L', d:'d', h:'0.08'}, {s:'sph', m:'fleurs', n:'floor(L/0.45)', x:'0.22+i*0.45', y:'d*0.3', z:'0.05', r:'0.2'}, {s:'sph', m:'vegetal', n:'floor(L/0.5)', x:'0.25+i*0.5', y:'d*0.72', z:'0.05', r:'0.24'}]},
+  'bac-fleurs': {nom:'Bac à plantes', cat:'Extérieur', host:'free', params:{w:P(0.8,'Longueur'), d:P(0.4,'Largeur'), h:P(0.45,'Hauteur')}, types:[{nom:'80 × 40', p:{}}, {nom:'120 × 50', p:{w:1.2, d:0.5}}],
+    parts:[{s:'box', m:'fibroCiment', x:'0', y:'0', z:'0', w:'w', d:'d', h:'h'}, {s:'sph', m:'vegetal', n:'max(1, round(w/0.35))', x:'0.18+i*(w-0.36)/max(1, round(w/0.35)-1)', y:'d/2', z:'h-0.12', r:'0.18'}]},
+  /* --- aménagements --- */
+  'terrasse-bois': {nom:'Terrasse bois (platelage)', cat:'Extérieur', host:'free', params:{L:P(5,'Longueur'), d:P(3,'Largeur'), e:P(0.145,'Largeur des lames')}, types:[{nom:'5 × 3 m', p:{}}, {nom:'8 × 4 m', p:{L:8, d:4}}],
+    parts:[{s:'box', m:'bois', n:'floor(L/0.5)+1', x:'min(i*0.5, L-0.045)', y:'0', z:'0', w:'0.045', d:'d', h:'0.07'}, {s:'box', m:'meleze', n:'floor(d/(e+0.005))', x:'0', y:'i*(e+0.005)', z:'0.07', w:'L', d:'e', h:'0.027'}]},
+  'piscine': {nom:'Piscine enterrée', cat:'Extérieur', host:'free', params:{L:P(8,'Longueur'), d:P(4,'Largeur')}, types:[{nom:'8 × 4 m', p:{}}, {nom:'10 × 5 m', p:{L:10, d:5}}],
+    parts:[{s:'box', m:'pierreSol', x:'-0.3', y:'-0.3', z:'0', w:'L+0.6', d:'0.3', h:'0.05'}, {s:'box', m:'pierreSol', x:'-0.3', y:'d', z:'0', w:'L+0.6', d:'0.3', h:'0.05'},
+      {s:'box', m:'pierreSol', x:'-0.3', y:'0', z:'0', w:'0.3', d:'d', h:'0.05'}, {s:'box', m:'pierreSol', x:'L', y:'0', z:'0', w:'0.3', d:'d', h:'0.05'}, {s:'box', m:'eau', x:'0', y:'0', z:'-0.1', w:'L', d:'d', h:'0.12'}]},
+  'abri-jardin': {nom:'Abri de jardin bois', cat:'Extérieur', host:'free', params:{w:P(3,'Largeur'), d:P(2.5,'Profondeur'), h:P(2.2,'Hauteur')}, types:[{nom:'3 × 2,50 m', p:{}}],
+    parts:[{s:'box', m:'bardageBois', x:'0', y:'0', z:'0', w:'w', d:'d', h:'h'}, {s:'box', m:'bacAcier', x:'-0.15', y:'-0.15', z:'h', w:'w+0.3', d:'d+0.3', h:'0.06'}, {s:'box', m:'meleze', x:'w/2-0.45', y:'-0.03', z:'0', w:'0.9', d:'0.04', h:'1.9'}]},
+  'salon-jardin': {nom:'Salon de jardin', cat:'Extérieur', host:'free', params:{}, types:[{nom:'Table et 4 fauteuils', p:{}}],
+    parts:[{fam:'table', p:{w:1.4, d:0.8}, x:'0', y:'0', z:'0'}, {fam:'chaise', x:'-0.4', y:'-0.75', z:'0'}, {fam:'chaise', x:'0.4', y:'-0.75', z:'0'}, {fam:'chaise', x:'-0.4', y:'0.75', z:'0', rot:'180'}, {fam:'chaise', x:'0.4', y:'0.75', z:'0', rot:'180'}]},
+  'lampadaire': {nom:'Lampadaire d\'extérieur', cat:'Extérieur', host:'free', params:{h:P(3.5,'Hauteur')}, types:[{nom:'3,50 m', p:{}}, {nom:'Borne 0,80 m', p:{h:0.8}}],
+    parts:[{s:'cyl', m:'aluAnthr', x:'0', y:'0', z:'0', r:'0.05', h:'h'}, {s:'cyl', m:'aluAnthr', x:'0', y:'0', z:'h', r:'0.16', h:'0.08'}, {s:'cyl', m:'polycarb', x:'0', y:'0', z:'h-0.12', r:'0.12', h:'0.12'}]},
+  'boite-lettres': {nom:'Boîte aux lettres sur pied', cat:'Extérieur', host:'free', params:{}, types:[{nom:'Standard', p:{}}],
+    parts:[{s:'box', m:'aluAnthr', x:'-0.03', y:'-0.03', z:'0', w:'0.06', d:'0.06', h:'1.0'}, {s:'box', m:'aluAnthr', x:'-0.18', y:'-0.17', z:'1.0', w:'0.36', d:'0.34', h:'0.4'}]},
+  'velo': {nom:'Vélo', cat:'Extérieur', host:'free', params:{}, types:[{nom:'Adulte', p:{}}],
+    parts:[{s:'cyl', m:'caoutchouc', x:'-0.52', y:'0', z:'0.35', r:'0.34', h:'0.04', ax:'y'}, {s:'cyl', m:'caoutchouc', x:'0.52', y:'0', z:'0.35', r:'0.34', h:'0.04', ax:'y'},
+      {s:'box', m:'aluAnthr', x:'-0.5', y:'-0.015', z:'0.5', w:'1.0', d:'0.03', h:'0.03'}, {s:'box', m:'aluAnthr', x:'-0.12', y:'-0.015', z:'0.35', w:'0.03', d:'0.03', h:'0.5'}, {s:'box', m:'textile', x:'-0.2', y:'-0.06', z:'0.85', w:'0.22', d:'0.12', h:'0.05'}]},
+});
+// voiture : carrosserie, habitacle vitré, roues
+Object.assign(FAMS, {'arbre': {...FAMS['arbre'], nom:'Arbre feuillu', parts:[{s:'cyl', m:'chene', x:'0', y:'0', z:'0', r:'0.06+h/80', h:'h*0.5'}, {s:'sph', m:'vegetal', x:'0', y:'0', z:'h-2*r', r:'r'}, {s:'sph', m:'vegetal', x:'r*0.55', y:'r*0.25', z:'h-2*r-r*0.25', r:'r*0.72'}, {s:'sph', m:'vegetal', x:'-r*0.5', y:'-r*0.35', z:'h-2*r-r*0.15', r:'r*0.75'}, {s:'sph', m:'vegetal', x:'-r*0.1', y:'r*0.55', z:'h-2*r+r*0.2', r:'r*0.6'}]},
+  'voiture': {...FAMS['voiture'], nom:'Voiture', params:{L:P(4.5,'Longueur'), w:P(1.8,'Largeur')}, types:[{nom:'Berline', p:{}}, {nom:'Citadine', p:{L:3.9, w:1.7}}, {nom:'SUV', p:{L:4.6, w:1.9}}],
+  parts:[{s:'box', m:'acierLaque', x:'-L/2', y:'-w/2', z:'0.3', w:'L', d:'w', h:'0.62'}, {s:'box', m:'vitrage', x:'-L/2+L*0.28', y:'-w/2+0.08', z:'0.92', w:'L*0.45', d:'w-0.16', h:'0.5'}, {s:'box', m:'acierLaque', x:'-L/2+L*0.3', y:'-w/2+0.1', z:'1.4', w:'L*0.4', d:'w-0.2', h:'0.04'},
+    ...[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([a, b]) => ({s:'cyl', m:'caoutchouc', x:`${a}*(L/2-0.75)`, y:`${b}*(w/2-0.12)-0.11`, z:'0.33', r:'0.33', h:'0.22', ax:'y'}))]}});
+/* rangement en dossiers (catégorie › sous-dossier › sous-dossier) */
+const FAM_PATH = {
+  'porte-entree-pleine':['Portes', 'Entrée', '1 vantail'], 'porte-entree':['Portes', 'Entrée', '1 vantail'], 'porte-entree-tierce':['Portes', 'Entrée', 'Avec tierce'], 'porte-entree-2v':['Portes', 'Entrée', '2 vantaux'],
+  'porte-simple':['Portes', 'Intérieure', '1 vantail'], 'porte-int-vitree':['Portes', 'Intérieure', 'Vitrée'], 'porte-atelier':['Portes', 'Intérieure', 'Vitrée'], 'porte-double':['Portes', 'Intérieure', '2 vantaux'], 'porte-coulissante':['Portes', 'Intérieure', 'Coulissante'],
+  'garage-sectionnelle':['Portes', 'Garage', 'Sectionnelle'], 'garage-basculante':['Portes', 'Garage', 'Basculante'], 'garage-enroulable':['Portes', 'Garage', 'Enroulable'], 'garage-battante':['Portes', 'Garage', 'Battante'],
+  'portail-battant':['Portes', 'Portail', 'Battant'], 'portail-coulissant':['Portes', 'Portail', 'Coulissant'], 'portillon':['Portes', 'Portail', 'Portillon'],
+  'fenetre-1v':['Fenêtres', '1 vantail'], 'fenetre-2v':['Fenêtres', '2 vantaux'], 'porte-fenetre':['Fenêtres', 'Portes-fenêtres'], 'baie-coulissante':['Fenêtres', 'Baies coulissantes'], 'fenetre-fixe':['Fenêtres', 'Fixes'],
+  'arbre':['Extérieur', 'Végétation'], 'arbre-conifere':['Extérieur', 'Végétation'], 'arbre-fruitier':['Extérieur', 'Végétation'], 'palmier':['Extérieur', 'Végétation'], 'arbuste':['Extérieur', 'Végétation'], 'haie':['Extérieur', 'Végétation'], 'massif':['Extérieur', 'Végétation'], 'bac-fleurs':['Extérieur', 'Végétation'],
+  'cloture-rigide':['Extérieur', 'Clôtures'], 'cloture-bois':['Extérieur', 'Clôtures'], 'muret':['Extérieur', 'Clôtures'],
+  'terrasse-bois':['Extérieur', 'Aménagements'], 'piscine':['Extérieur', 'Aménagements'], 'abri-jardin':['Extérieur', 'Aménagements'], 'salon-jardin':['Extérieur', 'Aménagements'], 'lampadaire':['Extérieur', 'Éclairage et mobilier'], 'boite-lettres':['Extérieur', 'Éclairage et mobilier'],
+  'voiture':['Extérieur', 'Véhicules'], 'velo':['Extérieur', 'Véhicules'],
+};
+const famPath = (id, F) => FAM_PATH[id] || F?.path || [F?.cat || 'Divers'];
+
 /* ==== 20-state.js ==== */
 /* ============ État du projet ============
    state = {format:'archiplan', v:3, name, els:[…], nextId, levels:[{n,z}], lib:{mats, compos, fams}}
@@ -3017,7 +3164,8 @@ function famSolids(F, scope, depth = 0){
         continue;
       }
       const m = part.m || 'bois';
-      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
+      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz:0, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
+      else if (part.s === 'cone'){ const r = Math.max(0.001, fx(part.r, s)), r2 = Math.max(0, fx(part.r2 ?? 0, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cone', m, c:[x, y, z + h/2], r, r2, h, rz:0}); }
       else if (part.s === 'sph'){ const r = Math.max(0.001, fx(part.r, s)); out.push({s:'sph', m, c:[x, y, z + r], r, rz:0}); }
       else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4) out.push({s:'box', m, c:[x + w/2, y + d/2, z + h/2], w, d, h, rz:0}); }
     }
@@ -3042,7 +3190,7 @@ function instSolids(el){
     return {...so, c:[wp[0], wp[1], so.c[2] + fr.z], rz:fr.ang + mir * (so.rz || 0), lot:famLot(F)};
   });
 }
-const solidVol = so => so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : 4/3 * Math.PI * so.r ** 3;
+const solidVol = so => so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : so.s === 'cone' ? Math.PI * so.h * (so.r * so.r + so.r * so.r2 + so.r2 * so.r2) / 3 : 4/3 * Math.PI * so.r ** 3;
 
 /* Ouvertures portées par un mur : intervalles le long de l'axe et en hauteur */
 function wallOpenings(w, els = state.els){
@@ -3720,6 +3868,8 @@ function pieceGeo(pc){
 function solidGeo(so){
   let g;
   if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
+  else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
+  if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2);
   else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
   else g = boxGeo(so.w, so.d, so.h);
   if (so.rz) g.rotateY(so.rz);
@@ -4418,7 +4568,7 @@ function finishRoofPoly(){ const p = draw.poly || []; if (p.length < 4){ toast('
 
 /* ==== 60-panel.js ==== */
 /* ============ Panneau : propriétés, bibliothèque, métré ============ */
-let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '';
+let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '', libPath = [];
 const USES = {mur:'Mur extérieur', plancherBas:'Plancher bas (vide sanitaire, extérieur)', terrePlein:'Dallage sur terre-plein', plancherInt:'Plancher intermédiaire', toiture:'Toiture / plancher haut'};
 const elUse = el => el.kind === 'wall' ? 'mur' : el.kind === 'roof' ? 'toiture' : (el.use || (el.lvl === 0 ? 'terrePlein' : 'plancherInt'));
 // couches côté intérieur → extérieur pour les calculs
@@ -4591,11 +4741,22 @@ function renderLib(){
       return `<div class="row crow" data-compo="${esc(k)}"><div><b>${esc(c.nom)}</b>${layerBar(c.layers)}<div class="comp">${nf(c.layers.reduce((s, l) => s + l[1], 0) * 100, 1)} cm${libOwner('compos', k) !== 'base' ? ' · <em>' + (libOwner('compos', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div><span class="n">U ${nf(r.U, 2)}</span></div>`; }).join('');
     body = `<div class="libtools"><button class="btn primary" data-act="compo-new">+ Composition</button></div><div class="grp"><h3>Murs et cloisons</h3><div class="lib">${blk('wall')}</div></div><div class="grp"><h3>Planchers et toitures</h3><div class="lib">${blk('slab')}</div></div>`;
   } else {
-    const list = Object.entries(libFams()).filter(([, F]) => match(F.nom) && (!libCat || F.cat === libCat));
-    const cats = [...new Set(FAM_CATS.concat(list.map(([, F]) => F.cat)))];
-    body = `<div class="libtools"><select data-libcat aria-label="Catégorie"><option value="">Toutes les familles</option>${cats.map(c => `<option${c === libCat ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select><button class="btn primary" data-act="fam-new">+ Famille</button></div>` +
-      cats.map(c => { const items = list.filter(([, F]) => F.cat === c); if (!items.length) return '';
-        return `<div class="grp"><h3>${esc(c)}</h3><div class="fgrid">${items.map(([k, F]) => `<button class="fcard${tool === 'comp' && defs.comp.fam === k ? ' on' : ''}" data-fam="${esc(k)}" title="${esc(F.nom)}"><svg viewBox="0 0 24 24"><path d="${FAM_ICON[F.cat] || FAM_ICON.Mobilier}"/></svg><b>${esc(F.nom)}</b><small>${F.host === 'wall' ? 'Dans un mur' : (F.types || []).length + ' type' + ((F.types || []).length > 1 ? 's' : '')}${libOwner('fams', k) !== 'base' ? ' · perso' : ''}</small></button>`).join('')}</div></div>`; }).join('');
+    const all = Object.entries(libFams()), fcard = ([k, F]) => `<button class="fcard${tool === 'comp' && defs.comp.fam === k ? ' on' : ''}" data-fam="${esc(k)}" title="${esc(F.nom)}"><img class="fthumb" data-thumb="${esc(k)}|0" src="${famThumbCached(k, 0) || ''}" alt=""><b>${esc(F.nom)}</b><small>${(F.types || []).length} type${(F.types || []).length > 1 ? 's' : ''}${libOwner('fams', k) !== 'base' ? ' · perso' : ''}</small></button>`;
+    const crumb = `<nav class="fcrumb" aria-label="Dossiers"><button data-fpath="">Familles</button>${libPath.map((p, i) => `<span>›</span><button data-fpath="${esc(libPath.slice(0, i + 1).join('/'))}">${esc(p)}</button>`).join('')}</nav>`;
+    let inner = '';
+    if (q){ const list = all.filter(([, F]) => match(F.nom + ' ' + F.cat)); inner = list.length ? `<div class="fgrid">${list.map(fcard).join('')}</div>` : '<p class="hint">Aucune famille trouvée.</p>'; }
+    else {
+      const under = all.filter(([k, F]) => { const p = famPath(k, F); return libPath.every((x, i) => p[i] === x) && p.length >= libPath.length; });
+      const here = under.filter(([k, F]) => famPath(k, F).length === libPath.length), subs = {};
+      under.forEach(([k, F]) => { const p = famPath(k, F); if (p.length > libPath.length){ const n = p[libPath.length]; (subs[n] ??= []).push(k); } });
+      const order = libPath.length ? Object.keys(subs) : [...new Set(FAM_CATS.concat(Object.keys(subs)))].filter(n => subs[n]);
+      inner = (order.length ? `<div class="fgrid fold">${order.map(n => `<button class="fcard ffold" data-fopen="${esc(n)}"><span class="fico"><img class="fthumb" data-thumb="${esc(subs[n][0])}|0" src="${famThumbCached(subs[n][0], 0) || ''}" alt=""><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg></span><b>${esc(n)}</b><small>${subs[n].length} famille${subs[n].length > 1 ? 's' : ''}</small></button>`).join('')}</div>` : '') +
+        (here.length ? `<div class="fgrid">${here.map(fcard).join('')}</div>` : '');
+    }
+    const sel = tool === 'comp' ? fam(defs.comp.fam) : null;
+    const detail = sel ? `<div class="fdet"><img class="fthumb big" data-thumb="${esc(defs.comp.fam)}|${defs.comp.type | 0}" src="${famThumbCached(defs.comp.fam, defs.comp.type | 0) || ''}" alt="Aperçu"><div><b>${esc(sel.nom)}</b><div class="ftypes">${(sel.types || []).map((t, i) => `<button class="chip${(defs.comp.type | 0) === i ? ' on' : ''}" data-ftype="${i}">${esc(t.nom)}</button>`).join('')}</div><small>${sel.host === 'wall' ? 'Cliquez dans un mur pour la poser' : 'Cliquez pour la poser · Espace : pivoter'}</small></div></div>` : '';
+    body = `<div class="libtools">${crumb}<button class="btn primary" data-act="fam-new">+ Famille</button></div>${detail}${inner}`;
+    setTimeout(fillThumbs, 30);
   }
   return `<div class="ph"><h2>Bibliothèque</h2></div>
     <div class="subtabs" role="tablist">${[['fams', 'Familles'], ['compos', 'Compositions'], ['mats', 'Matériaux']].map(([k, n]) => `<button role="tab" data-libtab="${k}" aria-selected="${libTab === k}">${n}</button>`).join('')}</div>
@@ -4698,6 +4859,9 @@ $('#pbody').addEventListener('change', e => {
 $('#pbody').addEventListener('click', e => {
   const t = e.target;
   const lt = t.closest('[data-libtab]'); if (lt){ libTab = lt.dataset.libtab; libCat = ''; return renderPanel(); }
+  const fo = t.closest('[data-fopen]'); if (fo){ libPath = [...libPath, fo.dataset.fopen]; return renderPanel(); }
+  const fp = t.closest('[data-fpath]'); if (fp){ libPath = fp.dataset.fpath ? fp.dataset.fpath.split('/') : []; return renderPanel(); }
+  const ft = t.closest('[data-ftype]'); if (ft){ defs.comp.type = +ft.dataset.ftype; syncHud(); updatePreview(); return renderPanel(); }
   const fc = t.closest('[data-fam]'); if (fc){ defs.comp.fam = fc.dataset.fam; defs.comp.type = 0; defs.comp.rot = 0; setTool('comp'); renderPanel(); if (isNarrow.matches) openSheet(false); return; }
   const cr = t.closest('[data-compo]'); if (cr) return openComposer({id:cr.dataset.compo});
   const mr = t.closest('[data-mat]'); if (mr) return openMatEditor(mr.dataset.mat);
@@ -4711,7 +4875,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'iflip' && el){ pushHist(); el.flip = !el.flip; rebuild(); }
   else if (act === 'imirror' && el){ pushHist(); el.mirror = !el.mirror; rebuild(); }
   else if (act === 'irot90' && el){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); }
-  else if (act === 'add-opening' && el){ libTab = 'fams'; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
+  else if (act === 'add-opening' && el){ libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'site') openSiteDialog();
@@ -5054,6 +5218,48 @@ function onRenderClick(act, b){
   else if (act === 'export-glb') doExport('glb');
 }
 
+/* ==== 63b-thumbs.js ==== */
+/* ============ Vignettes des familles (aperçus 3D rendus hors écran, mis en cache) ============ */
+const thumbCache = new Map(); let thumbR = null, thumbQ = [], thumbBusy = false;
+const famThumbCached = (id, t) => thumbCache.get(`${id}|${t}|${famRev(id)}`) || '';
+const famRev = id => { const F = fam(id); return F ? (JSON.stringify(F).length % 9973) : 0; };
+function thumbRenderer(){
+  if (thumbR) return thumbR;
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 192;
+  const r = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true, preserveDrawingBuffer:true}); r.outputColorSpace = THREE.SRGBColorSpace; r.setClearColor(0x000000, 0);
+  const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x9a948a, 1.25)); const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(-3, 6, 5); sc.add(dl);
+  const cm = new THREE.PerspectiveCamera(30, 4 / 3, 0.01, 500), grp = new THREE.Group(); sc.add(grp);
+  return thumbR = {r, sc, cm, grp, cv};
+}
+function renderThumb(id, t){
+  const F = fam(id); if (!F) return '';
+  const T = thumbRenderer(); disposeGroup(T.grp);
+  const by = {}; for (const so of famSolids(F, famScope(F, {type:t, params:{}}))) (by[so.m] ??= []).push(solidGeo(so));
+  for (const [m, geos] of Object.entries(by)){ const M = mat(m), mm = new THREE.MeshStandardMaterial({color:M.color, roughness:M.rough ?? 0.8, metalness:M.metal ?? 0, transparent:M.opacity < 1, opacity:M.opacity ?? 1});
+    const mesh = new THREE.Mesh(geos.length === 1 ? geos[0] : mergeGeos(geos), mm); T.grp.add(mesh);
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 35), new THREE.LineBasicMaterial({color:0x5b6068, transparent:true, opacity:0.35})); T.grp.add(e); }
+  if (F.host === 'wall'){ // mur fantôme autour de l'ouverture
+    const s = famScope(F, {type:t, params:{}}), w = fx(F.cut?.w ?? 'w', s), h = fx(F.cut?.h ?? 'h', s), Ww = w + 0.8, Hw = h + 0.5, th = 0.22, mk = (x0, x1, z0, z1) => { if (x1 - x0 < 0.01 || z1 - z0 < 0.01) return; const g = new THREE.BoxGeometry(x1 - x0, z1 - z0, th); g.translate((x0 + x1) / 2, (z0 + z1) / 2, 0); T.grp.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:0xE6E3DD, transparent:true, opacity:0.55}))); };
+    mk(-Ww / 2, -w / 2, 0, Hw); mk(w / 2, Ww / 2, 0, Hw); mk(-w / 2, w / 2, h, Hw);
+  }
+  const b = new THREE.Box3().setFromObject(T.grp); if (b.isEmpty()) return '';
+  const c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3()), R = Math.max(sz.x, sz.y * 1.2, sz.z) * 0.5 + 0.05;
+  const dir = (F.host === 'wall' ? new THREE.Vector3(0.38, 0.18, 1) : new THREE.Vector3(-0.85, 0.65, 1)).normalize();
+  T.cm.position.copy(c).addScaledVector(dir, R / Math.tan(15 * Math.PI / 180) * 1.05); T.cm.lookAt(c); T.cm.updateProjectionMatrix();
+  T.r.render(T.sc, T.cm); const url = T.cv.toDataURL('image/png'); disposeGroup(T.grp); return url;
+}
+function fillThumbs(){
+  document.querySelectorAll('img.fthumb[data-thumb]').forEach(img => { if (img.getAttribute('src')) return; const [id, t] = img.dataset.thumb.split('|'); const key = `${id}|${t}|${famRev(id)}`; if (!thumbQ.includes(key)) thumbQ.push(key); });
+  if (!thumbBusy) pumpThumbs();
+}
+function pumpThumbs(){
+  if (!thumbQ.length){ thumbBusy = false; return; } thumbBusy = true;
+  const key = thumbQ.shift(), [id, t] = key.split('|');
+  if (!thumbCache.has(key)){ try { thumbCache.set(key, renderThumb(id, +t)); } catch(e){ thumbCache.set(key, ''); } }
+  const url = thumbCache.get(key); document.querySelectorAll(`img.fthumb[data-thumb="${CSS.escape(id + '|' + t)}"]`).forEach(img => { if (url) img.src = url; });
+  setTimeout(pumpThumbs, 0);
+}
+
 /* ==== 64-tree.js ==== */
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
 const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
@@ -5191,7 +5397,7 @@ function runTreeAction(k, key){
     case 'compose': return openComposer({id:el.type, apply:el.id});
     case 'unforce': pushHist(); delete el.forceU; delete el.forceR; delete el.forceNote; return re();
     case 'flip': case 'iflip': pushHist(); el.flip = !el.flip; return re();
-    case 'opening': select(el.id); libTab = 'fams'; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); return toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur');
+    case 'opening': select(el.id); libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); return toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur');
     case 'famedit': return openFamEditor(el.fam, el.id);
     case 'rot90': pushHist(); el.rot = ((el.rot || 0) + 90) % 360; return re();
     case 'dup': { pushHist(); const c = dupEl(el); if (!c){ hist.pop(); updUndo(); return toast('Pas assez de place dans le mur pour dupliquer'); } state.isSample = false; sel = c.id; multi = []; rebuild(); return toast('Élément dupliqué'); }
@@ -6409,6 +6615,7 @@ function buildIFC(){
     if (so.s === 'sph') return E(`IFCSPHERE(${E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(so.c[2] - zRef)}))`)},$,$)`)},${R(so.r)})`);
     const h = so.s === 'cyl' ? so.h : so.h, base = so.c[2] - h / 2 - zRef;
     const pos = E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(base)}))`)},${Z},${ref})`);
+    if (so.s === 'cone') so = {...so, s:'cyl', r:(so.r + (so.r2 || 0)) / 2};
     const prof = so.s === 'cyl' ? E(`IFCCIRCLEPROFILEDEF(.AREA.,$,$,${R(so.r)})`) : E(`IFCRECTANGLEPROFILEDEF(.AREA.,$,$,${R(so.w)},${R(so.d)})`);
     return E(`IFCEXTRUDEDAREASOLID(${prof},${pos},${Z},${R(h)})`);
   };
@@ -6728,7 +6935,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};
 
 /* ---------- Paramètres d'affichage : couleur de fond, grille, cotes, arêtes, ombres ---------- */

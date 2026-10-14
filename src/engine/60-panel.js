@@ -1,5 +1,5 @@
 /* ============ Panneau : propriétés, bibliothèque, métré ============ */
-let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '';
+let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '', libPath = [];
 const USES = {mur:'Mur extérieur', plancherBas:'Plancher bas (vide sanitaire, extérieur)', terrePlein:'Dallage sur terre-plein', plancherInt:'Plancher intermédiaire', toiture:'Toiture / plancher haut'};
 const elUse = el => el.kind === 'wall' ? 'mur' : el.kind === 'roof' ? 'toiture' : (el.use || (el.lvl === 0 ? 'terrePlein' : 'plancherInt'));
 // couches côté intérieur → extérieur pour les calculs
@@ -172,11 +172,22 @@ function renderLib(){
       return `<div class="row crow" data-compo="${esc(k)}"><div><b>${esc(c.nom)}</b>${layerBar(c.layers)}<div class="comp">${nf(c.layers.reduce((s, l) => s + l[1], 0) * 100, 1)} cm${libOwner('compos', k) !== 'base' ? ' · <em>' + (libOwner('compos', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div><span class="n">U ${nf(r.U, 2)}</span></div>`; }).join('');
     body = `<div class="libtools"><button class="btn primary" data-act="compo-new">+ Composition</button></div><div class="grp"><h3>Murs et cloisons</h3><div class="lib">${blk('wall')}</div></div><div class="grp"><h3>Planchers et toitures</h3><div class="lib">${blk('slab')}</div></div>`;
   } else {
-    const list = Object.entries(libFams()).filter(([, F]) => match(F.nom) && (!libCat || F.cat === libCat));
-    const cats = [...new Set(FAM_CATS.concat(list.map(([, F]) => F.cat)))];
-    body = `<div class="libtools"><select data-libcat aria-label="Catégorie"><option value="">Toutes les familles</option>${cats.map(c => `<option${c === libCat ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select><button class="btn primary" data-act="fam-new">+ Famille</button></div>` +
-      cats.map(c => { const items = list.filter(([, F]) => F.cat === c); if (!items.length) return '';
-        return `<div class="grp"><h3>${esc(c)}</h3><div class="fgrid">${items.map(([k, F]) => `<button class="fcard${tool === 'comp' && defs.comp.fam === k ? ' on' : ''}" data-fam="${esc(k)}" title="${esc(F.nom)}"><svg viewBox="0 0 24 24"><path d="${FAM_ICON[F.cat] || FAM_ICON.Mobilier}"/></svg><b>${esc(F.nom)}</b><small>${F.host === 'wall' ? 'Dans un mur' : (F.types || []).length + ' type' + ((F.types || []).length > 1 ? 's' : '')}${libOwner('fams', k) !== 'base' ? ' · perso' : ''}</small></button>`).join('')}</div></div>`; }).join('');
+    const all = Object.entries(libFams()), fcard = ([k, F]) => `<button class="fcard${tool === 'comp' && defs.comp.fam === k ? ' on' : ''}" data-fam="${esc(k)}" title="${esc(F.nom)}"><img class="fthumb" data-thumb="${esc(k)}|0" src="${famThumbCached(k, 0) || ''}" alt=""><b>${esc(F.nom)}</b><small>${(F.types || []).length} type${(F.types || []).length > 1 ? 's' : ''}${libOwner('fams', k) !== 'base' ? ' · perso' : ''}</small></button>`;
+    const crumb = `<nav class="fcrumb" aria-label="Dossiers"><button data-fpath="">Familles</button>${libPath.map((p, i) => `<span>›</span><button data-fpath="${esc(libPath.slice(0, i + 1).join('/'))}">${esc(p)}</button>`).join('')}</nav>`;
+    let inner = '';
+    if (q){ const list = all.filter(([, F]) => match(F.nom + ' ' + F.cat)); inner = list.length ? `<div class="fgrid">${list.map(fcard).join('')}</div>` : '<p class="hint">Aucune famille trouvée.</p>'; }
+    else {
+      const under = all.filter(([k, F]) => { const p = famPath(k, F); return libPath.every((x, i) => p[i] === x) && p.length >= libPath.length; });
+      const here = under.filter(([k, F]) => famPath(k, F).length === libPath.length), subs = {};
+      under.forEach(([k, F]) => { const p = famPath(k, F); if (p.length > libPath.length){ const n = p[libPath.length]; (subs[n] ??= []).push(k); } });
+      const order = libPath.length ? Object.keys(subs) : [...new Set(FAM_CATS.concat(Object.keys(subs)))].filter(n => subs[n]);
+      inner = (order.length ? `<div class="fgrid fold">${order.map(n => `<button class="fcard ffold" data-fopen="${esc(n)}"><span class="fico"><img class="fthumb" data-thumb="${esc(subs[n][0])}|0" src="${famThumbCached(subs[n][0], 0) || ''}" alt=""><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg></span><b>${esc(n)}</b><small>${subs[n].length} famille${subs[n].length > 1 ? 's' : ''}</small></button>`).join('')}</div>` : '') +
+        (here.length ? `<div class="fgrid">${here.map(fcard).join('')}</div>` : '');
+    }
+    const sel = tool === 'comp' ? fam(defs.comp.fam) : null;
+    const detail = sel ? `<div class="fdet"><img class="fthumb big" data-thumb="${esc(defs.comp.fam)}|${defs.comp.type | 0}" src="${famThumbCached(defs.comp.fam, defs.comp.type | 0) || ''}" alt="Aperçu"><div><b>${esc(sel.nom)}</b><div class="ftypes">${(sel.types || []).map((t, i) => `<button class="chip${(defs.comp.type | 0) === i ? ' on' : ''}" data-ftype="${i}">${esc(t.nom)}</button>`).join('')}</div><small>${sel.host === 'wall' ? 'Cliquez dans un mur pour la poser' : 'Cliquez pour la poser · Espace : pivoter'}</small></div></div>` : '';
+    body = `<div class="libtools">${crumb}<button class="btn primary" data-act="fam-new">+ Famille</button></div>${detail}${inner}`;
+    setTimeout(fillThumbs, 30);
   }
   return `<div class="ph"><h2>Bibliothèque</h2></div>
     <div class="subtabs" role="tablist">${[['fams', 'Familles'], ['compos', 'Compositions'], ['mats', 'Matériaux']].map(([k, n]) => `<button role="tab" data-libtab="${k}" aria-selected="${libTab === k}">${n}</button>`).join('')}</div>
@@ -279,6 +290,9 @@ $('#pbody').addEventListener('change', e => {
 $('#pbody').addEventListener('click', e => {
   const t = e.target;
   const lt = t.closest('[data-libtab]'); if (lt){ libTab = lt.dataset.libtab; libCat = ''; return renderPanel(); }
+  const fo = t.closest('[data-fopen]'); if (fo){ libPath = [...libPath, fo.dataset.fopen]; return renderPanel(); }
+  const fp = t.closest('[data-fpath]'); if (fp){ libPath = fp.dataset.fpath ? fp.dataset.fpath.split('/') : []; return renderPanel(); }
+  const ft = t.closest('[data-ftype]'); if (ft){ defs.comp.type = +ft.dataset.ftype; syncHud(); updatePreview(); return renderPanel(); }
   const fc = t.closest('[data-fam]'); if (fc){ defs.comp.fam = fc.dataset.fam; defs.comp.type = 0; defs.comp.rot = 0; setTool('comp'); renderPanel(); if (isNarrow.matches) openSheet(false); return; }
   const cr = t.closest('[data-compo]'); if (cr) return openComposer({id:cr.dataset.compo});
   const mr = t.closest('[data-mat]'); if (mr) return openMatEditor(mr.dataset.mat);
@@ -292,7 +306,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'iflip' && el){ pushHist(); el.flip = !el.flip; rebuild(); }
   else if (act === 'imirror' && el){ pushHist(); el.mirror = !el.mirror; rebuild(); }
   else if (act === 'irot90' && el){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); }
-  else if (act === 'add-opening' && el){ libTab = 'fams'; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
+  else if (act === 'add-opening' && el){ libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'site') openSiteDialog();

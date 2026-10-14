@@ -71,7 +71,8 @@ function famSolids(F, scope, depth = 0){
         continue;
       }
       const m = part.m || 'bois';
-      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
+      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz:0, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
+      else if (part.s === 'cone'){ const r = Math.max(0.001, fx(part.r, s)), r2 = Math.max(0, fx(part.r2 ?? 0, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cone', m, c:[x, y, z + h/2], r, r2, h, rz:0}); }
       else if (part.s === 'sph'){ const r = Math.max(0.001, fx(part.r, s)); out.push({s:'sph', m, c:[x, y, z + r], r, rz:0}); }
       else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4) out.push({s:'box', m, c:[x + w/2, y + d/2, z + h/2], w, d, h, rz:0}); }
     }
@@ -96,7 +97,7 @@ function instSolids(el){
     return {...so, c:[wp[0], wp[1], so.c[2] + fr.z], rz:fr.ang + mir * (so.rz || 0), lot:famLot(F)};
   });
 }
-const solidVol = so => so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : 4/3 * Math.PI * so.r ** 3;
+const solidVol = so => so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : so.s === 'cone' ? Math.PI * so.h * (so.r * so.r + so.r * so.r2 + so.r2 * so.r2) / 3 : 4/3 * Math.PI * so.r ** 3;
 
 /* Ouvertures portées par un mur : intervalles le long de l'axe et en hauteur */
 function wallOpenings(w, els = state.els){
