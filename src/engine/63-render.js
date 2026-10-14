@@ -13,14 +13,15 @@ function renderRenderPanel(){
       <label class="ap-check2"><input type="checkbox" data-rset="shadows"${DISPLAY.shadows ? ' checked' : ''}> Ombres portées</label>
       <label class="ap-check2"><input type="checkbox" data-rset="edges"${DISPLAY.edges ? ' checked' : ''}> Arêtes (traits)</label></div>
     <div class="grp"><h3>Points de vue</h3><div class="chips">${[['iso', 'Perspective'], ['front', 'Face'], ['right', 'Droite'], ['back', 'Arrière'], ['left', 'Gauche'], ['top', 'Dessus']].map(([k, n]) => `<button class="chip" data-act="cam" data-k="${k}">${n}</button>`).join('')}</div></div>
-    <div class="grp"><h3>Image</h3><div class="btns"><button class="btn" data-act="png" data-k="2">Capture HD (×2)</button><button class="btn primary" data-act="png" data-k="4">Capture 4K</button></div>
-      <p class="hint">L'image reprend exactement la vue et le style à l'écran (PNG). Réservé aux comptes avec licence ARCHIPLAN.</p></div>
+    <div class="grp"><h3>Image</h3><div class="btns"><button class="btn" data-act="png" data-k="2">Capture HD (×2)</button><button class="btn" data-act="png" data-k="4">Capture 4K</button><button class="btn primary" data-act="png" data-k="5">Rendu photo haute qualité</button></div>
+      <p class="hint">Captures : la vue et le style à l'écran (PNG). « Rendu photo haute qualité » : 4K, style Réaliste, lissage 16 passes, ombres fines et occlusion ambiante (quelques secondes). Réservé aux comptes avec licence ARCHIPLAN.</p></div>
+    <div class="grp"><h3>Qualité à l'écran (Réaliste)</h3><label class="ap-check2"><input type="checkbox" data-rset="fx"${DISPLAY.fx !== false ? ' checked' : ''}> Occlusion ambiante et anticrénelage</label></div>
     <div class="grp"><h3>Archi Vision</h3><div class="btns"><button class="btn primary" data-act="export-glb">Exporter pour Archi Vision (.glb)</button></div>
       <p class="hint">glTF binaire, mètres, axe Y vers le haut, matériaux PBR texturés, un nœud par niveau et par élément avec ses informations (type, composition, U, famille…).</p></div>`;
 }
 function onRenderInput(t, commit){
   const k = t.dataset.rset;
-  if (t.type === 'checkbox'){ DISPLAY[k] = t.checked; saveDisplay(); if (k === 'edges'){ resetMats(); rebuild({noPanel:true}); } applyThemeToScene(); return; }
+  if (t.type === 'checkbox'){ DISPLAY[k] = t.checked; saveDisplay(); if (k === 'fx'){ dirty = true; return; } if (k === 'edges'){ resetMats(); rebuild({noPanel:true}); } applyThemeToScene(); return; }
   const v = +t.value; DISPLAY[k] = v; const out = t.parentElement.querySelector('b'); if (out) out.textContent = k === 'exposure' ? nf(v, 2) : n0(v) + '°';
   if (k === 'exposure') renderer.toneMappingExposure = DISPLAY.style === 'realistic' ? v : 1; else positionSun();
   dirty = true; if (commit) saveDisplay();

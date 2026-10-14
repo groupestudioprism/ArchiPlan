@@ -5,6 +5,7 @@ function closeEDlg(){ if (state?.lib?.mats) delete state.lib.mats.__tmp; const d
 edlg().addEventListener('click', e => { if (e.target === edlg()) closeEDlg(); });
 function saveUserLib(){ try { window.APLib?.save(JSON.parse(JSON.stringify(USER_LIB))); } catch(e){} }
 const PATTERNS = {plain:'Uni', concrete:'Béton', plaster:'Enduit / plâtre', brick:'Brique', brickbig:'Bloc alvéolaire', block:'Bloc / parpaing', stone:'Pierre', wood:'Bois', woodpanel:'Panneau bois', cladding:'Bardage', parquet:'Parquet', osb:'OSB', insul:'Isolant fibreux', insulboard:'Isolant en panneau', metal:'Métal', ribbed:'Bac nervuré', tile:'Carrelage', rooftile:'Tuiles', slate:'Ardoises', membrane:'Membrane', gravel:'Gravier', grass:'Végétal', earth:'Terre', fabric:'Textile', glass:'Verre'};
+Object.entries(TEX_LIB).forEach(([k, v]) => { PATTERNS[k] ??= v.nom; });
 
 /* ---------- compositions ---------- */
 function openComposer({id, apply}){
@@ -144,13 +145,16 @@ function openMatEditor(id){
       ${f('gwp', 'Carbone (A1-A3)', 'kg CO₂e/kg')}${f('R', 'Résistance fixe (lame d\'air)', 'm²·K/W', '0.01')}
       <label class="f"><span>Couleur</span><span class="in"><input id="mtColor" type="color" value="${esc(base.color)}"${ro ? ' disabled' : ''}></span></label>
       <label class="f"><span>Motif de rendu</span><span class="in"><select id="mtTex"${ro ? ' disabled' : ''}>${Object.entries(PATTERNS).map(([k, n]) => `<option value="${k}"${k === base.tex ? ' selected' : ''}>${n}</option>`).join('')}</select></span></label>
+      <div class="f wide"><span>Bibliothèque de textures</span><div class="patlib" id="mtPats">${[...new Set(Object.values(TEX_LIB).map(v => v.grp))].map(gp => `<div class="patg"><em>${esc(gp)}</em><div class="patgrid">${Object.entries(TEX_LIB).filter(([, v]) => v.grp === gp).map(([k, v]) => `<button type="button" class="pat${k === base.tex ? ' on' : ''}" data-pat="${k}" title="${esc(v.nom)}"${ro ? ' disabled' : ''}><img alt="" data-patimg="${k}"><span>${esc(v.nom)}</span></button>`).join('')}</div></div>`).join('')}</div></div>
     </div><canvas id="mtPrev" width="256" height="96" class="mtprev"></canvas>
     <p class="hint">Laissez « Résistance fixe » vide pour un matériau courant : la résistance est alors e / λ. Pour une lame d'air, indiquez sa résistance (0,18 m²·K/W pour une lame non ventilée).</p></div>
     <footer class="ed-f">${ro ? '<button class="btn primary" id="mtDup">Dupliquer pour le modifier</button>' : `${owner === 'perso' ? '<button class="btn danger" id="mtDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button><button class="btn primary" id="mtSave">Enregistrer dans ma bibliothèque</button>`}</footer>`;
   const d = openEDlg(html);
-  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const t = paint(tmpId); delete MATS[tmpId];
-    const pat = g.createPattern(t.image, 'repeat'); g.fillStyle = pat; g.fillRect(0, 0, cv.width, cv.height); t.dispose(); };
-  prev(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtTex').onchange = prev;
+  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const img = paintV2(tmpId) || paint(tmpId).image; delete MATS[tmpId];
+    g.clearRect(0, 0, cv.width, cv.height); const k = cv.height / img.height * 1.4; for (let x = 0; x < cv.width; x += img.width * k) g.drawImage(img, x, 0, img.width * k, img.height * k); };
+  const pats = () => { const c = d.querySelector('#mtColor').value; d.querySelectorAll('[data-patimg]').forEach((im, i) => setTimeout(() => { im.src = patternPreview(im.dataset.patimg, c); }, i * 8)); };
+  prev(); pats(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtColor').onchange = pats; d.querySelector('#mtTex').onchange = () => { d.querySelectorAll('[data-pat]').forEach(b => b.classList.toggle('on', b.dataset.pat === d.querySelector('#mtTex').value)); prev(); };
+  d.querySelectorAll('[data-pat]').forEach(b => b.onclick = () => { const sel = d.querySelector('#mtTex'); if (![...sel.options].some(o => o.value === b.dataset.pat)) sel.add(new Option(TEX_LIB[b.dataset.pat].nom, b.dataset.pat)); sel.value = b.dataset.pat; sel.onchange(); });
   const dup = d.querySelector('#mtDup'); if (dup) dup.onclick = () => { const nid = 'M-' + uid8(); USER_LIB.mats[nid] = {...base, nom:base.nom + ' (perso)'}; saveUserLib(); closeEDlg(); openMatEditor(nid); renderPanel(); };
   const del = d.querySelector('#mtDel'); if (del) del.onclick = () => { delete USER_LIB.mats[id]; saveUserLib(); closeEDlg(); resetMats(); delete texCache[id]; rebuild(); toast('Matériau retiré de ma bibliothèque (les projets qui l\'utilisent en gardent une copie)'); };
   const sv = d.querySelector('#mtSave'); if (sv) sv.onclick = () => {

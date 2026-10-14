@@ -122,7 +122,7 @@ function updateCompass(){
 function loop(){
   requestAnimationFrame(loop);
   const moved = ctl().update();
-  if (moved || dirty){ renderer.render(scene, cam()); updateLabels(); updateCompass(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
+  if (moved || dirty){ renderFrame(); updateLabels(); updateCompass(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
 }
 new MutationObserver(() => { resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 

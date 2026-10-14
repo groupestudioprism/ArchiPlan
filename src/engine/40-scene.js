@@ -105,7 +105,7 @@ function paint(id){
   tex.name = 'archiplan-' + id;
   return tex;
 }
-const texFor = id => texCache[id] ??= paint(id);
+const texFor = id => texCache[id] ??= (texForV2(id) || paint(id));
 
 /* ---------- matériaux selon le style ---------- */
 let matCache = {};
@@ -138,7 +138,8 @@ function matFor(id, selected, light = 0){
   }
   else {
     const textured = st === 'textured' || st === 'realistic';
-    M = new THREE.MeshStandardMaterial({color:textured && m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:textured && m.tex && m.tex !== 'glass' ? texFor(id) : null,
+    const tx = textured && m.tex && m.tex !== 'glass' ? texFor(id) : null, bm = tx ? bumpFor(id) : null;
+    M = new THREE.MeshStandardMaterial({color:tx ? 0xffffff : m.color, map:tx, bumpMap:bm, bumpScale:bm ? (st === 'realistic' ? 1.4 : 0.8) : 1,
       roughness:m.rough ?? .9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1, depthWrite:!transp,
       envMapIntensity:st === 'realistic' ? 0.6 : 0.35});
   }
@@ -328,7 +329,7 @@ function camPreset(k){
 function resize(){
   const w = vpEl.clientWidth, h = vpEl.clientHeight; if (!w || !h) return;
   renderer.setSize(w, h, false);
-  persp.aspect = w / h; persp.updateProjectionMatrix();
+  persp.aspect = w / h; persp.updateProjectionMatrix(); if (typeof fxResize === 'function') fxResize(w, h);
   { const a = w / h, hh = (orthoS.top - orthoS.bottom) / 2 || 10; Object.assign(orthoS, {left:-hh * a, right:hh * a}); orthoS.updateProjectionMatrix(); }
   const a = w / h; Object.assign(ortho, {left:-10 * a, right:10 * a, top:10, bottom:-10}); ortho.updateProjectionMatrix();
   dirty = true;
@@ -371,11 +372,12 @@ function updateLabels(){ for (const l of labels){ const [x, y, z] = toScreen(l.p
 
 /* ---------- capture d'image (rendu haute définition) ---------- */
 async function captureImage(scale = 2){
-  const w = vpEl.clientWidth, h = vpEl.clientHeight, k = Math.min(scale, 4096 / Math.max(w, h));
+  const w = vpEl.clientWidth, h = vpEl.clientHeight, k = Math.min(scale >= 5 ? 4 : scale, 4096 / Math.max(w, h));
   const pr = renderer.getPixelRatio(); renderer.setPixelRatio(k); renderer.setSize(w, h, false);
   $('#labels').hidden = true; markGroup.visible = previewGroup.visible = false;
-  renderer.render(scene, cam());
+  const hq = scale >= 5; if (hq) await renderHQ(w, h, k); else renderFrame();
   const blob = await new Promise(res => renderer.domElement.toBlob(res, 'image/png'));
+  if (hq) endHQ();
   renderer.setPixelRatio(pr); renderer.setSize(w, h, false); $('#labels').hidden = false; markGroup.visible = previewGroup.visible = true; dirty = true;
   return blob;
 }

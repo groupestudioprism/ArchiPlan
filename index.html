@@ -478,6 +478,9 @@ body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .
 .cp-tip b{font-weight:700}.cp-tip>b{font-size:12px;margin-bottom:2px}.cp-tip .bad{color:#C0392B}
 .ed-body.cp.focus{grid-template-columns:minmax(300px,0.7fr) minmax(0,1.6fr)}
 .cp-fbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}.cp-kpi{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--mut)}.cp-kpi b{color:var(--ink)}.cp-kpi .bad{color:#C0392B;font-weight:600}.cp-kpi .ok{color:#1E8E4E;font-weight:600}
+.patlib{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto;padding:2px}.patg em{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.04em;margin:2px 0 4px}
+.patgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+.pat{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:3px 3px 4px;display:flex;flex-direction:column;gap:3px;cursor:pointer;color:var(--ink)}.pat img{width:100%;aspect-ratio:1;border-radius:5px;object-fit:cover;background:var(--line)}.pat span{font-size:10px;line-height:1.15}.pat.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
 /* intro : le symbole se dessine comme un plan (balayage de bas en haut), puis ARCHIPLAN est tracé de gauche à droite, puis la signature */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;transition:opacity .55s ease,visibility .55s}
 #splash.done{opacity:0;visibility:hidden}
@@ -2423,6 +2426,12 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+import { SSAARenderPass } from 'three/addons/postprocessing/SSAARenderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 const APP_VERSION = '0.7';
 
 /* ==== 01-util.js ==== */
@@ -3826,7 +3835,7 @@ function paint(id){
   tex.name = 'archiplan-' + id;
   return tex;
 }
-const texFor = id => texCache[id] ??= paint(id);
+const texFor = id => texCache[id] ??= (texForV2(id) || paint(id));
 
 /* ---------- matériaux selon le style ---------- */
 let matCache = {};
@@ -3859,7 +3868,8 @@ function matFor(id, selected, light = 0){
   }
   else {
     const textured = st === 'textured' || st === 'realistic';
-    M = new THREE.MeshStandardMaterial({color:textured && m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:textured && m.tex && m.tex !== 'glass' ? texFor(id) : null,
+    const tx = textured && m.tex && m.tex !== 'glass' ? texFor(id) : null, bm = tx ? bumpFor(id) : null;
+    M = new THREE.MeshStandardMaterial({color:tx ? 0xffffff : m.color, map:tx, bumpMap:bm, bumpScale:bm ? (st === 'realistic' ? 1.4 : 0.8) : 1,
       roughness:m.rough ?? .9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1, depthWrite:!transp,
       envMapIntensity:st === 'realistic' ? 0.6 : 0.35});
   }
@@ -4049,7 +4059,7 @@ function camPreset(k){
 function resize(){
   const w = vpEl.clientWidth, h = vpEl.clientHeight; if (!w || !h) return;
   renderer.setSize(w, h, false);
-  persp.aspect = w / h; persp.updateProjectionMatrix();
+  persp.aspect = w / h; persp.updateProjectionMatrix(); if (typeof fxResize === 'function') fxResize(w, h);
   { const a = w / h, hh = (orthoS.top - orthoS.bottom) / 2 || 10; Object.assign(orthoS, {left:-hh * a, right:hh * a}); orthoS.updateProjectionMatrix(); }
   const a = w / h; Object.assign(ortho, {left:-10 * a, right:10 * a, top:10, bottom:-10}); ortho.updateProjectionMatrix();
   dirty = true;
@@ -4092,13 +4102,182 @@ function updateLabels(){ for (const l of labels){ const [x, y, z] = toScreen(l.p
 
 /* ---------- capture d'image (rendu haute définition) ---------- */
 async function captureImage(scale = 2){
-  const w = vpEl.clientWidth, h = vpEl.clientHeight, k = Math.min(scale, 4096 / Math.max(w, h));
+  const w = vpEl.clientWidth, h = vpEl.clientHeight, k = Math.min(scale >= 5 ? 4 : scale, 4096 / Math.max(w, h));
   const pr = renderer.getPixelRatio(); renderer.setPixelRatio(k); renderer.setSize(w, h, false);
   $('#labels').hidden = true; markGroup.visible = previewGroup.visible = false;
-  renderer.render(scene, cam());
+  const hq = scale >= 5; if (hq) await renderHQ(w, h, k); else renderFrame();
   const blob = await new Promise(res => renderer.domElement.toBlob(res, 'image/png'));
+  if (hq) endHQ();
   renderer.setPixelRatio(pr); renderer.setSize(w, h, false); $('#labels').hidden = false; markGroup.visible = previewGroup.visible = true; dirty = true;
   return blob;
+}
+
+/* ==== 41-textures.js ==== */
+/* ============ Textures procédurales v2 : 512 px, bruit fractal, relief (bump), bibliothèque de motifs ============
+   Chaque motif dessine une tuile carrée répétée ; `sz` = taille réelle de la tuile en mètres. Le relief (bumpMap) est tiré de
+   la luminance de la tuile : joints creux, veinage, granulats. Les motifs de la v1 (40-scene.js) restent disponibles. */
+const TEX_LIB = {
+  // maçonnerie et béton
+  brick:{nom:'Brique de parement', grp:'Maçonnerie', sz:0.5}, brickbig:{nom:'Brique alvéolaire', grp:'Maçonnerie', sz:1}, block:{nom:'Bloc béton', grp:'Maçonnerie', sz:1},
+  stone:{nom:'Pierre appareillée', grp:'Maçonnerie', sz:1.2}, rubble:{nom:'Moellons', grp:'Maçonnerie', sz:1.2}, concrete:{nom:'Béton brut', grp:'Maçonnerie', sz:2},
+  concreteBoard:{nom:'Béton banché (planches)', grp:'Maçonnerie', sz:1.2}, polished:{nom:'Béton ciré / résine', grp:'Maçonnerie', sz:2}, aac:{nom:'Béton cellulaire', grp:'Maçonnerie', sz:1.25},
+  // enduits
+  plaster:{nom:'Enduit lisse / plâtre', grp:'Enduits', sz:2}, render:{nom:'Enduit gratté', grp:'Enduits', sz:1}, roughcast:{nom:'Crépi', grp:'Enduits', sz:0.6},
+  // bois
+  wood:{nom:'Bois massif', grp:'Bois', sz:1}, woodpanel:{nom:'Panneau bois (CLT)', grp:'Bois', sz:1.2}, cladding:{nom:'Bardage horizontal', grp:'Bois', sz:0.6}, cladV:{nom:'Bardage vertical', grp:'Bois', sz:0.6},
+  parquet:{nom:'Parquet à lames', grp:'Bois', sz:1}, herringbone:{nom:'Parquet point de Hongrie', grp:'Bois', sz:0.8}, deck:{nom:'Lames de terrasse', grp:'Bois', sz:0.75}, osb:{nom:'OSB', grp:'Bois', sz:1}, cork:{nom:'Liège', grp:'Bois', sz:0.5},
+  // sols
+  tile:{nom:'Carrelage 50 × 50', grp:'Sols', sz:1}, tile60:{nom:'Grès cérame 60 × 60', grp:'Sols', sz:1.2}, tile20:{nom:'Faïence 20 × 20', grp:'Sols', sz:0.4}, marble:{nom:'Marbre', grp:'Sols', sz:1.6},
+  terrazzo:{nom:'Terrazzo', grp:'Sols', sz:0.8}, flagstone:{nom:'Dallage pierre', grp:'Sols', sz:1.6}, pavers:{nom:'Pavés', grp:'Sols', sz:0.6}, gravel:{nom:'Gravier', grp:'Sols', sz:0.8}, sand:{nom:'Sable', grp:'Sols', sz:1},
+  grass:{nom:'Pelouse / végétal', grp:'Sols', sz:1}, earth:{nom:'Terre', grp:'Sols', sz:1.5}, fabric:{nom:'Moquette / textile', grp:'Sols', sz:0.5},
+  // couverture et métal
+  rooftile:{nom:'Tuiles', grp:'Couverture', sz:1}, slate:{nom:'Ardoises', grp:'Couverture', sz:0.8}, zinc:{nom:'Zinc joint debout', grp:'Couverture', sz:1.3}, ribbed:{nom:'Bac acier', grp:'Couverture', sz:1}, membrane:{nom:'Membrane', grp:'Couverture', sz:1},
+  metal:{nom:'Métal brossé', grp:'Métal et verre', sz:1}, glass:{nom:'Verre', grp:'Métal et verre', sz:1}, water:{nom:'Eau', grp:'Métal et verre', sz:2},
+  // isolants
+  insul:{nom:'Isolant fibreux', grp:'Isolants', sz:0.6}, insulboard:{nom:'Isolant en panneau', grp:'Isolants', sz:1.2}, plain:{nom:'Uni', grp:'Isolants', sz:2},
+};
+// matériaux de base dont le motif v1 était approximatif
+Object.assign(MATS.zinc ?? {}, {tex:'zinc'}); Object.assign(MATS.betonCire ?? {}, {tex:'polished'}); Object.assign(MATS.resine ?? {}, {tex:'polished'});
+Object.assign(MATS.enduit ?? {}, {tex:'render'}); Object.assign(MATS.enduitChaux ?? {}, {tex:'render'}); Object.assign(MATS.faience ?? {}, {tex:'tile20'}); Object.assign(MATS.carrelage ?? {}, {tex:'tile60'});
+Object.assign(MATS.pierreSol ?? {}, {tex:'flagstone'}); Object.assign(MATS.moellon ?? {}, {tex:'rubble'}); Object.assign(MATS.eau ?? {}, {tex:'water'}); Object.assign(MATS.liege ?? {}, {tex:'cork'});
+Object.assign(MATS.betCell ?? {}, {tex:'aac'}); Object.assign(MATS.chape ?? {}, {tex:'concrete'}); Object.assign(MATS.pvcSol ?? {}, {tex:'parquet'}); Object.assign(MATS.terreVeg ?? {}, {tex:'grass'}); Object.assign(MATS.sol ?? {}, {tex:'earth'});
+
+/* bruit de valeur fractal (périodique sur la tuile) */
+function fbmField(S, R, oct = 5, base = 4){
+  const out = new Float32Array(S * S);
+  let amp = 1, tot = 0;
+  for (let o = 0; o < oct; o++){
+    const n = base << o, gr = new Float32Array(n * n); for (let i = 0; i < n * n; i++) gr[i] = R();
+    const at = (x, y) => gr[((y % n + n) % n) * n + ((x % n + n) % n)], sm = t => t * t * (3 - 2 * t);
+    for (let y = 0; y < S; y++){ const fy = y / S * n, y0 = Math.floor(fy), ty = sm(fy - y0);
+      for (let x = 0; x < S; x++){ const fx = x / S * n, x0 = Math.floor(fx), tx = sm(fx - x0);
+        const v = (at(x0, y0) * (1 - tx) + at(x0 + 1, y0) * tx) * (1 - ty) + (at(x0, y0 + 1) * (1 - tx) + at(x0 + 1, y0 + 1) * tx) * ty;
+        out[y * S + x] += v * amp; } }
+    tot += amp; amp *= 0.5;
+  }
+  for (let i = 0; i < out.length; i++) out[i] /= tot;
+  return out;
+}
+function tintField(g, S, base, field, amt, fn = v => v){
+  const c = new THREE.Color(base), id = g.getImageData(0, 0, S, S), d = id.data;
+  for (let i = 0; i < S * S; i++){ const k = 1 + (fn(field[i]) - 0.5) * amt; d[i * 4] = clamp(d[i * 4] * k, 0, 255); d[i * 4 + 1] = clamp(d[i * 4 + 1] * k, 0, 255); d[i * 4 + 2] = clamp(d[i * 4 + 2] * k, 0, 255); }
+  g.putImageData(id, 0, 0); return c;
+}
+const TEXV2 = new Set(['render', 'roughcast', 'polished', 'concreteBoard', 'aac', 'cladV', 'herringbone', 'deck', 'cork', 'tile60', 'tile20', 'marble', 'terrazzo', 'flagstone', 'pavers', 'sand', 'rubble', 'zinc', 'water', 'wood', 'concrete', 'plaster', 'grass', 'brick', 'stone']);
+function paintV2(id){
+  const m = mat(id), t = m.tex || 'plain'; if (!TEXV2.has(t)) return null;
+  const S = 512, cv = document.createElement('canvas'); cv.width = cv.height = S; const g = cv.getContext('2d'), R = rng([...id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11));
+  const base = m.color; g.fillStyle = base; g.fillRect(0, 0, S, S);
+  const joint = (c, w = 3) => { g.fillStyle = c; return w; };
+  if (t === 'plaster' || t === 'render' || t === 'roughcast' || t === 'concrete' || t === 'polished' || t === 'sand' || t === 'aac'){
+    const f = fbmField(S, R, t === 'polished' ? 4 : 6, t === 'polished' ? 2 : t === 'render' || t === 'roughcast' || t === 'sand' ? 16 : 4);
+    tintField(g, S, base, f, t === 'polished' ? 0.28 : t === 'concrete' ? 0.22 : t === 'roughcast' ? 0.34 : t === 'sand' ? 0.3 : 0.1);
+    if (t === 'concrete' || t === 'aac'){ for (let i = 0; i < (t === 'aac' ? 900 : 60); i++){ g.fillStyle = shade(base, -0.18 - R() * 0.1); g.globalAlpha = 0.6; g.beginPath(); g.arc(R() * S, R() * S, t === 'aac' ? 0.6 + R() * 1.6 : 1 + R() * 2.2, 0, 7); g.fill(); } g.globalAlpha = 1; }
+    if (t === 'aac'){ g.fillStyle = shade(base, -0.12); g.fillRect(0, S / 2 - 1, S, 2); g.fillRect(0, 0, S, 2); g.fillRect(S * 0.3, 0, 2, S / 2); g.fillRect(S * 0.8, S / 2, 2, S / 2); }
+    if (t === 'polished') for (let i = 0; i < 26; i++){ g.strokeStyle = shade(base, (R() - 0.5) * 0.12); g.globalAlpha = 0.35; g.lineWidth = 6 + R() * 10; g.beginPath(); const x = R() * S, y = R() * S, r = 40 + R() * 80; g.arc(x, y, r, R() * 6, R() * 6 + 1.2); g.stroke(); }
+    g.globalAlpha = 1;
+  } else if (t === 'concreteBoard'){
+    const n = 8, h = S / n; for (let i = 0; i < n; i++){ const f = fbmField(S, R, 3, 4); g.fillStyle = shade(base, (R() - 0.5) * 0.08); g.fillRect(0, i * h, S, h);
+      for (let k = 0; k < 10; k++){ g.strokeStyle = shade(base, (R() - 0.5) * 0.1); g.globalAlpha = 0.5; g.lineWidth = 1; g.beginPath(); const y = i * h + R() * h; g.moveTo(0, y); g.bezierCurveTo(S / 3, y + (R() - 0.5) * 5, S * 2 / 3, y + (R() - 0.5) * 5, S, y); g.stroke(); }
+      g.globalAlpha = 1; g.fillStyle = shade(base, -0.14); g.fillRect(0, i * h, S, 1.5); }
+    for (const [x, y] of [[0.25, 0.5], [0.75, 0.5]]){ g.fillStyle = shade(base, -0.3); g.beginPath(); g.arc(x * S, y * S, 5, 0, 7); g.fill(); }
+  } else if (t === 'wood' || t === 'cladV' || t === 'deck'){
+    const vert = t === 'cladV', planks = t === 'wood' ? 3 : t === 'deck' ? 4 : 5, ph = S / planks;
+    for (let p = 0; p < planks; p++){
+      const col = shade(base, (R() - 0.5) * 0.12), f = fbmField(64, R, 3, 4);
+      g.save(); if (vert){ g.translate(S, 0); g.rotate(Math.PI / 2); }
+      g.fillStyle = col; g.fillRect(0, p * ph, S, ph);
+      const rings = 10 + Math.floor(R() * 10), cx = R() * S, cy = p * ph + (R() - 0.5) * ph * 3;
+      for (let k = 0; k < rings * 3; k++){ g.strokeStyle = shade(col, (R() - 0.5) * 0.2 - 0.04); g.globalAlpha = 0.45; g.lineWidth = 0.8 + R() * 1.6;
+        g.beginPath(); const y = p * ph + R() * ph; g.moveTo(0, y); for (let x = 0; x <= S; x += 32){ const w = (f[(Math.floor(x / 8) % 64) + (Math.floor((y - p * ph) / ph * 63)) * 64] - 0.5) * 10; g.lineTo(x, y + w + Math.sin((x - cx) / 90) * 3); } g.stroke(); }
+      if (R() < 0.5){ g.globalAlpha = 0.5; g.fillStyle = shade(col, -0.25); g.beginPath(); g.ellipse(R() * S, p * ph + ph / 2, 7, 4, 0, 0, 7); g.fill(); }
+      g.globalAlpha = 1; g.fillStyle = shade(base, -0.35); g.fillRect(0, p * ph, S, t === 'deck' ? 6 : vert ? 4 : 2);
+      if (t === 'deck') for (let k = 0; k < 6; k++){ g.fillStyle = shade(col, -0.1); g.fillRect(0, p * ph + 10 + k * (ph - 16) / 6, S, 1); }
+      g.restore();
+    }
+  } else if (t === 'herringbone'){
+    g.fillStyle = shade(base, -0.3); g.fillRect(0, 0, S, S); const L = S / 2, W = S / 8;
+    for (let row = -2; row < 6; row++) for (let col = -2; col < 6; col++){
+      const x0 = col * W * 2, y0 = row * W * 2 + col * W * 0;
+      for (const rot of [0, 1]){ g.save(); g.translate(x0 + (rot ? W : 0), y0 + (rot ? 0 : W)); g.rotate(rot ? Math.PI / 4 : -Math.PI / 4); g.fillStyle = shade(base, (R() - 0.5) * 0.14); g.fillRect(1, 1, L * 0.7 - 2, W - 2);
+        for (let k = 0; k < 6; k++){ g.strokeStyle = shade(base, (R() - 0.5) * 0.2); g.globalAlpha = 0.4; g.beginPath(); const y = R() * W; g.moveTo(2, y); g.lineTo(L * 0.7 - 2, y + (R() - 0.5) * 2); g.stroke(); } g.globalAlpha = 1; g.restore(); }
+    }
+  } else if (t === 'cork'){ for (let i = 0; i < 5000; i++){ g.fillStyle = shade(base, (R() - 0.5) * 0.35); g.beginPath(); g.arc(R() * S, R() * S, 1 + R() * 3, 0, 7); g.fill(); } }
+  else if (t === 'tile60' || t === 'tile20'){
+    const n = t === 'tile60' ? 2 : 2, j = t === 'tile60' ? 3 : 4, s = S / n; g.fillStyle = shade(base, t === 'tile20' ? -0.06 : -0.14); g.fillRect(0, 0, S, S);
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++){ g.fillStyle = shade(base, (R() - 0.5) * (t === 'tile60' ? 0.05 : 0.03)); g.fillRect(c * s + j / 2, r * s + j / 2, s - j, s - j);
+      if (t === 'tile60'){ const f = fbmField(128, R, 4, 2); g.globalAlpha = 0.18; for (let k = 0; k < 140; k++){ const x = R() * (s - j), y = R() * (s - j); g.fillStyle = shade(base, (f[Math.floor(k * 117) % f.length] - 0.5) * 0.3); g.fillRect(c * s + x, r * s + y, 18, 18); } g.globalAlpha = 1; }
+      else { const gr = g.createLinearGradient(c * s, r * s, c * s + s, r * s + s); gr.addColorStop(0, 'rgba(255,255,255,0.18)'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(c * s + j / 2, r * s + j / 2, s - j, s - j); } }
+  } else if (t === 'marble'){
+    const f = fbmField(S, R, 6, 3), id2 = g.getImageData(0, 0, S, S), d = id2.data, c = new THREE.Color(base);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){ const i = y * S + x, v = Math.abs(Math.sin((x + y) / S * Math.PI * 3 + f[i] * 9)); const k = v < 0.08 ? 0.72 : 1 - (1 - v) * 0.06; d[i * 4] = c.r * 255 * k; d[i * 4 + 1] = c.g * 255 * k; d[i * 4 + 2] = c.b * 255 * k; }
+    g.putImageData(id2, 0, 0); g.fillStyle = shade(base, -0.2); g.fillRect(0, 0, S, 2); g.fillRect(0, 0, 2, S);
+  } else if (t === 'terrazzo'){ const f = fbmField(S, R, 3, 4); tintField(g, S, base, f, 0.08); const cols = ['#8A7F72', '#C9B79C', '#5D6066', '#E8E2D6', '#A35D42'];
+    for (let i = 0; i < 1300; i++){ g.fillStyle = cols[Math.floor(R() * cols.length)]; g.beginPath(); const x = R() * S, y = R() * S, r = 1.5 + R() * 5; g.moveTo(x + r, y); for (let k = 1; k < 6; k++) g.lineTo(x + Math.cos(k * 1.26) * r * (0.6 + R() * 0.6), y + Math.sin(k * 1.26) * r * (0.6 + R() * 0.6)); g.fill(); } }
+  else if (t === 'flagstone' || t === 'pavers' || t === 'stone' || t === 'rubble' || t === 'brick'){
+    g.fillStyle = t === 'brick' ? '#CFC7B6' : shade(base, -0.24); g.fillRect(0, 0, S, S); const f = fbmField(S, R, 5, 8);
+    const block = (x, y, w, h, r = 3) => { g.fillStyle = shade(base, (R() - 0.5) * (t === 'brick' ? 0.16 : 0.14)); g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
+    if (t === 'brick'){ const rows = 8, rh = S / rows, cw = S / 2; for (let r = 0; r < rows; r++) for (let c = -1; c < 3; c++) block(c * cw + (r % 2 ? cw / 2 : 0) + 3, r * rh + 3, cw - 6, rh - 6, 2); }
+    else if (t === 'pavers'){ const n = 4, s = S / n; for (let r = 0; r < n; r++) for (let c = 0; c < n * 2; c++) block(c * s / 2 + (r % 2 ? s / 4 : 0) + 3, r * s + 3, s / 2 - 6, s - 6, 4); }
+    else if (t === 'rubble'){ for (let i = 0; i < 70; i++){ const x = R() * S, y = R() * S, rx = 18 + R() * 30, ry = 12 + R() * 20; g.fillStyle = shade(base, (R() - 0.5) * 0.2); g.beginPath(); g.ellipse(x, y, rx, ry, R() * 3, 0, 7); g.fill(); for (const [dx, dy] of [[S, 0], [-S, 0], [0, S], [0, -S]]){ g.beginPath(); g.ellipse(x + dx, y + dy, rx, ry, 0, 0, 7); g.fill(); } } }
+    else { const rows = t === 'stone' ? 4 : 3, rh = S / rows; for (let r = 0; r < rows; r++){ let x = -R() * 80; while (x < S){ const w = (t === 'stone' ? 90 : 110) + R() * 120; block(x + 3, r * rh + 3, w - 6, rh - 6, t === 'flagstone' ? 5 : 2); x += w; } } }
+    tintField(g, S, base, f, 0.16);
+  } else if (t === 'zinc'){
+    const f = fbmField(S, R, 4, 4); tintField(g, S, base, f, 0.08); const n = 3, w = S / n;
+    for (let i = 0; i < n; i++){ const x = i * w; const gr = g.createLinearGradient(x - 8, 0, x + 8, 0); gr.addColorStop(0, shade(base, -0.12)); gr.addColorStop(0.45, shade(base, 0.22)); gr.addColorStop(0.55, shade(base, -0.05)); gr.addColorStop(1, shade(base, -0.16)); g.fillStyle = gr; g.fillRect(x - 8, 0, 16, S); }
+  } else if (t === 'water'){ const f = fbmField(S, R, 5, 4); tintField(g, S, base, f, 0.35, v => Math.abs(Math.sin(v * 12))); }
+  else if (t === 'grass'){ const f = fbmField(S, R, 5, 8); tintField(g, S, base, f, 0.3); for (let i = 0; i < 9000; i++){ g.strokeStyle = shade(base, (R() - 0.4) * 0.35); g.globalAlpha = 0.5; g.lineWidth = 1; g.beginPath(); const x = R() * S, y = R() * S; g.moveTo(x, y); g.lineTo(x + (R() - 0.5) * 3, y - 3 - R() * 5); g.stroke(); } g.globalAlpha = 1; }
+  return cv;
+}
+const bumpCache = {};
+function texFromCanvas(cv, id, color){
+  const m = mat(id), info = TEX_LIB[m.tex] || {}, sz = info.sz || 1, tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace; tex.anisotropy = 8;
+  tex.repeat.set(1 / (m.tx || sz), 1 / (m.ty || sz)); tex.name = 'archiplan-' + id + (color ? '' : '-relief'); return tex;
+}
+function texForV2(id){ const cv = paintV2(id); if (!cv) return null; bumpCache[id] = texFromCanvas(cv, id, false); return texFromCanvas(cv, id, true); }
+const bumpFor = id => { texFor(id); return bumpCache[id] || null; };
+/* aperçu d'un motif pour la bibliothèque de textures (couleur au choix) */
+function patternPreview(tex, color){
+  const tmp = '__pat_' + tex; MATS[tmp] = {nom:'', cat:'', color, tex, rho:0, lambda:1}; const cv = paintV2(tmp) || paint(tmp).image; delete MATS[tmp];
+  const c2 = document.createElement('canvas'); c2.width = c2.height = 96; c2.getContext('2d').drawImage(cv, 0, 0, 96, 96); return c2.toDataURL('image/jpeg', 0.8);
+}
+
+/* ==== 42-quality.js ==== */
+/* ============ Qualité du rendu réaliste : occlusion ambiante (GTAO), anticrénelage (SMAA / SSAA), ombres fines ============
+   À l'écran : chaîne de post-traitement quand le style Réaliste est actif. À l'export « haute qualité » : 4K, 16 passes de
+   suréchantillonnage, ombres 8192 px, occlusion ambiante, puis retour aux réglages de l'écran. */
+let fxq = null;
+const fxOn = () => DISPLAY.style === 'realistic' && (view === '3d' || view === 'render') && DISPLAY.fx !== false;
+function fxBuild(){
+  const w = vpEl.clientWidth || 800, h = vpEl.clientHeight || 600, c = new EffectComposer(renderer);
+  const rp = new RenderPass(scene, persp), ao = new GTAOPass(scene, persp, w, h); ao.updateGtaoMaterial({radius:0.6, distanceExponent:1.5, thickness:1.5, scale:1.1, samples:12}); ao.blendIntensity = 0.85;
+  const aa = new SMAAPass(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()), out = new OutputPass();
+  c.addPass(rp); c.addPass(ao); c.addPass(aa); c.addPass(out);
+  return fxq = {c, rp, ao, aa, out};
+}
+function fxResize(w, h){ if (!fxq) return; fxq.c.setPixelRatio(renderer.getPixelRatio()); fxq.c.setSize(w, h); fxq.ao.setSize(w, h); }
+function renderFrame(){
+  if (fxOn()){ try { (fxq || fxBuild()).c.render(); return; } catch(e){ console.warn('[ARCHIPLAN] post-traitement indisponible', e); DISPLAY.fx = false; } }
+  renderer.render(scene, cam());
+}
+let hqPrev = null;
+async function renderHQ(w, h, k){
+  const real = DISPLAY.style === 'realistic';
+  hqPrev = {style:DISPLAY.style, shadow:sun.shadow.mapSize.x};
+  if (!real){ DISPLAY.style = 'realistic'; resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }
+  if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } sun.shadow.mapSize.set(8192, 8192); sun.shadow.needsUpdate = true;
+  const c = new EffectComposer(renderer), ss = new SSAARenderPass(scene, persp, 0x000000, 0); ss.sampleLevel = 4; ss.unbiased = true;
+  const ao = new GTAOPass(scene, persp, w * k, h * k); ao.updateGtaoMaterial({radius:0.6, distanceExponent:1.5, thickness:1.5, scale:1.15, samples:24}); ao.blendIntensity = 0.9;
+  c.setPixelRatio(k); c.setSize(w, h); c.addPass(ss); c.addPass(ao); c.addPass(new OutputPass());
+  await new Promise(r => requestAnimationFrame(r));
+  c.render(); hqPrev.c = c;
+}
+function endHQ(){
+  if (!hqPrev) return; const p = hqPrev; hqPrev = null; p.c?.dispose?.();
+  if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } sun.shadow.mapSize.set(p.shadow, p.shadow);
+  if (p.style !== DISPLAY.style){ DISPLAY.style = p.style; resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }
+  dirty = true;
 }
 
 /* ==== 50-input.js ==== */
@@ -4922,6 +5101,7 @@ function closeEDlg(){ if (state?.lib?.mats) delete state.lib.mats.__tmp; const d
 edlg().addEventListener('click', e => { if (e.target === edlg()) closeEDlg(); });
 function saveUserLib(){ try { window.APLib?.save(JSON.parse(JSON.stringify(USER_LIB))); } catch(e){} }
 const PATTERNS = {plain:'Uni', concrete:'Béton', plaster:'Enduit / plâtre', brick:'Brique', brickbig:'Bloc alvéolaire', block:'Bloc / parpaing', stone:'Pierre', wood:'Bois', woodpanel:'Panneau bois', cladding:'Bardage', parquet:'Parquet', osb:'OSB', insul:'Isolant fibreux', insulboard:'Isolant en panneau', metal:'Métal', ribbed:'Bac nervuré', tile:'Carrelage', rooftile:'Tuiles', slate:'Ardoises', membrane:'Membrane', gravel:'Gravier', grass:'Végétal', earth:'Terre', fabric:'Textile', glass:'Verre'};
+Object.entries(TEX_LIB).forEach(([k, v]) => { PATTERNS[k] ??= v.nom; });
 
 /* ---------- compositions ---------- */
 function openComposer({id, apply}){
@@ -5061,13 +5241,16 @@ function openMatEditor(id){
       ${f('gwp', 'Carbone (A1-A3)', 'kg CO₂e/kg')}${f('R', 'Résistance fixe (lame d\'air)', 'm²·K/W', '0.01')}
       <label class="f"><span>Couleur</span><span class="in"><input id="mtColor" type="color" value="${esc(base.color)}"${ro ? ' disabled' : ''}></span></label>
       <label class="f"><span>Motif de rendu</span><span class="in"><select id="mtTex"${ro ? ' disabled' : ''}>${Object.entries(PATTERNS).map(([k, n]) => `<option value="${k}"${k === base.tex ? ' selected' : ''}>${n}</option>`).join('')}</select></span></label>
+      <div class="f wide"><span>Bibliothèque de textures</span><div class="patlib" id="mtPats">${[...new Set(Object.values(TEX_LIB).map(v => v.grp))].map(gp => `<div class="patg"><em>${esc(gp)}</em><div class="patgrid">${Object.entries(TEX_LIB).filter(([, v]) => v.grp === gp).map(([k, v]) => `<button type="button" class="pat${k === base.tex ? ' on' : ''}" data-pat="${k}" title="${esc(v.nom)}"${ro ? ' disabled' : ''}><img alt="" data-patimg="${k}"><span>${esc(v.nom)}</span></button>`).join('')}</div></div>`).join('')}</div></div>
     </div><canvas id="mtPrev" width="256" height="96" class="mtprev"></canvas>
     <p class="hint">Laissez « Résistance fixe » vide pour un matériau courant : la résistance est alors e / λ. Pour une lame d'air, indiquez sa résistance (0,18 m²·K/W pour une lame non ventilée).</p></div>
     <footer class="ed-f">${ro ? '<button class="btn primary" id="mtDup">Dupliquer pour le modifier</button>' : `${owner === 'perso' ? '<button class="btn danger" id="mtDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button><button class="btn primary" id="mtSave">Enregistrer dans ma bibliothèque</button>`}</footer>`;
   const d = openEDlg(html);
-  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const t = paint(tmpId); delete MATS[tmpId];
-    const pat = g.createPattern(t.image, 'repeat'); g.fillStyle = pat; g.fillRect(0, 0, cv.width, cv.height); t.dispose(); };
-  prev(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtTex').onchange = prev;
+  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const img = paintV2(tmpId) || paint(tmpId).image; delete MATS[tmpId];
+    g.clearRect(0, 0, cv.width, cv.height); const k = cv.height / img.height * 1.4; for (let x = 0; x < cv.width; x += img.width * k) g.drawImage(img, x, 0, img.width * k, img.height * k); };
+  const pats = () => { const c = d.querySelector('#mtColor').value; d.querySelectorAll('[data-patimg]').forEach((im, i) => setTimeout(() => { im.src = patternPreview(im.dataset.patimg, c); }, i * 8)); };
+  prev(); pats(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtColor').onchange = pats; d.querySelector('#mtTex').onchange = () => { d.querySelectorAll('[data-pat]').forEach(b => b.classList.toggle('on', b.dataset.pat === d.querySelector('#mtTex').value)); prev(); };
+  d.querySelectorAll('[data-pat]').forEach(b => b.onclick = () => { const sel = d.querySelector('#mtTex'); if (![...sel.options].some(o => o.value === b.dataset.pat)) sel.add(new Option(TEX_LIB[b.dataset.pat].nom, b.dataset.pat)); sel.value = b.dataset.pat; sel.onchange(); });
   const dup = d.querySelector('#mtDup'); if (dup) dup.onclick = () => { const nid = 'M-' + uid8(); USER_LIB.mats[nid] = {...base, nom:base.nom + ' (perso)'}; saveUserLib(); closeEDlg(); openMatEditor(nid); renderPanel(); };
   const del = d.querySelector('#mtDel'); if (del) del.onclick = () => { delete USER_LIB.mats[id]; saveUserLib(); closeEDlg(); resetMats(); delete texCache[id]; rebuild(); toast('Matériau retiré de ma bibliothèque (les projets qui l\'utilisent en gardent une copie)'); };
   const sv = d.querySelector('#mtSave'); if (sv) sv.onclick = () => {
@@ -5254,14 +5437,15 @@ function renderRenderPanel(){
       <label class="ap-check2"><input type="checkbox" data-rset="shadows"${DISPLAY.shadows ? ' checked' : ''}> Ombres portées</label>
       <label class="ap-check2"><input type="checkbox" data-rset="edges"${DISPLAY.edges ? ' checked' : ''}> Arêtes (traits)</label></div>
     <div class="grp"><h3>Points de vue</h3><div class="chips">${[['iso', 'Perspective'], ['front', 'Face'], ['right', 'Droite'], ['back', 'Arrière'], ['left', 'Gauche'], ['top', 'Dessus']].map(([k, n]) => `<button class="chip" data-act="cam" data-k="${k}">${n}</button>`).join('')}</div></div>
-    <div class="grp"><h3>Image</h3><div class="btns"><button class="btn" data-act="png" data-k="2">Capture HD (×2)</button><button class="btn primary" data-act="png" data-k="4">Capture 4K</button></div>
-      <p class="hint">L'image reprend exactement la vue et le style à l'écran (PNG). Réservé aux comptes avec licence ARCHIPLAN.</p></div>
+    <div class="grp"><h3>Image</h3><div class="btns"><button class="btn" data-act="png" data-k="2">Capture HD (×2)</button><button class="btn" data-act="png" data-k="4">Capture 4K</button><button class="btn primary" data-act="png" data-k="5">Rendu photo haute qualité</button></div>
+      <p class="hint">Captures : la vue et le style à l'écran (PNG). « Rendu photo haute qualité » : 4K, style Réaliste, lissage 16 passes, ombres fines et occlusion ambiante (quelques secondes). Réservé aux comptes avec licence ARCHIPLAN.</p></div>
+    <div class="grp"><h3>Qualité à l'écran (Réaliste)</h3><label class="ap-check2"><input type="checkbox" data-rset="fx"${DISPLAY.fx !== false ? ' checked' : ''}> Occlusion ambiante et anticrénelage</label></div>
     <div class="grp"><h3>Archi Vision</h3><div class="btns"><button class="btn primary" data-act="export-glb">Exporter pour Archi Vision (.glb)</button></div>
       <p class="hint">glTF binaire, mètres, axe Y vers le haut, matériaux PBR texturés, un nœud par niveau et par élément avec ses informations (type, composition, U, famille…).</p></div>`;
 }
 function onRenderInput(t, commit){
   const k = t.dataset.rset;
-  if (t.type === 'checkbox'){ DISPLAY[k] = t.checked; saveDisplay(); if (k === 'edges'){ resetMats(); rebuild({noPanel:true}); } applyThemeToScene(); return; }
+  if (t.type === 'checkbox'){ DISPLAY[k] = t.checked; saveDisplay(); if (k === 'fx'){ dirty = true; return; } if (k === 'edges'){ resetMats(); rebuild({noPanel:true}); } applyThemeToScene(); return; }
   const v = +t.value; DISPLAY[k] = v; const out = t.parentElement.querySelector('b'); if (out) out.textContent = k === 'exposure' ? nf(v, 2) : n0(v) + '°';
   if (k === 'exposure') renderer.toneMappingExposure = DISPLAY.style === 'realistic' ? v : 1; else positionSun();
   dirty = true; if (commit) saveDisplay();
@@ -6955,7 +7139,7 @@ function updateCompass(){
 function loop(){
   requestAnimationFrame(loop);
   const moved = ctl().update();
-  if (moved || dirty){ renderer.render(scene, cam()); updateLabels(); updateCompass(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
+  if (moved || dirty){ renderFrame(); updateLabels(); updateCompass(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
 }
 new MutationObserver(() => { resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 
