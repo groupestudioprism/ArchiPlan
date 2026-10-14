@@ -259,6 +259,7 @@ function rebuild(opts = {}){
     modelGroup.add(g);
   }
   applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
+  if (typeof buildTerrain === 'function') buildTerrain();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){

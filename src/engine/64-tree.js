@@ -72,7 +72,7 @@ function renderProjectTab(){
 
 /* ---------- menus ⋮ ---------- */
 function treeMenuItems(key){
-  if (key === 'P') return [{k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
+  if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, exposition au bruit, relief IGN'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
   if (/^L\d+$/.test(key)){ const li = +key.slice(1), on = hiddenLvls.has(li);
     return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
   if (key.includes('|')) return [{k:'selall', t:'Sélectionner toute la catégorie'}, {k:'chide', t:'Masquer la catégorie'}, {k:'cshow', t:'Afficher la catégorie'}, {k:'cframe', t:'Centrer la vue'}];
@@ -108,6 +108,7 @@ function runTreeAction(k, key){
   const el = key.startsWith('E') ? getEl(+key.slice(1)) : null, li = /^L\d+$/.test(key) ? +key.slice(1) : null;
   const re = () => { rebuild(); };
   switch (k){
+    case 'site': return openSiteDialog();
     case 'showall': hiddenIds.clear(); hiddenLvls.clear(); return re();
     case 'lvl-add': { pushHist(); const last = state.levels[state.levels.length - 1]; state.levels.push({n:`R+${state.levels.length}`, z:rnd((last?.z || 0) + 2.8)}); rebuild(); syncLevels(); return; }
     case 'fit': return fit();

@@ -30,6 +30,9 @@ On modifie `src/`, on lance `python3 tools/build.py`, on enregistre (commit) sur
 - **Compositeur de parois** : couches de l'extérieur vers l'intérieur ; U et R (EN ISO 6946), déphasage, amortissement et capacité intérieure (EN ISO 13786), indice acoustique Rw estimé (loi de masse, masse-ressort-masse), Sd et diagramme de Glaser (condensation, règle du facteur 5), masse et carbone. Calculs de pré-dimensionnement, indicatifs.
 - **Familles** façon Revit : paramètres, types, pièces en formules (`w/2`, `min()`, répétitions `n`, conditions `si`), ouverture dans le mur, familles imbriquées (assemblages).
 - **Rendus** : ombré, matériaux, réaliste (ciel, soleil réglable, ombres), croquis, filaire, rayons X ; captures HD et 4K.
+- **Métré · DQE** : articles rangés automatiquement par lots (01 Terrassements … 14 Aménagements extérieurs) selon le contenu de la maquette (couches des parois, éléments, menuiseries, équipements), prix unitaires indicatifs modifiables (enregistrés dans le projet), export Excel (.xlsx avec formules), PDF ou CSV avec options à cocher (lots, numérotation, quantités, unités, prix, sous-totaux, TVA/TTC, quantités par niveau, masses, carbone, tableau des matériaux, en-tête).
+- **Lieu du projet** : adresse (géocodage IGN), zone climatique H1a…H3 et altitude, exposition au bruit (DnT,A,tr visé), repères thermiques adaptés (classes A/B/C/D, R minimaux rénovation et aides), estimation de l'isolement des façades, terrain 3D (relief IGN RGE ALTI, plateforme sous le bâtiment), exporté dans le GLB.
+- **Clés de licence** : activation d'une clé Studio Prism depuis l'écran licence (même procédure que le site).
 - **Exports** (licence) : **GLB pour Archi Vision** (un groupe par niveau, matériaux PBR texturés, métadonnées), IFC4, métré CSV, image PNG, projet JSON, paquet ZIP.
 
 ## Comptes Studio Prism

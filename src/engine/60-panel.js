@@ -56,6 +56,7 @@ function renderProps(){
     const counts = {}; state.els.forEach(e => counts[e.kind] = (counts[e.kind] || 0) + 1);
     return `<div class="ph"><h2>${esc(state.name)}</h2>${state.isSample ? '<span class="tag">Exemple</span>' : ''}</div>
       <div class="fields"><label class="f wide"><span>Nom du projet</span><span class="in"><input id="f-pname" data-f="pname" type="text" value="${esc(state.name)}" style="font-family:var(--f-body)"></span></label></div>
+      <div class="grp"><h3>Lieu du projet</h3>${siteSummary()}<div class="btns tight"><button class="btn${state.site?.zone ? '' : ' primary'}" data-act="site">${state.site?.zone ? 'Modifier le lieu, le climat, le bruit…' : 'Définir le lieu du projet'}</button></div></div>
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -195,7 +196,7 @@ function renderPanel(){
   const body = $('#pbody'); const st = body.scrollTop;
   const tp = body.querySelector('.tree-pane'), pp = body.querySelector('.prop-pane'), tst = tp?.scrollTop, pst = pp?.scrollTop;
   body.classList.toggle('splitmode', activeTab === 'props');
-  body.innerHTML = activeTab === 'props' ? renderProjectTab() : activeTab === 'qty' ? renderQty() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
+  body.innerHTML = activeTab === 'props' ? renderProjectTab() : activeTab === 'qty' ? renderDqePanel() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
   body.scrollTop = st; if (tst != null){ const a = body.querySelector('.tree-pane'), b = body.querySelector('.prop-pane'); if (a) a.scrollTop = tst; if (b) b.scrollTop = pst; }
 }
 $('#pbody').addEventListener('input', e => {
@@ -254,6 +255,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'add-opening' && el){ libTab = 'fams'; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'insul' && el) openInsulAdjust(el.id);
+  else if (act === 'site') openSiteDialog();
   else if (act === 'fam-edit' && el) openFamEditor(el.fam, el.id);
   else if (act === 'fam-new') openFamEditor(null);
   else if (act === 'compo-new') openComposer({id:null});

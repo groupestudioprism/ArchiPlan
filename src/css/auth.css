@@ -107,3 +107,6 @@
 @media (max-width:380px){.ap-grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion: reduce){.ap-dots.shake,.ap-spin{animation:none}}
 /* bouton et menu du compte dans l'app */
+.ap-key{margin:4px 0 14px;border:1px solid #DDE5EA;border-radius:10px;padding:10px 12px}
+.ap-key summary{cursor:pointer;font-weight:600;font-size:14px;color:#071A45}
+.ap-key form{margin-top:10px}

@@ -89,7 +89,7 @@ fileMenu.addEventListener('click', e => {
   else if (act === 'open') $('#fileIn').click();
   else if (act === 'home') $('#homeBtn').click();
 });
-expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; doExport(b.dataset.act, +b.dataset.k || undefined); });
+expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } doExport(b.dataset.act, +b.dataset.k || undefined); });
 $('#fileIn').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return;
   const rd = new FileReader();
@@ -152,7 +152,7 @@ function renderViewMenu(){
   m.innerHTML = `<div class="lbl">Couleur du fond</div><div class="bgsw">${BG_PRESETS.map(([c, n]) => `<button type="button" class="bgs${c === cur ? ' on' : ''}" data-bg="${c}" title="${n}" style="background:${c || '#FFFFFF'}" aria-label="${n}"></button>`).join('')}
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
     <hr><div class="lbl">Afficher</div>
-    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }

@@ -2,7 +2,7 @@
 const fileBase = () => (state.name || 'projet').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'projet';
 let dlNS;
 async function getDl(){ if (dlNS === undefined){ try { dlNS = window.claude?.use ? await window.claude.use('downloads') : null; } catch(e){ dlNS = null; } } return dlNS; }
-const MIME = {csv:'text/csv', json:'application/json', glb:'model/gltf-binary', ifc:'application/x-step', zip:'application/zip', png:'image/png'};
+const MIME = {csv:'text/csv', json:'application/json', glb:'model/gltf-binary', ifc:'application/x-step', zip:'application/zip', png:'image/png', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', html:'text/html'};
 async function offer(filename, data){
   const dl = await getDl();
   if (dl){
@@ -153,6 +153,8 @@ function buildGLB(){
       g.userData = {archiplan:info};
       (lv[el.lvl] || root).add(g);
     }
+    const T = state.site?.terrain; if (T && DISPLAY.terrain !== false){ const vw = view; view = '3d'; buildTerrain(); view = vw; const tm = terrainGroup.children.find(o => o.isMesh); if (tm){ const t = new THREE.Mesh(tm.geometry.clone(), new THREE.MeshStandardMaterial({color:0x6F8A5A, roughness:1})); t.name = 'Terrain'; t.userData = {archiplan:{type:'terrain', taille:T.size, altitudeOrigine:T.alt0, source:'IGN RGE ALTI'}}; root.add(t); } buildTerrain(); }
+    if (state.site?.lat) root.userData.archiplan.lieu = {adresse:state.site.label || '', latitude:state.site.lat, longitude:state.site.lon, altitude:state.site.alt ?? null, zoneClimatique:state.site.zone || ''};
     new GLTFExporter().parse(root, r => { disposeGroup(root); res(new Uint8Array(r)); }, err => rej(err), {binary:true, maxTextureSize:1024, onlyVisible:true});
   });
 }
@@ -183,6 +185,7 @@ async function doExport(kind, arg){
   const base = fileBase();
   try {
     if (kind === 'csv') return offer(`${base}_metre.csv`, buildCSV());
+    if (kind === 'dqe'){ if (arg === 'pdf') return printDqe(); if (arg === 'csv') return offer(`${base}_DQE.csv`, dqeCSV()); return offer(`${base}_DQE.xlsx`, new Blob([dqeXLSX()], {type:MIME.xlsx})); }
     if (kind === 'json') return offer(`${base}.archiplan.json`, projectJSON());
     if (kind === 'ifc') return offer(`${base}.ifc`, buildIFC());
     if (kind === 'glb'){ toast('Préparation du modèle Archi Vision…'); return offer(`${base}_archivision.glb`, await buildGLB()); }
@@ -190,8 +193,8 @@ async function doExport(kind, arg){
     if (kind === 'pack'){
       toast('Préparation du paquet…');
       const glb = await buildGLB();
-      const readme = `ARCHIPLAN ${APP_VERSION} - ${state.name}\r\n\r\n${base}.glb : modèle 3D pour Archi Vision (glTF binaire, Y vers le haut, mètres, matériaux PBR texturés). Un nœud par niveau puis par élément ; les informations (type, composition, U, famille, paramètres) sont dans "extras".\r\n${base}.ifc : maquette BIM IFC4 (murs à couches, ouvertures, portes, fenêtres, dalles, poteaux, mobilier).\r\n${base}_metre.csv : métré par lot, par composition et par famille, avec carbone.\r\n${base}.archiplan.json : projet source, à rouvrir dans ARCHIPLAN.\r\n`;
-      return offer(`${base}_archivision.zip`, makeZip([{name:`${base}.glb`, data:glb}, {name:`${base}.ifc`, data:buildIFC()}, {name:`${base}_metre.csv`, data:buildCSV()}, {name:`${base}.archiplan.json`, data:projectJSON()}, {name:'LISEZMOI.txt', data:readme}]));
+      const readme = `ARCHIPLAN ${APP_VERSION} - ${state.name}\r\n\r\n${base}.glb : modèle 3D pour Archi Vision (glTF binaire, Y vers le haut, mètres, matériaux PBR texturés). Un nœud par niveau puis par élément ; les informations (type, composition, U, famille, paramètres) sont dans "extras".\r\n${base}.ifc : maquette BIM IFC4 (murs à couches, ouvertures, portes, fenêtres, dalles, poteaux, mobilier).\r\n${base}_metre.csv : métré par lot, par composition et par famille, avec carbone.\r\n${base}_DQE.xlsx : détail quantitatif estimatif par lots (corps d'état), prix indicatifs modifiables.\r\n${base}.archiplan.json : projet source, à rouvrir dans ARCHIPLAN.\r\n`;
+      return offer(`${base}_archivision.zip`, makeZip([{name:`${base}.glb`, data:glb}, {name:`${base}.ifc`, data:buildIFC()}, {name:`${base}_metre.csv`, data:buildCSV()}, {name:`${base}_DQE.xlsx`, data:new Uint8Array(await dqeXLSX().arrayBuffer())}, {name:`${base}.archiplan.json`, data:projectJSON()}, {name:'LISEZMOI.txt', data:readme}]));
     }
   } catch(e){ console.error(e); toast('L\'export a échoué. Réessayez dans un instant.'); }
 }

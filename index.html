@@ -419,6 +419,35 @@ details.help summary{cursor:pointer;font-weight:600;font-size:12.5px;color:var(-
 #viewMenu .bgs{display:block;width:30px;height:30px;padding:0;flex:none;border-radius:8px}
 #viewMenu .bgs:hover{background-color:inherit;filter:brightness(.96)}
 @media (max-width:860px){ .vset button span{display:none} }
+/* DQE */
+.dqe{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.dqe-lot{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.dqe-h{display:flex;align-items:center;gap:8px;width:100%;border:0;background:var(--bg);padding:9px 10px;text-align:left;font-size:12.5px}
+.dqe-h b{flex:1;font-weight:600}.dqe-c{font:700 11px var(--f-mono);color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 6px}
+.dqe-t{font:600 12px var(--f-mono);white-space:nowrap}
+.dqe-lot .tbl{margin:0}.dqe-lot .tbl td,.dqe-lot .tbl th{padding-left:8px;padding-right:8px}
+.dqe-lot .tbl td b{font:600 11px var(--f-mono);color:var(--mut);margin-right:4px}
+.pu{width:72px;border:1px solid var(--line);border-radius:6px;height:26px;padding:0 6px;text-align:right;font:12px var(--f-mono);background:var(--panel)}
+.pu:focus{border-color:var(--accent);outline:none}
+.dqe-sum{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.ed-body.dqe-x{display:grid;grid-template-columns:1.1fr 1fr;gap:22px}
+.dx-lots{display:flex;flex-direction:column;gap:2px}.dx-lots em{font-style:normal;color:var(--mut);font-size:11.5px}
+@media (max-width:860px){.ed-body.dqe-x{grid-template-columns:1fr}}
+.dqe-rows{display:flex;flex-direction:column}
+.dqe-r{padding:8px 10px;border-top:1px solid var(--line)}
+.dqe-d{font-size:12.5px;line-height:1.35}
+.dqe-d small{display:block;color:var(--mut);font-size:11.5px;margin-top:1px}
+.dqe-n{font:600 11px var(--f-mono);color:var(--mut);margin-right:2px}
+.dqe-m{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:5px;font:12px var(--f-mono);color:var(--mut)}
+.dqe-m b{color:var(--ink);min-width:86px;text-align:right}
+/* lieu du projet */
+.ed-body.site{display:grid;grid-template-columns:1fr 1.05fr;gap:22px}
+.site-q{display:flex;gap:6px}.site-q input{flex:1;height:36px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:var(--bg)}
+.site-r{display:flex;flex-direction:column;gap:3px;margin:8px 0}
+.site-r button{display:flex;flex-direction:column;align-items:flex-start;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 10px;text-align:left}
+.site-r button:hover{border-color:var(--accent);background:var(--accent-soft)}.site-r span{font-size:11.5px;color:var(--mut)}
+.site-v{height:35px;display:flex;align-items:center;font:600 13px var(--f-mono)}
+@media (max-width:860px){.ed-body.site{grid-template-columns:1fr}}
 /* intro : le symbole se dessine comme un plan (balayage de bas en haut), puis ARCHIPLAN est tracé de gauche à droite, puis la signature */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;transition:opacity .55s ease,visibility .55s}
 #splash.done{opacity:0;visibility:hidden}
@@ -558,6 +587,9 @@ details.help summary{cursor:pointer;font-weight:600;font-size:12.5px;color:var(-
 @media (max-width:380px){.ap-grid2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion: reduce){.ap-dots.shake,.ap-spin{animation:none}}
 /* bouton et menu du compte dans l'app */
+.ap-key{margin:4px 0 14px;border:1px solid #DDE5EA;border-radius:10px;padding:10px 12px}
+.ap-key summary{cursor:pointer;font-weight:600;font-size:14px;color:#071A45}
+.ap-key form{margin-top:10px}
 /* ===== Accueil cloud — habillage Studio Prism ===== */
 #home{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
 #home[hidden]{display:none!important}
@@ -808,7 +840,7 @@ a.ap-link{text-decoration:none}
   </footer>
   <section class="panel" id="panel">
     <div class="sheethead"><i></i></div>
-    <div class="tabs" role="tablist"><button data-tab="props" aria-selected="true">Projet</button><button data-tab="lib" aria-selected="false">Bibliothèque</button><button data-tab="qty" aria-selected="false">Métré</button><button data-tab="render" aria-selected="false" hidden>Rendu</button></div>
+    <div class="tabs" role="tablist"><button data-tab="props" aria-selected="true">Projet</button><button data-tab="lib" aria-selected="false">Bibliothèque</button><button data-tab="qty" aria-selected="false">Métré · DQE</button><button data-tab="render" aria-selected="false" hidden>Rendu</button></div>
     <div class="pbody" id="pbody"></div>
   </section>
   <div id="scrim"></div>
@@ -826,7 +858,8 @@ a.ap-link{text-decoration:none}
   <button data-act="glb"><b>Archi Vision (.glb)</b><span>Modèle 3D texturé pour la réalité augmentée</span></button>
   <button data-act="pack"><b>Paquet complet (.zip)</b><span>GLB + IFC4 + métré CSV + projet</span></button>
   <button data-act="ifc"><b>Maquette BIM IFC4 (.ifc)</b><span>Murs à couches, ouvertures, menuiseries</span></button>
-  <button data-act="csv"><b>Métré (.csv)</b><span>Volumes, masses, carbone, menuiseries</span></button>
+  <button data-act="dqe"><b>DQE par lots (.xlsx, PDF, CSV)</b><span>Quantités, prix, options à cocher avant l'export</span></button>
+  <button data-act="csv"><b>Métré matériaux (.csv)</b><span>Volumes, masses, carbone, menuiseries</span></button>
   <button data-act="png" data-k="2"><b>Image (.png)</b><span>Capture HD de la vue et du style actuels</span></button>
   <button data-act="json"><b>Projet ARCHIPLAN (.json)</b><span>Sauvegarde à garder sur votre appareil</span></button>
 </div>
@@ -975,8 +1008,14 @@ const DemoAuth = {
   // Démo : licence fictive active ; un email contenant « decouverte » montre le mode découverte.
   async getAccess(u){
     await sleep(200); const info = {accountKind:'individual', subscription:'free', role:'user', companyName:''};
-    if (/decouverte/i.test(u.email || '')) return {level:'discovery', info, license:null};
-    return {level:'licensed', info, license:{type:'demo', status:'active', expiresAt:null, expired:false}};
+    const keyed = (store.get('sp.demo.keys') || {})[u.uid];
+    if (/decouverte/i.test(u.email || '') && !keyed) return {level:'discovery', info, license:null};
+    return {level:'licensed', info, license:{type:keyed ? 'pro' : 'demo', status:'active', expiresAt:null, expired:false}};
+  },
+  // Démo : toute clé au bon format commençant par ARCH active une licence Pro d'un an.
+  async redeemKey(u, raw){
+    await sleep(300); const n = normKey(raw); if (n.length < 12 || n.length > 40) throw {code:'app/key-format'}; if (!n.startsWith('ARCH')) throw {code:'app/key-unknown'};
+    const all = store.get('sp.demo.keys') || {}; all[u.uid] = n; store.set('sp.demo.keys', all); return {productName:'ARCHIPLAN', licenseType:'pro', durationDays:365, orgName:''};
   },
   async findClient(email){ await sleep(250); const c = (store.get('sp.demo.clients') || {})[email.trim().toLowerCase()]; return c ? {...c} : null; },
   async saveClient(u, fiche, existingId){
@@ -1065,7 +1104,7 @@ const FirebaseAuth = {
   // Droits ARCHIPLAN : administrateur actif → tout ; sinon licence licenses/{uid}_archiplan active et non expirée.
   async getAccess(u){
     const p = (await this.userRef(u.uid).get()).data() || {};
-    const info = {accountKind:p.accountKind || 'individual', subscription:p.subscription || 'free', role:p.role || 'user', companyName:p.companyName || ''};
+    const info = {accountKind:p.accountKind || 'individual', subscription:p.subscription || 'free', role:p.role || 'user', companyName:p.companyName || '', orgName:p.orgName || ''};
     let lic = null;
     try { const s = await this.db.collection('licenses').doc(`${u.uid}_${LICENSE_PRODUCT}`).get(); lic = s.exists ? s.data() : null; }
     catch(e){ if (e?.code !== 'permission-denied') throw e; }   // pas de licence : les règles refusent la lecture d'un document absent
@@ -1073,6 +1112,25 @@ const FirebaseAuth = {
     const license = lic ? {type:lic.licenseType, status:lic.status, expiresAt:exp ? exp.getTime() : null, expired:!!exp && exp <= now} : null;
     if (p.role === 'admin' && p.status === 'active') return {level:'admin', info, license};
     return {level: license && license.status === 'active' && !license.expired ? 'licensed' : 'discovery', info, license};
+  },
+  // Activation d'une clé de licence (même procédure que la page « Activer une clé » du site, vérifiée par les règles Firestore).
+  async redeemKey(u, raw){
+    const n = normKey(raw); if (n.length < 12 || n.length > 40) throw {code:'app/key-format'};
+    const id = await sha256hex(n), kref = this.db.collection('licenseKeys').doc(id), ks = await kref.get();
+    if (!ks.exists) throw {code:'app/key-unknown'};
+    const k = ks.data();
+    if (k.status === 'redeemed') throw {code:k.redeemedBy === u.uid ? 'app/key-mine' : 'app/key-used'};
+    if (k.status !== 'available') throw {code:'app/key-revoked'};
+    if (k.expiresAt && k.expiresAt.toMillis() < Date.now()) throw {code:'app/key-expired'};
+    const FV = firebase.firestore.FieldValue, TS = firebase.firestore.Timestamp, lref = this.db.collection('licenses').doc(`${u.uid}_${k.productId}`);
+    let prev = null; try { const ls = await lref.get(); prev = ls.exists ? ls.data() : null; } catch(e){}
+    const b = this.db.batch(), now = FV.serverTimestamp();
+    b.update(kref, {status:'redeemed', redeemedBy:u.uid, redeemedEmail:String(u.email || '').toLowerCase(), redeemedAt:now, updatedAt:now});
+    b.set(lref, {userId:u.uid, productId:k.productId, productName:k.productName, licenseType:k.licenseType, status:'active', activatedAt:now,
+      expiresAt:k.expiresAt || (k.durationDays ? TS.fromMillis(Date.now() + k.durationDays * 864e5) : null), keyId:id, orgId:k.orgId || '',
+      createdAt:prev?.createdAt || now, updatedAt:now});
+    if (k.orgId) b.update(this.userRef(u.uid), {orgId:k.orgId, orgName:k.orgName, orgKeyId:id, updatedAt:now});
+    await b.commit(); return k;
   },
   async getProfile(u){
     const p = (await this.userRef(u.uid).get()).data() || {};
@@ -1100,7 +1158,10 @@ const FirebaseAuth = {
 };
 const Auth = FIREBASE_CONFIG ? FirebaseAuth : DemoAuth;
 
+const normKey = raw => String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const ERR = {
+  'app/key-format':'Clé invalide : vérifiez la saisie (lettres et chiffres, au moins 12 caractères).', 'app/key-unknown':'Cette clé n\'existe pas. Vérifiez la saisie.',
+  'app/key-used':'Cette clé a déjà été activée par un autre compte.', 'app/key-mine':'Cette clé est déjà activée sur votre compte.', 'app/key-revoked':'Cette clé a été désactivée. Contactez Studio Prism.', 'app/key-expired':'Cette clé a expiré.',
   'auth/invalid-credential':'Email ou mot de passe incorrect.',
   'auth/wrong-password':'Email ou mot de passe incorrect.',
   'auth/user-not-found':'Email ou mot de passe incorrect.',
@@ -1261,13 +1322,14 @@ const SCREENS = {
     </form>${ed ? '<div class="ap-links"><button type="button" class="ap-link" data-act="toapp">Annuler</button></div>' : ''}`; },
 
   licence:() => { const ls = licSummary(), full = access.level === 'admin' || access.level === 'licensed', i = access.info || {};
-    const acct = [i.accountKind === 'company' ? `Entreprise${i.companyName ? ' · ' + esc(i.companyName) : ''}` : 'Particulier', i.subscription ? 'abonnement Studio Prism ' + esc(licLabel(i.subscription)) : ''].filter(Boolean).join(' · ');
+    const acct = [i.orgName ? `Établissement · ${esc(i.orgName)}` : i.accountKind === 'company' ? `Entreprise${i.companyName ? ' · ' + esc(i.companyName) : ''}` : 'Particulier', i.subscription ? 'abonnement Studio Prism ' + esc(licLabel(i.subscription)) : ''].filter(Boolean).join(' · ');
     const lead = view.reason === 'export' ? '<p class="ap-sub">L\'export est réservé aux comptes disposant d\'une licence ARCHIPLAN active.</p>'
       : view.reason === 'welcome' ? '<p class="ap-sub">Bienvenue ! Votre compte gratuit vous donne accès à tous les outils et à 10 Mo de cloud.</p>' : view.reason === 'quota' ? '<p class="ap-sub">Votre espace cloud est plein. Une licence ARCHIPLAN le porte à 50 Mo.</p>' : '';
     return `<h2>${esc(ls.title)}</h2>${lead}
     <div class="ap-lic ${ls.cls}"><b>${esc(ls.short)}</b>${esc(ls.text)}${acct ? `<br><span style="color:#5B6B7F">${acct}</span>` : ''}${access.offline ? '<br><span style="color:#5B6B7F">Hors ligne : derniers droits connus.</span>' : ''}</div>
     ${full ? '<ul class="ap-list"><li>Cloud : 50 Mo de projets (1 Go pour un administrateur), 5 dossiers et 3 dossiers partagés.</li><li>Tous les exports : Archi Vision (.glb), IFC, métré, images, sauvegardes.</li></ul>' : `<ul class="ap-list"><li>Offre gratuite : tous les outils de modélisation, bibliothèque, compositions et familles, rendus à l'écran.</li><li>Cloud de 10 Mo, 5 dossiers et 3 dossiers partagés ; partage de projets.</li><li>Les exports (Archi Vision, IFC, métré, images, sauvegardes) demandent une licence ARCHIPLAN, à obtenir sur le site Studio Prism et activée sur ce même compte.</li></ul>
     <a class="ap-btn" href="${OFFERS_URL}" target="_blank" rel="noopener" style="text-decoration:none">Voir les offres ARCHIPLAN</a>`}
+    <details class="ap-key"${full ? '' : ' open'}><summary>J'ai une clé de licence</summary><form id="apKeyF" novalidate><label class="ap-field"><span>Clé reçue de Studio Prism ou de votre établissement</span><span class="ap-in"><input id="apKey" autocomplete="off" autocapitalize="characters" placeholder="ARCH-XXXX-XXXX-XXXX" style="font-family:var(--f-mono,monospace);letter-spacing:.05em"></span></label><p class="ap-err" id="apKeyErr"></p><button class="ap-btn alt" type="submit">Activer la clé</button></form></details>
     <div class="ap-links"><button type="button" class="ap-link" id="apLicCheck">Vérifier à nouveau</button><a class="ap-link" href="${ACCOUNT_URL}" target="_blank" rel="noopener">Mon compte Studio Prism</a><button type="button" class="ap-link" data-act="toapp">${full ? 'Retour' : 'Continuer avec l\'offre gratuite'}</button></div>`; },
 
   'pin-offer':() => `${steps(2)}<h2>Protéger l'accès sur cet appareil</h2>
@@ -1381,6 +1443,9 @@ const WIRE = {
     };
   },
   licence(){
+    $a('#apKeyF').onsubmit = async e => { e.preventDefault(); const b = e.currentTarget.querySelector('button'), err = $a('#apKeyErr'); err.textContent = ''; busy(b, true, 'Activation…');
+      try { const k = await Auth.redeemKey(me, $a('#apKey').value); await refreshAccess(); show('licence', {}); toastA(`Clé activée : ${k.productName} ${licLabel(k.licenseType)}${k.orgName ? ' · ' + k.orgName : ''}`); }
+      catch(x){ busy(b, false); err.textContent = errMsg(x); } };
     $a('#apLicCheck').onclick = async e => { busy(e.currentTarget, true, 'Vérification…'); await refreshAccess(); show('licence', {reason:view.reason === 'export' ? 'export' : ''}); toastA(access.level === 'discovery' ? 'Toujours aucune licence active' : 'Licence active : ARCHIPLAN est débloqué'); };
   },
   'pin-offer'(){
@@ -2721,8 +2786,14 @@ function wallReport(layers, ctx = 'mur'){
   return {th, dyn, ac, gl, mass, T, co2};
 }
 /* Classement indicatif du U (repères RE2020 / rénovation) */
+/* Repères ajustés au lieu du projet (zone climatique, altitude : voir 65-site.js) */
+function uGradeLimits(ctx){
+  const base = ctx === 'toiture' ? [0.12, 0.17, 0.25] : ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
+  let f = 1; try { f = typeof siteFactor === 'function' ? siteFactor() : 1; } catch(e){}
+  return base.map(v => Math.round(v * f * 1000) / 1000);
+}
 function uGrade(U, ctx){
-  const lim = ctx === 'toiture' ? [0.12, 0.17, 0.25] : ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
+  const lim = uGradeLimits(ctx);
   return U <= lim[0] ? {g:'A', t:'Très performant (niveau passif)'} : U <= lim[1] ? {g:'B', t:'Performant (neuf RE2020)'} : U <= lim[2] ? {g:'C', t:'Correct (rénovation)'} : {g:'D', t:'Insuffisant : renforcer l\'isolation'};
 }
 
@@ -2772,7 +2843,8 @@ function migrate(s){
   s = s && typeof s === 'object' ? s : {};
   const out = {format:'archiplan', v:2, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
     levels:Array.isArray(s.levels) && s.levels.length ? s.levels.map(l => ({n:String(l.n || 'Niveau').slice(0, 30), z:+l.z || 0})) : DEFAULT_LEVELS.map(l => ({...l})),
-    lib:{mats:{...(s.lib?.mats || {})}, compos:{...(s.lib?.compos || {})}, fams:{...(s.lib?.fams || {})}}, isSample:!!s.isSample};
+    lib:{mats:{...(s.lib?.mats || {})}, compos:{...(s.lib?.compos || {})}, fams:{...(s.lib?.fams || {})}}, isSample:!!s.isSample,
+    ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {})};
   const okEl = el => el && KIND_NAME[el.kind] && (el.kind !== 'wall' || compo(el.type)) && (el.kind !== 'inst' || el.fam);
   const prev = state; state = out;   // pour que compo()/fam() lisent la bibliothèque du projet en cours de migration
   out.els = out.els.filter(okEl).map(el => ({...el, lvl:Math.max(0, Math.min(out.levels.length - 1, el.lvl | 0)), off:+el.off || 0}));
@@ -3240,6 +3312,7 @@ function rebuild(opts = {}){
     modelGroup.add(g);
   }
   applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
+  if (typeof buildTerrain === 'function') buildTerrain();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -3834,6 +3907,7 @@ function renderProps(){
     const counts = {}; state.els.forEach(e => counts[e.kind] = (counts[e.kind] || 0) + 1);
     return `<div class="ph"><h2>${esc(state.name)}</h2>${state.isSample ? '<span class="tag">Exemple</span>' : ''}</div>
       <div class="fields"><label class="f wide"><span>Nom du projet</span><span class="in"><input id="f-pname" data-f="pname" type="text" value="${esc(state.name)}" style="font-family:var(--f-body)"></span></label></div>
+      <div class="grp"><h3>Lieu du projet</h3>${siteSummary()}<div class="btns tight"><button class="btn${state.site?.zone ? '' : ' primary'}" data-act="site">${state.site?.zone ? 'Modifier le lieu, le climat, le bruit…' : 'Définir le lieu du projet'}</button></div></div>
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -3973,7 +4047,7 @@ function renderPanel(){
   const body = $('#pbody'); const st = body.scrollTop;
   const tp = body.querySelector('.tree-pane'), pp = body.querySelector('.prop-pane'), tst = tp?.scrollTop, pst = pp?.scrollTop;
   body.classList.toggle('splitmode', activeTab === 'props');
-  body.innerHTML = activeTab === 'props' ? renderProjectTab() : activeTab === 'qty' ? renderQty() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
+  body.innerHTML = activeTab === 'props' ? renderProjectTab() : activeTab === 'qty' ? renderDqePanel() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
   body.scrollTop = st; if (tst != null){ const a = body.querySelector('.tree-pane'), b = body.querySelector('.prop-pane'); if (a) a.scrollTop = tst; if (b) b.scrollTop = pst; }
 }
 $('#pbody').addEventListener('input', e => {
@@ -4032,6 +4106,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'add-opening' && el){ libTab = 'fams'; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'insul' && el) openInsulAdjust(el.id);
+  else if (act === 'site') openSiteDialog();
   else if (act === 'fam-edit' && el) openFamEditor(el.fam, el.id);
   else if (act === 'fam-new') openFamEditor(null);
   else if (act === 'compo-new') openComposer({id:null});
@@ -4443,7 +4518,7 @@ function renderProjectTab(){
 
 /* ---------- menus ⋮ ---------- */
 function treeMenuItems(key){
-  if (key === 'P') return [{k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
+  if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, exposition au bruit, relief IGN'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
   if (/^L\d+$/.test(key)){ const li = +key.slice(1), on = hiddenLvls.has(li);
     return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
   if (key.includes('|')) return [{k:'selall', t:'Sélectionner toute la catégorie'}, {k:'chide', t:'Masquer la catégorie'}, {k:'cshow', t:'Afficher la catégorie'}, {k:'cframe', t:'Centrer la vue'}];
@@ -4479,6 +4554,7 @@ function runTreeAction(k, key){
   const el = key.startsWith('E') ? getEl(+key.slice(1)) : null, li = /^L\d+$/.test(key) ? +key.slice(1) : null;
   const re = () => { rebuild(); };
   switch (k){
+    case 'site': return openSiteDialog();
     case 'showall': hiddenIds.clear(); hiddenLvls.clear(); return re();
     case 'lvl-add': { pushHist(); const last = state.levels[state.levels.length - 1]; state.levels.push({n:`R+${state.levels.length}`, z:rnd((last?.z || 0) + 2.8)}); rebuild(); syncLevels(); return; }
     case 'fit': return fit();
@@ -4660,12 +4736,535 @@ document.addEventListener('click', e => { const m = $('#treeMenu'); if (!m.hidde
 // ouvre la branche de l'élément sélectionné depuis la vue 3D
 function revealInTree(id){ const el = getEl(id); if (!el) return; treeOpen.add('P'); treeOpen.add('L' + el.lvl); const host = el.kind === 'inst' && el.host ? getEl(el.host) : null; if (host){ treeOpen.add(`L${host.lvl}|wall`); treeOpen.add('E' + host.id); } else treeOpen.add(`L${el.lvl}|${el.kind}`); }
 
+/* ==== 65-site.js ==== */
+/* ============ Lieu du projet : adresse, zone climatique, altitude, exposition au bruit, terrain (relief IGN) ============
+   state.site = {label, lon, lat, dept, postcode, citycode, alt, zone, zoneAuto, noise, terrain:{size, n, z:[…], alt0}}
+   Services publics de la Géoplateforme IGN (sans clé) : géocodage et altimétrie. Hors ligne : saisie manuelle du département
+   et de l'altitude. Les repères thermiques et acoustiques qui en découlent sont indicatifs. */
+const GEO_SEARCH = 'https://data.geopf.fr/geocodage/search';
+const GEO_ALTI = 'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json';
+const CLIMATE_ZONES = {
+  H1a:['02','14','27','28','59','60','61','62','75','76','77','78','80','91','92','93','94','95'],
+  H1b:['08','10','45','51','52','54','55','57','58','67','68','70','88','89','90'],
+  H1c:['01','03','05','15','19','21','23','25','38','39','42','43','63','69','71','73','74','87'],
+  H2a:['22','29','35','50','56'],
+  H2b:['16','17','18','36','37','41','44','49','53','72','79','85','86'],
+  H2c:['07','09','12','24','31','32','33','40','46','47','64','65','81','82'],
+  H2d:['04','26','48','84'],
+  H3:['06','11','13','2A','2B','30','34','66','83','971','972','973','974','976']};
+const DEPT_ZONE = Object.fromEntries(Object.entries(CLIMATE_ZONES).flatMap(([z, l]) => l.map(d => [d, z])));
+const ZONE_TXT = {H1:'climat le plus froid (nord, est, montagne)', H2:'climat tempéré (ouest, sud-ouest)', H3:'climat méditerranéen'};
+/* Exposition au bruit des façades : isolement visé DnT,A,tr (arrêtés du 30 mai 1996 / 23 juillet 2013, valeurs indicatives) */
+const NOISE = {
+  rural:['Zone rurale calme', 30, 'Pas de voie bruyante classée à proximité'],
+  periurbain:['Périurbain, lotissement', 30, 'Voie de desserte, trafic faible'],
+  urbain:['Zone urbaine', 35, 'Rue animée (voie de catégorie 4 environ)'],
+  centre:['Centre-ville', 38, 'Voie de catégorie 3, trafic dense'],
+  hyper:['Hyper-centre, boulevard', 42, 'Voie de catégorie 2, trafic très dense'],
+  axe:['Bord d\'autoroute ou de voie ferrée', 45, 'Voie de catégorie 1, à moins de 100 m'],
+  pebC:['Zone aéroportuaire (PEB C)', 35, 'Plan d\'exposition au bruit, zone C'],
+  pebB:['Zone aéroportuaire (PEB B)', 40, 'Plan d\'exposition au bruit, zone B (construction très encadrée)']};
+/* Résistances minimales (m²·K/W) : réglementation thermique des bâtiments existants (élément par élément, 2018) et aides (MaPrimeRénov' / CEE) */
+const R_MIN_RT = {mur:{H1:2.9, H2:2.9, H3:2.2}, toiture:{H1:3.3, H2:3.3, H3:3.3}, plancherBas:{H1:2.7, H2:2.7, H3:2.1}, terrePlein:{H1:2.7, H2:2.7, H3:2.1}, plancherInt:null};
+const R_AIDES = {mur:3.7, toiture:4.5, plancherBas:3, terrePlein:3, plancherInt:null};
+
+const siteZone = () => state?.site?.zone || '';
+const zoneMain = z => (z || '').slice(0, 2);
+function altClass(a){ return a == null || Number.isNaN(a) ? '' : a <= 400 ? '≤ 400 m' : a <= 800 ? '401 à 800 m' : '> 800 m'; }
+/* Facteur appliqué aux repères de classement A/B/C du U : zone froide et altitude plus exigeantes */
+function siteFactor(){
+  const s = state?.site; if (!s?.zone) return 1;
+  const z = zoneMain(s.zone), a = s.alt ?? 0;
+  let f = z === 'H1' ? 0.92 : z === 'H3' ? 1.15 : 1;
+  if (a > 800) f = Math.min(f, 1) * 0.85; else if (a > 400) f *= 0.95;
+  return f;
+}
+function rtMin(ctx){
+  const s = state?.site, t = R_MIN_RT[ctx]; if (!t || !s?.zone) return null;
+  const z = zoneMain(s.zone), eff = z === 'H3' && (s.alt ?? 0) > 800 ? 'H2' : z;
+  return t[eff] ?? null;
+}
+
+/* ---------- services IGN ---------- */
+async function fetchJSON(url, ms = 9000){
+  const c = new AbortController(), t = setTimeout(() => c.abort(), ms);
+  try { const r = await fetch(url, {signal:c.signal}); if (!r.ok) throw new Error('http ' + r.status); return await r.json(); } finally { clearTimeout(t); }
+}
+async function geoSearch(q){
+  const j = await fetchJSON(`${GEO_SEARCH}?${new URLSearchParams({q, limit:'6'})}`);
+  return (j.features || []).map(f => { const p = f.properties || {}, [lon, lat] = f.geometry?.coordinates || [];
+    const cc = String(p.citycode || ''), dept = cc.startsWith('97') ? cc.slice(0, 3) : cc.slice(0, 2);
+    return {label:p.label || p.name || q, lon, lat, postcode:p.postcode || '', citycode:cc, city:p.city || '', dept:dept || String(p.postcode || '').slice(0, 2), context:p.context || ''}; })
+    .filter(r => Number.isFinite(r.lon) && Number.isFinite(r.lat));
+}
+async function geoAlt(points){ // [[lon, lat]…] → [z…] (par lots de 100 points, ≤ 5 requêtes / s)
+  const out = [];
+  for (let i = 0; i < points.length; i += 100){
+    const ch = points.slice(i, i + 100);
+    const j = await fetchJSON(`${GEO_ALTI}?${new URLSearchParams({lon:ch.map(p => p[0].toFixed(6)).join('|'), lat:ch.map(p => p[1].toFixed(6)).join('|'), resource:'ign_rge_alti_wld', delimiter:'|', zonly:'true', indent:'false'})}`, 15000);
+    const e = j.elevations || []; e.forEach(v => out.push(typeof v === 'number' ? v : v?.z));
+    if (i + 100 < points.length) await new Promise(r => setTimeout(r, 230));
+  }
+  return out.map(z => (z == null || z < -900) ? null : z);   // -99999 : hors couverture
+}
+const mToLon = (m, lat) => m / (111320 * Math.cos(lat * Math.PI / 180)), mToLat = m => m / 110540;
+async function loadTerrain(size = 100, n = 21){
+  const s = state.site; if (!s?.lon) throw new Error('nosite');
+  const b = bbox(), cx = (b.min.x + b.max.x) / 2, cy = -(b.min.z + b.max.z) / 2;   // centre de la maquette (plan)
+  const pts = [], xs = [];
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++){ const x = cx - size / 2 + size * i / (n - 1), y = cy - size / 2 + size * j / (n - 1); xs.push([x, y]); pts.push([s.lon + mToLon(x, s.lat), s.lat + mToLat(y)]); }
+  const z = await geoAlt([[s.lon, s.lat], ...pts]);
+  const z0 = z.shift(); if (z0 == null) throw new Error('nodata');
+  const fill = z.map(v => v == null ? z0 : v);
+  s.alt = Math.round(z0 * 10) / 10;
+  s.terrain = {size, n, cx, cy, alt0:z0, z:fill.map(v => Math.round((v - z0) * 100) / 100), at:Date.now()};
+}
+
+/* ---------- terrain dans la scène ---------- */
+const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
+function buildTerrain(){
+  disposeGroup(terrainGroup);
+  const T = state?.site?.terrain; if (!T || DISPLAY.terrain === false || view === '2d') { terrainGroup.visible = false; return; }
+  const g = new THREE.PlaneGeometry(T.size, T.size, T.n - 1, T.n - 1); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position, bb = bbox(), x0 = bb.min.x, x1 = bb.max.x, z0 = bb.min.z, z1 = bb.max.z;
+  // plateforme de terrassement : le terrain est ramené au niveau du rez-de-chaussée sous l'emprise (+ 1 m), puis raccordé sur 4 m
+  const flat = (x, zz, y) => { const dx = Math.max(x0 - x, 0, x - x1), dz = Math.max(z0 - zz, 0, zz - z1), d = Math.hypot(dx, dz), t = Math.min(1, Math.max(0, (d - 1) / 4)); return -0.05 + (y + 0.05) * t * t * (3 - 2 * t); };
+  for (let k = 0; k < pos.count; k++){ // la grille de PlaneGeometry part du coin (-x, +z) ; plan y = -z scène
+    const i = k % T.n, j = Math.floor(k / T.n), jj = T.n - 1 - j;
+    pos.setX(k, T.cx - T.size / 2 + T.size * i / (T.n - 1)); pos.setZ(k, -(T.cy - T.size / 2 + T.size * jj / (T.n - 1))); pos.setY(k, bb.isEmpty() ? (T.z[jj * T.n + i] ?? 0) - 0.03 : flat(pos.getX(k), pos.getZ(k), (T.z[jj * T.n + i] ?? 0) - 0.03));
+  }
+  g.computeVertexNormals();
+  const real = DISPLAY.style === 'realistic';
+  const m = new THREE.MeshStandardMaterial({color:real ? 0x6F8A5A : 0xDCE3D2, roughness:1, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:2});
+  const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.name = 'Terrain'; mesh.userData.terrain = true; terrainGroup.add(mesh);
+  const w = new THREE.LineSegments(new THREE.WireframeGeometry(g), new THREE.LineBasicMaterial({color:real ? 0x55704A : 0xA9B59A, transparent:true, opacity:real ? 0.25 : 0.55}));
+  terrainGroup.add(w); terrainGroup.visible = true;
+  groundShadow.visible = false; groundReal.visible = false;
+  dirty = true;
+}
+
+/* ---------- dialogue « Lieu du projet » ---------- */
+function siteSummary(){
+  const s = state.site; if (!s?.zone && !s?.label) return '<p class="hint">Aucun lieu défini : les repères thermiques et acoustiques sont généraux.</p>';
+  return `<dl class="kv"><dt>Lieu</dt><dd style="font-family:var(--f-body);text-align:right">${esc(s.label || 'Département ' + (s.dept || '?'))}</dd>
+    <dt>Zone climatique</dt><dd>${esc(s.zone || '—')}</dd><dt>Altitude</dt><dd>${s.alt != null ? nf(s.alt, 0) + ' m' : '—'}</dd>
+    <dt>Bruit (façades)</dt><dd>${s.noise ? `${NOISE[s.noise][1]} dB` : '—'}</dd><dt>Terrain</dt><dd>${s.terrain ? `${s.terrain.size} × ${s.terrain.size} m` : '—'}</dd></dl>`;
+}
+function facadeAcoustic(){
+  // isolement de façade estimé : composite murs extérieurs (Rw + Ctr ≈ Rw − 5) et menuiseries (Rw + Ctr ≈ 28 dB, double vitrage courant)
+  let Sw = 0, Sr = 0, acc = 0;
+  for (const el of state.els){
+    if (el.kind !== 'wall' || compo(el.type).lot === 'Second œuvre') continue;
+    const L = wallAxis(el).L, ops = wallOpenings(el).reduce((s, o) => s + (o.t1 - o.t0) * (o.z1 - o.z0), 0), net = Math.max(0, L * el.h - ops);
+    const Rw = acoustic(layersInToOut(el)).Rw - 5; Sw += net; acc += net * Math.pow(10, -Rw / 10); Sr += ops;
+  }
+  if (!Sw) return null;
+  acc += Sr * Math.pow(10, -2.8); const S = Sw + Sr, Rc = -10 * Math.log10(acc / S);
+  return {Rc, DnT:Rc - 3, Sw, Sr};
+}
+function openSiteDialog(){
+  state.site ??= {};
+  const S = {...state.site, results:[], q:state.site.label || '', busy:'', msg:''};
+  const render = () => {
+    const z = S.zone || '', zm = zoneMain(z), f = facadeAcoustic(), target = S.noise ? NOISE[S.noise][1] : null;
+    return `<header class="ed-h"><div><span class="eyebrow">Paramètres du projet</span><h3 class="ed-t2">Lieu, climat, bruit et terrain</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body site">
+      <section>
+        <div class="grp" style="margin-top:0"><h3>Adresse du projet</h3>
+          <div class="site-q"><input id="stQ" type="search" placeholder="Adresse, commune ou code postal" value="${esc(S.q)}" autocomplete="off"><button class="btn" id="stGo">Rechercher</button></div>
+          ${S.results.length ? `<div class="site-r">${S.results.map((r, i) => `<button data-stres="${i}"><b>${esc(r.label)}</b><span>${esc(r.context)}</span></button>`).join('')}</div>` : ''}
+          ${S.busy ? `<p class="hint">${esc(S.busy)}</p>` : ''}${S.msg ? `<p class="fe">${esc(S.msg)}</p>` : ''}
+          ${S.label ? `<p class="hint">Retenu : <b>${esc(S.label)}</b>${S.lat ? ` · ${S.lat.toFixed(5)}, ${S.lon.toFixed(5)}` : ''}</p>` : ''}
+          <div class="fields"><label class="f"><span>Département</span><span class="in"><input id="stDept" type="text" maxlength="3" value="${esc(S.dept || '')}" placeholder="ex. 69"></span></label>
+            <label class="f"><span>Altitude</span><span class="in"><input id="stAlt" type="text" inputmode="decimal" value="${S.alt != null ? nf(S.alt, 0) : ''}"><em>m</em></span></label></div></div>
+        <div class="grp"><h3>Climat</h3>
+          <div class="fields"><label class="f"><span>Zone climatique</span><span class="in"><select id="stZone"><option value="">—</option>${Object.keys(CLIMATE_ZONES).map(k => `<option${k === z ? ' selected' : ''}>${k}</option>`).join('')}</select></span></label>
+            <div class="f"><span>Classe d'altitude</span><div class="site-v">${esc(altClass(S.alt) || '—')}</div></div></div>
+          ${z ? `<p class="hint">${esc(z)} : ${esc(ZONE_TXT[zm] || '')}.${S.zoneAuto === false ? ' Zone choisie manuellement.' : ''}</p>` : '<p class="hint">Indiquez l\'adresse ou le département pour obtenir la zone (H1a à H3).</p>'}
+        </div>
+        <div class="grp"><h3>Exposition au bruit</h3>
+          <div class="fields"><label class="f wide"><span>Environnement</span><span class="in"><select id="stNoise"><option value="">—</option>${Object.entries(NOISE).map(([k, [n, d]]) => `<option value="${k}"${k === S.noise ? ' selected' : ''}>${esc(n)} · ${d} dB</option>`).join('')}</select></span></label></div>
+          ${S.noise ? `<p class="hint">${esc(NOISE[S.noise][2])}. Isolement de façade visé : DnT,A,tr ≥ ${target} dB.</p>` : ''}
+        </div>
+        <div class="grp"><h3>Terrain (relief IGN)</h3>
+          <div class="fields"><label class="f"><span>Emprise</span><span class="in"><select id="stSize">${[60, 100, 150, 200].map(v => `<option value="${v}"${(S.terrain?.size || 100) === v ? ' selected' : ''}>${v} × ${v} m</option>`).join('')}</select></span></label>
+            <div class="f"><span>&nbsp;</span><button class="btn" id="stTer"${S.lon ? '' : ' disabled'}>${S.terrain ? 'Recharger le relief' : 'Charger le relief'}</button></div></div>
+          ${S.terrain ? `<p class="hint">Relief chargé : dénivelé ${nf(Math.max(...S.terrain.z) - Math.min(...S.terrain.z), 1)} m sur ${S.terrain.size} m. <button class="tlink" id="stTerDel">Retirer le terrain</button></p>` : `<p class="hint">${S.lon ? 'Altitudes du RGE ALTI® (IGN) autour du projet ; le rez-de-chaussée est calé sur l\'altitude du point d\'adresse.' : 'Choisissez d\'abord une adresse.'}</p>`}
+        </div>
+      </section>
+      <section>
+        <div class="grp" style="margin-top:0"><h3>Repères thermiques ${z ? `(${esc(z)}${S.alt > 400 ? ', ' + esc(altClass(S.alt)) : ''})` : '(généraux)'}</h3>
+          <table class="tbl"><thead><tr><th>Paroi</th><th class="n">U « A »</th><th class="n">U « B »</th><th class="n">R min. rénov.</th><th class="n">R aides</th></tr></thead><tbody>
+          ${[['mur', 'Murs extérieurs'], ['toiture', 'Toiture / plancher haut'], ['plancherBas', 'Plancher bas'], ['terrePlein', 'Dallage sur terre-plein']].map(([ctx, n]) => { const g = uLimits(ctx, S); const rm = rtMinFor(ctx, S);
+            return `<tr><td>${n}</td><td class="n">${nf(g[0], 2)}</td><td class="n">${nf(g[1], 2)}</td><td class="n">${rm != null ? nf(rm, 1) : '—'}</td><td class="n">${R_AIDES[ctx] != null ? nf(R_AIDES[ctx], 1) : '—'}</td></tr>`; }).join('')}
+          </tbody></table>
+          <p class="hint">A : très performant · B : neuf RE2020 (W/m²·K). R min. rénov. : réglementation des bâtiments existants, élément par élément (valeurs 2018, renforcées depuis). R aides : seuil MaPrimeRénov' / CEE. Les classes A/B/C/D des parois du projet utilisent ces repères.</p></div>
+        <div class="grp"><h3>Acoustique des façades</h3>
+          ${f ? `<div class="perf"><div class="pc"><span>Isolement estimé</span><b>≈ ${n0(f.DnT)}</b><em>dB DnT,A,tr</em></div><div class="pc"><span>Objectif</span><b>${target ?? '—'}</b><em>${target ? 'dB, selon l\'environnement' : 'choisissez l\'environnement'}</em></div></div>
+            ${target ? `<ul class="warns"><li class="${f.DnT >= target ? 'ok' : 'bad'}">${f.DnT >= target ? 'Objectif atteint (estimation).' : `Objectif non atteint : il manque environ ${n0(target - f.DnT)} dB. Les menuiseries limitent souvent l'isolement : prévoir un vitrage acoustique (feuilleté asymétrique, ≈ 35 dB Rw+Ctr) et des entrées d'air acoustiques.`}</li></ul>` : ''}
+            <p class="hint">Estimation simplifiée (EN 12354-3) : murs extérieurs ${n0(f.Sw)} m², menuiseries ${n0(f.Sr)} m² supposées en double vitrage courant (Rw+Ctr ≈ 28 dB).</p>` : '<p class="hint">Dessinez des murs extérieurs pour estimer l\'isolement des façades.</p>'}
+        </div>
+      </section></div>
+    <footer class="ed-f"><span class="hint">Données : Géoplateforme IGN (adresse, altitudes).</span><button class="btn" data-close>Annuler</button><button class="btn primary" id="stOk">Enregistrer</button></footer>`;
+  };
+  const draw = () => { const d = openEDlg(render(), 'mid'); wire(d); };
+  const wire = d => {
+    const q = x => d.querySelector(x);
+    const search = async () => { S.q = q('#stQ').value.trim(); if (S.q.length < 3) return; S.busy = 'Recherche…'; S.msg = ''; draw();
+      try { S.results = await geoSearch(S.q); S.busy = ''; if (!S.results.length) S.msg = 'Aucune adresse trouvée.'; }
+      catch(e){ S.busy = ''; S.results = []; S.msg = 'Service d\'adresses IGN injoignable : indiquez le département et l\'altitude à la main.'; }
+      draw(); };
+    q('#stGo').onclick = search; q('#stQ').onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); search(); } };
+    d.querySelectorAll('[data-stres]').forEach(b => b.onclick = async () => {
+      const r = S.results[+b.dataset.stres]; Object.assign(S, {label:r.label, lon:r.lon, lat:r.lat, dept:r.dept, postcode:r.postcode, citycode:r.citycode, q:r.label, results:[], terrain:null});
+      if (DEPT_ZONE[r.dept]){ S.zone = DEPT_ZONE[r.dept]; S.zoneAuto = true; }
+      S.busy = 'Altitude…'; draw();
+      try { const [z] = await geoAlt([[r.lon, r.lat]]); if (z != null) S.alt = Math.round(z); S.busy = ''; } catch(e){ S.busy = ''; S.msg = 'Altitude indisponible (service IGN) : saisissez-la.'; }
+      draw(); });
+    q('#stDept').onchange = e => { S.dept = e.target.value.trim().toUpperCase().padStart(2, '0'); if (DEPT_ZONE[S.dept]){ S.zone = DEPT_ZONE[S.dept]; S.zoneAuto = true; } draw(); };
+    q('#stAlt').onchange = e => { const v = num(e.target.value); S.alt = Number.isNaN(v) ? null : v; draw(); };
+    q('#stZone').onchange = e => { S.zone = e.target.value; S.zoneAuto = false; draw(); };
+    q('#stNoise').onchange = e => { S.noise = e.target.value; draw(); };
+    q('#stTer').onclick = async () => { S.busy = 'Chargement du relief (IGN)…'; S.msg = ''; draw();
+      const keep = state.site; state.site = {...S}; try { await loadTerrain(+q('#stSize').value || 100); S.terrain = state.site.terrain; S.alt = state.site.alt; S.busy = ''; }
+      catch(e){ S.busy = ''; S.msg = e.message === 'nodata' ? 'Pas de données d\'altitude à cet endroit.' : 'Relief indisponible (service IGN injoignable).'; }
+      state.site = keep; draw(); };
+    const del = q('#stTerDel'); if (del) del.onclick = () => { S.terrain = null; draw(); };
+    q('#stOk').onclick = () => { pushHist(); const {results, busy, msg, q:_q, ...keep} = S; state.site = keep; state.isSample = false; closeEDlg(); resetMats(); rebuild(); buildTerrain(); toast('Lieu du projet enregistré'); };
+  };
+  draw();
+}
+function uLimits(ctx, S){ const prev = state.site; state.site = S; const g = ['A', 'B'].map((_, i) => uGradeLimits(ctx)[i]); state.site = prev; return g; }
+function rtMinFor(ctx, S){ const prev = state.site; state.site = S; const r = rtMin(ctx); state.site = prev; return r; }
+
+/* ==== 66-dqe.js ==== */
+/* ============ DQE : détail quantitatif estimatif par lots (corps d'état) ============
+   Les articles sont déduits de la maquette : chaque couche de paroi, chaque élément et chaque composant est rangé dans le lot
+   qui l'exécute (gros œuvre, isolation-plâtrerie, façades…). Prix unitaires indicatifs (€ HT), modifiables et enregistrés dans
+   le projet (state.dqe.pu). Export : Excel (.xlsx), PDF (impression) ou CSV, avec options à cocher. */
+const DQE_LOTS = [
+  ['01', 'Terrassements – VRD'], ['02', 'Gros œuvre – Maçonnerie'], ['03', 'Charpente – Ossature bois'], ['04', 'Couverture – Étanchéité'],
+  ['05', 'Menuiseries extérieures'], ['06', 'Isolation – Plâtrerie – Cloisons'], ['07', 'Menuiseries intérieures'], ['08', 'Revêtements de sols – Chapes'],
+  ['09', 'Peinture – Revêtements muraux'], ['10', 'Façades – Bardage – Isolation extérieure'], ['11', 'Serrurerie – Métallerie'], ['12', 'Plomberie – Sanitaires'],
+  ['13', 'Mobilier – Équipements'], ['14', 'Aménagements extérieurs']];
+const DQE_LOT_NAME = Object.fromEntries(DQE_LOTS);
+const STRUCT_CATS = ['Maçonnerie', 'Béton et mortiers', 'Bois et dérivés'];
+const FINISH_IDS = new Set(['enduit', 'enduitChaux', 'enduitPlatre', 'mortier', 'chape', 'chapeAnhy', 'betonCire']);
+const isAir = m => mat(m).R != null;
+const isInsul = m => mat(m).cat === 'Isolants';
+const isWoodFrameish = m => ['osb', 'contreplaque', 'agglo', 'mdf', 'fibroCiment'].includes(m);
+const lc = t => t ? t.charAt(0).toLowerCase() + t.slice(1) : t;   // minuscule initiale seulement (garde C25/30, BA13, PSE…)
+const cm = e => nf(e * 100, e * 100 % 1 ? 1 : 0);
+/* Prix indicatifs (€ HT) : m² = base + parCm × épaisseur (cm) ; m³, kg, ml, u */
+const PRICE_MAT = {
+  parpaing:[30, 1.3], parpaingP:[35, 1.6], brique:[35, 1.6], briqueTh:[40, 1.5], briqueP:[45, 2.5], betCell:[35, 1.4], pierreCalc:[120, 3], pierreTend:[110, 3], granit:[150, 4], moellon:[90, 2.5], terreCrue:[40, 1.5], btc:[45, 2],
+  ba:[60, 4.5], beton:[45, 3.5], betonLeg:[40, 3], betonChanvre:[40, 2.5], laineVerre:[6, 0.6], laine:[7, 0.8], laineRocheD:[15, 1.2], pse:[5, 0.7], pseG:[6, 0.8], xps:[8, 1.2], pir:[9, 1.4],
+  fibreBoisR:[12, 1.8], fibreBoisS:[8, 1.1], ouate:[5, 0.6], chanvre:[9, 1], liege:[15, 2.2], verreCell:[25, 3], paille:[10, 0.3], pu:[8, 1.2], clt:[40, 9], bois:[20, 4], glulam:[30, 7], osb:[10, 1], bardageBois:[45, 4]
+};
+const PRICE_FIXED = { enduit:28, enduitChaux:35, enduitPlatre:18, chape:22, chapeAnhy:25, carrelage:55, faience:50, parquet:75, stratifie:30, pvcSol:35, moquette:28, resine:45, linoleum:38, pierreSol:110, betonCire:90,
+  tuile:55, ardoise:95, bitume:35, epdm:30, bacAcier:30, gravier:12, terreVeg:45, paraVapeur:4, freinVap:7, paraPluie:5, ba13:12, ba13H:15, ba13F:16, carreauPl:45, fermacell:20 };
+const pricePerM2 = (m, e) => PRICE_FIXED[m] != null ? PRICE_FIXED[m] : PRICE_MAT[m] ? PRICE_MAT[m][0] + PRICE_MAT[m][1] * e * 100 : 25;
+
+/* Lot d'une couche de paroi selon sa position (côté extérieur de la structure, structure, côté intérieur) */
+function layerLot(m, role, kind, use){
+  const M = mat(m);
+  if (kind === 'slab'){
+    if (['Revêtements de sol'].includes(M.cat) || m === 'chape' || m === 'chapeAnhy' || m === 'betonCire') return use === 'toiture' ? '04' : '08';
+    if (M.cat === 'Couverture et étanchéité' || m === 'bacAcier') return '04';
+    if (role === 'struct') return M.cat === 'Bois et dérivés' ? '03' : '02';
+    if (isInsul(m)) return role === 'above' ? (use === 'toiture' ? '04' : '08') : role === 'under' && (use === 'terrePlein' || use === 'plancherBas') ? '02' : '06';
+    if (M.cat === 'Plâtre et plaques') return '06';
+    if (isWoodFrameish(m)) return '03';
+    return '02';
+  }
+  if (role === 'struct') return M.cat === 'Bois et dérivés' ? '03' : '02';
+  if (role === 'ext') return isInsul(m) || FINISH_IDS.has(m) || m === 'bardageBois' || M.cat === 'Couverture et étanchéité' ? '10' : isWoodFrameish(m) ? '03' : '10';
+  return isInsul(m) || M.cat === 'Plâtre et plaques' || FINISH_IDS.has(m) || isWoodFrameish(m) ? '06' : '06';
+}
+function structIndex(layers){
+  let best = -1, w = -1;
+  layers.forEach(([m, e], i) => { const M = mat(m); if (isAir(m) || FINISH_IDS.has(m) || isInsul(m) || !STRUCT_CATS.includes(M.cat) || isWoodFrameish(m) || m === 'bardageBois') return; const k = (M.rho || 0) * e; if (k > w){ w = k; best = i; } });
+  return best;
+}
+const famLotDqe = (F, el) => {
+  const c = F?.cat, id = el.fam;
+  if (c === 'Fenêtres') return '05';
+  if (c === 'Portes'){ const w = el.host ? getEl(el.host) : null, ext = /entree|ext/.test(id) || (w && compo(w.type).lot !== 'Second œuvre' && wallLayersHaveInsul(w)); return ext ? '05' : '07'; }
+  if (c === 'Ouvertures') return null;
+  if (c === 'Cuisine et sanitaires') return id === 'cuisine' ? '13' : '12';
+  if (c === 'Escaliers et garde-corps') return /garde/.test(id) ? '11' : '02';
+  if (c === 'Structure'){ const m = instSolids(el)[0]?.m; return m === 'acier' || mat(m).cat === 'Métaux' ? '11' : mat(m).cat === 'Bois et dérivés' ? '03' : '02'; }
+  if (c === 'Extérieur') return '14';
+  return '13';
+};
+const wallLayersHaveInsul = w => compo(w.type).layers.some(([m]) => isInsul(m)) || compo(w.type).lot === 'Gros œuvre';
+function famPrice(F, el){
+  const c = famCut(el), a = c ? c.w * c.h : 1, id = el.fam;
+  if (F?.cat === 'Fenêtres') return Math.round(id === 'fenetre-fixe' ? 250 + 300 * a : /baie|porte-fenetre/.test(id) ? 600 + 450 * a : 380 + 420 * a);
+  if (F?.cat === 'Portes') return /entree/.test(id) ? 1800 : /double/.test(id) ? 650 : 380;
+  return ({wc:450, lavabo:380, douche:950, baignoire:1100, cuisine:3500, arbre:180, 'escalier-droit':2800, 'garde-corps':220, 'poutre-acier':0, 'poutre-bois':0, table:350, chaise:80, lit:500, canape:900, bureau:300, armoire:600, rayonnage:450, palette:0, cuve:2500, machine:0, voiture:0})[id] ?? 300;
+}
+
+/* Articles du DQE. Chaque article : {key, lot, des, det, u, q, byLvl, mass, co2, pu0} */
+function dqeItems(){
+  const items = new Map();
+  const add = (key, lot, des, det, u, q, lvl, pu0, mass = 0, co2 = 0) => {
+    if (!lot || !(q > 1e-6)) return;
+    let it = items.get(key); if (!it) items.set(key, it = {key, lot, des, det, u, q:0, byLvl:{}, mass:0, co2:0, pu0});
+    it.q += q; it.byLvl[lvl] = (it.byLvl[lvl] || 0) + q; it.mass += mass; it.co2 += co2;
+  };
+  const layerMass = (m, e, a) => { const M = mat(m), kg = isAir(m) ? 0 : (M.rho || 0) * e * a; return [kg, kg * (M.gwp || 0)]; };
+  let groundArea = 0, groundPerim = 0;
+  for (const el of state.els){
+    if (el.kind === 'wall'){
+      const C = compo(el.type), L = wallAxis(el).L, ops = wallOpenings(el).reduce((s, o) => s + (o.t1 - o.t0) * (o.z1 - o.z0), 0), net = Math.max(0, L * el.h - ops);
+      const layers = C.layers, part = C.lot === 'Second œuvre';
+      if (part){ // cloison : un seul article
+        add('W|' + el.type, '06', /^cloison/i.test(C.nom) ? C.nom : `Cloison ${lc(C.nom)}`, `ép. ${cm(layers.reduce((s, l) => s + l[1], 0))} cm`, 'm²', net, el.lvl, Math.round(layers.reduce((s, [m, e]) => s + (isAir(m) ? 0 : pricePerM2(m, e)), 0) + 15), ...layers.reduce((acc, [m, e]) => { const r = layerMass(m, e, net); return [acc[0] + r[0], acc[1] + r[1]]; }, [0, 0]));
+        add('P|wall2', '09', 'Peinture sur cloisons (2 faces)', 'impression + 2 couches', 'm²', net * 2, el.lvl, 14);
+        continue;
+      }
+      const si = structIndex(layers), lining = [];
+      layers.forEach(([m, e], i) => {
+        if (isAir(m)) return;
+        const role = si < 0 ? (i === 0 ? 'ext' : i === layers.length - 1 ? 'int' : 'struct') : i < si ? 'ext' : i === si ? 'struct' : 'int';
+        const lot = layerLot(m, role, 'wall'), M = mat(m), [kg, co] = layerMass(m, e, net);
+        if (role === 'int' && lot === '06'){ lining.push([m, e, kg, co]); return; }
+        const des = role === 'struct' ? `${M.cat === 'Bois et dérivés' ? 'Mur' : M.cat === 'Béton et mortiers' ? 'Voile' : 'Maçonnerie'} ${lc(M.nom)}` : FINISH_IDS.has(m) ? `${M.nom} sur façade` : isInsul(m) ? `Isolation par l'extérieur : ${lc(M.nom)}` : M.nom;
+        add(`L|${lot}|${m}|${Math.round(e * 1000)}`, lot, des, `ép. ${cm(e)} cm`, 'm²', net, el.lvl, Math.round(pricePerM2(m, e)), kg, co);
+      });
+      if (lining.length){
+        const des = lining.some(([m]) => isInsul(m)) ? 'Doublage isolant : ' + lining.map(([m, e]) => `${lc(mat(m).nom)} ${cm(e)} cm`).join(' + ') : 'Parement intérieur : ' + lining.map(([m, e]) => `${lc(mat(m).nom)} ${cm(e)} cm`).join(' + ');
+        add('D|' + lining.map(([m, e]) => m + Math.round(e * 1000)).join('+'), '06', des, '', 'm²', net, el.lvl, Math.round(lining.reduce((s, [m, e]) => s + pricePerM2(m, e), 0) + 10), lining.reduce((s, x) => s + x[2], 0), lining.reduce((s, x) => s + x[3], 0));
+        add('P|wall1', '09', 'Peinture sur murs intérieurs', 'impression + 2 couches', 'm²', net, el.lvl, 14);
+      }
+      if (el.lvl === 0 && el.off <= 0.01){ groundPerim += L; add('T|fouilles', '01', 'Fouilles en rigole et semelles filantes', 'sous murs porteurs, ~0,5 × 0,6 m', 'ml', L, el.lvl, 95); }
+    } else if (el.kind === 'slab'){
+      const C = compo(el.type), use = elUse(el), r = rect(el.p, el.q), A = area(r), layers = C.layers, si = structIndex(layers);
+      if (el.lvl === 0 && (use === 'terrePlein' || use === 'plancherBas')) groundArea += A;
+      layers.forEach(([m, e], i) => {
+        if (isAir(m)) return;
+        const role = si < 0 ? 'struct' : i < si ? 'above' : i === si ? 'struct' : 'under', lot = layerLot(m, role, 'slab', use), M = mat(m), [kg, co] = layerMass(m, e, A);
+        const des = role === 'struct' ? (M.cat === 'Bois et dérivés' ? `Plancher ${lc(M.nom)}` : use === 'terrePlein' ? `Dallage ${lc(M.nom)}` : `Dalle ${lc(M.nom)}`)
+          : isInsul(m) ? `Isolant ${role === 'under' ? (use === 'terrePlein' ? 'sous dallage' : 'en sous-face') : use === 'toiture' ? 'de toiture' : 'sous chape'} : ${lc(M.nom)}` : M.nom;
+        add(`S|${lot}|${m}|${Math.round(e * 1000)}|${role}`, lot, des, `ép. ${cm(e)} cm`, 'm²', A, el.lvl, Math.round(pricePerM2(m, e)), kg, co);
+      });
+    } else if (el.kind === 'col'){
+      const M = mat(el.mat), v = el.w * el.d * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : '02';
+      add(`C|${el.mat}|${n0(el.w * 100)}x${n0(el.d * 100)}`, lot, `Poteau ${lc(M.nom)}`, `section ${n0(el.w * 100)} × ${n0(el.d * 100)} cm`, 'u', 1, el.lvl, lot === '11' ? Math.round(kg * 4.5) : lot === '03' ? Math.round(v * 1400 + 60) : Math.round(v * 600 + 120), kg, kg * (M.gwp || 0));
+    } else if (el.kind === 'vol'){
+      const M = mat(el.mat), r = rect(el.p, el.q), v = area(r) * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
+      add(`V|${el.mat}`, lot, `Ouvrage en ${lc(M.nom)}`, 'volume', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
+    } else if (el.kind === 'inst'){
+      const F = fam(el.fam), lot = famLotDqe(F, el); if (!lot) continue;
+      const c = famCut(el), t = F?.types?.[el.type | 0]?.nom, sols = instSolids(el), kg = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0), 0), co = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0) * (mat(so.m).gwp || 0), 0);
+      const det = c ? `${n0(c.w * 100)} × ${n0(c.h * 100)} cm${t && !/×|x\s*\d/.test(t) ? ' · ' + t : ''}` : (t || '');
+      if (F?.cat === 'Structure' && lot === '11') add(`F|${el.fam}|${el.type | 0}`, lot, F.nom, t || '', 'kg', kg, el.lvl, 4.5, kg, co);
+      else if (F?.cat === 'Structure') add(`F|${el.fam}|${el.type | 0}`, lot, F.nom, t || '', 'm³', sols.reduce((s, so) => s + solidVol(so), 0), el.lvl, lot === '03' ? 1500 : 650, kg, co);
+      else add(`F|${el.fam}|${el.type | 0}|${c ? n0(c.w * 100) + 'x' + n0(c.h * 100) : ''}`, lot, F?.nom || 'Composant', det, 'u', 1, el.lvl, famPrice(F, el), kg, co);
+    }
+  }
+  if (groundArea > 0) add('T|decap', '01', 'Décapage de la terre végétale', 'emprise du bâtiment + 1 m', 'm²', groundArea + groundPerim * 1 + 4, 0, 4);
+  const out = [...items.values()];
+  for (const it of out){ it.pu = state.dqe?.pu?.[it.key] ?? it.pu0; it.total = it.q * it.pu; }
+  return out.sort((a, b) => a.lot.localeCompare(b.lot) || a.des.localeCompare(b.des, 'fr'));
+}
+function dqeGroups(items){ const g = []; for (const [code, name] of DQE_LOTS){ const l = items.filter(i => i.lot === code); if (l.length) g.push({code, name, items:l, total:l.reduce((s, i) => s + i.total, 0)}); } return g; }
+const eur = v => (Math.round(v * 100) / 100).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+const qtyFmt = (q, u) => nf(q, u === 'u' ? 0 : 2);
+
+/* ---------- onglet Métré : aperçu du DQE, prix modifiables ---------- */
+const dqeOpen = new Set();
+function renderDqePanel(){
+  if (!state.els.length) return `<p class="hint">Le DQE apparaîtra ici dès que vous aurez dessiné un premier élément.</p>`;
+  const items = dqeItems(), groups = dqeGroups(items), ht = items.reduce((s, i) => s + i.total, 0), tva = state.dqe?.tva ?? 20;
+  return `<div class="ph"><h2>DQE du projet</h2><span class="tag">Auto</span></div>
+    <p class="hint">Détail quantitatif estimatif, rangé par lots selon ce que contient la maquette. Les prix unitaires sont indicatifs : modifiez-les, ils sont enregistrés dans le projet.</p>
+    <div class="btns tight"><button class="btn primary" data-act="dqe-export">Exporter le DQE…</button><button class="btn" data-act="dqe-reset-pu">Prix par défaut</button></div>
+    <div class="dqe">${groups.map(g => { const open = dqeOpen.has(g.code) || dqeOpen.size === 0;
+      return `<section class="dqe-lot"><button class="dqe-h" data-dqelot="${g.code}" aria-expanded="${open}"><span class="dqe-c">${g.code}</span><b>${esc(g.name)}</b><span class="dqe-t">${eur(g.total)}</span></button>
+        ${open ? `<div class="dqe-rows">${g.items.map((it, k) => `<div class="dqe-r"><div class="dqe-d"><span class="dqe-n">${g.code}.${k + 1}</span> ${esc(it.des)}${it.det ? `<small>${esc(it.det)}</small>` : ''}</div>
+          <div class="dqe-m"><span>${qtyFmt(it.q, it.u)} ${it.u} ×</span><input class="pu" data-pu="${esc(it.key)}" type="text" inputmode="decimal" value="${nf(it.pu, 2)}" aria-label="Prix unitaire € HT"><span>€ =</span><b>${eur(it.total)}</b></div></div>`).join('')}</div>` : ''}</section>`; }).join('')}</div>
+    <dl class="kv dqe-sum"><dt>Total HT</dt><dd class="big">${eur(ht)}</dd><dt>TVA ${nf(tva, 1)} %</dt><dd>${eur(ht * tva / 100)}</dd><dt>Total TTC</dt><dd class="big">${eur(ht * (1 + tva / 100))}</dd></dl>
+    <details class="help"><summary>Matériaux : volumes, masses, carbone</summary>${renderQty().replace(/<div class="ph">[\s\S]*?<\/div>/, '').replace(/<div class="btns">[\s\S]*?<\/div>/, '')}</details>`;
+}
+$('#pbody').addEventListener('change', e => {
+  const t = e.target; if (!t.matches('[data-pu]')) return;
+  const v = num(t.value); state.dqe ??= {pu:{}, tva:20}; state.dqe.pu ??= {};
+  if (Number.isNaN(v)) delete state.dqe.pu[t.dataset.pu]; else state.dqe.pu[t.dataset.pu] = Math.max(0, v);
+  save(); renderPanel();
+});
+$('#pbody').addEventListener('click', e => {
+  const h = e.target.closest('[data-dqelot]'); if (h){ const c = h.dataset.dqelot; if (dqeOpen.size === 0) dqeGroups(dqeItems()).forEach(g => dqeOpen.add(g.code)); dqeOpen.has(c) ? dqeOpen.delete(c) : dqeOpen.add(c); if (!dqeOpen.size) dqeOpen.add('__none'); return renderPanel(); }
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'dqe-export') openDqeExport();
+  if (b.dataset.act === 'dqe-reset-pu'){ if (state.dqe) state.dqe.pu = {}; save(); renderPanel(); toast('Prix unitaires par défaut rétablis'); }
+});
+
+/* ---------- options d'export ---------- */
+const DQE_OPTS = [['lots', 'Regrouper par lots (corps d\'état)', true], ['num', 'Numéroter les articles (2.1, 2.2…)', true], ['details', 'Matériaux et épaisseurs dans les désignations', true],
+  ['qty', 'Quantités', true], ['unit', 'Unités', true], ['pu', 'Prix unitaires', true], ['total', 'Montant par article', true], ['subtotal', 'Sous-totaux par lot', true],
+  ['ttc', 'Total HT, TVA et TTC', true], ['levels', 'Quantités par niveau (une colonne par niveau)', false], ['mass', 'Masses (kg)', false], ['co2', 'Carbone (kg CO₂e)', false],
+  ['matsheet', 'Tableau des matériaux (volumes, masses, carbone)', false], ['header', 'En-tête : projet, lieu, date, rédacteur', true]];
+function openDqeExport(){
+  const items = dqeItems(), groups = dqeGroups(items), o = {...Object.fromEntries(DQE_OPTS.map(([k, , d]) => [k, d])), ...(state.dqe?.opts || {})};
+  const lotsOn = new Set(state.dqe?.lotsOff ? groups.map(g => g.code).filter(c => !state.dqe.lotsOff.includes(c)) : groups.map(g => g.code));
+  const loc = state.site?.label || '';
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Métré</span><h3 class="ed-t2">Exporter le DQE</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body dqe-x"><section>
+      <div class="fields"><label class="f wide"><span>Titre du document</span><span class="in"><input id="dxT" type="text" value="${esc(state.dqe?.title || 'DQE · ' + state.name)}" style="font-family:var(--f-body)"></span></label>
+        <label class="f"><span>Maître d'ouvrage</span><span class="in"><input id="dxMo" type="text" value="${esc(state.dqe?.mo || '')}" style="font-family:var(--f-body)"></span></label>
+        <label class="f"><span>Rédigé par</span><span class="in"><input id="dxBy" type="text" value="${esc(state.dqe?.by || '')}" style="font-family:var(--f-body)"></span></label>
+        <label class="f"><span>TVA</span><span class="in"><select id="dxTva">${[20, 10, 5.5, 0].map(t => `<option value="${t}"${(state.dqe?.tva ?? 20) == t ? ' selected' : ''}>${nf(t, 1)} %</option>`).join('')}</select></span></label>
+        <label class="f"><span>Format</span><span class="in"><select id="dxF"><option value="xlsx">Excel (.xlsx)</option><option value="pdf">PDF (impression)</option><option value="csv">CSV</option></select></span></label></div>
+      ${loc ? `<p class="hint">Lieu : ${esc(loc)}</p>` : ''}
+      <div class="grp"><h3>Lots inclus</h3><div class="dx-lots">${groups.map(g => `<label class="ap-check2"><input type="checkbox" data-dxlot="${g.code}"${lotsOn.has(g.code) ? ' checked' : ''}> <b>${g.code}</b> ${esc(g.name)} <em>${g.items.length} art.</em></label>`).join('')}</div></div>
+    </section><section><div class="grp" style="margin-top:0"><h3>Afficher</h3>${DQE_OPTS.map(([k, n]) => `<label class="ap-check2"><input type="checkbox" data-dxo="${k}"${o[k] ? ' checked' : ''}> ${n}</label>`).join('')}</div></section></div>
+    <footer class="ed-f"><span class="hint">${items.length} articles · ${groups.length} lots</span><button class="btn" data-close>Annuler</button><button class="btn primary" id="dxGo">Exporter</button></footer>`, 'mid');
+  d.querySelector('#dxGo').onclick = () => {
+    const opts = {}; d.querySelectorAll('[data-dxo]').forEach(c => opts[c.dataset.dxo] = c.checked);
+    const off = [...d.querySelectorAll('[data-dxlot]')].filter(c => !c.checked).map(c => c.dataset.dxlot);
+    state.dqe = {...(state.dqe || {}), pu:state.dqe?.pu || {}, opts, lotsOff:off, title:d.querySelector('#dxT').value.trim(), mo:d.querySelector('#dxMo').value.trim(), by:d.querySelector('#dxBy').value.trim(), tva:+d.querySelector('#dxTva').value};
+    save(); const fmt = d.querySelector('#dxF').value; closeEDlg(); doExport('dqe', fmt);
+  };
+}
+
+/* ---------- construction des tableaux ---------- */
+function dqeTable(){
+  const D = state.dqe || {}, o = {...Object.fromEntries(DQE_OPTS.map(([k, , d]) => [k, d])), ...(D.opts || {})}, off = new Set(D.lotsOff || []), tva = D.tva ?? 20;
+  const items = dqeItems().filter(i => !off.has(i.lot)), groups = o.lots ? dqeGroups(items) : [{code:'', name:'', items, total:items.reduce((s, i) => s + i.total, 0)}];
+  const lv = o.levels ? state.levels.map((l, i) => [i, l.n]).filter(([i]) => items.some(it => it.byLvl[i])) : [];
+  const cols = [o.num && ['N°', 'num'], ['Désignation', 'des'], o.unit && ['U', 'u'], ...lv.map(([i, n]) => [n, 'lvl' + i]), o.qty && ['Qté', 'q'], o.pu && ['PU € HT', 'pu'], o.total && ['Montant € HT', 'tot'], o.mass && ['Masse kg', 'kg'], o.co2 && ['kg CO₂e', 'co2']].filter(Boolean);
+  return {o, tva, items, groups, cols, lv};
+}
+function dqeCSV(){
+  const {o, tva, groups, cols} = dqeTable(), d = v => typeof v === 'number' ? String(Math.round(v * 100) / 100).replace('.', ',') : `"${String(v ?? '').replace(/"/g, '""')}"`, L = [];
+  if (o.header) L.push(d(state.dqe?.title || 'DQE'), d(state.name), state.site?.label ? d(state.site.label) : '', d(new Date().toLocaleDateString('fr-FR')), '');
+  L.push(cols.map(c => d(c[0])).join(';')); let ht = 0;
+  for (const g of groups){
+    if (o.lots) L.push(d(`${g.code} ${g.name}`));
+    g.items.forEach((it, k) => { ht += it.total; L.push(cols.map(([, key]) => d(cellVal(key, it, g, k, o))).join(';')); });
+    if (o.lots && o.subtotal && o.total) L.push(cols.map(([, key]) => key === 'des' ? d(`Sous-total lot ${g.code}`) : key === 'tot' ? d(g.total) : '').join(';'));
+  }
+  if (o.ttc && o.total) L.push('', `${d('Total HT')};${d(ht)}`, `${d('TVA ' + tva + ' %')};${d(ht * tva / 100)}`, `${d('Total TTC')};${d(ht * (1 + tva / 100))}`);
+  return '﻿' + L.join('\r\n');
+}
+function cellVal(key, it, g, k, o){
+  if (key === 'num') return o.lots ? `${g.code}.${k + 1}` : String(k + 1);
+  if (key === 'des') return it.des + (o.details && it.det ? ` (${it.det})` : '');
+  if (key === 'u') return it.u; if (key === 'q') return round2(it.q); if (key === 'pu') return round2(it.pu); if (key === 'tot') return round2(it.total);
+  if (key === 'kg') return Math.round(it.mass); if (key === 'co2') return Math.round(it.co2);
+  if (key.startsWith('lvl')) return round2(it.byLvl[+key.slice(3)] || 0);
+  return '';
+}
+const round2 = v => Math.round(v * 100) / 100;
+
+/* ---------- Excel (.xlsx) écrit à la main : styles, largeurs, formules (montants recalculés si on change un prix dans Excel) ---------- */
+function xlsxEsc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); }
+const colL = i => { let s = ''; i++; while (i > 0){ const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+function xlsxSheet(rows, widths, merges = []){
+  const cell = (c, r, x) => { if (x == null || x === '') return ''; const ref = colL(c) + (r + 1); const o = typeof x === 'object' ? x : {v:x};
+    const s = o.s ? ` s="${o.s}"` : '';
+    if (o.f) return `<c r="${ref}"${s}><f>${xlsxEsc(o.f)}</f>${o.v != null ? `<v>${o.v}</v>` : ''}</c>`;
+    if (typeof o.v === 'number') return `<c r="${ref}"${s}><v>${o.v}</v></c>`;
+    return `<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${xlsxEsc(o.v)}</t></is></c>`; };
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"/></sheetViews>
+<cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${rows.map((r, ri) => `<row r="${ri + 1}">${(r || []).map((x, ci) => cell(ci, ri, x)).join('')}</row>`).join('')}</sheetData>
+${merges.length ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : ''}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0" paperSize="9"/></worksheet>`;
+}
+const XLSX_STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00\\ &quot;€&quot;"/><numFmt numFmtId="165" formatCode="#,##0.00"/></numFmts>
+<fonts count="5"><font><sz val="10"/><name val="Calibri"/></font><font><b/><sz val="10"/><name val="Calibri"/></font><font><b/><sz val="15"/><name val="Calibri"/></font><font><sz val="9"/><color rgb="FF6B7280"/><name val="Calibri"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts>
+<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2A2E35"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEDEFF2"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8F2F9"/></patternFill></fill></fills>
+<borders count="2"><border/><border><bottom style="thin"><color rgb="FFD5D8DC"/></bottom></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="12">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="4" fillId="2" borderId="0" applyFont="1" applyFill="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="1" fillId="3" borderId="0" applyFont="1" applyFill="1"/>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="1" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="3" borderId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" applyBorder="1"><alignment wrapText="1" vertical="top"/></xf>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" applyFont="1"/>
+<xf numFmtId="164" fontId="1" fillId="4" borderId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/>
+<xf numFmtId="0" fontId="1" fillId="4" borderId="0" applyFont="1" applyFill="1"/>
+</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+function dqeXLSX(){
+  const {o, tva, groups, cols} = dqeTable(), rows = [], merges = [], W = cols.length, lastCol = colL(W - 1);
+  const ci = k => cols.findIndex(c => c[1] === k);
+  if (o.header){
+    rows.push([{v:state.dqe?.title || 'DQE', s:2}]); merges.push(`A1:${lastCol}1`);
+    const info = [['Projet', state.name], state.site?.label && ['Lieu', state.site.label], state.dqe?.mo && ['Maître d\'ouvrage', state.dqe.mo], state.dqe?.by && ['Rédigé par', state.dqe.by], ['Date', new Date().toLocaleDateString('fr-FR')]].filter(Boolean);
+    info.forEach(([a, b]) => rows.push([{v:a, s:9}, {v:b, s:1}]));
+    rows.push([{v:'Quantités issues de la maquette ARCHIPLAN ; prix unitaires indicatifs à valider.', s:9}], []);
+  }
+  rows.push(cols.map(c => ({v:c[0], s:3}))); const head = rows.length;
+  const subRefs = [];
+  for (const g of groups){
+    if (o.lots){ const r = [{v:`${g.code}  ${g.name}`, s:4}]; for (let i = 1; i < W; i++) r.push({v:'', s:4}); rows.push(r); }
+    const first = rows.length + 1;
+    g.items.forEach((it, k) => {
+      const r = cols.map(([, key]) => { const v = cellVal(key, it, g, k, o); return typeof v === 'number' ? {v, s:key === 'pu' || key === 'tot' ? 6 : 5} : {v, s:8}; });
+      const iq = ci('q'), ip = ci('pu'), it2 = ci('tot');
+      if (it2 >= 0 && iq >= 0 && ip >= 0) r[it2] = {f:`${colL(iq)}${rows.length + 1}*${colL(ip)}${rows.length + 1}`, v:round2(it.total), s:6};
+      rows.push(r);
+    });
+    const last = rows.length, itot = ci('tot');
+    if (o.lots && o.subtotal && itot >= 0){ const r = cols.map(() => ({v:'', s:11})); r[ci('des')] = {v:`Sous-total lot ${g.code}`, s:11}; r[itot] = {f:`SUM(${colL(itot)}${first}:${colL(itot)}${last})`, v:round2(g.total), s:10}; rows.push(r); subRefs.push(`${colL(itot)}${rows.length}`); }
+    else if (itot >= 0) subRefs.push(`SUM(${colL(itot)}${first}:${colL(itot)}${last})`);
+  }
+  const itot = ci('tot');
+  if (o.ttc && itot >= 0){
+    const ht = groups.reduce((s, g) => s + g.total, 0), lab = Math.max(0, itot - 1);
+    rows.push([]);
+    const line = (txt, f, v) => { const r = []; r[lab] = {v:txt, s:1}; r[itot] = {f, v:round2(v), s:7}; rows.push(r); return `${colL(itot)}${rows.length}`; };
+    const hR = line('Total HT', subRefs.join('+') || '0', ht); const tR = line(`TVA ${nf(tva, 1)} %`, `${hR}*${tva / 100}`, ht * tva / 100); line('Total TTC', `${hR}+${tR}`, ht * (1 + tva / 100));
+  }
+  const widths = cols.map(([, k]) => k === 'des' ? 62 : k === 'num' ? 7 : k === 'u' ? 6 : k === 'tot' || k === 'pu' ? 15 : 11);
+  const sheets = [{name:'DQE', xml:xlsxSheet(rows, widths, merges)}];
+  if (o.matsheet){
+    const q = quantities(), mr = [[{v:'Matériaux', s:2}], [], ['Lot', 'Matériau', 'Volume m³', 'Masse t', 'kg CO₂e'].map(v => ({v, s:3}))];
+    for (const lot of LOT_ORDER) for (const r of q.mats.filter(x => x.lot === lot)){ const M = mat(r.mat), ms = r.v * (M.R != null ? 0 : M.rho); mr.push([{v:lot, s:8}, {v:M.nom, s:8}, {v:round2(r.v), s:5}, {v:round2(ms / 1000), s:5}, {v:Math.round(ms * (M.gwp || 0)), s:5}]); }
+    sheets.push({name:'Matériaux', xml:xlsxSheet(mr, [22, 40, 12, 12, 12])});
+  }
+  const files = [
+    {name:'[Content_Types].xml', data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`},
+    {name:'_rels/.rels', data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+    {name:'xl/workbook.xml', data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s, i) => `<sheet name="${xlsxEsc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`},
+    {name:'xl/_rels/workbook.xml.rels', data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+    {name:'xl/styles.xml', data:XLSX_STYLES},
+    ...sheets.map((s, i) => ({name:`xl/worksheets/sheet${i + 1}.xml`, data:s.xml}))];
+  return makeZip(files);
+}
+/* PDF : document HTML mis en page, imprimé par le navigateur (« Enregistrer au format PDF ») */
+function dqeHTML(){
+  const {o, tva, groups, cols} = dqeTable(), ht = groups.reduce((s, g) => s + g.total, 0);
+  const fmt = (key, v) => typeof v === 'number' ? (key === 'pu' || key === 'tot' ? eur(v) : nf(v, key === 'kg' || key === 'co2' ? 0 : 2)) : esc(v);
+  const body = groups.map(g => `${o.lots ? `<tr class="lot"><td colspan="${cols.length}">${g.code} &nbsp; ${esc(g.name)}</td></tr>` : ''}${g.items.map((it, k) => `<tr>${cols.map(([, key]) => `<td class="${['des', 'num', 'u'].includes(key) ? '' : 'n'}">${fmt(key, cellVal(key, it, g, k, o))}</td>`).join('')}</tr>`).join('')}${o.lots && o.subtotal && o.total ? `<tr class="sub"><td colspan="${cols.length - 1}">Sous-total lot ${g.code}</td><td class="n">${eur(g.total)}</td></tr>` : ''}`).join('');
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(state.dqe?.title || 'DQE')}</title><style>
+    @page{size:A4 landscape;margin:14mm}body{font:10pt/1.35 Inter,Arial,sans-serif;color:#17191E}h1{font-size:17pt;margin:0 0 6px}.meta{color:#5E636C;margin:0 0 14px}
+    table{width:100%;border-collapse:collapse}th{background:#2A2E35;color:#fff;text-align:left;padding:6px;font-size:9pt}td{padding:5px 6px;border-bottom:1px solid #E3E5E8;vertical-align:top}
+    td.n,th.n{text-align:right;white-space:nowrap}tr.lot td{background:#EDEFF2;font-weight:700;padding-top:8px}tr.sub td{font-weight:700;background:#E8F2F9}
+    .tot{margin-top:12px;margin-left:auto;width:320px}.tot td{font-weight:600}.tot tr:last-child td{font-size:12pt;font-weight:800}.note{color:#5E636C;font-size:8.5pt;margin-top:14px}</style></head><body>
+    ${o.header ? `<h1>${esc(state.dqe?.title || 'DQE')}</h1><p class="meta">Projet : <b>${esc(state.name)}</b>${state.site?.label ? ' · Lieu : ' + esc(state.site.label) : ''}${state.dqe?.mo ? ' · Maître d\'ouvrage : ' + esc(state.dqe.mo) : ''}${state.dqe?.by ? ' · Rédigé par : ' + esc(state.dqe.by) : ''} · ${new Date().toLocaleDateString('fr-FR')}</p>` : ''}
+    <table><thead><tr>${cols.map(([n, key]) => `<th class="${['des', 'num', 'u'].includes(key) ? '' : 'n'}">${esc(n)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>
+    ${o.ttc && o.total ? `<table class="tot"><tr><td>Total HT</td><td class="n">${eur(ht)}</td></tr><tr><td>TVA ${nf(tva, 1)} %</td><td class="n">${eur(ht * tva / 100)}</td></tr><tr><td>Total TTC</td><td class="n">${eur(ht * (1 + tva / 100))}</td></tr></table>` : ''}
+    <p class="note">Quantités issues de la maquette ARCHIPLAN (ouvertures déduites). Prix unitaires indicatifs à valider par l'entreprise.</p></body></html>`;
+}
+function printDqe(){
+  const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
+  f.srcdoc = dqeHTML(); f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch(e){ toast('Impression impossible dans ce navigateur'); } setTimeout(() => f.remove(), 60000); };
+}
+
 /* ==== 70-export.js ==== */
 /* ============ Exports : Archi Vision (GLB), IFC4, CSV, JSON, ZIP, images ============ */
 const fileBase = () => (state.name || 'projet').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'projet';
 let dlNS;
 async function getDl(){ if (dlNS === undefined){ try { dlNS = window.claude?.use ? await window.claude.use('downloads') : null; } catch(e){ dlNS = null; } } return dlNS; }
-const MIME = {csv:'text/csv', json:'application/json', glb:'model/gltf-binary', ifc:'application/x-step', zip:'application/zip', png:'image/png'};
+const MIME = {csv:'text/csv', json:'application/json', glb:'model/gltf-binary', ifc:'application/x-step', zip:'application/zip', png:'image/png', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', html:'text/html'};
 async function offer(filename, data){
   const dl = await getDl();
   if (dl){
@@ -4816,6 +5415,8 @@ function buildGLB(){
       g.userData = {archiplan:info};
       (lv[el.lvl] || root).add(g);
     }
+    const T = state.site?.terrain; if (T && DISPLAY.terrain !== false){ const vw = view; view = '3d'; buildTerrain(); view = vw; const tm = terrainGroup.children.find(o => o.isMesh); if (tm){ const t = new THREE.Mesh(tm.geometry.clone(), new THREE.MeshStandardMaterial({color:0x6F8A5A, roughness:1})); t.name = 'Terrain'; t.userData = {archiplan:{type:'terrain', taille:T.size, altitudeOrigine:T.alt0, source:'IGN RGE ALTI'}}; root.add(t); } buildTerrain(); }
+    if (state.site?.lat) root.userData.archiplan.lieu = {adresse:state.site.label || '', latitude:state.site.lat, longitude:state.site.lon, altitude:state.site.alt ?? null, zoneClimatique:state.site.zone || ''};
     new GLTFExporter().parse(root, r => { disposeGroup(root); res(new Uint8Array(r)); }, err => rej(err), {binary:true, maxTextureSize:1024, onlyVisible:true});
   });
 }
@@ -4846,6 +5447,7 @@ async function doExport(kind, arg){
   const base = fileBase();
   try {
     if (kind === 'csv') return offer(`${base}_metre.csv`, buildCSV());
+    if (kind === 'dqe'){ if (arg === 'pdf') return printDqe(); if (arg === 'csv') return offer(`${base}_DQE.csv`, dqeCSV()); return offer(`${base}_DQE.xlsx`, new Blob([dqeXLSX()], {type:MIME.xlsx})); }
     if (kind === 'json') return offer(`${base}.archiplan.json`, projectJSON());
     if (kind === 'ifc') return offer(`${base}.ifc`, buildIFC());
     if (kind === 'glb'){ toast('Préparation du modèle Archi Vision…'); return offer(`${base}_archivision.glb`, await buildGLB()); }
@@ -4853,8 +5455,8 @@ async function doExport(kind, arg){
     if (kind === 'pack'){
       toast('Préparation du paquet…');
       const glb = await buildGLB();
-      const readme = `ARCHIPLAN ${APP_VERSION} - ${state.name}\r\n\r\n${base}.glb : modèle 3D pour Archi Vision (glTF binaire, Y vers le haut, mètres, matériaux PBR texturés). Un nœud par niveau puis par élément ; les informations (type, composition, U, famille, paramètres) sont dans "extras".\r\n${base}.ifc : maquette BIM IFC4 (murs à couches, ouvertures, portes, fenêtres, dalles, poteaux, mobilier).\r\n${base}_metre.csv : métré par lot, par composition et par famille, avec carbone.\r\n${base}.archiplan.json : projet source, à rouvrir dans ARCHIPLAN.\r\n`;
-      return offer(`${base}_archivision.zip`, makeZip([{name:`${base}.glb`, data:glb}, {name:`${base}.ifc`, data:buildIFC()}, {name:`${base}_metre.csv`, data:buildCSV()}, {name:`${base}.archiplan.json`, data:projectJSON()}, {name:'LISEZMOI.txt', data:readme}]));
+      const readme = `ARCHIPLAN ${APP_VERSION} - ${state.name}\r\n\r\n${base}.glb : modèle 3D pour Archi Vision (glTF binaire, Y vers le haut, mètres, matériaux PBR texturés). Un nœud par niveau puis par élément ; les informations (type, composition, U, famille, paramètres) sont dans "extras".\r\n${base}.ifc : maquette BIM IFC4 (murs à couches, ouvertures, portes, fenêtres, dalles, poteaux, mobilier).\r\n${base}_metre.csv : métré par lot, par composition et par famille, avec carbone.\r\n${base}_DQE.xlsx : détail quantitatif estimatif par lots (corps d'état), prix indicatifs modifiables.\r\n${base}.archiplan.json : projet source, à rouvrir dans ARCHIPLAN.\r\n`;
+      return offer(`${base}_archivision.zip`, makeZip([{name:`${base}.glb`, data:glb}, {name:`${base}.ifc`, data:buildIFC()}, {name:`${base}_metre.csv`, data:buildCSV()}, {name:`${base}_DQE.xlsx`, data:new Uint8Array(await dqeXLSX().arrayBuffer())}, {name:`${base}.archiplan.json`, data:projectJSON()}, {name:'LISEZMOI.txt', data:readme}]));
     }
   } catch(e){ console.error(e); toast('L\'export a échoué. Réessayez dans un instant.'); }
 }
@@ -4951,7 +5553,7 @@ fileMenu.addEventListener('click', e => {
   else if (act === 'open') $('#fileIn').click();
   else if (act === 'home') $('#homeBtn').click();
 });
-expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; doExport(b.dataset.act, +b.dataset.k || undefined); });
+expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } doExport(b.dataset.act, +b.dataset.k || undefined); });
 $('#fileIn').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return;
   const rd = new FileReader();
@@ -5014,7 +5616,7 @@ function renderViewMenu(){
   m.innerHTML = `<div class="lbl">Couleur du fond</div><div class="bgsw">${BG_PRESETS.map(([c, n]) => `<button type="button" class="bgs${c === cur ? ' on' : ''}" data-bg="${c}" title="${n}" style="background:${c || '#FFFFFF'}" aria-label="${n}"></button>`).join('')}
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
     <hr><div class="lbl">Afficher</div>
-    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }

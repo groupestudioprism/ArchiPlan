@@ -90,8 +90,14 @@ const DemoAuth = {
   // Démo : licence fictive active ; un email contenant « decouverte » montre le mode découverte.
   async getAccess(u){
     await sleep(200); const info = {accountKind:'individual', subscription:'free', role:'user', companyName:''};
-    if (/decouverte/i.test(u.email || '')) return {level:'discovery', info, license:null};
-    return {level:'licensed', info, license:{type:'demo', status:'active', expiresAt:null, expired:false}};
+    const keyed = (store.get('sp.demo.keys') || {})[u.uid];
+    if (/decouverte/i.test(u.email || '') && !keyed) return {level:'discovery', info, license:null};
+    return {level:'licensed', info, license:{type:keyed ? 'pro' : 'demo', status:'active', expiresAt:null, expired:false}};
+  },
+  // Démo : toute clé au bon format commençant par ARCH active une licence Pro d'un an.
+  async redeemKey(u, raw){
+    await sleep(300); const n = normKey(raw); if (n.length < 12 || n.length > 40) throw {code:'app/key-format'}; if (!n.startsWith('ARCH')) throw {code:'app/key-unknown'};
+    const all = store.get('sp.demo.keys') || {}; all[u.uid] = n; store.set('sp.demo.keys', all); return {productName:'ARCHIPLAN', licenseType:'pro', durationDays:365, orgName:''};
   },
   async findClient(email){ await sleep(250); const c = (store.get('sp.demo.clients') || {})[email.trim().toLowerCase()]; return c ? {...c} : null; },
   async saveClient(u, fiche, existingId){
@@ -180,7 +186,7 @@ const FirebaseAuth = {
   // Droits ARCHIPLAN : administrateur actif → tout ; sinon licence licenses/{uid}_archiplan active et non expirée.
   async getAccess(u){
     const p = (await this.userRef(u.uid).get()).data() || {};
-    const info = {accountKind:p.accountKind || 'individual', subscription:p.subscription || 'free', role:p.role || 'user', companyName:p.companyName || ''};
+    const info = {accountKind:p.accountKind || 'individual', subscription:p.subscription || 'free', role:p.role || 'user', companyName:p.companyName || '', orgName:p.orgName || ''};
     let lic = null;
     try { const s = await this.db.collection('licenses').doc(`${u.uid}_${LICENSE_PRODUCT}`).get(); lic = s.exists ? s.data() : null; }
     catch(e){ if (e?.code !== 'permission-denied') throw e; }   // pas de licence : les règles refusent la lecture d'un document absent
@@ -188,6 +194,25 @@ const FirebaseAuth = {
     const license = lic ? {type:lic.licenseType, status:lic.status, expiresAt:exp ? exp.getTime() : null, expired:!!exp && exp <= now} : null;
     if (p.role === 'admin' && p.status === 'active') return {level:'admin', info, license};
     return {level: license && license.status === 'active' && !license.expired ? 'licensed' : 'discovery', info, license};
+  },
+  // Activation d'une clé de licence (même procédure que la page « Activer une clé » du site, vérifiée par les règles Firestore).
+  async redeemKey(u, raw){
+    const n = normKey(raw); if (n.length < 12 || n.length > 40) throw {code:'app/key-format'};
+    const id = await sha256hex(n), kref = this.db.collection('licenseKeys').doc(id), ks = await kref.get();
+    if (!ks.exists) throw {code:'app/key-unknown'};
+    const k = ks.data();
+    if (k.status === 'redeemed') throw {code:k.redeemedBy === u.uid ? 'app/key-mine' : 'app/key-used'};
+    if (k.status !== 'available') throw {code:'app/key-revoked'};
+    if (k.expiresAt && k.expiresAt.toMillis() < Date.now()) throw {code:'app/key-expired'};
+    const FV = firebase.firestore.FieldValue, TS = firebase.firestore.Timestamp, lref = this.db.collection('licenses').doc(`${u.uid}_${k.productId}`);
+    let prev = null; try { const ls = await lref.get(); prev = ls.exists ? ls.data() : null; } catch(e){}
+    const b = this.db.batch(), now = FV.serverTimestamp();
+    b.update(kref, {status:'redeemed', redeemedBy:u.uid, redeemedEmail:String(u.email || '').toLowerCase(), redeemedAt:now, updatedAt:now});
+    b.set(lref, {userId:u.uid, productId:k.productId, productName:k.productName, licenseType:k.licenseType, status:'active', activatedAt:now,
+      expiresAt:k.expiresAt || (k.durationDays ? TS.fromMillis(Date.now() + k.durationDays * 864e5) : null), keyId:id, orgId:k.orgId || '',
+      createdAt:prev?.createdAt || now, updatedAt:now});
+    if (k.orgId) b.update(this.userRef(u.uid), {orgId:k.orgId, orgName:k.orgName, orgKeyId:id, updatedAt:now});
+    await b.commit(); return k;
   },
   async getProfile(u){
     const p = (await this.userRef(u.uid).get()).data() || {};
@@ -215,7 +240,10 @@ const FirebaseAuth = {
 };
 const Auth = FIREBASE_CONFIG ? FirebaseAuth : DemoAuth;
 
+const normKey = raw => String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const ERR = {
+  'app/key-format':'Clé invalide : vérifiez la saisie (lettres et chiffres, au moins 12 caractères).', 'app/key-unknown':'Cette clé n\'existe pas. Vérifiez la saisie.',
+  'app/key-used':'Cette clé a déjà été activée par un autre compte.', 'app/key-mine':'Cette clé est déjà activée sur votre compte.', 'app/key-revoked':'Cette clé a été désactivée. Contactez Studio Prism.', 'app/key-expired':'Cette clé a expiré.',
   'auth/invalid-credential':'Email ou mot de passe incorrect.',
   'auth/wrong-password':'Email ou mot de passe incorrect.',
   'auth/user-not-found':'Email ou mot de passe incorrect.',
@@ -376,13 +404,14 @@ const SCREENS = {
     </form>${ed ? '<div class="ap-links"><button type="button" class="ap-link" data-act="toapp">Annuler</button></div>' : ''}`; },
 
   licence:() => { const ls = licSummary(), full = access.level === 'admin' || access.level === 'licensed', i = access.info || {};
-    const acct = [i.accountKind === 'company' ? `Entreprise${i.companyName ? ' · ' + esc(i.companyName) : ''}` : 'Particulier', i.subscription ? 'abonnement Studio Prism ' + esc(licLabel(i.subscription)) : ''].filter(Boolean).join(' · ');
+    const acct = [i.orgName ? `Établissement · ${esc(i.orgName)}` : i.accountKind === 'company' ? `Entreprise${i.companyName ? ' · ' + esc(i.companyName) : ''}` : 'Particulier', i.subscription ? 'abonnement Studio Prism ' + esc(licLabel(i.subscription)) : ''].filter(Boolean).join(' · ');
     const lead = view.reason === 'export' ? '<p class="ap-sub">L\'export est réservé aux comptes disposant d\'une licence ARCHIPLAN active.</p>'
       : view.reason === 'welcome' ? '<p class="ap-sub">Bienvenue ! Votre compte gratuit vous donne accès à tous les outils et à 10 Mo de cloud.</p>' : view.reason === 'quota' ? '<p class="ap-sub">Votre espace cloud est plein. Une licence ARCHIPLAN le porte à 50 Mo.</p>' : '';
     return `<h2>${esc(ls.title)}</h2>${lead}
     <div class="ap-lic ${ls.cls}"><b>${esc(ls.short)}</b>${esc(ls.text)}${acct ? `<br><span style="color:#5B6B7F">${acct}</span>` : ''}${access.offline ? '<br><span style="color:#5B6B7F">Hors ligne : derniers droits connus.</span>' : ''}</div>
     ${full ? '<ul class="ap-list"><li>Cloud : 50 Mo de projets (1 Go pour un administrateur), 5 dossiers et 3 dossiers partagés.</li><li>Tous les exports : Archi Vision (.glb), IFC, métré, images, sauvegardes.</li></ul>' : `<ul class="ap-list"><li>Offre gratuite : tous les outils de modélisation, bibliothèque, compositions et familles, rendus à l'écran.</li><li>Cloud de 10 Mo, 5 dossiers et 3 dossiers partagés ; partage de projets.</li><li>Les exports (Archi Vision, IFC, métré, images, sauvegardes) demandent une licence ARCHIPLAN, à obtenir sur le site Studio Prism et activée sur ce même compte.</li></ul>
     <a class="ap-btn" href="${OFFERS_URL}" target="_blank" rel="noopener" style="text-decoration:none">Voir les offres ARCHIPLAN</a>`}
+    <details class="ap-key"${full ? '' : ' open'}><summary>J'ai une clé de licence</summary><form id="apKeyF" novalidate><label class="ap-field"><span>Clé reçue de Studio Prism ou de votre établissement</span><span class="ap-in"><input id="apKey" autocomplete="off" autocapitalize="characters" placeholder="ARCH-XXXX-XXXX-XXXX" style="font-family:var(--f-mono,monospace);letter-spacing:.05em"></span></label><p class="ap-err" id="apKeyErr"></p><button class="ap-btn alt" type="submit">Activer la clé</button></form></details>
     <div class="ap-links"><button type="button" class="ap-link" id="apLicCheck">Vérifier à nouveau</button><a class="ap-link" href="${ACCOUNT_URL}" target="_blank" rel="noopener">Mon compte Studio Prism</a><button type="button" class="ap-link" data-act="toapp">${full ? 'Retour' : 'Continuer avec l\'offre gratuite'}</button></div>`; },
 
   'pin-offer':() => `${steps(2)}<h2>Protéger l'accès sur cet appareil</h2>
@@ -496,6 +525,9 @@ const WIRE = {
     };
   },
   licence(){
+    $a('#apKeyF').onsubmit = async e => { e.preventDefault(); const b = e.currentTarget.querySelector('button'), err = $a('#apKeyErr'); err.textContent = ''; busy(b, true, 'Activation…');
+      try { const k = await Auth.redeemKey(me, $a('#apKey').value); await refreshAccess(); show('licence', {}); toastA(`Clé activée : ${k.productName} ${licLabel(k.licenseType)}${k.orgName ? ' · ' + k.orgName : ''}`); }
+      catch(x){ busy(b, false); err.textContent = errMsg(x); } };
     $a('#apLicCheck').onclick = async e => { busy(e.currentTarget, true, 'Vérification…'); await refreshAccess(); show('licence', {reason:view.reason === 'export' ? 'export' : ''}); toastA(access.level === 'discovery' ? 'Toujours aucune licence active' : 'Licence active : ARCHIPLAN est débloqué'); };
   },
   'pin-offer'(){

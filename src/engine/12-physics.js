@@ -98,7 +98,13 @@ function wallReport(layers, ctx = 'mur'){
   return {th, dyn, ac, gl, mass, T, co2};
 }
 /* Classement indicatif du U (repères RE2020 / rénovation) */
+/* Repères ajustés au lieu du projet (zone climatique, altitude : voir 65-site.js) */
+function uGradeLimits(ctx){
+  const base = ctx === 'toiture' ? [0.12, 0.17, 0.25] : ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
+  let f = 1; try { f = typeof siteFactor === 'function' ? siteFactor() : 1; } catch(e){}
+  return base.map(v => Math.round(v * f * 1000) / 1000);
+}
 function uGrade(U, ctx){
-  const lim = ctx === 'toiture' ? [0.12, 0.17, 0.25] : ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
+  const lim = uGradeLimits(ctx);
   return U <= lim[0] ? {g:'A', t:'Très performant (niveau passif)'} : U <= lim[1] ? {g:'B', t:'Performant (neuf RE2020)'} : U <= lim[2] ? {g:'C', t:'Correct (rénovation)'} : {g:'D', t:'Insuffisant : renforcer l\'isolation'};
 }
