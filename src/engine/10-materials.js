@@ -110,6 +110,8 @@ M('airFV',      'Lame d\'air faiblement ventilée',    "Lames d'air et divers", 
 M('sol',        'Terrain (sol argilo-sableux)',       "Lames d'air et divers", 2000, 2.00, 1000, 50, '#8A7356', 'earth', 0);
 M('eau',        'Eau',                                "Lames d'air et divers", 1000, 0.60, 4190, 1e6, '#5FA8D3', 'glass', 0, {opacity:0.6, rough:0.05});
 M('textile',    'Textile d\'ameublement',             "Lames d'air et divers", 300, 0.06, 1300, 5, '#7A8597', 'fabric', 5.0);
+M('hourdis',    'Poutrelles-hourdis béton 16 (équivalent)', 'Béton et mortiers', 1300, 1.10, 1000, 60, '#A9A49B', 'concrete', 0.12);
+M('sousCoucheAc','Sous-couche acoustique résiliente',  'Isolants', 120, 0.05, 1500, 20, '#8E9A7C', 'membrane', 2.0);
 M('acierLaque', 'Acier laqué gris anthracite',        'Métaux', 7850, 50,  450, 1e6, '#3A3F46', 'metal', 1.8, {rough:0.5, metal:0.5});
 M('aluAnthr',   'Aluminium laqué anthracite',         'Métaux', 2700, 160, 880, 1e6, '#3D4249', 'metal', 6.9, {rough:0.45, metal:0.5});
 M('feuillageC', 'Végétal (conifère)',                 "Lames d'air et divers", 300, 0.10, 1500, 5, '#3F6B45', 'grass', 0);
@@ -118,7 +120,7 @@ M('vegetal',    'Végétal (feuillage)',                "Lames d'air et divers",
 
 /* ============ Compositions de base (murs : extérieur → intérieur ; planchers et toitures : haut → bas) ============ */
 const COMPOS = {
-  'MUR-EXT-01': {nom:'Mur ext. parpaing 20 + doublage 10', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.015],['parpaing',.20],['laine',.10],['ba13',.013]]},
+  'MUR-EXT-01': {nom:'Parpaing 20 + doublage laine minérale 100 sur rails + BA13', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.015],['parpaing',.20],['laine',.10],['ba13',.013]]},
   'MUR-EXT-02': {nom:'Mur ext. béton 18 + ITE PSE 14', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.01],['pse',.14],['ba',.18]]},
   'MUR-EXT-03': {nom:'Mur ext. brique 20 + doublage 10', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.015],['brique',.20],['laine',.10],['ba13',.013]]},
   'MUR-EXT-04': {nom:'Mur ext. monomur 37,5', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.02],['briqueTh',.375],['enduitPlatre',.01]]},
@@ -144,4 +146,17 @@ const COMPOS = {
   'TOIT-BAC': {nom:'Toiture bac acier + PIR 12 (bâtiment d\'activité)', kind:'roof', lot:'Couverture', layers:[['bacAcier',.0008],['pir',.12],['bacAcier',.0008]]},
   'TOIT-SARKING': {nom:'Toiture tuiles, sarking fibre de bois 16 + chevrons 10', kind:'roof', lot:'Couverture', layers:[['tuile',.02],['airFV',.04],['fibreBoisR',.16],['bois',.022],['airNV',.10],['ba13',.013]]},
   'DAL-IND':    {nom:'Dallage industriel BA 20 + résine', kind:'slab', lot:'Industrie', layers:[['resine',.003],['ba',.20]]},
+  /* compositions techniques courantes (maison individuelle, niveau RE2020) */
+  'MUR-EXT-06': {nom:'Parpaing 20 + doublage collé PSE gris 120 + BA13 (R 3,75)', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.015],['parpaing',.20],['pseG',.12],['ba13',.013]]},
+  'MUR-EXT-07': {nom:'Brique 20 + laine de verre 120 sur rails, frein-vapeur, BA13', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.015],['brique',.20],['airNV',.01],['laineVerre',.12],['freinVap',.001],['ba13',.013]]},
+  'MUR-ITE-01': {nom:'Béton 20 + ITE laine de roche 160 sous bardage ventilé', kind:'wall', lot:'Gros œuvre', layers:[['bardageBois',.022],['airFV',.027],['paraPluie',.001],['laineRocheD',.16],['ba',.20],['enduitPlatre',.01]]},
+  'MUR-ITE-02': {nom:'Béton 18 + ITE PSE 160 sous enduit mince', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.008],['pse',.16],['ba',.18],['enduitPlatre',.01]]},
+  'MUR-MOB-02': {nom:'Ossature bois 145 laine de bois + ITE fibre 60, vide technique 45', kind:'wall', lot:'Gros œuvre', layers:[['enduit',.008],['fibreBoisR',.06],['fibreBoisS',.145],['osb',.012],['laine',.045],['ba13',.013]]},
+  'CLO-72H':    {nom:'Cloison 72/48 hydrofuge (pièces humides)', kind:'wall', lot:'Second œuvre', layers:[['ba13H',.0125],['laine',.047],['ba13H',.0125]]},
+  'CLO-ACOU':   {nom:'Cloison acoustique 120/70 double peau (Rw ≈ 50 dB)', kind:'wall', lot:'Second œuvre', layers:[['ba13',.025],['laine',.07],['ba13',.025]]},
+  'DAL-TP-01':  {nom:'Dallage sur terre-plein : carrelage, chape, PU 80, BA 12, hérisson', kind:'slab', lot:'Gros œuvre', layers:[['carrelage',.01],['chape',.05],['pu',.08],['ba',.12],['paraVapeur',.0002],['gravier',.15]]},
+  'PL-VS-01':   {nom:'Plancher sur vide sanitaire : chape, PU 80, poutrelles-hourdis 16+4', kind:'slab', lot:'Gros œuvre', layers:[['carrelage',.01],['chape',.05],['pu',.08],['ba',.04],['hourdis',.16]]},
+  'PL-INT-01':  {nom:'Plancher intermédiaire : parquet, chape, résilient, BA 20, faux plafond', kind:'slab', lot:'Gros œuvre', layers:[['parquet',.014],['chape',.05],['sousCoucheAc',.005],['ba',.20],['airNV',.10],['ba13',.013]]},
+  'PL-BOIS-02': {nom:'Plancher bois : parquet, OSB 22, solives 220 + laine 100, BA13 sur suspentes', kind:'slab', lot:'Gros œuvre', layers:[['parquet',.014],['osb',.022],['airNV',.12],['laineVerre',.10],['ba13',.013]]},
+  'TT-BA-01':   {nom:'Toiture terrasse : gravillons, étanchéité bicouche, PIR 120, pare-vapeur, BA 20', kind:'slab', lot:'Gros œuvre', layers:[['gravier',.05],['bitume',.006],['pir',.12],['paraVapeur',.0002],['ba',.20],['enduitPlatre',.01]]},
 };

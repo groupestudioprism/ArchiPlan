@@ -78,6 +78,14 @@ function renderResults(box, W){
   if (W.kind === 'wall' && dyn.phase < 6 && th.U < 0.5) warn.push(['info', `Déphasage de ${nf(dyn.phase, 1)} h : un isolant plus dense (fibre de bois, ouate) améliore le confort d'été (objectif ≥ 8 h en toiture).`]);
   if (ac.f0 && ac.f0 > 100) warn.push(['warn', `Fréquence de résonance élevée (${n0(ac.f0)} Hz) : augmentez la lame d'air ou la masse des parements.`]);
   if (!warn.length) warn.push(['ok', 'Aucune alerte : paroi cohérente pour ces conditions.']);
+  box.closest('.ed-body')?.classList.toggle('focus', !!W.focus);
+  if (W.focus){
+    box.innerHTML = `<div class="cp-fbar"><button class="btn" data-cpback>← Retour à la fiche</button><div class="cp-kpi"><span>U <b>${nf(th.U, 3)}</b></span><span>R <b>${nf(th.R, 2)}</b></span><span>Déphasage <b>${nf(dyn.phase, 1)} h</b></span><span>Rw <b>≈ ${ac.Rw} dB</b></span><span class="${gl.risk.length ? 'bad' : 'ok'}">${gl.risk.length ? 'Condensation possible' : 'Pas de condensation'}</span></div></div>
+      <div class="cp-charts big"><figure><figcaption>Coupe et profil de température · survolez pour lire les valeurs</figcaption>${sectionSvg(W, L, gl, true)}<div class="cp-tip" hidden></div></figure>
+      <figure><figcaption>Diagramme de Glaser (pression de vapeur) · survolez pour lire les valeurs</figcaption>${glaserSvg(L, gl, true)}<div class="cp-tip" hidden></div></figure></div>
+      <ul class="warns">${warn.map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join('')}</ul>`;
+    wireCharts(box, L, W); return;
+  }
   box.innerHTML = `<div class="perf big">
       <div class="pc"><span>Coefficient U</span><b>${nf(th.U, 3)}</b><em>W/m²·K</em><i class="gr g${g.g}">${g.g}</i><small>${esc(g.t)}</small></div>
       <div class="pc"><span>Résistance R</span><b>${nf(th.R, 2)}</b><em>m²·K/W (paroi seule ${nf(th.Rp, 2)})</em></div>
@@ -87,31 +95,34 @@ function renderResults(box, W){
       <div class="pc"><span>Masse surfacique</span><b>${n0(mass)}</b><em>kg/m² · épaisseur ${nf(T * 100, 1)} cm</em></div>
       <div class="pc"><span>Vapeur (Sd total)</span><b>${nf(gl.sdTot, 2)}</b><em>m d'air équivalent</em></div>
       <div class="pc"><span>Carbone (A1-A3)</span><b>${n0(co2)}</b><em>kg CO₂e/m²</em></div></div>
-    <div class="cp-charts"><figure><figcaption>Coupe et profil de température</figcaption>${sectionSvg(W, L, gl)}</figure><figure><figcaption>Diagramme de Glaser (pression de vapeur)</figcaption>${glaserSvg(L, gl)}</figure></div>
+    <div class="cp-charts"><figure class="zoomable" title="Cliquer pour agrandir"><figcaption>Coupe et profil de température <em>· cliquer pour agrandir</em></figcaption>${sectionSvg(W, L, gl)}<div class="cp-tip" hidden></div></figure><figure class="zoomable" title="Cliquer pour agrandir"><figcaption>Diagramme de Glaser (pression de vapeur) <em>· cliquer pour agrandir</em></figcaption>${glaserSvg(L, gl)}<div class="cp-tip" hidden></div></figure></div>
     <ul class="warns">${warn.map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join('')}</ul>
     <p class="hint">Calculs simplifiés de pré-dimensionnement (EN ISO 6946, EN ISO 13786, loi de masse EN 12354-1, méthode de Glaser). Ils ne remplacent ni une étude thermique réglementaire, ni une étude acoustique, ni une analyse hygrothermique dynamique (WUFI).</p>`;
+  wireCharts(box, L, W);
 }
-function sectionSvg(W, L, gl){
+function sectionSvg(W, L, gl, big){
   // L : intérieur → extérieur. Affichage : intérieur à gauche.
-  const Wd = 420, H = 170, pad = 30, T = L.reduce((s, l) => s + l[1], 0) || 1, minW = 6;
+  const Wd = big ? 760 : 420, H = big ? 300 : 170, pad = 30, T = L.reduce((s, l) => s + l[1], 0) || 1, minW = 6;
   const widths = L.map(([, e]) => Math.max(minW, e / T * (Wd - 2 * pad))), tot = widths.reduce((a, b) => a + b, 0), k = (Wd - 2 * pad) / tot;
   let x = pad, rects = '', xs = [pad];
   L.forEach(([m, e], i) => { const w = widths[i] * k; rects += `<rect x="${x.toFixed(1)}" y="26" width="${w.toFixed(1)}" height="${H - 52}" fill="${mat(m).color}" stroke="#0003"><title>${esc(mat(m).nom)} · ${nf(e * 100, 1)} cm</title></rect>`; x += w; xs.push(x); });
   const tMin = Math.min(...gl.pts.map(p => p.t)), tMax = Math.max(...gl.pts.map(p => p.t)), ty = t => 26 + (H - 52) * (1 - (t - tMin) / ((tMax - tMin) || 1));
   const line = gl.pts.map((p, i) => `${xs[i].toFixed(1)},${ty(p.t).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${Wd} ${H}" class="chart" role="img" aria-label="Coupe de la paroi">${rects}
+  const data = gl.pts.map((p, i) => ({x:+xs[i].toFixed(1), t:p.t, p:p.p, ps:p.ps, d:p.x * 100}));
+  return `<svg viewBox="0 0 ${Wd} ${H}" class="chart" role="img" aria-label="Coupe de la paroi" data-pts='${JSON.stringify(data)}' data-y0="26" data-y1="${H - 26}">${rects}
     <polyline points="${line}" fill="none" stroke="#C0392B" stroke-width="2"/>${gl.pts.map((p, i) => `<circle cx="${xs[i]}" cy="${ty(p.t)}" r="2.5" fill="#C0392B"/>`).join('')}
     <text x="${pad}" y="16" class="lb">Intérieur ${nf(gl.cond.ti, 0)} °C</text><text x="${Wd - pad}" y="16" class="lb" text-anchor="end">Extérieur ${nf(gl.cond.te, 0)} °C</text>
     <text x="${pad}" y="${H - 8}" class="lb">θsi ${nf(gl.pts[0].t, 1)} °C</text><text x="${Wd - pad}" y="${H - 8}" class="lb" text-anchor="end">θse ${nf(gl.pts[gl.pts.length - 1].t, 1)} °C</text></svg>`;
 }
-function glaserSvg(L, gl){
-  const Wd = 420, H = 170, pad = 34, T = gl.pts[gl.pts.length - 1].x || 1;
+function glaserSvg(L, gl, big){
+  const Wd = big ? 760 : 420, H = big ? 300 : 170, pad = 34, T = gl.pts[gl.pts.length - 1].x || 1;
   const pMax = Math.max(...gl.pts.map(p => Math.max(p.ps, p.p))) * 1.08, X = x => pad + (Wd - pad - 10) * x / T, Y = p => 12 + (H - 40) * (1 - p / pMax);
   // courbe de saturation finement échantillonnée dans chaque couche
   let ps = ''; gl.pts.forEach((p, i) => { ps += `${X(p.x).toFixed(1)},${Y(p.ps).toFixed(1)} `; });
   const pp = gl.pts.map(p => `${X(p.x).toFixed(1)},${Y(p.p).toFixed(1)}`).join(' ');
   const risk = gl.pts.filter(p => p.p > p.ps).map(p => `<circle cx="${X(p.x)}" cy="${Y(p.p)}" r="4" fill="#C0392B"/>`).join('');
-  return `<svg viewBox="0 0 ${Wd} ${H}" class="chart" role="img" aria-label="Diagramme de Glaser">
+  const data = gl.pts.map(p => ({x:+X(p.x).toFixed(1), t:p.t, p:p.p, ps:p.ps, d:p.x * 100}));
+  return `<svg viewBox="0 0 ${Wd} ${H}" class="chart" role="img" aria-label="Diagramme de Glaser" data-pts='${JSON.stringify(data)}' data-y0="12" data-y1="${H - 28}">
     <line x1="${pad}" y1="${H - 28}" x2="${Wd - 10}" y2="${H - 28}" stroke="#9AA7B4"/><line x1="${pad}" y1="12" x2="${pad}" y2="${H - 28}" stroke="#9AA7B4"/>
     ${gl.pts.map(p => `<line x1="${X(p.x)}" y1="12" x2="${X(p.x)}" y2="${H - 28}" stroke="#DCE5EC"/>`).join('')}
     <polyline points="${ps}" fill="none" stroke="#C0392B" stroke-width="2"/><polyline points="${pp}" fill="none" stroke="#0877B9" stroke-width="2" stroke-dasharray="5 3"/>${risk}
@@ -150,4 +161,27 @@ function openMatEditor(id){
     const mid = owner === 'perso' ? id : 'M-' + uid8(); USER_LIB.mats[mid] = m; if (state.lib.mats[mid]) state.lib.mats[mid] = {...m};
     saveUserLib(); delete texCache[mid]; resetMats(); closeEDlg(); rebuild(); libTab = 'mats'; renderPanel(); toast('Matériau enregistré');
   };
+}
+
+/* graphiques interactifs : curseur vertical, valeurs au survol ; clic pour agrandir (composition à gauche, graphiques à droite) */
+function wireCharts(box, L, W){
+  box.querySelectorAll('figure').forEach(fig => {
+    const svg = fig.querySelector('svg.chart[data-pts]'), tip = fig.querySelector('.cp-tip'); if (!svg || !tip) return;
+    const pts = JSON.parse(svg.dataset.pts), y0 = +svg.dataset.y0, y1 = +svg.dataset.y1, NS = 'http://www.w3.org/2000/svg';
+    const ln = document.createElementNS(NS, 'line'); ln.setAttribute('class', 'hv'); ln.setAttribute('y1', y0); ln.setAttribute('y2', y1); ln.style.display = 'none'; svg.appendChild(ln);
+    const hide = () => { ln.style.display = 'none'; tip.hidden = true; };
+    svg.addEventListener('mouseleave', hide);
+    svg.addEventListener('mousemove', e => {
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const sp = pt.matrixTransform(svg.getScreenCTM().inverse());
+      if (sp.x < pts[0].x || sp.x > pts[pts.length - 1].x){ hide(); return; }
+      let i = 0; while (i < pts.length - 2 && sp.x > pts[i + 1].x) i++;
+      const a = pts[i], b = pts[i + 1], u = (sp.x - a.x) / ((b.x - a.x) || 1), lerp = k => a[k] + (b[k] - a[k]) * u, t = lerp('t'), p = lerp('p'), ps = psat(t), d = lerp('d');
+      ln.setAttribute('x1', sp.x); ln.setAttribute('x2', sp.x); ln.style.display = '';
+      const m = L[i] ? mat(L[i][0]) : null, hr = Math.min(100, p / ps * 100);
+      tip.innerHTML = `<b>${esc(m?.nom || '')}</b><span>à ${nf(d, 1)} cm de l'intérieur</span><span>Température <b>${nf(t, 1)} °C</b></span><span>Pression de vapeur <b>${n0(p)} Pa</b> / saturante ${n0(ps)} Pa</span><span class="${p > ps ? 'bad' : ''}">Humidité relative <b>${n0(hr)} %</b>${p > ps ? ' · condensation' : ''}</span>`;
+      const r = fig.getBoundingClientRect(); tip.hidden = false; let left = e.clientX - r.left + 14; if (left + 230 > r.width) left = e.clientX - r.left - 240; tip.style.left = Math.max(4, left) + 'px'; tip.style.top = Math.max(4, e.clientY - r.top - 20) + 'px';
+    });
+    if (fig.classList.contains('zoomable')) fig.addEventListener('click', () => { W.focus = true; renderResults(box, W); });
+  });
+  const back = box.querySelector('[data-cpback]'); if (back) back.onclick = () => { W.focus = false; renderResults(box, W); };
 }

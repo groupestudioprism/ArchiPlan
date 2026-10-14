@@ -18,11 +18,11 @@ const cm = e => nf(e * 100, e * 100 % 1 ? 1 : 0);
 /* Prix indicatifs (€ HT) : m² = base + parCm × épaisseur (cm) ; m³, kg, ml, u */
 const PRICE_MAT = {
   parpaing:[30, 1.3], parpaingP:[35, 1.6], brique:[35, 1.6], briqueTh:[40, 1.5], briqueP:[45, 2.5], betCell:[35, 1.4], pierreCalc:[120, 3], pierreTend:[110, 3], granit:[150, 4], moellon:[90, 2.5], terreCrue:[40, 1.5], btc:[45, 2],
-  ba:[60, 4.5], beton:[45, 3.5], betonLeg:[40, 3], betonChanvre:[40, 2.5], laineVerre:[6, 0.6], laine:[7, 0.8], laineRocheD:[15, 1.2], pse:[5, 0.7], pseG:[6, 0.8], xps:[8, 1.2], pir:[9, 1.4],
+  ba:[60, 4.5], beton:[45, 3.5], hourdis:[45, 1.0], betonLeg:[40, 3], betonChanvre:[40, 2.5], laineVerre:[6, 0.6], laine:[7, 0.8], laineRocheD:[15, 1.2], pse:[5, 0.7], pseG:[6, 0.8], xps:[8, 1.2], pir:[9, 1.4],
   fibreBoisR:[12, 1.8], fibreBoisS:[8, 1.1], ouate:[5, 0.6], chanvre:[9, 1], liege:[15, 2.2], verreCell:[25, 3], paille:[10, 0.3], pu:[8, 1.2], clt:[40, 9], bois:[20, 4], glulam:[30, 7], osb:[10, 1], bardageBois:[45, 4]
 };
 const PRICE_FIXED = { enduit:28, enduitChaux:35, enduitPlatre:18, chape:22, chapeAnhy:25, carrelage:55, faience:50, parquet:75, stratifie:30, pvcSol:35, moquette:28, resine:45, linoleum:38, pierreSol:110, betonCire:90,
-  tuile:55, ardoise:95, bitume:35, epdm:30, bacAcier:30, zinc:95, gravier:12, terreVeg:45, paraVapeur:4, freinVap:7, paraPluie:5, ba13:12, ba13H:15, ba13F:16, carreauPl:45, fermacell:20 };
+  tuile:55, ardoise:95, bitume:35, epdm:30, bacAcier:30, zinc:95, gravier:12, terreVeg:45, paraVapeur:4, freinVap:7, sousCoucheAc:6, paraPluie:5, ba13:12, ba13H:15, ba13F:16, carreauPl:45, fermacell:20 };
 const pricePerM2 = (m, e) => PRICE_FIXED[m] != null ? PRICE_FIXED[m] : PRICE_MAT[m] ? PRICE_MAT[m][0] + PRICE_MAT[m][1] * e * 100 : 25;
 
 /* Lot d'une couche de paroi selon sa position (côté extérieur de la structure, structure, côté intérieur) */
