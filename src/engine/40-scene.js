@@ -16,10 +16,13 @@ c3.mouseButtons = {LEFT:THREE.MOUSE.ROTATE, MIDDLE:THREE.MOUSE.PAN, RIGHT:THREE.
 const c2 = new OrbitControls(ortho, canvas); c2.enableRotate = false; c2.screenSpacePanning = true; c2.minPolarAngle = c2.maxPolarAngle = 0; c2.minAzimuthAngle = c2.maxAzimuthAngle = 0;
 c2.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.PAN, RIGHT:THREE.MOUSE.PAN}; c2.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_PAN};
 c2.zoomToCursor = true; c2.minZoom = 0.03; c2.maxZoom = 120; c2.target.set(5, 0, -4); c2.enabled = false;
-[c2, c3].forEach(c => c.addEventListener('change', () => dirty = true));
+const orthoS = new THREE.OrthographicCamera(-10, 10, 10, -10, -1000, 1000);   // coupes et élévations
+const c4 = new OrbitControls(orthoS, canvas); c4.enableRotate = false; c4.screenSpacePanning = true; c4.zoomToCursor = true; c4.minZoom = 0.03; c4.maxZoom = 120; c4.enabled = false;
+c4.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.PAN, RIGHT:THREE.MOUSE.PAN}; c4.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_PAN};
+[c2, c3, c4].forEach(c => c.addEventListener('change', () => dirty = true));
 let view = '3d';                // '2d' plan | '3d' | 'render'
-const cam = () => view === '2d' ? ortho : persp;
-const ctl = () => view === '2d' ? c2 : c3;
+const cam = () => view === '2d' ? ortho : view === 'sec' ? orthoS : persp;
+const ctl = () => view === '2d' ? c2 : view === 'sec' ? c4 : c3;
 
 const hemi = new THREE.HemisphereLight(0xf2f7ff, 0x6b6456, 1.0); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.9); sun.castShadow = true;
@@ -114,11 +117,15 @@ const hoverMat = new THREE.MeshBasicMaterial({color:0x1F89C5, transparent:true, 
 const PLAN_LIGHT = {wall:0.08, col:0.08, slab:0.84, vol:0.55, inst:0.72, host:0.35};
 const planOn = () => view === '2d';
 function matFor(id, selected, light = 0){
-  const plan = planOn(), st = plan ? 'plan' : DISPLAY.style, key = st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '');
+  const plan = planOn(), sec = view === 'sec', st = plan ? 'plan' : sec ? 'shaded' : DISPLAY.style, key = (sec ? 'sec|' : '') + st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '');
   if (matCache[key]) return matCache[key];
   const m = mat(id); let M;
   const transp = m.opacity != null && m.opacity < 1;
-  if (plan){ // plan façon DAO : aplats clairs, traits sombres, sans ombre
+  if (sec){ // coupes et élévations façon dessin : aplats éclaircis, arêtes, poché sombre
+    const c = new THREE.Color(m.color).lerp(new THREE.Color(0xffffff), transp ? 0.7 : 0.42);
+    M = new THREE.MeshBasicMaterial({color:c, transparent:transp, opacity:transp ? 0.45 : 1, depthWrite:!transp});
+  }
+  else if (plan){ // plan façon DAO : aplats clairs, traits sombres, sans ombre
     const c = new THREE.Color(m.color).lerp(new THREE.Color(0xffffff), transp ? Math.max(light, 0.6) : light);
     M = new THREE.MeshBasicMaterial({color:c, transparent:transp, opacity:transp ? 0.6 : 1, depthWrite:!transp});
   }
@@ -136,6 +143,10 @@ function matFor(id, selected, light = 0){
       envMapIntensity:st === 'realistic' ? 0.6 : 0.35});
   }
   M.polygonOffset = true; M.polygonOffsetFactor = 1; M.polygonOffsetUnits = 1; M.name = m.nom;
+  if (sec){ // coupe : les faces arrière découvertes par le plan de coupe sont peintes en sombre (poché)
+    M.side = THREE.DoubleSide; M.customProgramCacheKey = () => 'cutcap';
+    M.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <dithering_fragment>', '#include <dithering_fragment>\n if (!gl_FrontFacing) gl_FragColor = vec4(0.16, 0.17, 0.19, 1.0);'); };
+  }
   if (selected && M.emissive){ M.emissive = new THREE.Color(cssVar('--sel') || '#E2861B'); M.emissiveIntensity = 0.3; }
   else if (selected) M.color = new THREE.Color(cssVar('--sel') || '#E2861B');
   return matCache[key] = M;
@@ -150,6 +161,7 @@ function boxGeo(w, d, h){ // boîte aux UV « monde » (motifs à la bonne éche
 function pieceGeo(pc){
   if (pc.top) return prismGeo(pc.top, pc.ext);
   const shape = new THREE.Shape(pc.poly.map(p => new THREE.Vector2(p[0], p[1])));
+  if (pc.holes) pc.holes.forEach(h => shape.holes.push(new THREE.Path(h.map(p => new THREE.Vector2(p[0], p[1])))));
   const geo = new THREE.ExtrudeGeometry(shape, {depth:Math.max(pc.h, 0.001), bevelEnabled:false});
   geo.rotateX(-Math.PI / 2); geo.translate(0, pc.base, 0);
   return geo;
@@ -166,7 +178,7 @@ function solidGeo(so){
 function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0){
   const mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light));
   mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.light = light;
-  if (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn()){
+  if (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn() || view === 'sec'){
     const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
     edges.userData.isEdge = true; mesh.add(edges);
   }
@@ -237,7 +249,7 @@ function buildGrid(){
   gridMinor.material.opacity = 0.7; positionGrid();
 }
 function positionGrid(){
-  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || !SNAP.grid || !DISPLAY.grid || (view !== '2d' && state?.site?.terrain && DISPLAY.terrain !== false);
+  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || view === 'sec' || !SNAP.grid || !DISPLAY.grid || (view !== '2d' && state?.site?.terrain && DISPLAY.terrain !== false);
   gridMajor.position.y = y + 0.0005; gridMinor.position.y = y; gridMajor.visible = !hide; gridMinor.visible = !hide && (view === '2d' || step <= 0.1); dirty = true;
 }
 
@@ -261,6 +273,7 @@ function rebuild(opts = {}){
   }
   applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
   if (typeof buildTerrain === 'function') buildTerrain();
+  if (typeof buildCutMarks === 'function') buildCutMarks();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -314,6 +327,7 @@ function resize(){
   const w = vpEl.clientWidth, h = vpEl.clientHeight; if (!w || !h) return;
   renderer.setSize(w, h, false);
   persp.aspect = w / h; persp.updateProjectionMatrix();
+  { const a = w / h, hh = (orthoS.top - orthoS.bottom) / 2 || 10; Object.assign(orthoS, {left:-hh * a, right:hh * a}); orthoS.updateProjectionMatrix(); }
   const a = w / h; Object.assign(ortho, {left:-10 * a, right:10 * a, top:10, bottom:-10}); ortho.updateProjectionMatrix();
   dirty = true;
 }

@@ -1,17 +1,18 @@
 /* ============ Interface : modes, outils, barre d'état, clavier, menus ============ */
 function setView(v){
   const prev = view; view = v;
-  c3.enabled = v !== '2d'; c2.enabled = v === '2d';
+  c3.enabled = v === '3d' || v === 'render'; c2.enabled = v === '2d'; c4.enabled = v === 'sec'; renderer.clippingPlanes = v === 'sec' ? secClip() : [];
+  if (v !== 'sec') $('#secBar').hidden = true;
   $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === v));
   document.body.dataset.mode = v;
   if (v === '2d'){ c2.target.set(c3.target.x, 0, c3.target.z); ortho.position.set(c3.target.x, 200, c3.target.z); c2.update(); }
   if (v === 'render'){ if (tool !== 'select') setTool('select'); if (DISPLAY.style === 'shaded' || DISPLAY.style === 'wire') setStyle('realistic'); activeTab = 'render'; }
   else if (prev === 'render' && activeTab === 'render') activeTab = 'props';
   if (prev === 'render' && v !== 'render' && DISPLAY.style === 'realistic') setStyle('shaded');
-  if ((prev === '2d') !== (v === '2d')){ resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }
+  if ((prev === '2d') !== (v === '2d') || (prev === 'sec') !== (v === 'sec')){ resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }
   positionGrid(); buildLabels(); updatePreview(); renderPanel(); dirty = true;
 }
-$$('[data-mode]').forEach(b => b.addEventListener('click', () => setView(b.dataset.mode)));
+$$('[data-mode]').forEach(b => b.addEventListener('click', e => b.dataset.mode === 'sec' ? openSecMenu(e.currentTarget) : setView(b.dataset.mode)));
 $$('[data-style]').forEach(b => { if (!b.closest('#pbody')) b.addEventListener('click', () => setStyle(b.dataset.style)); });
 $$('[data-cam]').forEach(b => b.addEventListener('click', () => b.dataset.cam === 'fit' ? fit() : camPreset(b.dataset.cam)));
 $('#undo').addEventListener('click', undo); $('#redo').addEventListener('click', redo);
@@ -20,6 +21,10 @@ function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<opt
 $('#lvlSel').addEventListener('change', e => { curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
+$('#wArcIn').addEventListener('change', e => { defs.wall.arc = !!e.target.value; cancelDraw(); setPrompt(); });
+$('#sTypeIn').addEventListener('change', e => { defs.stair.st = e.target.value; updatePreview(); });
+$('#sSideIn').addEventListener('change', e => { defs.stair.side = e.target.value; updatePreview(); });
+$('#sMatIn').addEventListener('change', e => { defs.stair.mat = e.target.value; updatePreview(); });
 $('#rModeIn').addEventListener('change', e => { defs.roof.mode = e.target.value; cancelDraw(); updatePreview(); setPrompt(); });
 $('#rShapeIn').addEventListener('change', e => { defs.roof.shape = e.target.value; updatePreview(); });
 $('#rPitchIn').addEventListener('change', e => { const v = num(e.target.value); if (v >= 3 && v <= 70) defs.roof.pitch = v; else e.target.value = defs.roof.pitch; updatePreview(); });
@@ -71,7 +76,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', t:'roof', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 

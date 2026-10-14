@@ -2,12 +2,22 @@
 const wallT = w => compo(w.type).layers.reduce((s, l) => s + l[1], 0);
 const slabT = s => compo(s.type).layers.reduce((a, l) => a + l[1], 0);
 function lineInter(p, d, q, e){ const c = V.cross(d, e); if (Math.abs(c) < 1e-3) return null; const t = V.cross(V.sub(q, p), e) / c; return V.add(p, V.mul(d, t)); }
-function wallAxis(w){ const d = V.sub(w.b, w.a), L = V.len(d) || 1e-9; const u = V.mul(d, 1 / L); return {u, n:[-u[1], u[0]], L}; }
+function wallAxis(w){ const d = V.sub(w.b, w.a), L = V.len(d) || 1e-9; const u = V.mul(d, 1 / L), A = wallArc(w); return {u, n:[-u[1], u[0]], L:A ? A.len : L, chord:L}; }
+/* Mur courbe : w.bulge = flèche (m) au milieu de la corde, du côté gauche (> 0) ou droit (< 0) du sens a → b */
+function wallArc(w){
+  const s = +w.bulge || 0; if (Math.abs(s) < 1e-3) return null;
+  const d = V.sub(w.b, w.a), c = V.len(d); if (c < 1e-6) return null;
+  const u = V.mul(d, 1 / c), n = [-u[1], u[0]], R = (c * c / 4 + s * s) / (2 * Math.abs(s)), mid = V.mul(V.add(w.a, w.b), 0.5), C = V.add(mid, V.mul(n, s - Math.sign(s) * R)), pm = V.add(mid, V.mul(n, s));
+  const ta = Math.atan2(w.a[1] - C[1], w.a[0] - C[0]), tb = Math.atan2(w.b[1] - C[1], w.b[0] - C[0]);
+  let best = null; for (const k of [-1, 0, 1]){ const D = tb - ta + k * 2 * Math.PI; if (Math.abs(D) < 1e-6 || Math.abs(D) > 2 * Math.PI) continue; const tm = ta + D / 2, q = [C[0] + R * Math.cos(tm), C[1] + R * Math.sin(tm)], e = Math.hypot(q[0] - pm[0], q[1] - pm[1]); if (!best || e < best.e) best = {D, e}; }
+  return {C, R, ta, D:best.D, len:R * Math.abs(best.D)};
+}
+function arcPts(w, off, A = wallArc(w)){ const N = Math.max(8, Math.ceil(Math.abs(A.D) / (Math.PI / 32))), r = A.R - Math.sign(A.D) * off, out = []; for (let i = 0; i <= N; i++){ const t = A.ta + A.D * i / N; out.push([A.C[0] + r * Math.cos(t), A.C[1] + r * Math.sin(t)]); } return out; }
 // point de jonction d'une ligne de couche (décalage s) à une extrémité, avec onglet sur le mur adjacent
 function endPt(w, atStart, s, els){
   const P = atStart ? w.a : w.b, {u, n} = wallAxis(w), base = V.add(P, V.mul(n, s));
   for (const v of els){
-    if (v === w || v.kind !== 'wall' || v.lvl !== w.lvl || v.id === w.id) continue;
+    if (v === w || v.kind !== 'wall' || v.lvl !== w.lvl || v.id === w.id || v.bulge || w.bulge) continue;
     let sign = 0;
     if (atStart){ if (V.eq(v.b, P)) sign = 1; else if (V.eq(v.a, P)) sign = -1; }
     else { if (V.eq(v.a, P)) sign = 1; else if (V.eq(v.b, P)) sign = -1; }
@@ -21,7 +31,7 @@ function endPt(w, atStart, s, els){
   return base;
 }
 function wallLayers(w){ const L = compo(w.type).layers.slice(); return w.flip ? L.reverse() : L; }
-function wallPoly(w, els, s1, s2){ return [endPt(w, true, s1, els), endPt(w, false, s1, els), endPt(w, false, s2, els), endPt(w, true, s2, els)]; }
+function wallPoly(w, els, s1, s2){ if (wallArc(w)) return [...arcPts(w, s1), ...arcPts(w, s2).reverse()]; return [endPt(w, true, s1, els), endPt(w, false, s1, els), endPt(w, false, s2, els), endPt(w, true, s2, els)]; }
 const rect = (p, q) => { const x0 = Math.min(p[0], q[0]), x1 = Math.max(p[0], q[0]), y0 = Math.min(p[1], q[1]), y1 = Math.max(p[1], q[1]); return [[x0,y0],[x1,y0],[x1,y1],[x0,y1]]; };
 const area = poly => { let a = 0; for (let i = 0; i < poly.length; i++){ const p = poly[i], q = poly[(i + 1) % poly.length]; a += p[0]*q[1] - q[0]*p[1]; } return Math.abs(a) / 2; };
 function colPoly(c){ const hw = c.w/2, hd = c.d/2; return [[c.c[0]-hw,c.c[1]-hd],[c.c[0]+hw,c.c[1]-hd],[c.c[0]+hw,c.c[1]+hd],[c.c[0]-hw,c.c[1]+hd]]; }
@@ -104,10 +114,12 @@ function wallOpenings(w, els = state.els){
 // Décompose un élément en "pièces" homogènes : un matériau, un contour plan, une base et une hauteur
 function pieces(el, els = state.els){
   if (el.kind === 'roof') return roofPieces(el);
+  if (el.kind === 'stair') return stairPieces(el);
   const z = lvlZ(el.lvl) + (el.off || 0), out = [];
   if (el.kind === 'wall'){
     const T = wallT(el), {u, n, L} = wallAxis(el), ops = wallOpenings(el, els), lot = compo(el.type).lot;
     let s = -T/2;
+    if (wallArc(el)){ for (const [m, e] of wallLayers(el)){ out.push({mat:m, e, poly:[...arcPts(el, s), ...arcPts(el, s + e).reverse()], base:z, h:el.h, lot}); s += e; } return out; }
     for (const [m, e] of wallLayers(el)){
       const s1 = s, s2 = s + e;
       const P0 = endPt(el, true, s1, els), P1 = endPt(el, false, s1, els), P2 = endPt(el, false, s2, els), P3 = endPt(el, true, s2, els);
@@ -139,8 +151,8 @@ function pieces(el, els = state.els){
     }
   } else if (el.kind === 'slab'){
     // la dalle est posée AU-DESSUS de son niveau : off = dessous de la dalle ; couches listées du dessus vers le dessous
-    const poly = rect(el.p, el.q), C = compo(el.type); let top = z + slabT(el);
-    for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot}); top -= e; }
+    const poly = rect(el.p, el.q), C = compo(el.type), holes = slabHoles(el), net = area(poly) - holes.reduce((s, h) => s + area(h), 0); let top = z + slabT(el);
+    for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot, ...(holes.length ? {holes, vol:net * e} : {})}); top -= e; }
   } else if (el.kind === 'vol'){
     out.push({mat:el.mat, poly:rect(el.p, el.q), base:z, h:el.h, lot:'Industrie'});
   } else if (el.kind === 'col'){
@@ -157,8 +169,10 @@ function elStats(el){
 }
 /* Points caractéristiques d'un élément (accroches, cotes) */
 function elKeyPoints(el){
+  if (el.kind === 'wall' && wallArc(el)){ const P = arcPts(el, 0); return {ends:[el.a, el.b], segs:P.slice(1).map((p, i) => [P[i], p]), mids:[P[Math.floor(P.length / 2)]], faces:[]}; }
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
   if (el.kind === 'slab' || el.kind === 'vol'){ const r = rect(el.p, el.q); const segs = r.map((p, i) => [p, r[(i + 1) % 4]]); return {ends:r, segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
+  if (el.kind === 'stair'){ const F = stairFootprint(el); if (!F) return {ends:[], segs:[], mids:[]}; const r = [[F.x0, F.y0], [F.x1, F.y0], [F.x1, F.y1], [F.x0, F.y1]]; return {ends:[el.c, ...r], segs:r.map((p, i) => [p, r[(i + 1) % 4]]), mids:[[(F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2]]}; }
   if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % r.length]]), ...o.map((p, i) => [p, o[(i + 1) % o.length]])];
     return {ends:[...r, ...o, ...G.ridges.flatMap(([a, b]) => [[a[0], a[1]], [b[0], b[1]]])], segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
   if (el.kind === 'col'){ const r = colPoly(el); return {ends:r, segs:r.map((p, i) => [p, r[(i + 1) % 4]]), centers:[el.c], mids:[]}; }

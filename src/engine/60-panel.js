@@ -79,6 +79,7 @@ function renderProps(){
     h += field('Longueur', 'len', L, 'm') + field('Hauteur', 'h', el.h, 'm');
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage base', 'off', el.off, 'm');
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
+    h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
     h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(T * 100, 1)} cm</dd><dt>Surface brute</dt><dd>${nf(L * el.h)} m²</dd><dt>Ouvertures</dt><dd>${ops.length}</dd><dt>Volume net</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, L * el.h, true)}</div>
@@ -101,12 +102,21 @@ function renderProps(){
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.hip ? `<dt>Arêtiers</dt><dd>${nf(Q.hip)} ml</dd>` : ''}${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}${Q.ceil ? `<dt>Plafond</dt><dd>${nf(Q.ceil)} m²</dd>` : ''}${FQ.length ? `<dt>Charpente</dt><dd>${nf(FQ.reduce((s, x) => s + x.m3, 0), 2)} m³</dd>` : ''}</dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Q.slope, false)}</div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
+  } else if (el.kind === 'stair'){
+    const D = stairDims(el), F = stairFootprint(el), okB = D.blondel >= 0.60 && D.blondel <= 0.65;
+    h += selectField('Type', 'sttype', Object.entries(STAIR_TYPES), el.st || 'droit', false) + (el.st && el.st !== 'droit' ? selectField('Tournant', 'stside', [['d', 'à droite'], ['g', 'à gauche']], el.side || 'd', false) : '');
+    h += selectField('Matériau', 'stmat', Object.entries(STAIR_MATS), el.mat || 'bois') + (el.st === 'helico' ? field('Rayon', 'stR', el.R || 0.8, 'm') : field('Emmarchement', 'stw', el.w || 0.9, 'm'));
+    h += field('Hauteur à monter', 'stH', D.H, 'm') + selectField('Niveau de départ', 'lvl', lvlOpts(), el.lvl, false) + field('Départ x', 'icx', el.c[0], 'm') + field('Départ y', 'icy', el.c[1], 'm') + field('Orientation', 'strot', el.rot || 0, '°', '1');
+    h += `<label class="f wide rchk"><input type="checkbox" data-f="strail"${el.rail !== false ? ' checked' : ''}> Main courante et garde-corps</label><label class="f wide rchk"><input type="checkbox" data-f="sttrem"${el.tremie !== false ? ' checked' : ''}> Trémie automatique dans le plancher d'arrivée</label>`;
+    h += `</div><div class="grp"><h3>Confort (règle de Blondel)</h3><div class="perf"><div class="pc"><span>Marches</span><b>${D.n}</b><em>hauteur ${nf(D.h * 100, 1)} cm</em></div><div class="pc"><span>Giron</span><b>${nf(D.g * 100, 1)}</b><em>cm</em></div><div class="pc ${okB ? 'g-ok' : 'g-bad'}"><span>2h + g</span><b>${nf(D.blondel * 100, 1)}</b><em>cm (60 à 65)</em></div></div>
+      ${F ? `<p class="hint">Emprise ${nf(F.x1 - F.x0)} × ${nf(F.y1 - F.y0)} m. ${el.tremie !== false ? 'La trémie est découpée dans la dalle traversée à l\'arrivée.' : ''}</p>` : ''}</div>
+      <div class="btns"><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers;
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
     h += field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
-    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Arase supérieure', 'off', el.off, 'm');
+    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(Lx * Ly)} m²</dd><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Lx * Ly, false)}</div>
@@ -235,6 +245,10 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
   const el = getEl(sel); if (!el || (!f && !fp)) return;
   if (fp){ const v = num(t.value); if (Number.isNaN(v)) return renderPanel(); pushHist(); el.params = {...(el.params || {}), [fp]:v}; state.isSample = false; rebuild(); return; }
+  if (el.kind === 'stair' && ['sttype', 'stside', 'stmat', 'stw', 'stH', 'stR', 'strot', 'strail', 'sttrem'].includes(f)){ pushHist(); state.isSample = false;
+    if (f === 'sttype') el.st = t.value; else if (f === 'stside') el.side = t.value; else if (f === 'stmat') el.mat = t.value; else if (f === 'strail') el.rail = t.checked; else if (f === 'sttrem') el.tremie = t.checked;
+    else { const v = num(t.value); if (!Number.isNaN(v)){ if (f === 'stw') el.w = clamp(v, 0.6, 2); else if (f === 'stH') el.H = clamp(v, 0.3, 8); else if (f === 'stR') el.R = clamp(v, 0.6, 1.6); else if (f === 'strot') el.rot = ((v % 360) + 360) % 360; } }
+    rebuild(); return; }
   if (f === 'rceil' || f === 'rgtype'){ pushHist(); if (f === 'rceil') el.ceil = t.value; else el.gableType = t.value; state.isSample = false; rebuild(); return; }
   if (f === 'lvl' && el.kind === 'roof'){ pushHist(); el.lvl = +t.value; roofFitWalls(el); state.isSample = false; rebuild(); syncLevels?.(); return; }
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
@@ -248,7 +262,8 @@ $('#pbody').addEventListener('change', e => {
   else if (f === 't'){ const w = getEl(el.host); if (w){ const c = famCut(el), L = wallAxis(w).L; el.t = rnd(clamp(val, c.w / 2, L - c.w / 2)); } }
   else if (f === 'icx') el.c = [val, el.c[1]]; else if (f === 'icy') el.c = [el.c[0], val]; else if (f === 'irot') el.rot = val % 360;
   else if (el.kind === 'wall'){
-    if (f === 'len'){ const {u} = wallAxis(el); el.b = [rnd(el.a[0] + u[0] * pos(val)), rnd(el.a[1] + u[1] * pos(val))]; }
+    if (f === 'bulge'){ const c = V.len(V.sub(el.b, el.a)); el.bulge = Math.abs(val) < 0.005 ? 0 : clamp(val, -c * 2, c * 2); if (el.bulge && wallOpenings(el).length) toast('Les ouvertures de ce mur sont ignorées tant qu\'il est courbe'); }
+    else if (f === 'len'){ const {u} = wallAxis(el); el.b = [rnd(el.a[0] + u[0] * pos(val)), rnd(el.a[1] + u[1] * pos(val))]; }
     else if (f === 'ax') el.a = [val, el.a[1]]; else if (f === 'ay') el.a = [el.a[0], val];
     else if (f === 'bx') el.b = [val, el.b[1]]; else if (f === 'by') el.b = [el.b[0], val];
     if (V.len(V.sub(el.a, el.b)) < 0.01){ state = JSON.parse(hist.pop()); updUndo(); renderPanel(); toast('Un mur doit mesurer au moins 1 cm'); return; }

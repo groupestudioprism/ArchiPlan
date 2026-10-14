@@ -4,7 +4,7 @@
               inst {fam,type,params,host?,t?,c?,rot,lvl,off,flip,mirror} (famille posée ; hébergée dans un mur si host)
    Bibliothèques : base (code) < bibliothèque personnelle (compte, cloud) < bibliothèque du projet. Un élément de bibliothèque
    utilisé par le projet est copié dans state.lib : le projet reste lisible chez un invité qui n'a pas la même bibliothèque. */
-const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', vol:'Volume', col:'Poteau', inst:'Composant'};
+const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Volume', col:'Poteau', inst:'Composant'};
 const LOT_ORDER = ['Gros œuvre', 'Couverture', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Industrie'];
 const DEFAULT_LEVELS = [{n:'RDC', z:0}, {n:'R+1', z:2.8}, {n:'R+2', z:5.6}];
 let USER_LIB = {mats:{}, compos:{}, fams:{}};
@@ -44,7 +44,7 @@ function migrate(s){
   const out = {format:'archiplan', v:3, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
     levels:Array.isArray(s.levels) && s.levels.length ? s.levels.map(l => ({n:String(l.n || 'Niveau').slice(0, 30), z:+l.z || 0})) : DEFAULT_LEVELS.map(l => ({...l})),
     lib:{mats:{...(s.lib?.mats || {})}, compos:{...(s.lib?.compos || {})}, fams:{...(s.lib?.fams || {})}}, isSample:!!s.isSample,
-    ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {}), ...(+s.shab > 0 ? {shab:+s.shab} : {})};
+    ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {}), ...(+s.shab > 0 ? {shab:+s.shab} : {}), ...(Array.isArray(s.views) ? {views:s.views.filter(v => v && v.a && v.b)} : {})};
   const okEl = el => el && KIND_NAME[el.kind] && (el.kind !== 'wall' || compo(el.type)) && (el.kind !== 'inst' || el.fam);
   const prev = state; state = out;   // pour que compo()/fam() lisent la bibliothèque du projet en cours de migration
   out.els = out.els.filter(okEl).map(el => ({...el, lvl:Math.max(0, Math.min(out.levels.length - 1, el.lvl | 0)), off:+el.off || 0}));

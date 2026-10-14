@@ -142,6 +142,10 @@ function dqeItems(){
       if (Q.gable > 0){ const G = roofGeom(el), gt = G.gables.length ? gableType(el, G.gables[0]) : 'MUR-EXT-01', GC = compo(gt), kg = GC.layers.reduce((s, [m, e]) => s + (isAir(m) ? 0 : (mat(m).rho || 0) * e), 0) * Q.gable;
         add(`R|pignon|${gt}`, '02', `Pignons : ${lc(GC.nom)}`, `ép. ${cm(GC.layers.reduce((s, l) => s + l[1], 0))} cm, triangles`, 'm²', Q.gable, el.lvl, Math.round(GC.layers.reduce((s, [m, e]) => s + (isAir(m) ? 0 : pricePerM2(m, e)), 0) + 15), kg, kg * 0.2); }
       if (plaster) add('P|ceil', '09', 'Peinture sur plafonds', 'impression + 2 couches', 'm²', A, el.lvl, 16);
+    } else if (el.kind === 'stair'){
+      const D = stairDims(el), st = el.st || 'droit', m = el.mat || 'bois', base = {droit:2600, quart:3600, demi:4300, tq:4900, helico:4200}[st] ?? 3000, k = m === 'beton' ? 1.15 : m === 'acier' ? 1.35 : 1;
+      add(`ST|${st}|${m}|${D.n}`, m === 'beton' ? '02' : m === 'acier' ? '11' : '07', `Escalier ${lc(STAIR_TYPES[st])} en ${m === 'beton' ? 'béton armé' : m === 'acier' ? 'acier, marches bois' : 'bois'}`, `${D.n} marches de ${nf(D.h * 100, 1)} cm, giron ${nf(D.g * 100, 1)} cm${el.rail !== false ? ', avec main courante' : ''}`, 'u', 1, el.lvl, Math.round(base * k));
+      if (el.tremie !== false && state.els.some(s => s.kind === 'slab' && slabHoles(s).length)) add(`ST|tremie`, '02', 'Trémie d\'escalier dans plancher (chevêtres, rives)', 'réservation et reprise', 'u', 1, el.lvl, 450);
     } else if (el.kind === 'col'){
       const M = mat(el.mat), v = el.w * el.d * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : '02';
       add(`C|${el.mat}|${n0(el.w * 100)}x${n0(el.d * 100)}`, lot, `Poteau ${lc(M.nom)}`, `section ${n0(el.w * 100)} × ${n0(el.d * 100)} cm`, 'u', 1, el.lvl, lot === '11' ? Math.round(kg * 4.5) : lot === '03' ? Math.round(v * 1400 + 60) : Math.round(v * 600 + 120), kg, kg * (M.gwp || 0));

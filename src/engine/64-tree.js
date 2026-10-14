@@ -1,9 +1,9 @@
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
 const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
 let treeQuery = '';
-const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
+const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['stair', 'Escaliers'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
 const TICON = {
-  wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', roof:'M2 12l10-7 10 7M5 10v10h14V10', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
+  wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', roof:'M2 12l10-7 10 7M5 10v10h14V10', stair:'M3 20h5v-4h4v-4h4V8h5M3 20V9', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
   inst:'M4 11h16v4H4zM6 15v5M18 15v5', open:'M4 4h16v16H4zM12 4v16M4 12h16', door:'M7 21V3h10v18M14 12h.01', lvl:'M3 17h18M3 12h18M3 7h18', proj:'M3 21V9l9-6 9 6v12zM9 21v-7h6v7',
   eye:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', eyeOff:'M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.3-1'
 };
@@ -13,6 +13,7 @@ const DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5"
 function elName(el){
   if (el.kind === 'inst'){ const F = fam(el.fam); const t = F?.types?.[el.type | 0]?.nom; return `${F?.nom || 'Composant'}${t ? ' · ' + t : ''}`; }
   if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
+  if (el.kind === 'stair') return `Escalier ${el.id} · ${STAIR_TYPES[el.st || 'droit']}`;
   return `${KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
 }
 function forcedPerf(el){ return el.forceU > 0 ? {U:el.forceU, R:null} : el.forceR > 0 ? {U:null, R:el.forceR} : null; }
@@ -23,6 +24,7 @@ function elMeta(el){
   }
   if (el.kind === 'inst'){ const c = famCut(el); return c ? `${n0(c.w * 100)}×${n0(c.h * 100)}` : ''; }
   if (el.kind === 'col') return `${n0(el.w * 100)}×${n0(el.d * 100)}`;
+  if (el.kind === 'stair') return `${stairDims(el).n} m.`;
   const r = rect(el.p, el.q); return `${nf(r[1][0] - r[0][0], 1)}×${nf(r[2][1] - r[1][1], 1)}`;
 }
 function treeRow({key, depth, icon, label, meta = '', open = null, selected = false, hidden = null, menu = '', cls = '', title = ''}){
