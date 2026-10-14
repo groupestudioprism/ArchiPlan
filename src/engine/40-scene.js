@@ -148,6 +148,7 @@ function boxGeo(w, d, h){ // boîte aux UV « monde » (motifs à la bonne éche
   return g;
 }
 function pieceGeo(pc){
+  if (pc.top) return prismGeo(pc.top, pc.ext);
   const shape = new THREE.Shape(pc.poly.map(p => new THREE.Vector2(p[0], p[1])));
   const geo = new THREE.ExtrudeGeometry(shape, {depth:Math.max(pc.h, 0.001), bevelEnabled:false});
   geo.rotateX(-Math.PI / 2); geo.translate(0, pc.base, 0);
@@ -236,7 +237,7 @@ function buildGrid(){
   gridMinor.material.opacity = 0.7; positionGrid();
 }
 function positionGrid(){
-  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || !SNAP.grid || !DISPLAY.grid;
+  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || !SNAP.grid || !DISPLAY.grid || (view !== '2d' && state?.site?.terrain && DISPLAY.terrain !== false);
   gridMajor.position.y = y + 0.0005; gridMinor.position.y = y; gridMajor.visible = !hide; gridMinor.visible = !hide && (view === '2d' || step <= 0.1); dirty = true;
 }
 

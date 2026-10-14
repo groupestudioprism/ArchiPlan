@@ -153,6 +153,7 @@ body[data-mode="2d"] .vtools .vgrp:first-child{display:none}
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .f{display:flex;flex-direction:column;gap:3px;min-width:0}
 .f.wide{grid-column:1 / -1}
+.f.rchk{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--ink-2,#444);cursor:pointer}.f.rchk input{width:16px;height:16px;margin:0;accent-color:var(--accent)}
 .f > span{font-size:11.5px;color:var(--mut)}
 .f .in,.lv .in,.cl .in{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);height:35px;padding:0 9px;min-width:0}
 .f input,.f select{border:0;background:transparent;width:100%;min-width:0;outline:none;font-size:13.5px}
@@ -448,6 +449,8 @@ details.help summary{cursor:pointer;font-weight:600;font-size:12.5px;color:var(-
 .site-r button:hover{border-color:var(--accent);background:var(--accent-soft)}.site-r span{font-size:11.5px;color:var(--mut)}
 .site-v{height:35px;display:flex;align-items:center;font:600 13px var(--f-mono)}
 @media (max-width:860px){.ed-body.site{grid-template-columns:1fr}}
+
+.env-o{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:2px 0 8px}.env-a{display:flex;align-items:center;gap:12px;margin-bottom:4px}
 /* intro : le symbole se dessine comme un plan (balayage de bas en haut), puis ARCHIPLAN est tracé de gauche à droite, puis la signature */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;transition:opacity .55s ease,visibility .55s}
 #splash.done{opacity:0;visibility:hidden}
@@ -757,6 +760,16 @@ a.ap-link{text-decoration:none}
   .hmeta{padding:8px 36px 10px 10px}
 }
 @media (max-width:420px){ .hfolders{grid-template-columns:1fr} }
+/* bandeau offre gratuite */
+.h-offer{max-width:1284px;width:100%;margin:18px auto 0;padding:0 22px}
+.ho-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border:1px solid color-mix(in srgb,var(--accent) 25%,var(--line));background:var(--accent-soft);border-radius:12px;padding:12px 14px}
+.ho-in>div:first-child{flex:1;min-width:240px}
+.ho-in b{display:block;font-size:14px}.ho-in span{font-size:13px;color:var(--mut);line-height:1.45}
+.ho-a{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ho-b{height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:600;font-size:13px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
+.ho-b:hover{border-color:var(--accent);color:var(--accent)}
+.ho-x{width:30px;height:30px;border:0;background:transparent;border-radius:8px;color:var(--mut);cursor:pointer}.ho-x:hover{background:var(--panel)}
+@media (max-width:700px){.h-offer{padding:0 14px}}
 </style>
 
 <div id="splash" role="status" aria-live="polite">
@@ -801,7 +814,7 @@ a.ap-link{text-decoration:none}
     </div>
   </header>
   <nav class="tools" role="toolbar" aria-label="Outils">
-    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Volume (B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Volume</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><hr><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button>
+    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Volume (B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Volume</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><hr><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button>
   </nav>
   <main class="vp" id="vp">
     <canvas id="c"></canvas>
@@ -811,7 +824,8 @@ a.ap-link{text-decoration:none}
     <div class="hud">
       <label class="pill"><span>Niveau</span><select id="lvlSel" aria-label="Niveau de travail"></select></label>
       <label class="pill" id="typePill" hidden><span id="typeLbl">Type</span><select id="typeSel"></select></label>
-      <label class="pill" id="hPill" hidden><span>H</span><input id="hIn" type="number" step="0.05" inputmode="decimal" aria-label="Hauteur"><em>m</em></label>
+      <label class="pill" id="hPill" hidden><span id="hLbl">H</span><input id="hIn" type="number" step="0.05" inputmode="decimal" aria-label="Hauteur"><em>m</em></label>
+      <label class="pill" id="roofPill" hidden><span>Forme</span><select id="rShapeIn" aria-label="Forme du toit"><option value="2">2 pans</option><option value="4">4 pans</option><option value="1">1 pan</option><option value="0">Plate</option></select><input id="rPitchIn" type="number" min="3" max="70" step="1" aria-label="Pente en degrés" style="width:44px"><em>°</em></label>
       <label class="pill"><span>Pas</span><select id="stepSel" aria-label="Pas de la grille"><option value="0.01">1 cm</option><option value="0.05" selected>5 cm</option><option value="0.1">10 cm</option><option value="0.25">25 cm</option><option value="0.5">50 cm</option><option value="1">1 m</option></select></label>
     </div>
     <div class="vtools" role="toolbar" aria-label="Affichage">
@@ -894,6 +908,7 @@ a.ap-link{text-decoration:none}
         </div></div>
       <aside class="h-quota" id="homeQuota" aria-live="polite"></aside>
     </section>
+    <div class="h-offer" id="homeOffer" hidden></div>
     <main class="h-body" id="homeBody"></main>
     <footer class="h-foot">Studio Prism · Creative &amp; Technical Solutions · ARCHIPLAN</footer>
   </div>
@@ -1129,7 +1144,7 @@ const FirebaseAuth = {
     b.set(lref, {userId:u.uid, productId:k.productId, productName:k.productName, licenseType:k.licenseType, status:'active', activatedAt:now,
       expiresAt:k.expiresAt || (k.durationDays ? TS.fromMillis(Date.now() + k.durationDays * 864e5) : null), keyId:id, orgId:k.orgId || '',
       createdAt:prev?.createdAt || now, updatedAt:now});
-    if (k.orgId) b.update(this.userRef(u.uid), {orgId:k.orgId, orgName:k.orgName, orgKeyId:id, updatedAt:now});
+    if (k.orgId) b.update(this.userRef(u.uid), {orgId:k.orgId, orgName:k.orgName, orgKeyId:id, orgRole:k.role || '', orgClass:k.classe || '', updatedAt:now});
     await b.commit(); return k;
   },
   async getProfile(u){
@@ -1624,7 +1639,7 @@ function enterApp(msg){
   const wasPending = access.level === 'pending';
   accessReady = refreshAccess();
   if (ctx.libFor !== me.uid){ ctx.libFor = me.uid; loadUserLib(); }
-  accessReady.then(a => { if (wasPending && a.level === 'discovery' && !ctx.discShown && root().hidden && !ctx.pendingLink){ ctx.discShown = true; show('licence', {reason:'welcome'}); } });
+  accessReady.then(() => { if (typeof renderHome === 'function') renderHome(); });   // l'offre gratuite est présentée dans « Mes projets » (bandeau), sans écran intermédiaire
   // Après le code PIN : l'accueil (mes projets) ; retour direct à la maquette si on y était (verrouillage, réglages…)
   if (ctx.where === 'app'){ const hh = $a('#home'); if (hh) hh.inert = false; return; }
   showHome();
@@ -2018,6 +2033,14 @@ function folderHtml(f, shared){
   return `<div class="hfold${f.shared && !shared ? ' sh' : ''}${f.locked ? ' locked' : ''}" data-folder="${esc(f.id)}" data-shared="${shared ? 1 : ''}" tabindex="0">${f.locked ? ICON.lock : ICON.folder}<div><b>${esc(f.name)}</b><small>${f.locked ? 'Email à confirmer' : sub}</small></div>
     ${f.shared && !shared ? `<span class="hb2" title="Dossier partagé">${ICON.share}</span>` : ''}<button type="button" class="hdots" data-fmenu="${esc(f.id)}" data-shared="${shared ? 1 : ''}" aria-label="Gérer le dossier ${esc(f.name)}">${ICON.dots}</button></div>`;
 }
+/* Bandeau « offre gratuite » dans Mes projets (au lieu d'un écran à chaque ouverture) ; masquable */
+function renderOffer(){
+  const el = $a('#homeOffer'); if (!el) return;
+  const hide = planKey() !== 'free' || access.level === 'pending' || !me || store.get('ap.offerHide.' + me.uid);
+  el.hidden = !!hide; if (hide) return;
+  el.innerHTML = `<div class="ho-in"><div><b>Offre gratuite</b><span>Tous les outils de modélisation, 10 Mo de cloud, 5 dossiers et 3 dossiers partagés. Les exports (Archi Vision, IFC, DQE, images) demandent une licence ARCHIPLAN.</span></div>
+    <div class="ho-a"><a class="ho-b" href="${OFFERS_URL}" target="_blank" rel="noopener">Voir les offres</a><button type="button" class="ho-b" data-hact="key">J'ai une clé de licence</button><button type="button" class="ho-x" data-hact="offer-hide" aria-label="Masquer">✕</button></div></div>`;
+}
 function renderHome(){
   const body = $a('#homeBody'); if (!body) return;
   $a('#homeTabs').querySelectorAll('[data-htab]').forEach(b => b.setAttribute('aria-selected', b.dataset.htab === H.tab));
@@ -2025,7 +2048,7 @@ function renderHome(){
   const inShared = H.tab === 'shared' && H.sharedFolder, sf = inShared ? (H.shared?.folders || []).find(f => f.id === H.sharedFolder) : null;
   const canCreate = canCloud() && (H.tab === 'mine' || (sf && sf.role === 'edit'));
   $a('#homeNewP').disabled = !canCreate; $a('#homeImport').disabled = !canCreate; $a('#homeNewF').disabled = !(canCloud() && H.tab === 'mine' && !curFolderShared());
-  renderQuota();
+  renderQuota(); renderOffer();
   const sub = $a('#homeSub'); if (sub) sub.textContent = H.tab === 'mine' ? 'Vos maquettes s\'enregistrent toutes seules dans le cloud Studio Prism.' : 'Les projets et dossiers que l\'on vous a partagés.';
   if (H.loading && !(H.tab === 'mine' ? H.mine : H.shared)){ body.innerHTML = `<div class="hgrid">${'<div class="hcard sk"><div class="hthumb"></div><div class="hmeta"><b></b><span></span></div></div>'.repeat(4)}</div>`; return; }
   if (H.err){ body.innerHTML = `<div class="hempty"><p>${esc(H.err)}</p><button type="button" class="ap-btn alt" data-hact="reload">Réessayer</button></div>`; return; }
@@ -2276,6 +2299,7 @@ $a('#homeFile').addEventListener('change', e => {
 });
 $a('#homeLic').addEventListener('click', () => show('licence'));
 $a('#homeQuota').addEventListener('click', e => { if (e.target.closest('[data-hact="upgrade"]')) show('licence'); });
+$a('#homeOffer').addEventListener('click', e => { const a = e.target.closest('[data-hact]'); if (!a) return; if (a.dataset.hact === 'key') show('licence'); if (a.dataset.hact === 'offer-hide'){ store.set('ap.offerHide.' + me.uid, 1); renderOffer(); } });
 $a('#homeBody').addEventListener('click', async e => {
   const t = e.target;
   const pm = t.closest('[data-menu]'); if (pm){ e.stopPropagation(); const p = findP(pm.dataset.menu, !!pm.dataset.shared); if (p) projectMenu(pm, p, !!pm.dataset.shared); return; }
@@ -2531,6 +2555,11 @@ const COMPOS = {
   'PL-BOIS-01': {nom:'Plancher bois : parquet + OSB + solives isolées', kind:'slab', lot:'Gros œuvre', layers:[['parquet',.014],['osb',.022],['laineVerre',.20],['ba13',.013]]},
   'TT-BAC-01':  {nom:'Toiture terrasse bac acier + PIR 12', kind:'slab', lot:'Gros œuvre', layers:[['bitume',.006],['pir',.12],['bacAcier',.0008]]},
   'TT-VEG-01':  {nom:'Toiture végétalisée sur BA', kind:'slab', lot:'Gros œuvre', layers:[['terreVeg',.10],['epdm',.0015],['xps',.14],['bitume',.004],['ba',.20]]},
+  'TOIT-TUILE': {nom:'Toiture tuiles + laine 24 sous rampants', kind:'roof', lot:'Couverture', layers:[['tuile',.02],['airFV',.04],['paraPluie',.001],['laineVerre',.24],['freinVap',.001],['ba13',.013]]},
+  'TOIT-ARDOISE': {nom:'Toiture ardoises + laine de roche 24', kind:'roof', lot:'Couverture', layers:[['ardoise',.01],['airFV',.04],['paraPluie',.001],['laine',.24],['freinVap',.001],['ba13',.013]]},
+  'TOIT-ZINC': {nom:'Toiture zinc + fibre de bois 22', kind:'roof', lot:'Couverture', layers:[['zinc',.0008],['osb',.022],['airFV',.04],['fibreBoisS',.22],['freinVap',.001],['ba13',.013]]},
+  'TOIT-BAC': {nom:'Toiture bac acier + PIR 12 (bâtiment d\'activité)', kind:'roof', lot:'Couverture', layers:[['bacAcier',.0008],['pir',.12],['bacAcier',.0008]]},
+  'TOIT-SARKING': {nom:'Toiture tuiles, sarking fibre de bois 16 + chevrons 10', kind:'roof', lot:'Couverture', layers:[['tuile',.02],['airFV',.04],['fibreBoisR',.16],['bois',.022],['airNV',.10],['ba13',.013]]},
   'DAL-IND':    {nom:'Dallage industriel BA 20 + résine', kind:'slab', lot:'Industrie', layers:[['resine',.003],['ba',.20]]},
 };
 
@@ -2804,8 +2833,8 @@ function uGrade(U, ctx){
               inst {fam,type,params,host?,t?,c?,rot,lvl,off,flip,mirror} (famille posée ; hébergée dans un mur si host)
    Bibliothèques : base (code) < bibliothèque personnelle (compte, cloud) < bibliothèque du projet. Un élément de bibliothèque
    utilisé par le projet est copié dans state.lib : le projet reste lisible chez un invité qui n'a pas la même bibliothèque. */
-const KIND_NAME = {wall:'Mur', slab:'Dalle', vol:'Volume', col:'Poteau', inst:'Composant'};
-const LOT_ORDER = ['Gros œuvre', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Industrie'];
+const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', vol:'Volume', col:'Poteau', inst:'Composant'};
+const LOT_ORDER = ['Gros œuvre', 'Couverture', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Industrie'];
 const DEFAULT_LEVELS = [{n:'RDC', z:0}, {n:'R+1', z:2.8}, {n:'R+2', z:5.6}];
 let USER_LIB = {mats:{}, compos:{}, fams:{}};
 let state, sel = null, multi = [];
@@ -3000,6 +3029,7 @@ function wallOpenings(w, els = state.els){
 
 // Décompose un élément en "pièces" homogènes : un matériau, un contour plan, une base et une hauteur
 function pieces(el, els = state.els){
+  if (el.kind === 'roof') return roofPieces(el);
   const z = lvlZ(el.lvl) + (el.off || 0), out = [];
   if (el.kind === 'wall'){
     const T = wallT(el), {u, n, L} = wallAxis(el), ops = wallOpenings(el, els), lot = compo(el.type).lot;
@@ -3043,11 +3073,88 @@ function elStats(el){
 function elKeyPoints(el){
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
   if (el.kind === 'slab' || el.kind === 'vol'){ const r = rect(el.p, el.q); const segs = r.map((p, i) => [p, r[(i + 1) % 4]]); return {ends:r, segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
+  if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % 4]]), ...o.map((p, i) => [p, o[(i + 1) % 4]])];
+    return {ends:[...r, ...o, ...G.ridges.flatMap(([a, b]) => [[a[0], a[1]], [b[0], b[1]]])], segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
   if (el.kind === 'col'){ const r = colPoly(el); return {ends:r, segs:r.map((p, i) => [p, r[(i + 1) % 4]]), centers:[el.c], mids:[]}; }
   if (el.kind === 'inst'){ const fr = instFrame(el); if (!fr) return {ends:[]}; const pts = [fr.o];
     if (el.host){ const c = famCut(el); if (c){ const d = [Math.cos(fr.ang), Math.sin(fr.ang)]; pts.push(V.add(fr.o, V.mul(d, -c.w/2)), V.add(fr.o, V.mul(d, c.w/2))); } }
     return {ends:pts, centers:[fr.o], segs:[], mids:[]}; }
   return {ends:[]};
+}
+
+/* ==== 31-roof.js ==== */
+/* ============ Toitures : 2 pans, 4 pans (croupes), 1 pan (appentis), plate ============
+   roof {type (composition de toiture), p, q (rectangle des murs, en plan), lvl, off (hauteur d'égout au-dessus du niveau),
+         shape '2'|'4'|'1'|'0', pitch (°), ov (débord, m), dir 'x'|'y' (faîtage parallèle à x ou y), gable (pignons maçonnés)}
+   Les pans sont des plaques inclinées en couches (couverture, écran, isolant, parement), au vrai volume ; les pignons sont
+   des triangles maçonnés. Les « pièces » renvoyées gardent l'interface commune (poly en plan × h = volume exact). */
+const ROOF_SHAPES = {'2':'2 pans', '4':'4 pans (croupes)', '1':'1 pan (appentis)', '0':'Toiture plate'};
+const roofPitch = el => el.shape === '0' ? 0 : clamp(el.pitch ?? 35, 3, 70);
+function roofGeom(el){
+  const ov = Math.max(0, el.ov ?? 0.4), a = Math.atan(1) * 0 + roofPitch(el) * Math.PI / 180, tp = Math.tan(a), zE = lvlZ(el.lvl) + (el.off ?? 2.7);
+  const X0 = Math.min(el.p[0], el.q[0]), X1 = Math.max(el.p[0], el.q[0]), Y0 = Math.min(el.p[1], el.q[1]), Y1 = Math.max(el.p[1], el.q[1]);
+  const ax = (el.dir || (X1 - X0 >= Y1 - Y0 ? 'x' : 'y')) === 'x';
+  // repère local : u le long du faîtage, v en travers (montée du pan)
+  const U0 = ax ? X0 : Y0, U1 = ax ? X1 : Y1, V0 = ax ? Y0 : X0, V1 = ax ? Y1 : X1, W = V1 - V0, vm = (V0 + V1) / 2;
+  const P = (u, v, z) => ax ? [u, v, z] : [v, u, z];
+  const u0 = U0 - ov, u1 = U1 + ov, v0 = V0 - ov, v1 = V1 + ov, zEo = zE - ov * tp;
+  const pans = [], gables = [], ridges = [];
+  const shape = el.shape || '2';
+  if (shape === '0') pans.push([P(u0, v0, zE), P(u1, v0, zE), P(u1, v1, zE), P(u0, v1, zE)]);
+  else if (shape === '1'){
+    const z1 = zE + (W + ov) * tp;
+    pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(u1, v1, z1), P(u0, v1, z1)]);
+    if (el.gable !== false){ const zt = zE + W * tp; gables.push({tri:[P(U0, V0, zE), P(U0, V1, zE), P(U0, V1, zt)], dir:ax ? [1, 0] : [0, 1]}, {tri:[P(U1, V0, zE), P(U1, V1, zE), P(U1, V1, zt)], dir:ax ? [-1, 0] : [0, -1]}); }
+  } else if (shape === '2'){
+    const zR = zE + (W / 2) * tp;
+    pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(u1, vm, zR), P(u0, vm, zR)], [P(u1, v1, zEo), P(u0, v1, zEo), P(u0, vm, zR), P(u1, vm, zR)]);
+    ridges.push([P(u0, vm, zR), P(u1, vm, zR)]);
+    if (el.gable !== false) gables.push({tri:[P(U0, V0, zE), P(U0, V1, zE), P(U0, vm, zR)], dir:ax ? [1, 0] : [0, 1]}, {tri:[P(U1, V0, zE), P(U1, V1, zE), P(U1, vm, zR)], dir:ax ? [-1, 0] : [0, -1]});
+  } else { // 4 pans : faîtage raccourci de W/2 à chaque bout (pyramide si le plan est carré)
+    const half = Math.min(W / 2, (U1 - U0) / 2), zR = zE + half * tp, ur0 = U0 + half, ur1 = U1 - half, vr0 = vm, vr1 = vm;
+    pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(ur1, vr0, zR), P(ur0, vr0, zR)], [P(u1, v1, zEo), P(u0, v1, zEo), P(ur0, vr1, zR), P(ur1, vr1, zR)],
+      [P(u0, v1, zEo), P(u0, v0, zEo), P(ur0, vm, zR)], [P(u1, v0, zEo), P(u1, v1, zEo), P(ur1, vm, zR)]);
+    if (ur1 - ur0 > 1e-3) ridges.push([P(ur0, vm, zR), P(ur1, vm, zR)]);
+  }
+  return {pans:pans.map(p => p.filter((q, i) => i === 0 || Math.hypot(q[0] - p[i - 1][0], q[1] - p[i - 1][1], q[2] - p[i - 1][2]) > 1e-6)), gables, ridges, a, zE, zEo, ax, W,
+    eaveLen:shape === '0' ? 2 * (u1 - u0 + v1 - v0) : shape === '1' ? (u1 - u0) : shape === '2' ? 2 * (u1 - u0) : 2 * (u1 - u0 + v1 - v0),
+    outline:[P(u0, v0, 0), P(u1, v0, 0), P(u1, v1, 0), P(u0, v1, 0)].map(q => [q[0], q[1]]), wall:[[X0, Y0], [X1, Y0], [X1, Y1], [X0, Y1]]};
+}
+const planArea3 = pts => Math.abs(area(pts.map(q => [q[0], q[1]])));
+function roofPieces(el){
+  const G = roofGeom(el), C = compo(el.type), c = Math.cos(G.a), out = [];
+  for (const pan of G.pans){
+    let dzs = 0; const poly = pan.map(q => [q[0], q[1]]);
+    for (const [m, e] of C.layers){
+      const dz = e / c, top = pan.map(q => [q[0], q[1], q[2] - dzs]);
+      out.push({poly, top, ext:[0, 0, -dz], base:Math.min(...top.map(q => q[2])) - dz, h:dz, mat:m, lot:C.lot || 'Gros œuvre', e, roof:true});
+      dzs += dz;
+    }
+  }
+  for (const g of G.gables){
+    const t = 0.2, [A, B, T] = g.tri, Hh = T[2] - A[2], L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+    const d = g.dir, rectP = [[A[0], A[1]], [B[0], B[1]], [B[0] + d[0] * t, B[1] + d[1] * t], [A[0] + d[0] * t, A[1] + d[1] * t]];
+    out.push({poly:rectP, top:g.tri, ext:[d[0] * t, d[1] * t, 0], base:A[2], h:Hh / 2, mat:el.gableMat || 'parpaing', lot:'Gros œuvre', e:t, gable:true, area:L * Hh / 2});
+  }
+  return out;
+}
+/* Surfaces utiles au métré : rampants (vraie grandeur), égouts, faîtages, pignons */
+function roofQty(el){
+  const G = roofGeom(el), c = Math.cos(G.a);
+  return {slope:G.pans.reduce((s, p) => s + planArea3(p), 0) / (c || 1), plan:G.pans.reduce((s, p) => s + planArea3(p), 0), eave:G.eaveLen,
+    ridge:G.ridges.reduce((s, [a, b]) => s + Math.hypot(b[0] - a[0], b[1] - a[1]), 0), gable:G.gables.reduce((s, g) => { const [A, B, T] = g.tri; return s + Math.hypot(B[0] - A[0], B[1] - A[1]) * (T[2] - A[2]) / 2; }, 0)};
+}
+/* Prisme quelconque : face supérieure (polygone convexe 3D, plan y = −z scène) translatée de ext */
+function prismGeo(top, ext){
+  const n = top.length, toS = q => [q[0], q[2], -q[1]], E = toS(ext), T = top.map(toS), B = T.map(q => [q[0] + E[0], q[1] + E[1], q[2] + E[2]]);
+  let nx = 0, ny = 0, nz = 0; for (let i = 0; i < n; i++){ const a = T[i], b = T[(i + 1) % n]; nx += (a[1] - b[1]) * (a[2] + b[2]); ny += (a[2] - b[2]) * (a[0] + b[0]); nz += (a[0] - b[0]) * (a[1] + b[1]); }
+  let top2 = T, bot = B; if (nx * E[0] + ny * E[1] + nz * E[2] > 0){ top2 = T.slice().reverse(); bot = B.slice().reverse(); }
+  const pos = [], uv = [], push = (...pts) => pts.forEach(p => { pos.push(p[0], p[1], p[2]); uv.push(p[0], -p[2] + p[1] * 0.3); });
+  for (let i = 1; i < n - 1; i++) push(top2[0], top2[i], top2[i + 1]);
+  for (let i = 1; i < n - 1; i++) push(bot[0], bot[i + 1], bot[i]);
+  for (let i = 0; i < n; i++){ const j = (i + 1) % n; push(top2[i], bot[i], bot[j]); push(top2[i], bot[j], top2[j]); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
+  return g;
 }
 
 /* ==== 40-scene.js ==== */
@@ -3201,6 +3308,7 @@ function boxGeo(w, d, h){ // boîte aux UV « monde » (motifs à la bonne éche
   return g;
 }
 function pieceGeo(pc){
+  if (pc.top) return prismGeo(pc.top, pc.ext);
   const shape = new THREE.Shape(pc.poly.map(p => new THREE.Vector2(p[0], p[1])));
   const geo = new THREE.ExtrudeGeometry(shape, {depth:Math.max(pc.h, 0.001), bevelEnabled:false});
   geo.rotateX(-Math.PI / 2); geo.translate(0, pc.base, 0);
@@ -3289,7 +3397,7 @@ function buildGrid(){
   gridMinor.material.opacity = 0.7; positionGrid();
 }
 function positionGrid(){
-  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || !SNAP.grid || !DISPLAY.grid;
+  if (!gridMajor) return; const y = lvlZ(curLvl) + 0.001, hide = DISPLAY.style === 'realistic' || view === 'render' || !SNAP.grid || !DISPLAY.grid || (view !== '2d' && state?.site?.terrain && DISPLAY.terrain !== false);
   gridMajor.position.y = y + 0.0005; gridMinor.position.y = y; gridMajor.visible = !hide; gridMinor.visible = !hide && (view === '2d' || step <= 0.1); dirty = true;
 }
 
@@ -3423,7 +3531,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7}, slab:{type:'DAL-BA-20'}, vol:{type:'acier', h:0.5}, col:{type:'ba', h:2.7, w:0.25}, comp:{fam:'fenetre-2v', type:1, rot:0}};
+const defs = {wall:{type:'MUR-EXT-01', h:2.7}, slab:{type:'DAL-BA-20'}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4}, vol:{type:'acier', h:0.5}, col:{type:'ba', h:2.7, w:0.25}, comp:{fam:'fenetre-2v', type:1, rot:0}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -3540,6 +3648,7 @@ function tempEl(a, b){
   const lvl = curLvl, off = offFromZ();
   if (tool === 'wall') return {kind:'wall', type:defs.wall.type, a, b, h:defs.wall.h, lvl, off, flip:false};
   if (tool === 'slab') return {kind:'slab', type:defs.slab.type, p:a, q:b, lvl, off:off ? rnd(off + slabT({type:defs.slab.type})) : 0};
+  if (tool === 'roof') return {kind:'roof', type:defs.roof.type, p:a, q:b, lvl, off:rnd(off + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov};
   if (tool === 'vol') return {kind:'vol', mat:defs.vol.type, p:a, q:b, h:defs.vol.h, lvl, off};
   if (tool === 'col') return {kind:'col', mat:defs.col.type, c:b, w:defs.col.w, d:defs.col.w, h:defs.col.h, lvl, off};
 }
@@ -3558,11 +3667,11 @@ function updatePreview(){
     const d = V.sub(cur, S), L = V.len(d);
     if (L > 0.005) markGroup.add(lineObj(S, cur, ac));
     if (tool === 'wall' && L > 0.005){ const t = tempEl(S, cur); for (const pc of pieces(t, state.els.concat([t]))) previewGroup.add(pieceMesh(pc, true)); }
-    if ((tool === 'slab' || tool === 'vol') && Math.abs(d[0]) > 0.005 && Math.abs(d[1]) > 0.005){ const t = tempEl(S, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
+    if ((tool === 'slab' || tool === 'vol' || tool === 'roof') && Math.abs(d[0]) > 0.005 && Math.abs(d[1]) > 0.005){ const t = tempEl(S, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
     if ((tool === 'move' || tool === 'copy') && L > 0.005) previewMove(d);
     if (tool === 'rotate') previewRotate(Math.atan2(d[1], d[0]));
     let ang = Math.atan2(d[1], d[0]) * 180 / Math.PI; if (ang < 0) ang += 360;
-    text = (tool === 'slab' || tool === 'vol') ? `${nf(Math.abs(d[0]))} × ${nf(Math.abs(d[1]))} m` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${nf(L)} m · ${nf(ang, 1)}°`;
+    text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${nf(Math.abs(d[0]))} × ${nf(Math.abs(d[1]))} m` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${nf(L)} m · ${nf(ang, 1)}°`;
   } else {
     if (tool === 'col'){ const t = tempEl(null, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
     text = `x ${nf(cur[0])} · y ${nf(cur[1])}${draw.workZ != null && Math.abs(draw.workZ - lvlZ(curLvl)) > 0.001 ? ` · z ${nf(draw.workZ)}` : ''}`;
@@ -3622,7 +3731,7 @@ const selIds = () => [...new Set([sel, ...multi].filter(Boolean))];
 function movedEl(el, d){
   const m = JSON.parse(JSON.stringify(el)), mv = p => [rnd(p[0] + d[0]), rnd(p[1] + d[1])];
   if (m.kind === 'wall'){ m.a = mv(m.a); m.b = mv(m.b); }
-  else if (m.kind === 'slab' || m.kind === 'vol'){ m.p = mv(m.p); m.q = mv(m.q); }
+  else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ m.p = mv(m.p); m.q = mv(m.q); }
   else if (m.kind === 'col') m.c = mv(m.c);
   else if (m.kind === 'inst'){ if (m.host){ const w = getEl(m.host); if (w){ const {u} = wallAxis(w); m.t = rnd((m.t || 0) + V.dot(d, u)); } } else m.c = mv(m.c); }
   return m;
@@ -3630,12 +3739,12 @@ function movedEl(el, d){
 function rotatedEl(el, base, ang){
   const m = JSON.parse(JSON.stringify(el)), rp = p => { const r = V.add(base, V.rot(V.sub(p, base), ang)); return [rnd(r[0]), rnd(r[1])]; };
   if (m.kind === 'wall'){ m.a = rp(m.a); m.b = rp(m.b); }
-  else if (m.kind === 'slab' || m.kind === 'vol'){ const r = rect(m.p, m.q).map(rp); m.p = [Math.min(...r.map(p => p[0])), Math.min(...r.map(p => p[1]))]; m.q = [Math.max(...r.map(p => p[0])), Math.max(...r.map(p => p[1]))]; }
+  else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ const r = rect(m.p, m.q).map(rp); m.p = [Math.min(...r.map(p => p[0])), Math.min(...r.map(p => p[1]))]; m.q = [Math.max(...r.map(p => p[0])), Math.max(...r.map(p => p[1]))]; if (m.kind === 'roof' && Math.abs(Math.sin(ang)) > 0.7){ const G = roofGeom(el); m.dir = G.ax ? 'y' : 'x'; } }
   else if (m.kind === 'col'){ m.c = rp(m.c); if (Math.abs(Math.sin(ang)) > 0.7) [m.w, m.d] = [m.d, m.w]; }
   else if (m.kind === 'inst' && !m.host){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI) % 360; }
   return m;
 }
-const rectOnly = () => selIds().some(id => ['slab', 'vol', 'col'].includes(getEl(id)?.kind));
+const rectOnly = () => selIds().some(id => ['slab', 'vol', 'col', 'roof'].includes(getEl(id)?.kind));
 function previewMove(d){ for (const id of selIds()){ const el = getEl(id); if (!el) continue; const m = movedEl(el, d); if (m.kind === 'inst') instMeshes(m, true).forEach(x => previewGroup.add(x)); else pieces(m).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } }
 function previewRotate(a){ if (rectOnly()) a = Math.round(a / (Math.PI / 2)) * (Math.PI / 2); for (const id of selIds()){ const el = getEl(id); if (!el || (el.kind === 'inst' && el.host)) continue; const m = rotatedEl(el, draw.base, a); if (m.kind === 'inst') instMeshes(m, true).forEach(x => previewGroup.add(x)); else pieces(m).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } }
 function applyMove(d, copy){
@@ -3695,6 +3804,7 @@ const PROMPTS = {
   select:() => 'Sélection : cliquez un élément (Maj pour en ajouter). Clic droit ou deux doigts : déplacer la vue.',
   wall:() => draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
   slab:() => draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
+  roof:() => draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
   vol:() => draw.start ? '<b>Volume</b> : coin opposé, ou <code>L;l</code>' : '<b>Volume</b> : premier coin (ou x;y)',
   col:() => '<b>Poteau</b> : position du centre (ou x;y)',
   comp:() => fam(defs.comp.fam)?.host === 'wall' ? `<b>${esc(fam(defs.comp.fam)?.nom)}</b> : cliquez dans un mur, du côté où elle s'ouvre` : `<b>${esc(fam(defs.comp.fam)?.nom || 'Composant')}</b> : point d'insertion · <kbd>Espace</kbd> pivote de 90°`,
@@ -3723,12 +3833,15 @@ function syncHud(){
   let opts = null, cur = null, lbl = 'Type';
   if (tool === 'wall'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'wall').map(([k, v]) => [k, v.nom]); cur = defs.wall.type; lbl = 'Mur'; }
   else if (tool === 'slab'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'slab').map(([k, v]) => [k, v.nom]); cur = defs.slab.type; lbl = 'Plancher'; }
+  else if (tool === 'roof'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'roof').map(([k, v]) => [k, v.nom]); cur = defs.roof.type; lbl = 'Toiture'; }
   else if (tool === 'vol' || tool === 'col'){ opts = Object.entries(libMats()).map(([k, v]) => [k, v.nom]).sort((a, b) => a[1].localeCompare(b[1], 'fr')); cur = defs[tool].type; lbl = 'Matériau'; }
   else if (tool === 'comp'){ const F = fam(defs.comp.fam); opts = (F?.types || []).map((t, i) => [i, `${F.nom} · ${t.nom}`]); cur = defs.comp.type; lbl = 'Type'; }
   tp.hidden = !opts;
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
-  hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col');
+  hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col' || tool === 'roof');
   if (!hp.hidden) $('#hIn').value = defs[tool].h;
+  $('#hLbl').textContent = tool === 'roof' ? 'Égout' : 'H'; $('#roofPill').hidden = tool !== 'roof';
+  if (tool === 'roof'){ $('#rShapeIn').value = defs.roof.shape; $('#rPitchIn').value = defs.roof.pitch; }
 }
 function placePoint(pt){
   const S = draw.start;
@@ -3739,7 +3852,7 @@ function placePoint(pt){
       if (draw.chainFirst && V.eq(pt, draw.chainFirst) && draw.chainN > 1){ cancelDraw(); toast('Contour fermé'); return; }
       draw.start = pt;
     }
-  } else if (tool === 'slab' || tool === 'vol'){
+  } else if (tool === 'slab' || tool === 'vol' || tool === 'roof'){
     if (!S) draw.start = pt;
     else if (Math.abs(pt[0] - S[0]) > 0.01 && Math.abs(pt[1] - S[1]) > 0.01){ const r = rect(S, pt); addEl(tempEl(r[0], r[2])); draw.start = null; draw.workZ = null; }
     else toast('Le rectangle doit avoir deux côtés non nuls');
@@ -3758,7 +3871,7 @@ function placePoint(pt){
 }
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
-const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
+const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
   deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', di:'measure', r:'measure', selection:'select', v:'select'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
@@ -3778,7 +3891,7 @@ function runCmd(){
     if (word === 'ze' || word === 'zoom') return fit();
     if (word === 'u' && !draw.start) return undo();
     if (CMDS[word]) return setTool(CMDS[word]);
-    return toast('Commande inconnue. Exemples : MUR, DALLE, DEP, CO, RO, PP, ZE');
+    return toast('Commande inconnue. Exemples : MUR, DALLE, TOIT, DEP, CO, RO, PP, ZE');
   }
   const c = parseCmd(raw);
   if (!c){ if (raw) toast('Saisie non reconnue. Exemples : 4,20 · 4,2<90 · @5;3'); return; }
@@ -3793,7 +3906,7 @@ function runCmd(){
     if ('polar' in c){ const a = c.ang * Math.PI / 180; const L = Number.isNaN(c.polar) ? 1 : c.polar; pt = [S[0] + L * Math.cos(a), S[1] + L * Math.sin(a)]; }
     else if ('x' in c) pt = [S[0] + c.x, S[1] + c.y];
     else if ('len' in c){
-      if (tool === 'slab' || tool === 'vol'){ toast('Entrez les deux côtés : L;l'); return; }
+      if (tool === 'slab' || tool === 'vol' || tool === 'roof'){ toast('Entrez les deux côtés : L;l'); return; }
       let dir = draw.cursor ? V.sub(draw.cursor, S) : [1, 0]; if (V.len(dir) < 1e-6) dir = [1, 0];
       pt = V.add(S, V.mul(dir, c.len / V.len(dir)));
     }
@@ -3852,10 +3965,11 @@ function deleteSel(){ const ids = selIds(); if (!ids.length) return; pushHist();
 /* ============ Panneau : propriétés, bibliothèque, métré ============ */
 let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '';
 const USES = {mur:'Mur extérieur', plancherBas:'Plancher bas (vide sanitaire, extérieur)', terrePlein:'Dallage sur terre-plein', plancherInt:'Plancher intermédiaire', toiture:'Toiture / plancher haut'};
-const elUse = el => el.kind === 'wall' ? 'mur' : (el.use || (el.lvl === 0 ? 'terrePlein' : 'plancherInt'));
+const elUse = el => el.kind === 'wall' ? 'mur' : el.kind === 'roof' ? 'toiture' : (el.use || (el.lvl === 0 ? 'terrePlein' : 'plancherInt'));
 // couches côté intérieur → extérieur pour les calculs
 function layersInToOut(el){
   if (el.kind === 'wall') return wallLayers(el).slice().reverse();         // murs : la composition est saisie extérieur → intérieur
+  if (el.kind === 'roof') return compo(el.type).layers.slice().reverse();   // toitures : couverture (dessus) → parement (dessous)
   const L = compo(el.type).layers.slice();                                   // planchers : haut → bas
   return elUse(el) === 'toiture' ? L.reverse() : L;
 }
@@ -3919,7 +4033,7 @@ function renderProps(){
       <div class="grp"><h3>Raccourcis</h3><p class="hint"><kbd>V</kbd> sélection · <kbd>M</kbd> mur · <kbd>D</kbd> dalle · <kbd>P</kbd> poteau · <kbd>B</kbd> volume · <kbd>F</kbd> composant · <kbd>U</kbd> pousser/tirer · <kbd>G</kbd> déplacer · <kbd>C</kbd> copier · <kbd>O</kbd> rotation · <kbd>R</kbd> mesure · <kbd>F3</kbd> accroches · <kbd>F8</kbd> ortho · <kbd>F10</kbd> polaire · <kbd>F9</kbd> grille · <kbd>Z</kbd> zoom étendu.</p></div></details>`;
   }
   const {v, m} = elStats(el);
-  const lot = el.kind === 'wall' || el.kind === 'slab' ? compo(el.type).lot : el.kind === 'inst' ? famLot(fam(el.fam)) : el.kind === 'vol' ? 'Industrie' : 'Gros œuvre';
+  const lot = el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof' ? compo(el.type).lot : el.kind === 'inst' ? famLot(fam(el.fam)) : el.kind === 'vol' ? 'Industrie' : 'Gros œuvre';
   const title = el.kind === 'inst' ? esc(fam(el.fam)?.nom || 'Composant') : `${KIND_NAME[el.kind]} ${el.id}`;
   let h = `<div class="ph"><h2>${title}</h2><span class="tag">${esc(lot)}</span></div><div class="fields">`;
   if (el.kind === 'wall'){
@@ -3932,6 +4046,18 @@ function renderProps(){
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(T * 100, 1)} cm</dd><dt>Surface brute</dt><dd>${nf(L * el.h)} m²</dd><dt>Ouvertures</dt><dd>${ops.length}</dd><dt>Volume net</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, L * el.h, true)}</div>
       <div class="btns"><button class="btn" data-act="flip">Inverser les faces</button><button class="btn" data-act="add-opening">+ Ouverture</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+  } else if (el.kind === 'roof'){
+    const layers = compo(el.type).layers, Q = roofQty(el), r = rect(el.p, el.q);
+    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'roof').map(([k, t]) => [k, t.nom]), el.type);
+    h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
+    h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false) + field('Débord', 'rov', el.ov ?? 0.4, 'm');
+    h += field('Hauteur d\'égout', 'off', el.off ?? 2.7, 'm') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false);
+    h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
+    h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons maçonnés (2 pans et appentis)</label>`;
+    h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
+      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}<dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
+      <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Q.slope, false)}</div>
+      <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers;
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
@@ -4007,7 +4133,7 @@ function renderLib(){
 
 /* ---------- métré ---------- */
 function quantities(){
-  const mats = {}, walls = {}, slabs = {}, fams = {};
+  const mats = {}, walls = {}, slabs = {}, roofs = {}, fams = {};
   const addM = (lot, m, v) => { const k = lot + '|' + m; mats[k] ??= {lot, mat:m, v:0}; mats[k].v += v; };
   for (const el of state.els){
     if (el.kind === 'inst'){ const F = fam(el.fam); for (const so of instSolids(el)) addM(famLot(F), so.m, solidVol(so));
@@ -4015,8 +4141,9 @@ function quantities(){
     for (const pc of pieces(el)) addM(pc.lot, pc.mat, area(pc.poly) * pc.h);
     if (el.kind === 'wall'){ const L = wallAxis(el).L, ops = wallOpenings(el).reduce((s, o) => s + (o.t1 - o.t0) * (o.z1 - o.z0), 0); walls[el.type] ??= {ml:0, m2:0, net:0}; walls[el.type].ml += L; walls[el.type].m2 += L * el.h; walls[el.type].net += L * el.h - ops; }
     if (el.kind === 'slab'){ slabs[el.type] ??= {m2:0}; slabs[el.type].m2 += area(rect(el.p, el.q)); }
+    if (el.kind === 'roof'){ const r = roofQty(el); roofs[el.type] ??= {m2:0, plan:0, eave:0, ridge:0}; roofs[el.type].m2 += r.slope; roofs[el.type].plan += r.plan; roofs[el.type].eave += r.eave; roofs[el.type].ridge += r.ridge; }
   }
-  return {mats:Object.values(mats), walls, slabs, fams:Object.values(fams)};
+  return {mats:Object.values(mats), walls, slabs, roofs, fams:Object.values(fams)};
 }
 function renderQty(){
   const q = quantities(); if (!state.els.length) return `<p class="hint">Le métré apparaîtra ici dès que vous aurez dessiné un premier élément.</p>`;
@@ -4064,11 +4191,12 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
   const el = getEl(sel); if (!el || (!f && !fp)) return;
   if (fp){ const v = num(t.value); if (Number.isNaN(v)) return renderPanel(); pushHist(); el.params = {...(el.params || {}), [fp]:v}; state.isSample = false; rebuild(); return; }
+  if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
   const pos = x => Math.max(0.001, x);
-  if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
+  if (f === 'rshape') el.shape = val; else if (f === 'rpitch') el.pitch = clamp(val, 3, 70); else if (f === 'rdir') el.dir = val; else if (f === 'rov') el.ov = clamp(val, 0, 2); else if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
   else if (f === 'ftype'){ el.type = +val; el.params = {}; }
   else if (f === 'h') el.h = pos(val); else if (f === 'off') el.off = val;
   else if (f === 't'){ const w = getEl(el.host); if (w){ const c = famCut(el), L = wallAxis(w).L; el.t = rnd(clamp(val, c.w / 2, L - c.w / 2)); } }
@@ -4078,7 +4206,7 @@ $('#pbody').addEventListener('change', e => {
     else if (f === 'ax') el.a = [val, el.a[1]]; else if (f === 'ay') el.a = [el.a[0], val];
     else if (f === 'bx') el.b = [val, el.b[1]]; else if (f === 'by') el.b = [el.b[0], val];
     if (V.len(V.sub(el.a, el.b)) < 0.01){ state = JSON.parse(hist.pop()); updUndo(); renderPanel(); toast('Un mur doit mesurer au moins 1 cm'); return; }
-  } else if (el.kind === 'slab' || el.kind === 'vol'){
+  } else if (el.kind === 'slab' || el.kind === 'vol' || el.kind === 'roof'){
     const r = rect(el.p, el.q); let [x0, y0] = r[0], lx = r[1][0] - x0, ly = r[2][1] - y0;
     if (f === 'lx') lx = pos(val); else if (f === 'ly') ly = pos(val); else if (f === 'px') x0 = val; else if (f === 'py') y0 = val;
     el.p = [x0, y0]; el.q = [rnd(x0 + lx), rnd(y0 + ly)];
@@ -4130,12 +4258,12 @@ const PATTERNS = {plain:'Uni', concrete:'Béton', plaster:'Enduit / plâtre', br
 function openComposer({id, apply}){
   const base = id ? compo(id) : {nom:'Nouvelle composition', kind:'wall', lot:'Gros œuvre', layers:[['enduit', 0.015], ['parpaing', 0.2], ['laine', 0.1], ['ba13', 0.013]]};
   const owner = id ? libOwner('compos', id) : 'new';
-  const W = {nom:owner === 'base' ? base.nom : base.nom, kind:base.kind, lot:base.lot, layers:base.layers.map(l => [...l]), use:base.kind === 'wall' ? 'mur' : 'plancherBas', cond:{ti:20, hi:50, te:-5, he:80}};
-  const target = apply ? getEl(apply) : null; if (target && target.kind === 'slab') W.use = elUse(target);
+  const W = {nom:owner === 'base' ? base.nom : base.nom, kind:base.kind, lot:base.lot, layers:base.layers.map(l => [...l]), use:base.kind === 'wall' ? 'mur' : base.kind === 'roof' ? 'toiture' : 'plancherBas', cond:{ti:20, hi:50, te:-5, he:80}};
+  const target = apply ? getEl(apply) : null; if (target && (target.kind === 'slab' || target.kind === 'roof')) W.use = elUse(target);
   const html = `<header class="ed-h"><div><span class="eyebrow">Composition de paroi</span><input class="ed-name" id="cpName" value="${esc(W.nom)}" aria-label="Nom de la composition"></div><button class="ib" data-close aria-label="Fermer">✕</button></header>
     <div class="ed-body cp">
       <section class="cp-l">
-        <div class="cp-row"><label class="f"><span>Type</span><span class="in"><select id="cpKind"><option value="wall"${W.kind === 'wall' ? ' selected' : ''}>Mur / cloison</option><option value="slab"${W.kind === 'slab' ? ' selected' : ''}>Plancher / toiture</option></select></span></label>
+        <div class="cp-row"><label class="f"><span>Type</span><span class="in"><select id="cpKind"><option value="wall"${W.kind === 'wall' ? ' selected' : ''}>Mur / cloison</option><option value="slab"${W.kind === 'slab' ? ' selected' : ''}>Plancher / toiture-terrasse</option><option value="roof"${W.kind === 'roof' ? ' selected' : ''}>Toiture en pente</option></select></span></label>
           <label class="f"><span>Usage (calculs)</span><span class="in"><select id="cpUse"></select></span></label>
           <label class="f"><span>Lot</span><span class="in"><select id="cpLot">${LOT_ORDER.map(l => `<option${l === W.lot ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></span></label></div>
         <p class="hint" id="cpOrder"></p>
@@ -4150,7 +4278,7 @@ function openComposer({id, apply}){
       <button class="btn" data-close>Annuler</button>${target ? '<button class="btn" id="cpApply">Enregistrer et appliquer à l\'élément</button>' : ''}<button class="btn primary" id="cpSave">${owner === 'perso' ? 'Enregistrer' : 'Enregistrer dans ma bibliothèque'}</button></footer>`;
   const d = openEDlg(html, 'wide');
   const useSel = d.querySelector('#cpUse');
-  const syncUse = () => { const opts = W.kind === 'wall' ? [['mur', USES.mur]] : Object.entries(USES).filter(([k]) => k !== 'mur'); if (!opts.some(([k]) => k === W.use)) W.use = opts[0][0];
+  const syncUse = () => { const opts = W.kind === 'wall' ? [['mur', USES.mur]] : W.kind === 'roof' ? [['toiture', USES.toiture]] : Object.entries(USES).filter(([k]) => k !== 'mur'); if (!opts.some(([k]) => k === W.use)) W.use = opts[0][0];
     useSel.innerHTML = opts.map(([k, n]) => `<option value="${k}"${k === W.use ? ' selected' : ''}>${esc(n)}</option>`).join('');
     d.querySelector('#cpOrder').textContent = W.kind === 'wall' ? 'Couches de l\'extérieur (en haut) vers l\'intérieur (en bas).' : 'Couches du dessus (en haut) vers le dessous (en bas).'; };
   const opts = matOptions();
@@ -4183,8 +4311,8 @@ function openComposer({id, apply}){
     if (USER_LIB.compos[cid] && state.lib.compos[cid]) state.lib.compos[cid] = JSON.parse(JSON.stringify(data));
     saveUserLib(); return cid;
   };
-  d.querySelector('#cpSave').onclick = () => { const cid = persist(); if (W.kind === 'wall') defs.wall.type = cid; else defs.slab.type = cid; closeEDlg(); pushHist(); embedUsedLib(); rebuild(); syncHud(); toast('Composition enregistrée'); };
-  const ap = d.querySelector('#cpApply'); if (ap) ap.onclick = () => { const cid = persist(); pushHist(); const el = getEl(apply); if (el && ((el.kind === 'wall') === (W.kind === 'wall'))){ el.type = cid; if (el.kind === 'slab') el.use = W.use; } embedUsedLib(); closeEDlg(); rebuild(); toast('Composition appliquée'); };
+  d.querySelector('#cpSave').onclick = () => { const cid = persist(); if (W.kind === 'wall') defs.wall.type = cid; else if (W.kind === 'roof') defs.roof.type = cid; else defs.slab.type = cid; closeEDlg(); pushHist(); embedUsedLib(); rebuild(); syncHud(); toast('Composition enregistrée'); };
+  const ap = d.querySelector('#cpApply'); if (ap) ap.onclick = () => { const cid = persist(); pushHist(); const el = getEl(apply); if (el && (el.kind === W.kind || (el.kind !== 'wall' && W.kind !== 'wall'))){ el.type = cid; if (el.kind === 'slab') el.use = W.use; } embedUsedLib(); closeEDlg(); rebuild(); toast('Composition appliquée'); };
   syncUse(); renderLayers(); calc();
 }
 function renderResults(box, W){
@@ -4445,11 +4573,11 @@ function onRenderClick(act, b){
 
 /* ==== 64-tree.js ==== */
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
-const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|inst']);
+const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
 let treeQuery = '';
-const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles, planchers, toitures'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
+const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
 const TICON = {
-  wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
+  wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', roof:'M2 12l10-7 10 7M5 10v10h14V10', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
   inst:'M4 11h16v4H4zM6 15v5M18 15v5', open:'M4 4h16v16H4zM12 4v16M4 12h16', door:'M7 21V3h10v18M14 12h.01', lvl:'M3 17h18M3 12h18M3 7h18', proj:'M3 21V9l9-6 9 6v12zM9 21v-7h6v7',
   eye:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', eyeOff:'M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.3-1'
 };
@@ -4458,12 +4586,12 @@ const DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5"
 
 function elName(el){
   if (el.kind === 'inst'){ const F = fam(el.fam); const t = F?.types?.[el.type | 0]?.nom; return `${F?.nom || 'Composant'}${t ? ' · ' + t : ''}`; }
-  if (el.kind === 'wall' || el.kind === 'slab') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
+  if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
   return `${KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
 }
 function forcedPerf(el){ return el.forceU > 0 ? {U:el.forceU, R:null} : el.forceR > 0 ? {U:null, R:el.forceR} : null; }
 function elMeta(el){
-  if (el.kind === 'wall' || el.kind === 'slab'){
+  if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){
     const f = forcedPerf(el); if (f) return f.U ? `U ${nf(f.U, 2)}*` : `R ${nf(f.R, 2)}*`;
     return 'U ' + nf(thermal(layersInToOut(el), elUse(el)).U, 2);
   }
@@ -4495,10 +4623,10 @@ function renderTree(){
       if (!cOpen) continue;
       for (const el of list){
         const ek = 'E' + el.id, kids = kind === 'wall' ? state.els.filter(x => x.kind === 'inst' && x.host === el.id) : [];
-        const hasKids = kind === 'wall' || kind === 'slab' || kids.length, eOpen = treeOpen.has(ek);
-        h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
+        const hasKids = kind === 'wall' || kind === 'slab' || kind === 'roof' || kids.length, eOpen = treeOpen.has(ek);
+        h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' || kind === 'roof' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
         if (!hasKids || !eOpen) continue;
-        if (kind === 'wall' || kind === 'slab'){
+        if (kind === 'wall' || kind === 'slab' || kind === 'roof'){
           const layers = compo(el.type).layers;
           h += `<div class="tlayers" style="--d:4">${layers.map(([m, e]) => { const M = mat(m); return `<div class="tly"><span class="sw" style="background:${M.color}"></span><span>${esc(M.nom)}</span><em>${nf(e * 1000, 0)} mm</em><em>${M.R != null ? 'R ' + nf(M.R, 2) : 'λ ' + nf(M.lambda, 3)}</em></div>`; }).join('')}
             <button class="tlink" data-tins="${el.id}">Ajuster l'isolant et les performances…</button></div>`;
@@ -4518,13 +4646,13 @@ function renderProjectTab(){
 
 /* ---------- menus ⋮ ---------- */
 function treeMenuItems(key){
-  if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, exposition au bruit, relief IGN'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
+  if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, bruit, relief NGF, environnement'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
   if (/^L\d+$/.test(key)){ const li = +key.slice(1), on = hiddenLvls.has(li);
     return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
   if (key.includes('|')) return [{k:'selall', t:'Sélectionner toute la catégorie'}, {k:'chide', t:'Masquer la catégorie'}, {k:'cshow', t:'Afficher la catégorie'}, {k:'cframe', t:'Centrer la vue'}];
   const el = getEl(+key.slice(1)); if (!el) return [];
   const it = [{k:'frame', t:'Centrer la vue'}, {k:'hide', t:hiddenIds.has(el.id) ? 'Afficher' : 'Masquer'}, {k:'iso', t:'Isoler', s:'Masquer tout le reste'}, '-'];
-  if (el.kind === 'wall' || el.kind === 'slab'){
+  if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){
     it.push({k:'insul', t:'Ajuster l\'isolant et les performances…', s:'Épaisseur, λ, objectif U ou R, valeurs forcées'}, {k:'compose', t:'Modifier la composition…', s:'Fiche complète : couches, Glaser, acoustique'});
     if (forcedPerf(el)) it.push({k:'unforce', t:'Revenir aux valeurs calculées', s:'Supprime le U / R forcé'});
     if (el.kind === 'wall') it.push({k:'flip', t:'Inverser les faces'}, {k:'opening', t:'+ Porte ou fenêtre'});
@@ -4601,7 +4729,7 @@ function mainInsulIdx(layers){
   return Math.max(0, best);
 }
 function openInsulAdjust(id){
-  const el = getEl(id); if (!el || !(el.kind === 'wall' || el.kind === 'slab')) return;
+  const el = getEl(id); if (!el || !(el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof')) return;
   const base = compo(el.type), use = elUse(el), layers0 = base.layers.map(l => l.slice());
   const S = {idx:mainInsulIdx(layers0), mode:'e', target:''};
   S.mat = layers0[S.idx][0]; S.e = layers0[S.idx][1]; S.lambda = mat(S.mat).lambda ?? 0.035;
@@ -4808,7 +4936,7 @@ async function geoAlt(points){ // [[lon, lat]…] → [z…] (par lots de 100 po
   return out.map(z => (z == null || z < -900) ? null : z);   // -99999 : hors couverture
 }
 const mToLon = (m, lat) => m / (111320 * Math.cos(lat * Math.PI / 180)), mToLat = m => m / 110540;
-async function loadTerrain(size = 100, n = 21){
+async function loadTerrain(size = 100, n = size <= 100 ? 41 : 51){
   const s = state.site; if (!s?.lon) throw new Error('nosite');
   const b = bbox(), cx = (b.min.x + b.max.x) / 2, cy = -(b.min.z + b.max.z) / 2;   // centre de la maquette (plan)
   const pts = [], xs = [];
@@ -4820,27 +4948,89 @@ async function loadTerrain(size = 100, n = 21){
   s.terrain = {size, n, cx, cy, alt0:z0, z:fill.map(v => Math.round((v - z0) * 100) / 100), at:Date.now()};
 }
 
-/* ---------- terrain dans la scène ---------- */
-const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
+/* ---------- terrain dans la scène : relief lissé, teintes hypsométriques, courbes de niveau NGF, socle de maquette ---------- */
+const terrainGroup = new THREE.Group(); terrainGroup.name = 'Site'; scene.add(terrainGroup);
+let siteKey = '', siteTex = [];
+function footprint(){ const bb = new THREE.Box3().setFromObject(modelGroup); return bb.isEmpty() ? null : {x0:bb.min.x, x1:bb.max.x, y0:-bb.max.z, y1:-bb.min.z}; }
+/* hauteur du terrain (m, relative au rez-de-chaussée) au point (x, y) du plan ; plate-forme de terrassement sous l'emprise */
+function makeTerrainH(T, fp){
+  const n = T.n, st = T.size / (n - 1), X0 = T.cx - T.size / 2, Y0 = T.cy - T.size / 2;
+  const raw = (x, y) => { let fi = (x - X0) / st, fj = (y - Y0) / st; fi = Math.max(0, Math.min(n - 1.0001, fi)); fj = Math.max(0, Math.min(n - 1.0001, fj));
+    const i = Math.floor(fi), j = Math.floor(fj), u = fi - i, v = fj - j, z = (a, b) => T.z[b * n + a] ?? 0;
+    return (z(i, j) * (1 - u) + z(i + 1, j) * u) * (1 - v) + (z(i, j + 1) * (1 - u) + z(i + 1, j + 1) * u) * v; };
+  if (!fp) return raw;
+  return (x, y) => { const h = raw(x, y), dx = Math.max(fp.x0 - x, 0, x - fp.x1), dy = Math.max(fp.y0 - y, 0, y - fp.y1), d = Math.hypot(dx, dy), t = Math.min(1, Math.max(0, (d - 1) / 5));
+    return -0.05 + (h + 0.05) * t * t * (3 - 2 * t); };
+}
+const contourStep = r => r < 3 ? 0.25 : r < 8 ? 0.5 : r < 25 ? 1 : r < 70 ? 2 : 5;
+function textSprite(txt, size, color = '#3E4A35'){
+  const cv = document.createElement('canvas'), g = cv.getContext('2d'), f = 44; g.font = `600 ${f}px Inter, Arial, sans-serif`;
+  const w = Math.ceil(g.measureText(txt).width) + 24; cv.width = w; cv.height = f + 18; g.font = `600 ${f}px Inter, Arial, sans-serif`;
+  g.fillStyle = 'rgba(255,255,255,.82)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, cv.height, 12) : g.rect(0, 0, w, cv.height); g.fill();
+  g.fillStyle = color; g.textBaseline = 'middle'; g.fillText(txt, 12, cv.height / 2 + 2);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; siteTex.push(tex);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true, sizeAttenuation:false})); sp.scale.set(size * w / cv.height, size, 1); sp.renderOrder = 6; return sp;
+}
 function buildTerrain(){
-  disposeGroup(terrainGroup);
-  const T = state?.site?.terrain; if (!T || DISPLAY.terrain === false || view === '2d') { terrainGroup.visible = false; return; }
-  const g = new THREE.PlaneGeometry(T.size, T.size, T.n - 1, T.n - 1); g.rotateX(-Math.PI / 2);
-  const pos = g.attributes.position, bb = bbox(), x0 = bb.min.x, x1 = bb.max.x, z0 = bb.min.z, z1 = bb.max.z;
-  // plateforme de terrassement : le terrain est ramené au niveau du rez-de-chaussée sous l'emprise (+ 1 m), puis raccordé sur 4 m
-  const flat = (x, zz, y) => { const dx = Math.max(x0 - x, 0, x - x1), dz = Math.max(z0 - zz, 0, zz - z1), d = Math.hypot(dx, dz), t = Math.min(1, Math.max(0, (d - 1) / 4)); return -0.05 + (y + 0.05) * t * t * (3 - 2 * t); };
-  for (let k = 0; k < pos.count; k++){ // la grille de PlaneGeometry part du coin (-x, +z) ; plan y = -z scène
-    const i = k % T.n, j = Math.floor(k / T.n), jj = T.n - 1 - j;
-    pos.setX(k, T.cx - T.size / 2 + T.size * i / (T.n - 1)); pos.setZ(k, -(T.cy - T.size / 2 + T.size * jj / (T.n - 1))); pos.setY(k, bb.isEmpty() ? (T.z[jj * T.n + i] ?? 0) - 0.03 : flat(pos.getX(k), pos.getZ(k), (T.z[jj * T.n + i] ?? 0) - 0.03));
-  }
-  g.computeVertexNormals();
-  const real = DISPLAY.style === 'realistic';
-  const m = new THREE.MeshStandardMaterial({color:real ? 0x6F8A5A : 0xDCE3D2, roughness:1, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:2});
-  const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.name = 'Terrain'; mesh.userData.terrain = true; terrainGroup.add(mesh);
-  const w = new THREE.LineSegments(new THREE.WireframeGeometry(g), new THREE.LineBasicMaterial({color:real ? 0x55704A : 0xA9B59A, transparent:true, opacity:real ? 0.25 : 0.55}));
-  terrainGroup.add(w); terrainGroup.visible = true;
-  groundShadow.visible = false; groundReal.visible = false;
+  const T = state?.site?.terrain, E = state?.site?.env, onT = !!T && DISPLAY.terrain !== false, onE = !!E && DISPLAY.env !== false;
+  if ((!onT && !onE) || view === '2d'){ terrainGroup.visible = false; return; }
+  const fp = footprint(), real = DISPLAY.style === 'realistic', dark = isDarkBg?.() || false;
+  const key = [T?.at, T?.size, E?.at, onT, onE, real, dark, DISPLAY.style, fp && [fp.x0, fp.x1, fp.y0, fp.y1].map(v => v.toFixed(1)).join(',')].join('|');
+  terrainGroup.visible = true; if (onT){ groundShadow.visible = false; groundReal.visible = false; }
+  if (key === siteKey && terrainGroup.children.length){ dirty = true; return; }
+  siteKey = key; disposeGroup(terrainGroup); siteTex.forEach(t => t.dispose()); siteTex = [];
+  const H = onT ? makeTerrainH(T, fp) : () => 0;
+  if (onT) buildRelief(T, H, real);
+  if (onE) buildEnv(E, H, real, T);
   dirty = true;
+}
+const isDarkBg = () => { const c = DISPLAY.bg || ''; if (!/^#[0-9a-f]{6}$/i.test(c)) return false; const v = parseInt(c.slice(1), 16); return ((v >> 16) * 0.3 + ((v >> 8) & 255) * 0.59 + (v & 255) * 0.11) < 110; };
+function buildRelief(T, H, real){
+  const R = Math.min(180, (T.n - 1) * 4), size = T.size, X0 = T.cx - size / 2, Y0 = T.cy - size / 2, N = R + 1, st = size / R;
+  const hs = new Float32Array(N * N); let lo = Infinity, hi = -Infinity;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++){ const h = H(X0 + i * st, Y0 + j * st); hs[j * N + i] = h; if (h < lo) lo = h; if (h > hi) hi = h; }
+  const range = Math.max(0.01, hi - lo);
+  // maillage (plan y → scène −z)
+  const pos = new Float32Array(N * N * 3), col = new Float32Array(N * N * 3), idx = [];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++){ const k = j * N + i; pos[k * 3] = X0 + i * st; pos[k * 3 + 1] = hs[k] - 0.03; pos[k * 3 + 2] = -(Y0 + j * st); }
+  for (let j = 0; j < R; j++) for (let i = 0; i < R; i++){ const a = j * N + i, b = a + 1, c = a + N, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  const nor = g.attributes.normal.array;
+  const ramp = real ? [[0, [0.36, 0.47, 0.29]], [0.5, [0.47, 0.54, 0.33]], [1, [0.6, 0.56, 0.42]]] : [[0, [0.86, 0.90, 0.82]], [0.5, [0.90, 0.91, 0.82]], [1, [0.93, 0.89, 0.80]]];
+  const rampAt = t => { for (let q = 1; q < ramp.length; q++) if (t <= ramp[q][0]){ const [t0, c0] = ramp[q - 1], [t1, c1] = ramp[q], u = (t - t0) / (t1 - t0); return c0.map((c, m) => c + (c1[m] - c) * u); } return ramp[ramp.length - 1][1]; };
+  for (let k = 0; k < N * N; k++){ const c = rampAt((hs[k] - lo) / range), sh = 0.82 + 0.18 * Math.pow(nor[k * 3 + 1], 4); col[k * 3] = Math.pow(c[0] * sh, 2.2); col[k * 3 + 1] = Math.pow(c[1] * sh, 2.2); col[k * 3 + 2] = Math.pow(c[2] * sh, 2.2); }   // sRGB → linéaire
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({vertexColors:true, roughness:1, metalness:0, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:2}));
+  mesh.receiveShadow = true; mesh.name = 'Terrain'; mesh.userData.terrain = true; terrainGroup.add(mesh);
+  // courbes de niveau (altitudes NGF absolues), maîtresses toutes les 5 courbes
+  const iv = contourStep(range), a0 = T.alt0 || 0, minor = [], major = [], labels = {}, cand = {};
+  const k0 = Math.ceil((lo + a0) / iv), k1 = Math.floor((hi + a0) / iv), nl = k1 - k0 + 1, lab = nl >= 10 ? 5 : nl >= 4 ? 2 : 1;
+  for (let kk = k0; kk <= k1 && k1 - k0 < 400; kk++){
+    const lv = kk * iv - a0, out = kk % 5 === 0 ? major : minor, P = (i, j) => [X0 + i * st, Y0 + j * st];
+    for (let j = 0; j < R; j++) for (let i = 0; i < R; i++){
+      const v = [hs[j * N + i], hs[j * N + i + 1], hs[(j + 1) * N + i + 1], hs[(j + 1) * N + i]], c = [P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1)];
+      const pts = []; for (let e = 0; e < 4; e++){ const f = (e + 1) % 4, A = v[e] - lv, B = v[f] - lv; if ((A < 0) !== (B < 0)){ const t = A / (A - B); pts.push([c[e][0] + (c[f][0] - c[e][0]) * t, c[e][1] + (c[f][1] - c[e][1]) * t]); } }
+      for (let q = 0; q + 1 < pts.length; q += 2){ out.push(pts[q][0], lv + 0.03, -pts[q][1], pts[q + 1][0], lv + 0.03, -pts[q + 1][1]);
+        if (kk % lab === 0 && (i + j) % 3 === 0){ const mx = (pts[q][0] + pts[q + 1][0]) / 2, my = (pts[q][1] + pts[q + 1][1]) / 2, sc = Math.max(Math.abs(mx - T.cx), Math.abs(my - T.cy)); if (sc < size * 0.44 && sc > size * 0.12) (cand[kk] ??= []).push({sc, x:mx, y:my, z:lv}); } }
+    }
+  }
+  // étiquettes : une par courbe retenue, en évitant qu'elles se chevauchent
+  const placed = [];
+  for (const kk of Object.keys(cand).sort((a, b) => a - b)){ const c = cand[kk].sort((a, b) => b.sc - a.sc); const pick = c.find(p => placed.every(q => Math.hypot(p.x - q.x, p.y - q.y) > size * 0.22)) || null; if (pick){ placed.push(pick); labels[kk] = pick; } }
+  const lines = (arr, color, op) => { if (!arr.length) return; const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color, transparent:true, opacity:op})); l.userData.contour = true; terrainGroup.add(l); };
+  lines(minor, real ? 0x3F5233 : 0x9AA88B, real ? 0.35 : 0.55); lines(major, real ? 0x2E3D25 : 0x6F7E60, real ? 0.6 : 0.9);
+  Object.entries(labels).forEach(([kk, L]) => { const sp = textSprite(`${nf(kk * iv, iv < 1 ? 1 : 0)} m NGF`, 0.024); sp.position.set(L.x, L.z + 0.4, -L.y); terrainGroup.add(sp); });
+  // socle : flancs de la maquette jusqu'à une base horizontale
+  const base = lo - Math.max(1.5, range * 0.12) - 0.03, sp = [], edge = [];
+  const side = (getP) => { for (let q = 0; q < R; q++){ const [x1, y1, h1] = getP(q), [x2, y2, h2] = getP(q + 1); sp.push(x1, h1, -y1, x1, base, -y1, x2, base, -y2, x1, h1, -y1, x2, base, -y2, x2, h2, -y2); edge.push(x1, h1, -y1, x2, h2, -y2); } };
+  const at = (i, j) => [X0 + i * st, Y0 + j * st, hs[j * N + i] - 0.03];
+  side(q => at(R - q, 0)); side(q => at(R, R - q)); side(q => at(q, R)); side(q => at(0, q));
+  // orientation : on laisse DoubleSide, normales recalculées
+  sp.push(X0, base, -Y0, X0 + size, base, -Y0, X0 + size, base, -(Y0 + size), X0, base, -Y0, X0 + size, base, -(Y0 + size), X0, base, -(Y0 + size));
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.computeVertexNormals();
+  const socle = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({color:real ? 0x6B5643 : 0xD9CDB8, roughness:1, side:THREE.DoubleSide})); socle.name = 'Socle'; socle.userData.socle = true; terrainGroup.add(socle);
+  const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(edge, 3)); terrainGroup.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({color:real ? 0x3B2F24 : 0x8C7F6A})));
+  T._stats = {lo, hi, iv};
 }
 
 /* ---------- dialogue « Lieu du projet » ---------- */
@@ -4848,7 +5038,7 @@ function siteSummary(){
   const s = state.site; if (!s?.zone && !s?.label) return '<p class="hint">Aucun lieu défini : les repères thermiques et acoustiques sont généraux.</p>';
   return `<dl class="kv"><dt>Lieu</dt><dd style="font-family:var(--f-body);text-align:right">${esc(s.label || 'Département ' + (s.dept || '?'))}</dd>
     <dt>Zone climatique</dt><dd>${esc(s.zone || '—')}</dd><dt>Altitude</dt><dd>${s.alt != null ? nf(s.alt, 0) + ' m' : '—'}</dd>
-    <dt>Bruit (façades)</dt><dd>${s.noise ? `${NOISE[s.noise][1]} dB` : '—'}</dd><dt>Terrain</dt><dd>${s.terrain ? `${s.terrain.size} × ${s.terrain.size} m` : '—'}</dd></dl>`;
+    <dt>Bruit (façades)</dt><dd>${s.noise ? `${NOISE[s.noise][1]} dB` : '—'}</dd><dt>Terrain</dt><dd>${s.terrain ? `${s.terrain.size} × ${s.terrain.size} m` : '—'}</dd><dt>Environnement</dt><dd>${s.env ? `${s.env.b.length} bât. · ${s.env.t.length} arbres` : '—'}</dd></dl>`;
 }
 function facadeAcoustic(){
   // isolement de façade estimé : composite murs extérieurs (Rw + Ctr ≈ Rw − 5) et menuiseries (Rw + Ctr ≈ 28 dB, double vitrage courant)
@@ -4864,7 +5054,7 @@ function facadeAcoustic(){
 }
 function openSiteDialog(){
   state.site ??= {};
-  const S = {...state.site, results:[], q:state.site.label || '', busy:'', msg:''};
+  const S = {...state.site, results:[], q:state.site.label || '', busy:'', msg:'', envOpts:{...ENV_DEF, ...(state.site.env?.opts || {})}};
   const render = () => {
     const z = S.zone || '', zm = zoneMain(z), f = facadeAcoustic(), target = S.noise ? NOISE[S.noise][1] : null;
     return `<header class="ed-h"><div><span class="eyebrow">Paramètres du projet</span><h3 class="ed-t2">Lieu, climat, bruit et terrain</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
@@ -4889,7 +5079,12 @@ function openSiteDialog(){
         <div class="grp"><h3>Terrain (relief IGN)</h3>
           <div class="fields"><label class="f"><span>Emprise</span><span class="in"><select id="stSize">${[60, 100, 150, 200].map(v => `<option value="${v}"${(S.terrain?.size || 100) === v ? ' selected' : ''}>${v} × ${v} m</option>`).join('')}</select></span></label>
             <div class="f"><span>&nbsp;</span><button class="btn" id="stTer"${S.lon ? '' : ' disabled'}>${S.terrain ? 'Recharger le relief' : 'Charger le relief'}</button></div></div>
-          ${S.terrain ? `<p class="hint">Relief chargé : dénivelé ${nf(Math.max(...S.terrain.z) - Math.min(...S.terrain.z), 1)} m sur ${S.terrain.size} m. <button class="tlink" id="stTerDel">Retirer le terrain</button></p>` : `<p class="hint">${S.lon ? 'Altitudes du RGE ALTI® (IGN) autour du projet ; le rez-de-chaussée est calé sur l\'altitude du point d\'adresse.' : 'Choisissez d\'abord une adresse.'}</p>`}
+          ${S.terrain ? `<p class="hint">Relief chargé : ${nf(S.terrain.alt0 + Math.min(...S.terrain.z), 0)} à ${nf(S.terrain.alt0 + Math.max(...S.terrain.z), 0)} m NGF, maille ${nf(S.terrain.size / (S.terrain.n - 1), 1)} m. Courbes de niveau et altitudes NGF affichées en 3D. <button class="tlink" id="stTerDel">Retirer le terrain</button></p>` : `<p class="hint">${S.lon ? 'Altitudes du RGE ALTI® (IGN) autour du projet ; le rez-de-chaussée est calé sur l\'altitude du point d\'adresse.' : 'Choisissez d\'abord une adresse.'}</p>`}
+        </div>
+        <div class="grp"><h3>Environnement (bâti, végétation, voirie)</h3>
+          <div class="env-o">${[['b', 'Bâtiments existants'], ['v', 'Végétation et arbres'], ['r', 'Routes et chemins'], ['w', 'Eau'], ['drop', 'Retirer le bâti existant sous le projet']].map(([k, n]) => `<label class="ap-check2"><input type="checkbox" data-envo="${k}"${S.envOpts[k] ? ' checked' : ''}> ${n}</label>`).join('')}</div>
+          <div class="env-a"><button class="btn" id="stEnv"${S.lon ? '' : ' disabled'}>${S.env ? 'Regénérer l\'environnement' : 'Générer l\'environnement'}</button>${S.env ? '<button class="tlink" id="stEnvDel">Retirer</button>' : ''}</div>
+          <p class="hint">${S.env ? `${esc(envSummary(S.env))} sur ${S.env.size} × ${S.env.size} m. Source : ${esc(S.env.src)}.` : S.lon ? 'Bâtiments (avec leur hauteur), routes, zones boisées, haies et plans d\'eau autour du projet, d\'après la BD TOPO® de l\'IGN (OpenStreetMap en secours). Même emprise que le relief.' : 'Choisissez d\'abord une adresse.'}</p>
         </div>
       </section>
       <section>
@@ -4905,7 +5100,7 @@ function openSiteDialog(){
             <p class="hint">Estimation simplifiée (EN 12354-3) : murs extérieurs ${n0(f.Sw)} m², menuiseries ${n0(f.Sr)} m² supposées en double vitrage courant (Rw+Ctr ≈ 28 dB).</p>` : '<p class="hint">Dessinez des murs extérieurs pour estimer l\'isolement des façades.</p>'}
         </div>
       </section></div>
-    <footer class="ed-f"><span class="hint">Données : Géoplateforme IGN (adresse, altitudes).</span><button class="btn" data-close>Annuler</button><button class="btn primary" id="stOk">Enregistrer</button></footer>`;
+    <footer class="ed-f"><span class="hint">Données : Géoplateforme IGN (adresse, altitudes, BD TOPO®) · © OpenStreetMap en secours.</span><button class="btn" data-close>Annuler</button><button class="btn primary" id="stOk">Enregistrer</button></footer>`;
   };
   const draw = () => { const d = openEDlg(render(), 'mid'); wire(d); };
   const wire = d => {
@@ -4929,8 +5124,14 @@ function openSiteDialog(){
       const keep = state.site; state.site = {...S}; try { await loadTerrain(+q('#stSize').value || 100); S.terrain = state.site.terrain; S.alt = state.site.alt; S.busy = ''; }
       catch(e){ S.busy = ''; S.msg = e.message === 'nodata' ? 'Pas de données d\'altitude à cet endroit.' : 'Relief indisponible (service IGN injoignable).'; }
       state.site = keep; draw(); };
+    d.querySelectorAll('[data-envo]').forEach(c => c.onchange = () => { S.envOpts[c.dataset.envo] = c.checked; });
+    q('#stEnv').onclick = async () => { S.busy = 'Génération de l\'environnement (IGN BD TOPO®)…'; S.msg = ''; draw();
+      const keep = state.site; state.site = {...S}; try { S.env = await loadEnv(+q('#stSize').value || 100, S.envOpts); S.busy = ''; if (!S.env.b.length && !S.env.r.length && !S.env.v.length) S.msg = 'Aucun élément trouvé autour du projet.'; }
+      catch(e){ S.busy = ''; S.msg = 'Environnement indisponible (services IGN et OpenStreetMap injoignables).'; }
+      state.site = keep; draw(); };
+    const ed = q('#stEnvDel'); if (ed) ed.onclick = () => { S.env = null; draw(); };
     const del = q('#stTerDel'); if (del) del.onclick = () => { S.terrain = null; draw(); };
-    q('#stOk').onclick = () => { pushHist(); const {results, busy, msg, q:_q, ...keep} = S; state.site = keep; state.isSample = false; closeEDlg(); resetMats(); rebuild(); buildTerrain(); toast('Lieu du projet enregistré'); };
+    q('#stOk').onclick = () => { pushHist(); const {results, busy, msg, q:_q, envOpts, ...keep} = S; if (!keep.env) delete keep.env; state.site = keep; state.isSample = false; closeEDlg(); resetMats(); rebuild(); buildTerrain(); toast('Lieu du projet enregistré'); };
   };
   draw();
 }
@@ -4962,7 +5163,7 @@ const PRICE_MAT = {
   fibreBoisR:[12, 1.8], fibreBoisS:[8, 1.1], ouate:[5, 0.6], chanvre:[9, 1], liege:[15, 2.2], verreCell:[25, 3], paille:[10, 0.3], pu:[8, 1.2], clt:[40, 9], bois:[20, 4], glulam:[30, 7], osb:[10, 1], bardageBois:[45, 4]
 };
 const PRICE_FIXED = { enduit:28, enduitChaux:35, enduitPlatre:18, chape:22, chapeAnhy:25, carrelage:55, faience:50, parquet:75, stratifie:30, pvcSol:35, moquette:28, resine:45, linoleum:38, pierreSol:110, betonCire:90,
-  tuile:55, ardoise:95, bitume:35, epdm:30, bacAcier:30, gravier:12, terreVeg:45, paraVapeur:4, freinVap:7, paraPluie:5, ba13:12, ba13H:15, ba13F:16, carreauPl:45, fermacell:20 };
+  tuile:55, ardoise:95, bitume:35, epdm:30, bacAcier:30, zinc:95, gravier:12, terreVeg:45, paraVapeur:4, freinVap:7, paraPluie:5, ba13:12, ba13H:15, ba13F:16, carreauPl:45, fermacell:20 };
 const pricePerM2 = (m, e) => PRICE_FIXED[m] != null ? PRICE_FIXED[m] : PRICE_MAT[m] ? PRICE_MAT[m][0] + PRICE_MAT[m][1] * e * 100 : 25;
 
 /* Lot d'une couche de paroi selon sa position (côté extérieur de la structure, structure, côté intérieur) */
@@ -5049,6 +5250,31 @@ function dqeItems(){
           : isInsul(m) ? `Isolant ${role === 'under' ? (use === 'terrePlein' ? 'sous dallage' : 'en sous-face') : use === 'toiture' ? 'de toiture' : 'sous chape'} : ${lc(M.nom)}` : M.nom;
         add(`S|${lot}|${m}|${Math.round(e * 1000)}|${role}`, lot, des, `ép. ${cm(e)} cm`, 'm²', A, el.lvl, Math.round(pricePerM2(m, e)), kg, co);
       });
+    } else if (el.kind === 'roof'){
+      const C = compo(el.type), Q = roofQty(el), A = Q.slope, layers = C.layers, flat = (el.shape || '2') === '0';
+      const woodAt = layers.findIndex(([m]) => isWoodFrameish(m) || m === 'bois');
+      let plaster = false;
+      layers.forEach(([m, e], i) => {
+        if (isAir(m)) return;
+        const M = mat(m), [kg, co] = layerMass(m, e, A); let lot, des;
+        if (m === 'freinVap' || m === 'paraVapeur'){ lot = '06'; des = `${M.nom} en rampants`; }
+        else if (m === 'paraPluie'){ lot = '04'; des = 'Écran de sous-toiture HPV'; }
+        else if (M.cat === 'Couverture et étanchéité' || m === 'bacAcier' || m === 'zinc'){
+          if (/pluie|hpv/i.test(m + M.nom)){ lot = '04'; des = 'Écran de sous-toiture HPV'; }
+          else { lot = '04'; des = i === layers.length - 1 && m === 'bacAcier' ? 'Bac acier en sous-face' : `Couverture ${lc(M.nom)}${flat ? '' : ` · pente ${n0(roofPitch(el))}°`}`; }
+        } else if (isInsul(m)){ const sark = woodAt >= 0 && woodAt > i; lot = sark ? '04' : '06'; des = sark ? `Isolation par sarking : ${lc(M.nom)}` : `Isolation sous rampants : ${lc(M.nom)}`; }
+        else if (m === 'paraPluie'){ lot = '04'; des = 'Écran de sous-toiture HPV'; }
+        else if (m === 'freinVap' || m === 'paraVapeur'){ lot = '06'; des = `${M.nom} en rampants`; }
+        else if (M.cat === 'Plâtre et plaques'){ lot = '06'; des = `Plafond rampant ${lc(M.nom)}`; plaster = true; }
+        else if (isWoodFrameish(m) || m === 'bois'){ lot = '03'; des = i <= 2 ? `Voligeage / support ${lc(M.nom)}` : `Chevronnage ${lc(M.nom)}`; }
+        else { lot = '04'; des = M.nom; }
+        add(`R|${lot}|${m}|${Math.round(e * 1000)}|${des}`, lot, des, e >= 0.005 ? `ép. ${cm(e)} cm · rampants` : 'surface des rampants', 'm²', A, el.lvl, Math.round(pricePerM2(m, e)), kg, co);
+      });
+      if (!layers.some(([m]) => mat(m).cat === 'Bois et dérivés' && !isWoodFrameish(m) && m !== 'bois') && !flat) add('R|charpente', '03', 'Charpente bois (fermettes industrielles ou traditionnelle)', 'au m² de rampant', 'm²', A, el.lvl, 60);
+      if (Q.eave > 0) add('R|zing', '04', 'Gouttières et descentes (zinguerie)', 'linéaire d\'égout', 'ml', Q.eave, el.lvl, 55);
+      if (Q.ridge > 0) add('R|faitage', '04', 'Faîtage et closoirs', 'linéaire de faîtage', 'ml', Q.ridge, el.lvl, 38);
+      if (Q.gable > 0){ const gm = el.gableMat || 'parpaing', M = mat(gm), kg = (M.rho || 0) * 0.2 * Q.gable; add(`R|pignon|${gm}`, '02', `Pignons en ${lc(M.nom)}`, 'ép. 20 cm, triangles', 'm²', Q.gable, el.lvl, Math.round(pricePerM2(gm, 0.2) + 10), kg, kg * (M.gwp || 0)); }
+      if (plaster) add('P|ceil', '09', 'Peinture sur plafonds', 'impression + 2 couches', 'm²', A, el.lvl, 16);
     } else if (el.kind === 'col'){
       const M = mat(el.mat), v = el.w * el.d * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : '02';
       add(`C|${el.mat}|${n0(el.w * 100)}x${n0(el.d * 100)}`, lot, `Poteau ${lc(M.nom)}`, `section ${n0(el.w * 100)} × ${n0(el.d * 100)} cm`, 'u', 1, el.lvl, lot === '11' ? Math.round(kg * 4.5) : lot === '03' ? Math.round(v * 1400 + 60) : Math.round(v * 600 + 120), kg, kg * (M.gwp || 0));
@@ -5105,7 +5331,8 @@ $('#pbody').addEventListener('click', e => {
 const DQE_OPTS = [['lots', 'Regrouper par lots (corps d\'état)', true], ['num', 'Numéroter les articles (2.1, 2.2…)', true], ['details', 'Matériaux et épaisseurs dans les désignations', true],
   ['qty', 'Quantités', true], ['unit', 'Unités', true], ['pu', 'Prix unitaires', true], ['total', 'Montant par article', true], ['subtotal', 'Sous-totaux par lot', true],
   ['ttc', 'Total HT, TVA et TTC', true], ['levels', 'Quantités par niveau (une colonne par niveau)', false], ['mass', 'Masses (kg)', false], ['co2', 'Carbone (kg CO₂e)', false],
-  ['matsheet', 'Tableau des matériaux (volumes, masses, carbone)', false], ['header', 'En-tête : projet, lieu, date, rédacteur', true]];
+  ['matsheet', 'Tableau des matériaux (volumes, masses, carbone)', false], ['header', 'En-tête : projet, lieu, date, rédacteur', true],
+  ['recap', 'Récapitulatif par lot en tête du document', true], ['sign', 'Cadre de signatures (PDF)', false]];
 function openDqeExport(){
   const items = dqeItems(), groups = dqeGroups(items), o = {...Object.fromEntries(DQE_OPTS.map(([k, , d]) => [k, d])), ...(state.dqe?.opts || {})};
   const lotsOn = new Set(state.dqe?.lotsOff ? groups.map(g => g.code).filter(c => !state.dqe.lotsOff.includes(c)) : groups.map(g => g.code));
@@ -5241,23 +5468,253 @@ function dqeXLSX(){
 }
 /* PDF : document HTML mis en page, imprimé par le navigateur (« Enregistrer au format PDF ») */
 function dqeHTML(){
-  const {o, tva, groups, cols} = dqeTable(), ht = groups.reduce((s, g) => s + g.total, 0);
+  const {o, tva, groups, cols} = dqeTable(), ht = groups.reduce((s, g) => s + g.total, 0), D = state.dqe || {}, today = new Date().toLocaleDateString('fr-FR');
+  const logo = document.querySelector('.brand-mark img')?.src || '', site = state.site || {}, wide = cols.length > 7;
+  const isN = key => !['des', 'num', 'u'].includes(key);
   const fmt = (key, v) => typeof v === 'number' ? (key === 'pu' || key === 'tot' ? eur(v) : nf(v, key === 'kg' || key === 'co2' ? 0 : 2)) : esc(v);
-  const body = groups.map(g => `${o.lots ? `<tr class="lot"><td colspan="${cols.length}">${g.code} &nbsp; ${esc(g.name)}</td></tr>` : ''}${g.items.map((it, k) => `<tr>${cols.map(([, key]) => `<td class="${['des', 'num', 'u'].includes(key) ? '' : 'n'}">${fmt(key, cellVal(key, it, g, k, o))}</td>`).join('')}</tr>`).join('')}${o.lots && o.subtotal && o.total ? `<tr class="sub"><td colspan="${cols.length - 1}">Sous-total lot ${g.code}</td><td class="n">${eur(g.total)}</td></tr>` : ''}`).join('');
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(state.dqe?.title || 'DQE')}</title><style>
-    @page{size:A4 landscape;margin:14mm}body{font:10pt/1.35 Inter,Arial,sans-serif;color:#17191E}h1{font-size:17pt;margin:0 0 6px}.meta{color:#5E636C;margin:0 0 14px}
-    table{width:100%;border-collapse:collapse}th{background:#2A2E35;color:#fff;text-align:left;padding:6px;font-size:9pt}td{padding:5px 6px;border-bottom:1px solid #E3E5E8;vertical-align:top}
-    td.n,th.n{text-align:right;white-space:nowrap}tr.lot td{background:#EDEFF2;font-weight:700;padding-top:8px}tr.sub td{font-weight:700;background:#E8F2F9}
-    .tot{margin-top:12px;margin-left:auto;width:320px}.tot td{font-weight:600}.tot tr:last-child td{font-size:12pt;font-weight:800}.note{color:#5E636C;font-size:8.5pt;margin-top:14px}</style></head><body>
-    ${o.header ? `<h1>${esc(state.dqe?.title || 'DQE')}</h1><p class="meta">Projet : <b>${esc(state.name)}</b>${state.site?.label ? ' · Lieu : ' + esc(state.site.label) : ''}${state.dqe?.mo ? ' · Maître d\'ouvrage : ' + esc(state.dqe.mo) : ''}${state.dqe?.by ? ' · Rédigé par : ' + esc(state.dqe.by) : ''} · ${new Date().toLocaleDateString('fr-FR')}</p>` : ''}
-    <table><thead><tr>${cols.map(([n, key]) => `<th class="${['des', 'num', 'u'].includes(key) ? '' : 'n'}">${esc(n)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>
-    ${o.ttc && o.total ? `<table class="tot"><tr><td>Total HT</td><td class="n">${eur(ht)}</td></tr><tr><td>TVA ${nf(tva, 1)} %</td><td class="n">${eur(ht * tva / 100)}</td></tr><tr><td>Total TTC</td><td class="n">${eur(ht * (1 + tva / 100))}</td></tr></table>` : ''}
-    <p class="note">Quantités issues de la maquette ARCHIPLAN (ouvertures déduites). Prix unitaires indicatifs à valider par l'entreprise.</p></body></html>`;
+  const cell = (key, it, g, k) => { const v = cellVal(key, it, g, k, o);
+    if (key === 'des'){ const d = o.details && it.det ? `<small>${esc(it.det)}</small>` : ''; return `<td class="des">${esc(it.des)}${d}</td>`; }
+    return `<td class="${isN(key) ? 'n' : ''} c-${key.replace(/\d+/, '')}">${fmt(key, v)}</td>`; };
+  const colgroup = `<colgroup>${cols.map(([, key]) => `<col class="w-${key.replace(/\d+/, '')}">`).join('')}</colgroup>`;
+  const thead = `<thead><tr>${cols.map(([n, key]) => `<th class="${isN(key) ? 'n' : ''}">${esc(n)}</th>`).join('')}</tr></thead>`;
+  const lotTable = g => `<section class="lot">${o.lots ? `<h2><span class="code">${g.code}</span>${esc(g.name)}${o.total ? `<span class="st">${eur(g.total)} HT</span>` : ''}</h2>` : ''}
+    <table class="det">${colgroup}${thead}<tbody>${g.items.map((it, k) => `<tr>${cols.map(([, key]) => cell(key, it, g, k)).join('')}</tr>`).join('')}</tbody>
+    ${o.lots && o.subtotal && o.total ? `<tfoot><tr><td colspan="${cols.length - 1 - (o.mass ? 1 : 0) - (o.co2 ? 1 : 0)}">Sous-total lot ${g.code} · ${esc(g.name)}</td><td class="n">${eur(g.total)}</td>${o.mass ? '<td></td>' : ''}${o.co2 ? '<td></td>' : ''}</tr></tfoot>` : ''}</table></section>`;
+  const info = [['Projet', state.name], site.label && ['Lieu', site.label], site.zone && ['Zone climatique', `${site.zone}${site.alt != null ? ` · altitude ${n0(site.alt)} m` : ''}`], D.mo && ['Maître d\'ouvrage', D.mo], D.by && ['Rédigé par', D.by], ['Date', today]].filter(Boolean);
+  const recap = o.recap !== false && o.lots && o.total && groups.length > 1 ? `<section class="recap"><h3>Récapitulatif par lot</h3><table><thead><tr><th>Lot</th><th>Désignation</th><th class="n">Articles</th><th class="n">Montant € HT</th><th class="n">Part</th></tr></thead><tbody>
+    ${groups.map(g => `<tr><td class="code2">${g.code}</td><td>${esc(g.name)}</td><td class="n">${g.items.length}</td><td class="n">${eur(g.total)}</td><td class="n"><span class="bar"><i style="width:${ht ? Math.round(g.total / ht * 100) : 0}%"></i></span>${ht ? nf(g.total / ht * 100, 1) : '0'} %</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="3">Total HT</td><td class="n">${eur(ht)}</td><td class="n">100 %</td></tr></tfoot></table></section>` : '';
+  const totals = o.ttc && o.total ? `<table class="tot"><tr><td>Total HT</td><td class="n">${eur(ht)}</td></tr><tr><td>TVA ${nf(tva, 1)} %</td><td class="n">${eur(ht * tva / 100)}</td></tr><tr class="ttc"><td>Total TTC</td><td class="n">${eur(ht * (1 + tva / 100))}</td></tr></table>` : '';
+  const sign = o.sign ? `<div class="sign"><div><b>Le maître d'ouvrage</b><span>${esc(D.mo || '')}</span><em>Date, mention « Bon pour accord » et signature</em></div><div><b>L'entreprise</b><span></span><em>Date, cachet et signature</em></div></div>` : '';
+  const title = esc(D.title || 'DQE · ' + state.name);
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${title}</title><style>
+    @page{size:A4 ${wide ? 'landscape' : 'portrait'};margin:16mm 14mm 18mm;@bottom-left{content:"${title.replace(/"/g, '')}";font:8pt Arial,sans-serif;color:#8A8F98}@bottom-right{content:"Page " counter(page) " / " counter(pages);font:8pt Arial,sans-serif;color:#8A8F98}}
+    *{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{margin:0;font:9.5pt/1.4 Inter,"Segoe UI",Arial,sans-serif;color:#1D2026}
+    .hd{display:flex;align-items:center;gap:14px;padding-bottom:12px;border-bottom:2px solid #1D2026}
+    .hd img{width:44px;height:44px;border-radius:10px}.hd .t{flex:1}.hd .k{font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#6B7079;font-weight:700}
+    .hd h1{margin:2px 0 0;font-size:18pt;line-height:1.15;letter-spacing:-.01em}.hd .r{text-align:right;font-size:8.5pt;color:#6B7079}.hd .r b{display:block;font-size:13pt;color:#1D2026}
+    .info{display:grid;grid-template-columns:repeat(${info.length === 4 ? 4 : Math.min(3, info.length)},1fr);gap:0;margin:14px 0 18px;border:1px solid #DADDE2;border-radius:8px;overflow:hidden}
+    .info{margin:14px 0 18px}.info div{padding:8px 11px;border-right:1px solid #DADDE2;border-bottom:1px solid #DADDE2}.info span{display:block;font-size:7.5pt;text-transform:uppercase;letter-spacing:.08em;color:#7A7F88;font-weight:700}.info b{font-weight:600}
+    h3{font-size:10.5pt;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:#4A4F57}
+    table{width:100%;border-collapse:collapse}th{font-size:7.8pt;text-transform:uppercase;letter-spacing:.05em;color:#5C616A;text-align:left;padding:5px 6px;border-bottom:1.5px solid #1D2026;font-weight:700}
+    td{padding:5px 6px;border-bottom:1px solid #E6E8EB;vertical-align:top}td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    thead{display:table-header-group}tfoot{display:table-row-group}tr{break-inside:avoid}
+    .recap{margin-bottom:20px;break-inside:avoid}.recap tbody tr:nth-child(even) td{background:#F6F7F8}.recap tfoot td{font-weight:800;border-top:1.5px solid #1D2026;border-bottom:0;font-size:10.5pt}
+    .code2{font-weight:700;color:#6B7079;width:40px}.bar{display:inline-block;width:46px;height:5px;background:#E6E8EB;border-radius:3px;margin-right:6px;vertical-align:middle;overflow:hidden}.bar i{display:block;height:100%;background:#E2861B}
+    .lot{margin-top:16px}.lot h2{display:flex;align-items:center;gap:9px;margin:0 0 2px;padding:7px 10px;background:#1D2026;color:#fff;font-size:10.5pt;border-radius:6px 6px 0 0;break-after:avoid}
+    .lot h2 .code{background:#E2861B;color:#fff;border-radius:4px;padding:1px 6px;font-size:9pt}.lot h2 .st{margin-left:auto;font-weight:600;font-size:9.5pt;opacity:.9}
+    td.des small{display:block;color:#7A7F88;font-size:8pt;margin-top:1px}td.c-num{color:#6B7079;white-space:nowrap}td.c-tot{font-weight:600}
+    .det tbody tr:nth-child(even) td{background:#FAFAFB}.det tfoot td{font-weight:700;background:#F1F2F4;border-bottom:0}
+    col.w-num{width:44px}col.w-u{width:34px}col.w-q,col.w-pu,col.w-lvl{width:62px}col.w-tot{width:84px}col.w-kg,col.w-co2{width:62px}
+    .end{display:flex;gap:18px;align-items:flex-start;margin-top:18px;break-inside:avoid}.end .note{flex:1;color:#6B7079;font-size:8pt;margin:0}
+    .tot{width:290px;border:1.5px solid #1D2026;border-radius:8px;border-collapse:separate;overflow:hidden}.tot td{border-bottom:1px solid #E6E8EB;padding:7px 10px;font-weight:600}.tot .ttc td{background:#1D2026;color:#fff;font-size:12pt;font-weight:800;border:0}
+    .sign{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;break-inside:avoid}.sign div{border:1px solid #DADDE2;border-radius:8px;padding:10px 12px;height:110px;display:flex;flex-direction:column}.sign span{color:#4A4F57}.sign em{margin-top:auto;font-size:7.5pt;color:#8A8F98}
+    .foot{margin-top:14px;font-size:7.5pt;color:#9A9FA7;text-align:center}</style></head><body>
+    ${o.header ? `<header class="hd">${logo ? `<img src="${logo}" alt="">` : ''}<div class="t"><div class="k">Détail quantitatif estimatif</div><h1>${title}</h1></div>${o.total ? `<div class="r">Montant ${o.ttc ? 'TTC' : 'HT'}<b>${eur(o.ttc ? ht * (1 + tva / 100) : ht)}</b>${groups.length} lot${groups.length > 1 ? 's' : ''} · ${groups.reduce((s, g) => s + g.items.length, 0)} articles</div>` : ''}</header>
+    <div class="info">${info.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
+    ${recap}${groups.map(lotTable).join('')}
+    <div class="end"><p class="note">Quantités issues de la maquette numérique ARCHIPLAN (ouvertures déduites, rampants en vraie grandeur). Prix unitaires indicatifs en euros hors taxes, à valider par les entreprises. Document non contractuel.</p>${totals}</div>
+    ${sign}<p class="foot">Établi avec ARCHIPLAN · Studio Prism · ${today}</p></body></html>`;
 }
 function printDqe(){
   const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
   f.srcdoc = dqeHTML(); f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch(e){ toast('Impression impossible dans ce navigateur'); } setTimeout(() => f.remove(), 60000); };
 }
+
+/* ==== 67-env.js ==== */
+/* ============ Environnement du projet : bâtiments, végétation, routes, eau ============
+   Source : IGN BD TOPO® (service WFS de la Géoplateforme) ; repli sur OpenStreetMap (Overpass) si l'IGN ne répond pas
+   ou hors de France. Le résultat est figé dans le projet :
+   state.site.env = {at, src, size, cx, cy, opts, b:[{p, h}], r:[{p, w, k}], v:[{p, k}], w:[{p}], t:[[x, y, h, type]]}
+   Coordonnées en mètres dans le repère du plan (origine = point d'adresse = 0;0 du projet). */
+const WFS_URL = 'https://data.geopf.fr/wfs/ows', OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const ENV_WFS = {b:'BDTOPO_V3:batiment', r:'BDTOPO_V3:troncon_de_route', v:'BDTOPO_V3:zone_de_vegetation', w:'BDTOPO_V3:surface_hydrographique'};
+const ENV_DEF = {b:true, r:true, v:true, w:true, drop:true};
+const ROAD_W = {'Type autoroutier':22, 'Route à 2 chaussées':14, 'Route à 1 chaussée':6, 'Route empierrée':4, 'Bretelle':6, 'Rond-point':7, 'Chemin':3, 'Sentier':1.5, 'Piste cyclable':2, 'Escalier':2};
+const OSM_W = {motorway:20, trunk:14, primary:10, secondary:8, tertiary:7, residential:6, unclassified:5, living_street:5, service:4, motorway_link:6, trunk_link:6, primary_link:6, secondary_link:6, track:3, footway:2, path:1.5, cycleway:2, steps:2, pedestrian:4, bridleway:2};
+const PATHS = /chemin|sentier|piste|escalier|empierr|footway|path|cycleway|steps|track|bridleway|pedestrian/i;
+
+function envArea(size){
+  const T = state.site?.terrain; if (T) return {size:T.size, cx:T.cx, cy:T.cy};
+  const b = bbox(); return {size, cx:(b.min.x + b.max.x) / 2, cy:-(b.min.z + b.max.z) / 2};
+}
+const ringArea = p => { let a = 0; for (let i = 0; i < p.length; i++){ const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return a / 2; };
+function inPoly(x, y, p){ let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++){ const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
+function clipPoly(p, X0, X1, Y0, Y1){ // Sutherland–Hodgman sur le carré d'étude
+  const edges = [[q => q[0] >= X0, (a, b) => { const t = (X0 - a[0]) / (b[0] - a[0]); return [X0, a[1] + (b[1] - a[1]) * t]; }], [q => q[0] <= X1, (a, b) => { const t = (X1 - a[0]) / (b[0] - a[0]); return [X1, a[1] + (b[1] - a[1]) * t]; }],
+    [q => q[1] >= Y0, (a, b) => { const t = (Y0 - a[1]) / (b[1] - a[1]); return [a[0] + (b[0] - a[0]) * t, Y0]; }], [q => q[1] <= Y1, (a, b) => { const t = (Y1 - a[1]) / (b[1] - a[1]); return [a[0] + (b[0] - a[0]) * t, Y1]; }]];
+  let out = p;
+  for (const [ins, cut] of edges){ const inp = out; out = []; for (let i = 0; i < inp.length; i++){ const a = inp[(i + inp.length - 1) % inp.length], b = inp[i]; if (ins(b)){ if (!ins(a)) out.push(cut(a, b)); out.push(b); } else if (ins(a)) out.push(cut(a, b)); } if (!out.length) break; }
+  return out;
+}
+function clipLine(p, X0, X1, Y0, Y1){ // Liang–Barsky segment par segment ; renvoie les morceaux intérieurs
+  const parts = []; let cur = null;
+  for (let i = 0; i + 1 < p.length; i++){
+    const [x1, y1] = p[i], [x2, y2] = p[i + 1], dx = x2 - x1, dy = y2 - y1; let t0 = 0, t1 = 1, ok = true;
+    for (const [pp, qq] of [[-dx, x1 - X0], [dx, X1 - x1], [-dy, y1 - Y0], [dy, Y1 - y1]]){
+      if (pp === 0){ if (qq < 0){ ok = false; break; } continue; }
+      const r = qq / pp; if (pp < 0){ if (r > t1){ ok = false; break; } if (r > t0) t0 = r; } else { if (r < t0){ ok = false; break; } if (r < t1) t1 = r; }
+    }
+    if (!ok){ cur = null; continue; }
+    const a = [x1 + dx * t0, y1 + dy * t0], b = [x1 + dx * t1, y1 + dy * t1];
+    if (!cur || t0 > 0){ cur = [a]; parts.push(cur); }
+    cur.push(b); if (t1 < 1) cur = null;
+  }
+  return parts.filter(q => q.length > 1);
+}
+const simplify = (p, d = 0.3) => p.filter((q, i) => i === 0 || i === p.length - 1 || Math.hypot(q[0] - p[i - 1][0], q[1] - p[i - 1][1]) > d);
+const r2 = p => p.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100]);
+
+/* ---------- récupération des données ---------- */
+async function wfsLayer(type, B){
+  const p = new URLSearchParams({SERVICE:'WFS', VERSION:'2.0.0', REQUEST:'GetFeature', TYPENAMES:type, OUTPUTFORMAT:'application/json', COUNT:'2500', BBOX:`${B.s},${B.w},${B.n},${B.e},urn:ogc:def:crs:EPSG::4326`});
+  return (await fetchJSON(`${WFS_URL}?${p}`, 25000)).features || [];
+}
+function geomParts(g, kind){ // kind 'poly' → anneaux extérieurs ; 'line' → polylignes
+  if (!g) return [];
+  if (kind === 'poly') return g.type === 'Polygon' ? [g.coordinates[0]] : g.type === 'MultiPolygon' ? g.coordinates.map(p => p[0]) : [];
+  return g.type === 'LineString' ? [g.coordinates] : g.type === 'MultiLineString' ? g.coordinates : [];
+}
+async function fetchIGN(B, toXY){
+  const res = await Promise.allSettled(Object.entries(ENV_WFS).map(async ([k, t]) => [k, await wfsLayer(t, B)]));
+  const ok = res.filter(r => r.status === 'fulfilled').map(r => r.value); if (!ok.length) throw new Error('ign');
+  const D = {b:[], r:[], v:[], w:[], t:[]};
+  for (const [k, feats] of ok) for (const f of feats){
+    const P = f.properties || {};
+    if (k === 'r'){
+      if (String(P.position_par_rapport_au_sol ?? '0').startsWith('-')) continue;
+      const nat = P.nature || '', w = +P.largeur_de_chaussee > 0 ? +P.largeur_de_chaussee : ROAD_W[nat] ?? (+P.nombre_de_voies > 0 ? P.nombre_de_voies * 3 : 5);
+      if (!w) continue; for (const l of geomParts(f.geometry, 'line')) D.r.push({p:l.map(toXY), w:Math.min(30, w), k:PATHS.test(nat) ? 'p' : 'r'});
+    } else for (const ring of geomParts(f.geometry, 'poly')){
+      const p = ring.map(toXY);
+      if (k === 'b'){ const h = +P.hauteur > 0 ? +P.hauteur : +P.nombre_d_etages > 0 ? P.nombre_d_etages * 3 + 1 : 6; D.b.push({p, h:Math.min(200, h)}); }
+      else if (k === 'v'){ const n = P.nature || ''; D.v.push({p, k:/haie/i.test(n) ? 'h' : /verger/i.test(n) ? 'o' : /vigne/i.test(n) ? 'g' : /lande/i.test(n) ? 'l' : /conif/i.test(n) ? 'c' : /ouverte/i.test(n) ? 'u' : 'f'}); }
+      else D.w.push({p});
+    }
+  }
+  return D;
+}
+async function fetchOSM(B, toXY){
+  const bb = `(${B.s},${B.w},${B.n},${B.e})`;
+  const q = `[out:json][timeout:25];(way["building"]${bb};way["highway"]${bb};way["natural"~"^(wood|scrub|water)$"]${bb};way["landuse"~"^(forest|orchard|vineyard)$"]${bb};node["natural"="tree"]${bb};);out geom;`;
+  const c = new AbortController(), tm = setTimeout(() => c.abort(), 30000);
+  let j; try { const r = await fetch(OVERPASS_URL, {method:'POST', body:'data=' + encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'}, signal:c.signal}); if (!r.ok) throw new Error('osm'); j = await r.json(); } finally { clearTimeout(tm); }
+  const D = {b:[], r:[], v:[], w:[], t:[]};
+  for (const e of j.elements || []){
+    const T = e.tags || {};
+    if (e.type === 'node'){ if (T.natural === 'tree'){ const [x, y] = toXY([e.lon, e.lat]); D.t.push([x, y, +T.height > 0 ? +T.height : 9, /conif|needle/i.test(T.leaf_type || '') ? 1 : 0]); } continue; }
+    const p = (e.geometry || []).map(g => toXY([g.lon, g.lat])); if (p.length < 2) continue;
+    if (T.building){ const h = parseFloat(T.height) > 0 ? parseFloat(T.height) : +T['building:levels'] > 0 ? T['building:levels'] * 3 + 1 : 6; D.b.push({p, h:Math.min(200, h)}); }
+    else if (T.highway){ if (T.tunnel === 'yes' || +T.layer < 0) continue; const w = parseFloat(T.width) > 0 ? parseFloat(T.width) : OSM_W[T.highway]; if (w) D.r.push({p, w, k:PATHS.test(T.highway) ? 'p' : 'r'}); }
+    else if (T.natural === 'water') D.w.push({p});
+    else D.v.push({p, k:T.landuse === 'orchard' ? 'o' : T.landuse === 'vineyard' ? 'g' : T.natural === 'scrub' ? 'l' : /needle/i.test(T.leaf_type || '') ? 'c' : 'f'});
+  }
+  return D;
+}
+async function loadEnv(size = 100, opts = ENV_DEF){
+  const s = state.site; if (!s?.lon) throw new Error('nosite');
+  const A = envArea(size), h = A.size / 2, X0 = A.cx - h, X1 = A.cx + h, Y0 = A.cy - h, Y1 = A.cy + h;
+  const B = {w:s.lon + mToLon(X0, s.lat), e:s.lon + mToLon(X1, s.lat), s:s.lat + mToLat(Y0), n:s.lat + mToLat(Y1)};
+  const kx = 1 / mToLon(1, s.lat), ky = 1 / mToLat(1);
+  let swap = null;
+  const toXY = c => { if (swap === null) swap = Math.abs(c[0] - s.lon) + Math.abs(c[1] - s.lat) > Math.abs(c[1] - s.lon) + Math.abs(c[0] - s.lat); const lon = swap ? c[1] : c[0], lat = swap ? c[0] : c[1]; return [(lon - s.lon) * kx, (lat - s.lat) * ky]; };
+  let D, src = 'IGN BD TOPO®';
+  try { D = await fetchIGN(B, toXY); if (!D.b.length && !D.r.length && !D.v.length) throw new Error('empty'); }
+  catch(e){ swap = null; D = await fetchOSM(B, toXY); src = 'OpenStreetMap'; }
+  const fp = footprint(), m = 1.5;
+  const out = {at:Date.now(), src, size:A.size, cx:A.cx, cy:A.cy, opts:{...opts}, b:[], r:[], v:[], w:[], t:[]};
+  if (opts.b) for (const b of D.b){
+    let p = simplify(b.p); if (p.length > 3 && Math.hypot(p[0][0] - p[p.length - 1][0], p[0][1] - p[p.length - 1][1]) < 0.05) p.pop(); if (p.length < 3) continue;
+    const cx = p.reduce((a, q) => a + q[0], 0) / p.length, cy = p.reduce((a, q) => a + q[1], 0) / p.length;
+    if (cx < X0 || cx > X1 || cy < Y0 || cy > Y1) continue;
+    if (opts.drop && fp && cx > fp.x0 - m && cx < fp.x1 + m && cy > fp.y0 - m && cy < fp.y1 + m) continue;
+    if (Math.abs(ringArea(p)) < 4) continue;
+    out.b.push({p:r2(p), h:Math.round(b.h * 10) / 10}); if (out.b.length >= 600) break;
+  }
+  if (opts.r) for (const r of D.r.sort((a, b) => b.w - a.w)) for (const part of clipLine(simplify(r.p, 0.5), X0, X1, Y0, Y1)){ out.r.push({p:r2(part), w:r.w, k:r.k}); if (out.r.length >= 500) break; }
+  const polys = (list, key) => { for (const v of list){ let p = v.p; if (p.length > 3 && Math.hypot(p[0][0] - p[p.length - 1][0], p[0][1] - p[p.length - 1][1]) < 0.05) p = p.slice(0, -1); p = clipPoly(simplify(p, 0.5), X0, X1, Y0, Y1); if (p.length >= 3 && Math.abs(ringArea(p)) > 2) out[key].push({...v, p:r2(p)}); if (out[key].length >= 250) break; } };
+  if (opts.v) polys(D.v, 'v');
+  if (opts.w) polys(D.w, 'w');
+  if (opts.v){ // arbres : isolés (OSM) + plantés dans les zones boisées, de façon reproductible
+    const R = rng(Math.round(Math.abs(s.lon * 1e5 + s.lat * 1e5))), DENS = {f:1 / 45, c:1 / 40, u:1 / 140, o:1 / 36, h:1 / 10, l:1 / 220, g:0}, cap = 1400;
+    for (const t of D.t) if (t[0] > X0 && t[0] < X1 && t[1] > Y0 && t[1] < Y1 && out.t.length < cap) out.t.push([Math.round(t[0] * 100) / 100, Math.round(t[1] * 100) / 100, t[2], t[3]]);
+    for (const v of out.v){
+      const A2 = Math.abs(ringArea(v.p)), n = Math.min(Math.round(A2 * (DENS[v.k] ?? 0)), cap - out.t.length); if (n <= 0) continue;
+      const xs = v.p.map(q => q[0]), ys = v.p.map(q => q[1]), bx0 = Math.min(...xs), bx1 = Math.max(...xs), by0 = Math.min(...ys), by1 = Math.max(...ys);
+      for (let k = 0, tries = 0; k < n && tries < n * 8; tries++){
+        const x = bx0 + R() * (bx1 - bx0), y = by0 + R() * (by1 - by0); if (!inPoly(x, y, v.p)) continue;
+        if (fp && x > fp.x0 - 3 && x < fp.x1 + 3 && y > fp.y0 - 3 && y < fp.y1 + 3) continue;
+        const type = v.k === 'c' || (v.k === 'f' && R() < 0.12) ? 1 : v.k === 'o' ? 2 : v.k === 'h' || v.k === 'l' ? 3 : 0;
+        const hh = type === 2 ? 4 + R() * 2 : type === 3 ? 2.5 + R() * 2 : type === 1 ? 12 + R() * 10 : 9 + R() * 9;
+        out.t.push([Math.round(x * 100) / 100, Math.round(y * 100) / 100, Math.round(hh * 10) / 10, type]); k++;
+      }
+    }
+  }
+  return out;
+}
+
+/* ---------- rendu ---------- */
+const ENV_COL = {
+  shaded:{bld:0xF3F2EF, bldE:0x9EA2A8, road:0xC9CCD0, path:0xDCCFB4, veg:0xC8D8B6, vegH:0xA9C29A, vine:0xE2DCB8, water:0xA9CCE0, crown:0xA6C493, crownC:0x8DAF86, trunk:0xB8A48C},
+  real:{bld:0xD9D3C8, bldE:0x7E7A72, road:0x55595F, path:0xB3A385, veg:0x4E6B3B, vegH:0x3E5A30, vine:0x8E8A55, water:0x4C7891, crown:0x3D6A33, crownC:0x2C512E, trunk:0x6E5240}};
+function drapedShape(p, H, dz){
+  const pts = ringArea(p) < 0 ? p.slice().reverse() : p, g = new THREE.ShapeGeometry(new THREE.Shape(pts.map(q => new THREE.Vector2(q[0], q[1]))));
+  const a = g.attributes.position; for (let i = 0; i < a.count; i++){ const x = a.getX(i), y = a.getY(i); a.setXYZ(i, x, H(x, y) + dz, -y); }
+  g.computeVertexNormals(); return g.index ? g.toNonIndexed() : g;
+}
+function ribbon(p, w, H, dz){
+  const pts = []; for (let i = 0; i + 1 < p.length; i++){ const [a, b] = [p[i], p[i + 1]], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 3)); for (let k = 0; k < n; k++) pts.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); }
+  pts.push(p[p.length - 1]); if (pts.length < 2) return null;
+  const pos = [], hw = w / 2;
+  const off = i => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; return [-dy / L * hw, dx / L * hw]; };
+  const V = (x, y) => [x, H(x, y) + dz, -y];
+  for (let i = 0; i + 1 < pts.length; i++){
+    const o1 = off(i), o2 = off(i + 1), [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+    const A = V(x1 + o1[0], y1 + o1[1]), B = V(x1 - o1[0], y1 - o1[1]), C = V(x2 + o2[0], y2 + o2[1]), D = V(x2 - o2[0], y2 - o2[1]);
+    pos.push(...A, ...B, ...C, ...C, ...B, ...D);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  const n = g.attributes.normal; for (let i = 0; i < n.count; i++) if (n.getY(i) < 0) n.setXYZ(i, -n.getX(i), -n.getY(i), -n.getZ(i));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(pos.length / 3 * 2), 2)); return g;
+}
+function buildEnv(E, H, real, T){
+  const C = real ? ENV_COL.real : ENV_COL.shaded, grp = new THREE.Group(); grp.name = 'Environnement';
+  const M = (color, extra = {}) => new THREE.MeshStandardMaterial({color, roughness:0.95, metalness:0, ...extra});
+  const add = (geos, mat, name, shadow = false) => { geos = geos.filter(Boolean); if (!geos.length) return null; geos.forEach(g => { if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2)); });
+    const m = new THREE.Mesh(mergeGeos(geos), mat); m.name = name; m.castShadow = shadow; m.receiveShadow = true; m.userData.env = name; grp.add(m); return m; };
+  // eau et végétation (surfaces drapées sur le relief)
+  add(E.w.map(w => drapedShape(w.p, H, 0.02)), M(C.water, {roughness:0.3}), 'Eau');
+  add(E.v.filter(v => v.k !== 'g' && v.k !== 'h').map(v => drapedShape(v.p, H, 0.025)), M(C.veg, {polygonOffset:true, polygonOffsetFactor:-1}), 'Végétation');
+  add(E.v.filter(v => v.k === 'h').map(v => drapedShape(v.p, H, 0.03)), M(C.vegH), 'Haies');
+  add(E.v.filter(v => v.k === 'g').map(v => drapedShape(v.p, H, 0.03)), M(C.vine), 'Vignes');
+  // voirie
+  add(E.r.filter(r => r.k === 'r').map(r => ribbon(r.p, r.w, H, 0.06)), M(C.road, {polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2}), 'Routes');
+  add(E.r.filter(r => r.k === 'p').map(r => ribbon(r.p, r.w, H, 0.05)), M(C.path, {polygonOffset:true, polygonOffsetFactor:-1}), 'Chemins');
+  // bâtiments (volumes extrudés, posés sur le point bas du terrain)
+  const bg = E.b.map(b => {
+    const pts = ringArea(b.p) < 0 ? b.p.slice().reverse() : b.p, zs = pts.map(q => H(q[0], q[1])), z0 = Math.min(...zs) - 0.1, z1 = Math.max(...zs);
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(q => new THREE.Vector2(q[0], q[1]))), {depth:b.h + (z1 - z0), bevelEnabled:false});
+    g.rotateX(-Math.PI / 2); g.translate(0, z0, 0); return g.index ? g.toNonIndexed() : g;
+  });
+  const bm = add(bg, M(C.bld, {roughness:0.85}), 'Bâtiments existants', true);
+  if (bm && DISPLAY.edges !== false){ const e = new THREE.LineSegments(new THREE.EdgesGeometry(bm.geometry, 25), new THREE.LineBasicMaterial({color:C.bldE, transparent:true, opacity:0.7})); e.userData.envEdges = true; grp.add(e); }
+  // arbres : tronc + houppier (feuillu, conifère, fruitier, arbuste)
+  if (E.t.length){
+    const tpl = {trunk:new THREE.CylinderGeometry(0.11, 0.17, 1, 5), ico:new THREE.IcosahedronGeometry(1, 0), cone:new THREE.ConeGeometry(1, 1, 7)};
+    const crowns = [], cones = [], trunks = [];
+    for (const [x, y, h, type] of E.t){
+      const z = H(x, y), th = type === 3 ? 0.3 : type === 1 ? h * 0.25 : h * 0.38, sc = type === 3 ? 0.6 : h / 10;
+      const t = tpl.trunk.clone(); t.scale(sc * 1.4, th, sc * 1.4); t.translate(x, z + th / 2, -y); trunks.push(t);
+      if (type === 1){ const c = tpl.cone.clone(); c.scale(h * 0.22, h * 0.8, h * 0.22); c.translate(x, z + th + h * 0.38, -y); cones.push(c); }
+      else { const r = type === 2 ? h * 0.4 : type === 3 ? h * 0.45 : h * 0.33, c = tpl.ico.clone(); c.scale(r, (h - th) * 0.55, r); c.rotateY((x * 7 + y * 13) % 6.28); c.translate(x, z + th + (h - th) * 0.5, -y); crowns.push(c); }
+    }
+    add(trunks, M(C.trunk), 'Troncs', true); add(crowns, M(C.crown, {flatShading:true}), 'Arbres', true); add(cones, M(C.crownC, {flatShading:true}), 'Conifères', true);
+    Object.values(tpl).forEach(g => g.dispose());
+  }
+  terrainGroup.add(grp);
+}
+function envSummary(E){ if (!E) return ''; return `${E.b.length} bâtiment${E.b.length > 1 ? 's' : ''} · ${E.r.length} tronçon${E.r.length > 1 ? 's' : ''} de voirie · ${E.v.length} zone${E.v.length > 1 ? 's' : ''} végétale${E.v.length > 1 ? 's' : ''} · ${E.t.length} arbre${E.t.length > 1 ? 's' : ''}${E.w.length ? ` · ${E.w.length} surface${E.w.length > 1 ? 's' : ''} d'eau` : ''}`; }
 
 /* ==== 70-export.js ==== */
 /* ============ Exports : Archi Vision (GLB), IFC4, CSV, JSON, ZIP, images ============ */
@@ -5285,6 +5742,8 @@ function buildCSV(){
   for (const [k, w] of Object.entries(q.walls)) lines.push(`${compo(k).nom};${d(w.ml)};${d(w.m2)};${d(w.net)}`);
   lines.push('', 'Composition de plancher;Surface (m2)');
   for (const [k, s] of Object.entries(q.slabs)) lines.push(`${compo(k).nom};${d(s.m2)}`);
+  lines.push('', 'Composition de toiture;Rampants (m2);Projection (m2);Égouts (ml);Faîtages (ml)');
+  for (const [k, r] of Object.entries(q.roofs || {})) lines.push(`${compo(k).nom};${d(r.m2)};${d(r.plan)};${d(r.eave)};${d(r.ridge)}`);
   lines.push('', 'Famille;Type;Quantité;Surface de baie (m2)');
   for (const f of q.fams){ const F = fam(f.fam); lines.push(`${F?.nom || f.fam};${F?.types?.[f.type]?.nom || ''};${f.n};${d(f.area)}`); }
   return '﻿' + lines.join('\r\n');
@@ -5332,8 +5791,23 @@ function buildIFC(){
     return E(`IFCEXTRUDEDAREASOLID(${prof},${pos},${Z},${R(h)})`);
   };
   const shape = items => E(`IFCPRODUCTDEFINITIONSHAPE($,$,(${E(`IFCSHAPEREPRESENTATION(${BODY},'Body','${items.length > 1 ? 'CSG' : 'SweptSolid'}',(${items.join(',')}))`)}))`);
+  const brep = (top, ext, zRef) => { // prisme quelconque en IfcFacetedBrep (pans de toiture, pignons)
+    const P = q => E(`IFCCARTESIANPOINT((${R(q[0])},${R(q[1])},${R(q[2] - zRef)}))`), T = top.map(P), B = top.map(q => P([q[0] + ext[0], q[1] + ext[1], q[2] + ext[2]])), n = T.length;
+    const face = ids => E(`IFCFACE((${E(`IFCFACEOUTERBOUND(${E(`IFCPOLYLOOP((${ids.join(',')}))`)},.T.)`)}))`);
+    const faces = [face(T), face(B.slice().reverse())]; for (let i = 0; i < n; i++){ const j = (i + 1) % n; faces.push(face([T[i], B[i], B[j], T[j]])); }
+    return E(`IFCFACETEDBREP(${E(`IFCCLOSEDSHELL((${faces.join(',')}))`)})`);
+  };
+  const brepShape = items => E(`IFCPRODUCTDEFINITIONSHAPE($,$,(${E(`IFCSHAPEREPRESENTATION(${BODY},'Body','Brep',(${items.join(',')}))`)}))`);
+  for (const el of state.els.filter(e => e.kind === 'roof')){
+    const st = storeys[el.lvl], rel = lvlZ(el.lvl), G = roofGeom(el), C = compo(el.type), T = C.layers.reduce((s, [, e]) => s + e, 0) / Math.cos(G.a);
+    const items = G.pans.map(pan => brep(pan, [0, 0, -T], rel));
+    const eid = E(`IFCSLAB('${guid()}',$,${ifcS(`Toiture ${el.id}`)},${ifcS(C.nom)},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape(items)},${ifcS(String(el.id))},.ROOF.)`);
+    E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${eid}),${lset(el.type, C.nom, C.layers)})`); st.items.push(eid);
+    G.gables.forEach((g, i) => { const gid = E(`IFCWALL('${guid()}',$,${ifcS(`Pignon ${el.id}.${i + 1}`)},$,$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape([brep(g.tri, [g.dir[0] * 0.2, g.dir[1] * 0.2, 0], rel)])},$,.STANDARD.)`);
+      E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${gid}),${imat(el.gableMat || 'parpaing')})`); st.items.push(gid); });
+  }
   const wallIds = {};
-  for (const el of state.els.filter(e => e.kind !== 'inst')){
+  for (const el of state.els.filter(e => e.kind !== 'inst' && e.kind !== 'roof')){
     const st = storeys[el.lvl], rel = lvlZ(el.lvl);
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }
@@ -5404,7 +5878,7 @@ function buildGLB(){
         for (const so of instSolids(el)) (geoBy[so.m] ??= []).push(solidGeo(so));
       } else {
         g.name = `${KIND_NAME[el.kind]} ${el.id}`;
-        if (el.kind === 'wall' || el.kind === 'slab'){ const C = compo(el.type), Lr = layersInToOut(el), th = thermal(Lr, elUse(el)); Object.assign(info, {composition:C.nom, couches:C.layers.map(([m, e]) => ({materiau:mat(m).nom, epaisseur:e})), U:Math.round(th.U * 1000) / 1000, lot:C.lot}); }
+        if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){ const C = compo(el.type), Lr = layersInToOut(el), th = thermal(Lr, elUse(el)); Object.assign(info, {composition:C.nom, couches:C.layers.map(([m, e]) => ({materiau:mat(m).nom, epaisseur:e})), U:Math.round(th.U * 1000) / 1000, lot:C.lot}); }
         else Object.assign(info, {materiau:mat(el.mat).nom});
         for (const pc of pieces(el)) (geoBy[pc.mat] ??= []).push(pieceGeo(pc));
       }
@@ -5415,7 +5889,11 @@ function buildGLB(){
       g.userData = {archiplan:info};
       (lv[el.lvl] || root).add(g);
     }
-    const T = state.site?.terrain; if (T && DISPLAY.terrain !== false){ const vw = view; view = '3d'; buildTerrain(); view = vw; const tm = terrainGroup.children.find(o => o.isMesh); if (tm){ const t = new THREE.Mesh(tm.geometry.clone(), new THREE.MeshStandardMaterial({color:0x6F8A5A, roughness:1})); t.name = 'Terrain'; t.userData = {archiplan:{type:'terrain', taille:T.size, altitudeOrigine:T.alt0, source:'IGN RGE ALTI'}}; root.add(t); } buildTerrain(); }
+    if ((state.site?.terrain && DISPLAY.terrain !== false) || (state.site?.env && DISPLAY.env !== false)){
+      const vw = view; view = '3d'; siteKey = ''; buildTerrain(); view = vw; const T = state.site.terrain, E = state.site.env, sg = new THREE.Group(); sg.name = 'Site';
+      terrainGroup.traverse(o => { if (!o.isMesh || o.isSprite) return; const m = o.material, t = new THREE.Mesh(o.geometry.clone(), new THREE.MeshStandardMaterial({color:m.color?.getHex?.() ?? 0x888888, vertexColors:!!m.vertexColors, roughness:1, side:m.side})); t.name = o.name || 'Site';
+        t.userData = {archiplan:o.userData.terrain ? {type:'terrain', taille:T.size, altitudeOrigine:T.alt0, source:'IGN RGE ALTI'} : o.userData.env ? {type:'environnement', objet:o.userData.env, source:E?.src || ''} : {type:'socle'}}; sg.add(t); });
+      root.add(sg); siteKey = ''; buildTerrain(); }
     if (state.site?.lat) root.userData.archiplan.lieu = {adresse:state.site.label || '', latitude:state.site.lat, longitude:state.site.lon, altitude:state.site.alt ?? null, zoneClimatique:state.site.zone || ''};
     new GLTFExporter().parse(root, r => { disposeGroup(root); res(new Uint8Array(r)); }, err => rej(err), {binary:true, maxTextureSize:1024, onlyVisible:true});
   });
@@ -5484,6 +5962,8 @@ function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<opt
 $('#lvlSel').addEventListener('change', e => { curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
+$('#rShapeIn').addEventListener('change', e => { defs.roof.shape = e.target.value; updatePreview(); });
+$('#rPitchIn').addEventListener('change', e => { const v = num(e.target.value); if (v >= 3 && v <= 70) defs.roof.pitch = v; else e.target.value = defs.roof.pitch; updatePreview(); });
 $('#stepSel').addEventListener('change', e => { step = +e.target.value; positionGrid(); dirty = true; });
 $('#cmdOk').addEventListener('click', runCmd);
 $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!e.target.value.trim() && tool === 'wall' && draw.start) cancelDraw(); else runCmd(); } else if (e.key === 'Escape'){ e.target.value = ''; e.target.blur(); cancelDraw(); } });
@@ -5531,7 +6011,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 
@@ -5606,7 +6086,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {state: () => state, sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};
 
 /* ---------- Paramètres d'affichage : couleur de fond, grille, cotes, arêtes, ombres ---------- */
@@ -5616,7 +6096,7 @@ function renderViewMenu(){
   m.innerHTML = `<div class="lbl">Couleur du fond</div><div class="bgsw">${BG_PRESETS.map(([c, n]) => `<button type="button" class="bgs${c === cur ? ' on' : ''}" data-bg="${c}" title="${n}" style="background:${c || '#FFFFFF'}" aria-label="${n}"></button>`).join('')}
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
     <hr><div class="lbl">Afficher</div>
-    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }

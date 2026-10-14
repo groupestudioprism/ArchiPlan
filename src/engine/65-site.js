@@ -69,7 +69,7 @@ async function geoAlt(points){ // [[lon, lat]…] → [z…] (par lots de 100 po
   return out.map(z => (z == null || z < -900) ? null : z);   // -99999 : hors couverture
 }
 const mToLon = (m, lat) => m / (111320 * Math.cos(lat * Math.PI / 180)), mToLat = m => m / 110540;
-async function loadTerrain(size = 100, n = 21){
+async function loadTerrain(size = 100, n = size <= 100 ? 41 : 51){
   const s = state.site; if (!s?.lon) throw new Error('nosite');
   const b = bbox(), cx = (b.min.x + b.max.x) / 2, cy = -(b.min.z + b.max.z) / 2;   // centre de la maquette (plan)
   const pts = [], xs = [];
@@ -81,27 +81,89 @@ async function loadTerrain(size = 100, n = 21){
   s.terrain = {size, n, cx, cy, alt0:z0, z:fill.map(v => Math.round((v - z0) * 100) / 100), at:Date.now()};
 }
 
-/* ---------- terrain dans la scène ---------- */
-const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
+/* ---------- terrain dans la scène : relief lissé, teintes hypsométriques, courbes de niveau NGF, socle de maquette ---------- */
+const terrainGroup = new THREE.Group(); terrainGroup.name = 'Site'; scene.add(terrainGroup);
+let siteKey = '', siteTex = [];
+function footprint(){ const bb = new THREE.Box3().setFromObject(modelGroup); return bb.isEmpty() ? null : {x0:bb.min.x, x1:bb.max.x, y0:-bb.max.z, y1:-bb.min.z}; }
+/* hauteur du terrain (m, relative au rez-de-chaussée) au point (x, y) du plan ; plate-forme de terrassement sous l'emprise */
+function makeTerrainH(T, fp){
+  const n = T.n, st = T.size / (n - 1), X0 = T.cx - T.size / 2, Y0 = T.cy - T.size / 2;
+  const raw = (x, y) => { let fi = (x - X0) / st, fj = (y - Y0) / st; fi = Math.max(0, Math.min(n - 1.0001, fi)); fj = Math.max(0, Math.min(n - 1.0001, fj));
+    const i = Math.floor(fi), j = Math.floor(fj), u = fi - i, v = fj - j, z = (a, b) => T.z[b * n + a] ?? 0;
+    return (z(i, j) * (1 - u) + z(i + 1, j) * u) * (1 - v) + (z(i, j + 1) * (1 - u) + z(i + 1, j + 1) * u) * v; };
+  if (!fp) return raw;
+  return (x, y) => { const h = raw(x, y), dx = Math.max(fp.x0 - x, 0, x - fp.x1), dy = Math.max(fp.y0 - y, 0, y - fp.y1), d = Math.hypot(dx, dy), t = Math.min(1, Math.max(0, (d - 1) / 5));
+    return -0.05 + (h + 0.05) * t * t * (3 - 2 * t); };
+}
+const contourStep = r => r < 3 ? 0.25 : r < 8 ? 0.5 : r < 25 ? 1 : r < 70 ? 2 : 5;
+function textSprite(txt, size, color = '#3E4A35'){
+  const cv = document.createElement('canvas'), g = cv.getContext('2d'), f = 44; g.font = `600 ${f}px Inter, Arial, sans-serif`;
+  const w = Math.ceil(g.measureText(txt).width) + 24; cv.width = w; cv.height = f + 18; g.font = `600 ${f}px Inter, Arial, sans-serif`;
+  g.fillStyle = 'rgba(255,255,255,.82)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, cv.height, 12) : g.rect(0, 0, w, cv.height); g.fill();
+  g.fillStyle = color; g.textBaseline = 'middle'; g.fillText(txt, 12, cv.height / 2 + 2);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; siteTex.push(tex);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true, sizeAttenuation:false})); sp.scale.set(size * w / cv.height, size, 1); sp.renderOrder = 6; return sp;
+}
 function buildTerrain(){
-  disposeGroup(terrainGroup);
-  const T = state?.site?.terrain; if (!T || DISPLAY.terrain === false || view === '2d') { terrainGroup.visible = false; return; }
-  const g = new THREE.PlaneGeometry(T.size, T.size, T.n - 1, T.n - 1); g.rotateX(-Math.PI / 2);
-  const pos = g.attributes.position, bb = bbox(), x0 = bb.min.x, x1 = bb.max.x, z0 = bb.min.z, z1 = bb.max.z;
-  // plateforme de terrassement : le terrain est ramené au niveau du rez-de-chaussée sous l'emprise (+ 1 m), puis raccordé sur 4 m
-  const flat = (x, zz, y) => { const dx = Math.max(x0 - x, 0, x - x1), dz = Math.max(z0 - zz, 0, zz - z1), d = Math.hypot(dx, dz), t = Math.min(1, Math.max(0, (d - 1) / 4)); return -0.05 + (y + 0.05) * t * t * (3 - 2 * t); };
-  for (let k = 0; k < pos.count; k++){ // la grille de PlaneGeometry part du coin (-x, +z) ; plan y = -z scène
-    const i = k % T.n, j = Math.floor(k / T.n), jj = T.n - 1 - j;
-    pos.setX(k, T.cx - T.size / 2 + T.size * i / (T.n - 1)); pos.setZ(k, -(T.cy - T.size / 2 + T.size * jj / (T.n - 1))); pos.setY(k, bb.isEmpty() ? (T.z[jj * T.n + i] ?? 0) - 0.03 : flat(pos.getX(k), pos.getZ(k), (T.z[jj * T.n + i] ?? 0) - 0.03));
-  }
-  g.computeVertexNormals();
-  const real = DISPLAY.style === 'realistic';
-  const m = new THREE.MeshStandardMaterial({color:real ? 0x6F8A5A : 0xDCE3D2, roughness:1, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:2});
-  const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.name = 'Terrain'; mesh.userData.terrain = true; terrainGroup.add(mesh);
-  const w = new THREE.LineSegments(new THREE.WireframeGeometry(g), new THREE.LineBasicMaterial({color:real ? 0x55704A : 0xA9B59A, transparent:true, opacity:real ? 0.25 : 0.55}));
-  terrainGroup.add(w); terrainGroup.visible = true;
-  groundShadow.visible = false; groundReal.visible = false;
+  const T = state?.site?.terrain, E = state?.site?.env, onT = !!T && DISPLAY.terrain !== false, onE = !!E && DISPLAY.env !== false;
+  if ((!onT && !onE) || view === '2d'){ terrainGroup.visible = false; return; }
+  const fp = footprint(), real = DISPLAY.style === 'realistic', dark = isDarkBg?.() || false;
+  const key = [T?.at, T?.size, E?.at, onT, onE, real, dark, DISPLAY.style, fp && [fp.x0, fp.x1, fp.y0, fp.y1].map(v => v.toFixed(1)).join(',')].join('|');
+  terrainGroup.visible = true; if (onT){ groundShadow.visible = false; groundReal.visible = false; }
+  if (key === siteKey && terrainGroup.children.length){ dirty = true; return; }
+  siteKey = key; disposeGroup(terrainGroup); siteTex.forEach(t => t.dispose()); siteTex = [];
+  const H = onT ? makeTerrainH(T, fp) : () => 0;
+  if (onT) buildRelief(T, H, real);
+  if (onE) buildEnv(E, H, real, T);
   dirty = true;
+}
+const isDarkBg = () => { const c = DISPLAY.bg || ''; if (!/^#[0-9a-f]{6}$/i.test(c)) return false; const v = parseInt(c.slice(1), 16); return ((v >> 16) * 0.3 + ((v >> 8) & 255) * 0.59 + (v & 255) * 0.11) < 110; };
+function buildRelief(T, H, real){
+  const R = Math.min(180, (T.n - 1) * 4), size = T.size, X0 = T.cx - size / 2, Y0 = T.cy - size / 2, N = R + 1, st = size / R;
+  const hs = new Float32Array(N * N); let lo = Infinity, hi = -Infinity;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++){ const h = H(X0 + i * st, Y0 + j * st); hs[j * N + i] = h; if (h < lo) lo = h; if (h > hi) hi = h; }
+  const range = Math.max(0.01, hi - lo);
+  // maillage (plan y → scène −z)
+  const pos = new Float32Array(N * N * 3), col = new Float32Array(N * N * 3), idx = [];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++){ const k = j * N + i; pos[k * 3] = X0 + i * st; pos[k * 3 + 1] = hs[k] - 0.03; pos[k * 3 + 2] = -(Y0 + j * st); }
+  for (let j = 0; j < R; j++) for (let i = 0; i < R; i++){ const a = j * N + i, b = a + 1, c = a + N, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  const nor = g.attributes.normal.array;
+  const ramp = real ? [[0, [0.36, 0.47, 0.29]], [0.5, [0.47, 0.54, 0.33]], [1, [0.6, 0.56, 0.42]]] : [[0, [0.86, 0.90, 0.82]], [0.5, [0.90, 0.91, 0.82]], [1, [0.93, 0.89, 0.80]]];
+  const rampAt = t => { for (let q = 1; q < ramp.length; q++) if (t <= ramp[q][0]){ const [t0, c0] = ramp[q - 1], [t1, c1] = ramp[q], u = (t - t0) / (t1 - t0); return c0.map((c, m) => c + (c1[m] - c) * u); } return ramp[ramp.length - 1][1]; };
+  for (let k = 0; k < N * N; k++){ const c = rampAt((hs[k] - lo) / range), sh = 0.82 + 0.18 * Math.pow(nor[k * 3 + 1], 4); col[k * 3] = Math.pow(c[0] * sh, 2.2); col[k * 3 + 1] = Math.pow(c[1] * sh, 2.2); col[k * 3 + 2] = Math.pow(c[2] * sh, 2.2); }   // sRGB → linéaire
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({vertexColors:true, roughness:1, metalness:0, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:2}));
+  mesh.receiveShadow = true; mesh.name = 'Terrain'; mesh.userData.terrain = true; terrainGroup.add(mesh);
+  // courbes de niveau (altitudes NGF absolues), maîtresses toutes les 5 courbes
+  const iv = contourStep(range), a0 = T.alt0 || 0, minor = [], major = [], labels = {}, cand = {};
+  const k0 = Math.ceil((lo + a0) / iv), k1 = Math.floor((hi + a0) / iv), nl = k1 - k0 + 1, lab = nl >= 10 ? 5 : nl >= 4 ? 2 : 1;
+  for (let kk = k0; kk <= k1 && k1 - k0 < 400; kk++){
+    const lv = kk * iv - a0, out = kk % 5 === 0 ? major : minor, P = (i, j) => [X0 + i * st, Y0 + j * st];
+    for (let j = 0; j < R; j++) for (let i = 0; i < R; i++){
+      const v = [hs[j * N + i], hs[j * N + i + 1], hs[(j + 1) * N + i + 1], hs[(j + 1) * N + i]], c = [P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1)];
+      const pts = []; for (let e = 0; e < 4; e++){ const f = (e + 1) % 4, A = v[e] - lv, B = v[f] - lv; if ((A < 0) !== (B < 0)){ const t = A / (A - B); pts.push([c[e][0] + (c[f][0] - c[e][0]) * t, c[e][1] + (c[f][1] - c[e][1]) * t]); } }
+      for (let q = 0; q + 1 < pts.length; q += 2){ out.push(pts[q][0], lv + 0.03, -pts[q][1], pts[q + 1][0], lv + 0.03, -pts[q + 1][1]);
+        if (kk % lab === 0 && (i + j) % 3 === 0){ const mx = (pts[q][0] + pts[q + 1][0]) / 2, my = (pts[q][1] + pts[q + 1][1]) / 2, sc = Math.max(Math.abs(mx - T.cx), Math.abs(my - T.cy)); if (sc < size * 0.44 && sc > size * 0.12) (cand[kk] ??= []).push({sc, x:mx, y:my, z:lv}); } }
+    }
+  }
+  // étiquettes : une par courbe retenue, en évitant qu'elles se chevauchent
+  const placed = [];
+  for (const kk of Object.keys(cand).sort((a, b) => a - b)){ const c = cand[kk].sort((a, b) => b.sc - a.sc); const pick = c.find(p => placed.every(q => Math.hypot(p.x - q.x, p.y - q.y) > size * 0.22)) || null; if (pick){ placed.push(pick); labels[kk] = pick; } }
+  const lines = (arr, color, op) => { if (!arr.length) return; const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color, transparent:true, opacity:op})); l.userData.contour = true; terrainGroup.add(l); };
+  lines(minor, real ? 0x3F5233 : 0x9AA88B, real ? 0.35 : 0.55); lines(major, real ? 0x2E3D25 : 0x6F7E60, real ? 0.6 : 0.9);
+  Object.entries(labels).forEach(([kk, L]) => { const sp = textSprite(`${nf(kk * iv, iv < 1 ? 1 : 0)} m NGF`, 0.024); sp.position.set(L.x, L.z + 0.4, -L.y); terrainGroup.add(sp); });
+  // socle : flancs de la maquette jusqu'à une base horizontale
+  const base = lo - Math.max(1.5, range * 0.12) - 0.03, sp = [], edge = [];
+  const side = (getP) => { for (let q = 0; q < R; q++){ const [x1, y1, h1] = getP(q), [x2, y2, h2] = getP(q + 1); sp.push(x1, h1, -y1, x1, base, -y1, x2, base, -y2, x1, h1, -y1, x2, base, -y2, x2, h2, -y2); edge.push(x1, h1, -y1, x2, h2, -y2); } };
+  const at = (i, j) => [X0 + i * st, Y0 + j * st, hs[j * N + i] - 0.03];
+  side(q => at(R - q, 0)); side(q => at(R, R - q)); side(q => at(q, R)); side(q => at(0, q));
+  // orientation : on laisse DoubleSide, normales recalculées
+  sp.push(X0, base, -Y0, X0 + size, base, -Y0, X0 + size, base, -(Y0 + size), X0, base, -Y0, X0 + size, base, -(Y0 + size), X0, base, -(Y0 + size));
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.computeVertexNormals();
+  const socle = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({color:real ? 0x6B5643 : 0xD9CDB8, roughness:1, side:THREE.DoubleSide})); socle.name = 'Socle'; socle.userData.socle = true; terrainGroup.add(socle);
+  const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(edge, 3)); terrainGroup.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({color:real ? 0x3B2F24 : 0x8C7F6A})));
+  T._stats = {lo, hi, iv};
 }
 
 /* ---------- dialogue « Lieu du projet » ---------- */
@@ -109,7 +171,7 @@ function siteSummary(){
   const s = state.site; if (!s?.zone && !s?.label) return '<p class="hint">Aucun lieu défini : les repères thermiques et acoustiques sont généraux.</p>';
   return `<dl class="kv"><dt>Lieu</dt><dd style="font-family:var(--f-body);text-align:right">${esc(s.label || 'Département ' + (s.dept || '?'))}</dd>
     <dt>Zone climatique</dt><dd>${esc(s.zone || '—')}</dd><dt>Altitude</dt><dd>${s.alt != null ? nf(s.alt, 0) + ' m' : '—'}</dd>
-    <dt>Bruit (façades)</dt><dd>${s.noise ? `${NOISE[s.noise][1]} dB` : '—'}</dd><dt>Terrain</dt><dd>${s.terrain ? `${s.terrain.size} × ${s.terrain.size} m` : '—'}</dd></dl>`;
+    <dt>Bruit (façades)</dt><dd>${s.noise ? `${NOISE[s.noise][1]} dB` : '—'}</dd><dt>Terrain</dt><dd>${s.terrain ? `${s.terrain.size} × ${s.terrain.size} m` : '—'}</dd><dt>Environnement</dt><dd>${s.env ? `${s.env.b.length} bât. · ${s.env.t.length} arbres` : '—'}</dd></dl>`;
 }
 function facadeAcoustic(){
   // isolement de façade estimé : composite murs extérieurs (Rw + Ctr ≈ Rw − 5) et menuiseries (Rw + Ctr ≈ 28 dB, double vitrage courant)
@@ -125,7 +187,7 @@ function facadeAcoustic(){
 }
 function openSiteDialog(){
   state.site ??= {};
-  const S = {...state.site, results:[], q:state.site.label || '', busy:'', msg:''};
+  const S = {...state.site, results:[], q:state.site.label || '', busy:'', msg:'', envOpts:{...ENV_DEF, ...(state.site.env?.opts || {})}};
   const render = () => {
     const z = S.zone || '', zm = zoneMain(z), f = facadeAcoustic(), target = S.noise ? NOISE[S.noise][1] : null;
     return `<header class="ed-h"><div><span class="eyebrow">Paramètres du projet</span><h3 class="ed-t2">Lieu, climat, bruit et terrain</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
@@ -150,7 +212,12 @@ function openSiteDialog(){
         <div class="grp"><h3>Terrain (relief IGN)</h3>
           <div class="fields"><label class="f"><span>Emprise</span><span class="in"><select id="stSize">${[60, 100, 150, 200].map(v => `<option value="${v}"${(S.terrain?.size || 100) === v ? ' selected' : ''}>${v} × ${v} m</option>`).join('')}</select></span></label>
             <div class="f"><span>&nbsp;</span><button class="btn" id="stTer"${S.lon ? '' : ' disabled'}>${S.terrain ? 'Recharger le relief' : 'Charger le relief'}</button></div></div>
-          ${S.terrain ? `<p class="hint">Relief chargé : dénivelé ${nf(Math.max(...S.terrain.z) - Math.min(...S.terrain.z), 1)} m sur ${S.terrain.size} m. <button class="tlink" id="stTerDel">Retirer le terrain</button></p>` : `<p class="hint">${S.lon ? 'Altitudes du RGE ALTI® (IGN) autour du projet ; le rez-de-chaussée est calé sur l\'altitude du point d\'adresse.' : 'Choisissez d\'abord une adresse.'}</p>`}
+          ${S.terrain ? `<p class="hint">Relief chargé : ${nf(S.terrain.alt0 + Math.min(...S.terrain.z), 0)} à ${nf(S.terrain.alt0 + Math.max(...S.terrain.z), 0)} m NGF, maille ${nf(S.terrain.size / (S.terrain.n - 1), 1)} m. Courbes de niveau et altitudes NGF affichées en 3D. <button class="tlink" id="stTerDel">Retirer le terrain</button></p>` : `<p class="hint">${S.lon ? 'Altitudes du RGE ALTI® (IGN) autour du projet ; le rez-de-chaussée est calé sur l\'altitude du point d\'adresse.' : 'Choisissez d\'abord une adresse.'}</p>`}
+        </div>
+        <div class="grp"><h3>Environnement (bâti, végétation, voirie)</h3>
+          <div class="env-o">${[['b', 'Bâtiments existants'], ['v', 'Végétation et arbres'], ['r', 'Routes et chemins'], ['w', 'Eau'], ['drop', 'Retirer le bâti existant sous le projet']].map(([k, n]) => `<label class="ap-check2"><input type="checkbox" data-envo="${k}"${S.envOpts[k] ? ' checked' : ''}> ${n}</label>`).join('')}</div>
+          <div class="env-a"><button class="btn" id="stEnv"${S.lon ? '' : ' disabled'}>${S.env ? 'Regénérer l\'environnement' : 'Générer l\'environnement'}</button>${S.env ? '<button class="tlink" id="stEnvDel">Retirer</button>' : ''}</div>
+          <p class="hint">${S.env ? `${esc(envSummary(S.env))} sur ${S.env.size} × ${S.env.size} m. Source : ${esc(S.env.src)}.` : S.lon ? 'Bâtiments (avec leur hauteur), routes, zones boisées, haies et plans d\'eau autour du projet, d\'après la BD TOPO® de l\'IGN (OpenStreetMap en secours). Même emprise que le relief.' : 'Choisissez d\'abord une adresse.'}</p>
         </div>
       </section>
       <section>
@@ -166,7 +233,7 @@ function openSiteDialog(){
             <p class="hint">Estimation simplifiée (EN 12354-3) : murs extérieurs ${n0(f.Sw)} m², menuiseries ${n0(f.Sr)} m² supposées en double vitrage courant (Rw+Ctr ≈ 28 dB).</p>` : '<p class="hint">Dessinez des murs extérieurs pour estimer l\'isolement des façades.</p>'}
         </div>
       </section></div>
-    <footer class="ed-f"><span class="hint">Données : Géoplateforme IGN (adresse, altitudes).</span><button class="btn" data-close>Annuler</button><button class="btn primary" id="stOk">Enregistrer</button></footer>`;
+    <footer class="ed-f"><span class="hint">Données : Géoplateforme IGN (adresse, altitudes, BD TOPO®) · © OpenStreetMap en secours.</span><button class="btn" data-close>Annuler</button><button class="btn primary" id="stOk">Enregistrer</button></footer>`;
   };
   const draw = () => { const d = openEDlg(render(), 'mid'); wire(d); };
   const wire = d => {
@@ -190,8 +257,14 @@ function openSiteDialog(){
       const keep = state.site; state.site = {...S}; try { await loadTerrain(+q('#stSize').value || 100); S.terrain = state.site.terrain; S.alt = state.site.alt; S.busy = ''; }
       catch(e){ S.busy = ''; S.msg = e.message === 'nodata' ? 'Pas de données d\'altitude à cet endroit.' : 'Relief indisponible (service IGN injoignable).'; }
       state.site = keep; draw(); };
+    d.querySelectorAll('[data-envo]').forEach(c => c.onchange = () => { S.envOpts[c.dataset.envo] = c.checked; });
+    q('#stEnv').onclick = async () => { S.busy = 'Génération de l\'environnement (IGN BD TOPO®)…'; S.msg = ''; draw();
+      const keep = state.site; state.site = {...S}; try { S.env = await loadEnv(+q('#stSize').value || 100, S.envOpts); S.busy = ''; if (!S.env.b.length && !S.env.r.length && !S.env.v.length) S.msg = 'Aucun élément trouvé autour du projet.'; }
+      catch(e){ S.busy = ''; S.msg = 'Environnement indisponible (services IGN et OpenStreetMap injoignables).'; }
+      state.site = keep; draw(); };
+    const ed = q('#stEnvDel'); if (ed) ed.onclick = () => { S.env = null; draw(); };
     const del = q('#stTerDel'); if (del) del.onclick = () => { S.terrain = null; draw(); };
-    q('#stOk').onclick = () => { pushHist(); const {results, busy, msg, q:_q, ...keep} = S; state.site = keep; state.isSample = false; closeEDlg(); resetMats(); rebuild(); buildTerrain(); toast('Lieu du projet enregistré'); };
+    q('#stOk').onclick = () => { pushHist(); const {results, busy, msg, q:_q, envOpts, ...keep} = S; if (!keep.env) delete keep.env; state.site = keep; state.isSample = false; closeEDlg(); resetMats(); rebuild(); buildTerrain(); toast('Lieu du projet enregistré'); };
   };
   draw();
 }

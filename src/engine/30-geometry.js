@@ -103,6 +103,7 @@ function wallOpenings(w, els = state.els){
 
 // Décompose un élément en "pièces" homogènes : un matériau, un contour plan, une base et une hauteur
 function pieces(el, els = state.els){
+  if (el.kind === 'roof') return roofPieces(el);
   const z = lvlZ(el.lvl) + (el.off || 0), out = [];
   if (el.kind === 'wall'){
     const T = wallT(el), {u, n, L} = wallAxis(el), ops = wallOpenings(el, els), lot = compo(el.type).lot;
@@ -146,6 +147,8 @@ function elStats(el){
 function elKeyPoints(el){
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
   if (el.kind === 'slab' || el.kind === 'vol'){ const r = rect(el.p, el.q); const segs = r.map((p, i) => [p, r[(i + 1) % 4]]); return {ends:r, segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
+  if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % 4]]), ...o.map((p, i) => [p, o[(i + 1) % 4]])];
+    return {ends:[...r, ...o, ...G.ridges.flatMap(([a, b]) => [[a[0], a[1]], [b[0], b[1]]])], segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
   if (el.kind === 'col'){ const r = colPoly(el); return {ends:r, segs:r.map((p, i) => [p, r[(i + 1) % 4]]), centers:[el.c], mids:[]}; }
   if (el.kind === 'inst'){ const fr = instFrame(el); if (!fr) return {ends:[]}; const pts = [fr.o];
     if (el.host){ const c = famCut(el); if (c){ const d = [Math.cos(fr.ang), Math.sin(fr.ang)]; pts.push(V.add(fr.o, V.mul(d, -c.w/2)), V.add(fr.o, V.mul(d, c.w/2))); } }

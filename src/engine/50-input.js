@@ -4,7 +4,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7}, slab:{type:'DAL-BA-20'}, vol:{type:'acier', h:0.5}, col:{type:'ba', h:2.7, w:0.25}, comp:{fam:'fenetre-2v', type:1, rot:0}};
+const defs = {wall:{type:'MUR-EXT-01', h:2.7}, slab:{type:'DAL-BA-20'}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4}, vol:{type:'acier', h:0.5}, col:{type:'ba', h:2.7, w:0.25}, comp:{fam:'fenetre-2v', type:1, rot:0}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -121,6 +121,7 @@ function tempEl(a, b){
   const lvl = curLvl, off = offFromZ();
   if (tool === 'wall') return {kind:'wall', type:defs.wall.type, a, b, h:defs.wall.h, lvl, off, flip:false};
   if (tool === 'slab') return {kind:'slab', type:defs.slab.type, p:a, q:b, lvl, off:off ? rnd(off + slabT({type:defs.slab.type})) : 0};
+  if (tool === 'roof') return {kind:'roof', type:defs.roof.type, p:a, q:b, lvl, off:rnd(off + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov};
   if (tool === 'vol') return {kind:'vol', mat:defs.vol.type, p:a, q:b, h:defs.vol.h, lvl, off};
   if (tool === 'col') return {kind:'col', mat:defs.col.type, c:b, w:defs.col.w, d:defs.col.w, h:defs.col.h, lvl, off};
 }
@@ -139,11 +140,11 @@ function updatePreview(){
     const d = V.sub(cur, S), L = V.len(d);
     if (L > 0.005) markGroup.add(lineObj(S, cur, ac));
     if (tool === 'wall' && L > 0.005){ const t = tempEl(S, cur); for (const pc of pieces(t, state.els.concat([t]))) previewGroup.add(pieceMesh(pc, true)); }
-    if ((tool === 'slab' || tool === 'vol') && Math.abs(d[0]) > 0.005 && Math.abs(d[1]) > 0.005){ const t = tempEl(S, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
+    if ((tool === 'slab' || tool === 'vol' || tool === 'roof') && Math.abs(d[0]) > 0.005 && Math.abs(d[1]) > 0.005){ const t = tempEl(S, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
     if ((tool === 'move' || tool === 'copy') && L > 0.005) previewMove(d);
     if (tool === 'rotate') previewRotate(Math.atan2(d[1], d[0]));
     let ang = Math.atan2(d[1], d[0]) * 180 / Math.PI; if (ang < 0) ang += 360;
-    text = (tool === 'slab' || tool === 'vol') ? `${nf(Math.abs(d[0]))} × ${nf(Math.abs(d[1]))} m` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${nf(L)} m · ${nf(ang, 1)}°`;
+    text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${nf(Math.abs(d[0]))} × ${nf(Math.abs(d[1]))} m` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${nf(L)} m · ${nf(ang, 1)}°`;
   } else {
     if (tool === 'col'){ const t = tempEl(null, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
     text = `x ${nf(cur[0])} · y ${nf(cur[1])}${draw.workZ != null && Math.abs(draw.workZ - lvlZ(curLvl)) > 0.001 ? ` · z ${nf(draw.workZ)}` : ''}`;
@@ -203,7 +204,7 @@ const selIds = () => [...new Set([sel, ...multi].filter(Boolean))];
 function movedEl(el, d){
   const m = JSON.parse(JSON.stringify(el)), mv = p => [rnd(p[0] + d[0]), rnd(p[1] + d[1])];
   if (m.kind === 'wall'){ m.a = mv(m.a); m.b = mv(m.b); }
-  else if (m.kind === 'slab' || m.kind === 'vol'){ m.p = mv(m.p); m.q = mv(m.q); }
+  else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ m.p = mv(m.p); m.q = mv(m.q); }
   else if (m.kind === 'col') m.c = mv(m.c);
   else if (m.kind === 'inst'){ if (m.host){ const w = getEl(m.host); if (w){ const {u} = wallAxis(w); m.t = rnd((m.t || 0) + V.dot(d, u)); } } else m.c = mv(m.c); }
   return m;
@@ -211,12 +212,12 @@ function movedEl(el, d){
 function rotatedEl(el, base, ang){
   const m = JSON.parse(JSON.stringify(el)), rp = p => { const r = V.add(base, V.rot(V.sub(p, base), ang)); return [rnd(r[0]), rnd(r[1])]; };
   if (m.kind === 'wall'){ m.a = rp(m.a); m.b = rp(m.b); }
-  else if (m.kind === 'slab' || m.kind === 'vol'){ const r = rect(m.p, m.q).map(rp); m.p = [Math.min(...r.map(p => p[0])), Math.min(...r.map(p => p[1]))]; m.q = [Math.max(...r.map(p => p[0])), Math.max(...r.map(p => p[1]))]; }
+  else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ const r = rect(m.p, m.q).map(rp); m.p = [Math.min(...r.map(p => p[0])), Math.min(...r.map(p => p[1]))]; m.q = [Math.max(...r.map(p => p[0])), Math.max(...r.map(p => p[1]))]; if (m.kind === 'roof' && Math.abs(Math.sin(ang)) > 0.7){ const G = roofGeom(el); m.dir = G.ax ? 'y' : 'x'; } }
   else if (m.kind === 'col'){ m.c = rp(m.c); if (Math.abs(Math.sin(ang)) > 0.7) [m.w, m.d] = [m.d, m.w]; }
   else if (m.kind === 'inst' && !m.host){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI) % 360; }
   return m;
 }
-const rectOnly = () => selIds().some(id => ['slab', 'vol', 'col'].includes(getEl(id)?.kind));
+const rectOnly = () => selIds().some(id => ['slab', 'vol', 'col', 'roof'].includes(getEl(id)?.kind));
 function previewMove(d){ for (const id of selIds()){ const el = getEl(id); if (!el) continue; const m = movedEl(el, d); if (m.kind === 'inst') instMeshes(m, true).forEach(x => previewGroup.add(x)); else pieces(m).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } }
 function previewRotate(a){ if (rectOnly()) a = Math.round(a / (Math.PI / 2)) * (Math.PI / 2); for (const id of selIds()){ const el = getEl(id); if (!el || (el.kind === 'inst' && el.host)) continue; const m = rotatedEl(el, draw.base, a); if (m.kind === 'inst') instMeshes(m, true).forEach(x => previewGroup.add(x)); else pieces(m).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } }
 function applyMove(d, copy){
@@ -276,6 +277,7 @@ const PROMPTS = {
   select:() => 'Sélection : cliquez un élément (Maj pour en ajouter). Clic droit ou deux doigts : déplacer la vue.',
   wall:() => draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
   slab:() => draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
+  roof:() => draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
   vol:() => draw.start ? '<b>Volume</b> : coin opposé, ou <code>L;l</code>' : '<b>Volume</b> : premier coin (ou x;y)',
   col:() => '<b>Poteau</b> : position du centre (ou x;y)',
   comp:() => fam(defs.comp.fam)?.host === 'wall' ? `<b>${esc(fam(defs.comp.fam)?.nom)}</b> : cliquez dans un mur, du côté où elle s'ouvre` : `<b>${esc(fam(defs.comp.fam)?.nom || 'Composant')}</b> : point d'insertion · <kbd>Espace</kbd> pivote de 90°`,
@@ -304,12 +306,15 @@ function syncHud(){
   let opts = null, cur = null, lbl = 'Type';
   if (tool === 'wall'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'wall').map(([k, v]) => [k, v.nom]); cur = defs.wall.type; lbl = 'Mur'; }
   else if (tool === 'slab'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'slab').map(([k, v]) => [k, v.nom]); cur = defs.slab.type; lbl = 'Plancher'; }
+  else if (tool === 'roof'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'roof').map(([k, v]) => [k, v.nom]); cur = defs.roof.type; lbl = 'Toiture'; }
   else if (tool === 'vol' || tool === 'col'){ opts = Object.entries(libMats()).map(([k, v]) => [k, v.nom]).sort((a, b) => a[1].localeCompare(b[1], 'fr')); cur = defs[tool].type; lbl = 'Matériau'; }
   else if (tool === 'comp'){ const F = fam(defs.comp.fam); opts = (F?.types || []).map((t, i) => [i, `${F.nom} · ${t.nom}`]); cur = defs.comp.type; lbl = 'Type'; }
   tp.hidden = !opts;
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
-  hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col');
+  hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col' || tool === 'roof');
   if (!hp.hidden) $('#hIn').value = defs[tool].h;
+  $('#hLbl').textContent = tool === 'roof' ? 'Égout' : 'H'; $('#roofPill').hidden = tool !== 'roof';
+  if (tool === 'roof'){ $('#rShapeIn').value = defs.roof.shape; $('#rPitchIn').value = defs.roof.pitch; }
 }
 function placePoint(pt){
   const S = draw.start;
@@ -320,7 +325,7 @@ function placePoint(pt){
       if (draw.chainFirst && V.eq(pt, draw.chainFirst) && draw.chainN > 1){ cancelDraw(); toast('Contour fermé'); return; }
       draw.start = pt;
     }
-  } else if (tool === 'slab' || tool === 'vol'){
+  } else if (tool === 'slab' || tool === 'vol' || tool === 'roof'){
     if (!S) draw.start = pt;
     else if (Math.abs(pt[0] - S[0]) > 0.01 && Math.abs(pt[1] - S[1]) > 0.01){ const r = rect(S, pt); addEl(tempEl(r[0], r[2])); draw.start = null; draw.workZ = null; }
     else toast('Le rectangle doit avoir deux côtés non nuls');
@@ -339,7 +344,7 @@ function placePoint(pt){
 }
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
-const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
+const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
   deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', di:'measure', r:'measure', selection:'select', v:'select'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
@@ -359,7 +364,7 @@ function runCmd(){
     if (word === 'ze' || word === 'zoom') return fit();
     if (word === 'u' && !draw.start) return undo();
     if (CMDS[word]) return setTool(CMDS[word]);
-    return toast('Commande inconnue. Exemples : MUR, DALLE, DEP, CO, RO, PP, ZE');
+    return toast('Commande inconnue. Exemples : MUR, DALLE, TOIT, DEP, CO, RO, PP, ZE');
   }
   const c = parseCmd(raw);
   if (!c){ if (raw) toast('Saisie non reconnue. Exemples : 4,20 · 4,2<90 · @5;3'); return; }
@@ -374,7 +379,7 @@ function runCmd(){
     if ('polar' in c){ const a = c.ang * Math.PI / 180; const L = Number.isNaN(c.polar) ? 1 : c.polar; pt = [S[0] + L * Math.cos(a), S[1] + L * Math.sin(a)]; }
     else if ('x' in c) pt = [S[0] + c.x, S[1] + c.y];
     else if ('len' in c){
-      if (tool === 'slab' || tool === 'vol'){ toast('Entrez les deux côtés : L;l'); return; }
+      if (tool === 'slab' || tool === 'vol' || tool === 'roof'){ toast('Entrez les deux côtés : L;l'); return; }
       let dir = draw.cursor ? V.sub(draw.cursor, S) : [1, 0]; if (V.len(dir) < 1e-6) dir = [1, 0];
       pt = V.add(S, V.mul(dir, c.len / V.len(dir)));
     }

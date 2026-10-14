@@ -22,7 +22,7 @@ const PRICE_MAT = {
   fibreBoisR:[12, 1.8], fibreBoisS:[8, 1.1], ouate:[5, 0.6], chanvre:[9, 1], liege:[15, 2.2], verreCell:[25, 3], paille:[10, 0.3], pu:[8, 1.2], clt:[40, 9], bois:[20, 4], glulam:[30, 7], osb:[10, 1], bardageBois:[45, 4]
 };
 const PRICE_FIXED = { enduit:28, enduitChaux:35, enduitPlatre:18, chape:22, chapeAnhy:25, carrelage:55, faience:50, parquet:75, stratifie:30, pvcSol:35, moquette:28, resine:45, linoleum:38, pierreSol:110, betonCire:90,
-  tuile:55, ardoise:95, bitume:35, epdm:30, bacAcier:30, gravier:12, terreVeg:45, paraVapeur:4, freinVap:7, paraPluie:5, ba13:12, ba13H:15, ba13F:16, carreauPl:45, fermacell:20 };
+  tuile:55, ardoise:95, bitume:35, epdm:30, bacAcier:30, zinc:95, gravier:12, terreVeg:45, paraVapeur:4, freinVap:7, paraPluie:5, ba13:12, ba13H:15, ba13F:16, carreauPl:45, fermacell:20 };
 const pricePerM2 = (m, e) => PRICE_FIXED[m] != null ? PRICE_FIXED[m] : PRICE_MAT[m] ? PRICE_MAT[m][0] + PRICE_MAT[m][1] * e * 100 : 25;
 
 /* Lot d'une couche de paroi selon sa position (côté extérieur de la structure, structure, côté intérieur) */
@@ -109,6 +109,31 @@ function dqeItems(){
           : isInsul(m) ? `Isolant ${role === 'under' ? (use === 'terrePlein' ? 'sous dallage' : 'en sous-face') : use === 'toiture' ? 'de toiture' : 'sous chape'} : ${lc(M.nom)}` : M.nom;
         add(`S|${lot}|${m}|${Math.round(e * 1000)}|${role}`, lot, des, `ép. ${cm(e)} cm`, 'm²', A, el.lvl, Math.round(pricePerM2(m, e)), kg, co);
       });
+    } else if (el.kind === 'roof'){
+      const C = compo(el.type), Q = roofQty(el), A = Q.slope, layers = C.layers, flat = (el.shape || '2') === '0';
+      const woodAt = layers.findIndex(([m]) => isWoodFrameish(m) || m === 'bois');
+      let plaster = false;
+      layers.forEach(([m, e], i) => {
+        if (isAir(m)) return;
+        const M = mat(m), [kg, co] = layerMass(m, e, A); let lot, des;
+        if (m === 'freinVap' || m === 'paraVapeur'){ lot = '06'; des = `${M.nom} en rampants`; }
+        else if (m === 'paraPluie'){ lot = '04'; des = 'Écran de sous-toiture HPV'; }
+        else if (M.cat === 'Couverture et étanchéité' || m === 'bacAcier' || m === 'zinc'){
+          if (/pluie|hpv/i.test(m + M.nom)){ lot = '04'; des = 'Écran de sous-toiture HPV'; }
+          else { lot = '04'; des = i === layers.length - 1 && m === 'bacAcier' ? 'Bac acier en sous-face' : `Couverture ${lc(M.nom)}${flat ? '' : ` · pente ${n0(roofPitch(el))}°`}`; }
+        } else if (isInsul(m)){ const sark = woodAt >= 0 && woodAt > i; lot = sark ? '04' : '06'; des = sark ? `Isolation par sarking : ${lc(M.nom)}` : `Isolation sous rampants : ${lc(M.nom)}`; }
+        else if (m === 'paraPluie'){ lot = '04'; des = 'Écran de sous-toiture HPV'; }
+        else if (m === 'freinVap' || m === 'paraVapeur'){ lot = '06'; des = `${M.nom} en rampants`; }
+        else if (M.cat === 'Plâtre et plaques'){ lot = '06'; des = `Plafond rampant ${lc(M.nom)}`; plaster = true; }
+        else if (isWoodFrameish(m) || m === 'bois'){ lot = '03'; des = i <= 2 ? `Voligeage / support ${lc(M.nom)}` : `Chevronnage ${lc(M.nom)}`; }
+        else { lot = '04'; des = M.nom; }
+        add(`R|${lot}|${m}|${Math.round(e * 1000)}|${des}`, lot, des, e >= 0.005 ? `ép. ${cm(e)} cm · rampants` : 'surface des rampants', 'm²', A, el.lvl, Math.round(pricePerM2(m, e)), kg, co);
+      });
+      if (!layers.some(([m]) => mat(m).cat === 'Bois et dérivés' && !isWoodFrameish(m) && m !== 'bois') && !flat) add('R|charpente', '03', 'Charpente bois (fermettes industrielles ou traditionnelle)', 'au m² de rampant', 'm²', A, el.lvl, 60);
+      if (Q.eave > 0) add('R|zing', '04', 'Gouttières et descentes (zinguerie)', 'linéaire d\'égout', 'ml', Q.eave, el.lvl, 55);
+      if (Q.ridge > 0) add('R|faitage', '04', 'Faîtage et closoirs', 'linéaire de faîtage', 'ml', Q.ridge, el.lvl, 38);
+      if (Q.gable > 0){ const gm = el.gableMat || 'parpaing', M = mat(gm), kg = (M.rho || 0) * 0.2 * Q.gable; add(`R|pignon|${gm}`, '02', `Pignons en ${lc(M.nom)}`, 'ép. 20 cm, triangles', 'm²', Q.gable, el.lvl, Math.round(pricePerM2(gm, 0.2) + 10), kg, kg * (M.gwp || 0)); }
+      if (plaster) add('P|ceil', '09', 'Peinture sur plafonds', 'impression + 2 couches', 'm²', A, el.lvl, 16);
     } else if (el.kind === 'col'){
       const M = mat(el.mat), v = el.w * el.d * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : '02';
       add(`C|${el.mat}|${n0(el.w * 100)}x${n0(el.d * 100)}`, lot, `Poteau ${lc(M.nom)}`, `section ${n0(el.w * 100)} × ${n0(el.d * 100)} cm`, 'u', 1, el.lvl, lot === '11' ? Math.round(kg * 4.5) : lot === '03' ? Math.round(v * 1400 + 60) : Math.round(v * 600 + 120), kg, kg * (M.gwp || 0));
@@ -165,7 +190,8 @@ $('#pbody').addEventListener('click', e => {
 const DQE_OPTS = [['lots', 'Regrouper par lots (corps d\'état)', true], ['num', 'Numéroter les articles (2.1, 2.2…)', true], ['details', 'Matériaux et épaisseurs dans les désignations', true],
   ['qty', 'Quantités', true], ['unit', 'Unités', true], ['pu', 'Prix unitaires', true], ['total', 'Montant par article', true], ['subtotal', 'Sous-totaux par lot', true],
   ['ttc', 'Total HT, TVA et TTC', true], ['levels', 'Quantités par niveau (une colonne par niveau)', false], ['mass', 'Masses (kg)', false], ['co2', 'Carbone (kg CO₂e)', false],
-  ['matsheet', 'Tableau des matériaux (volumes, masses, carbone)', false], ['header', 'En-tête : projet, lieu, date, rédacteur', true]];
+  ['matsheet', 'Tableau des matériaux (volumes, masses, carbone)', false], ['header', 'En-tête : projet, lieu, date, rédacteur', true],
+  ['recap', 'Récapitulatif par lot en tête du document', true], ['sign', 'Cadre de signatures (PDF)', false]];
 function openDqeExport(){
   const items = dqeItems(), groups = dqeGroups(items), o = {...Object.fromEntries(DQE_OPTS.map(([k, , d]) => [k, d])), ...(state.dqe?.opts || {})};
   const lotsOn = new Set(state.dqe?.lotsOff ? groups.map(g => g.code).filter(c => !state.dqe.lotsOff.includes(c)) : groups.map(g => g.code));
@@ -301,18 +327,54 @@ function dqeXLSX(){
 }
 /* PDF : document HTML mis en page, imprimé par le navigateur (« Enregistrer au format PDF ») */
 function dqeHTML(){
-  const {o, tva, groups, cols} = dqeTable(), ht = groups.reduce((s, g) => s + g.total, 0);
+  const {o, tva, groups, cols} = dqeTable(), ht = groups.reduce((s, g) => s + g.total, 0), D = state.dqe || {}, today = new Date().toLocaleDateString('fr-FR');
+  const logo = document.querySelector('.brand-mark img')?.src || '', site = state.site || {}, wide = cols.length > 7;
+  const isN = key => !['des', 'num', 'u'].includes(key);
   const fmt = (key, v) => typeof v === 'number' ? (key === 'pu' || key === 'tot' ? eur(v) : nf(v, key === 'kg' || key === 'co2' ? 0 : 2)) : esc(v);
-  const body = groups.map(g => `${o.lots ? `<tr class="lot"><td colspan="${cols.length}">${g.code} &nbsp; ${esc(g.name)}</td></tr>` : ''}${g.items.map((it, k) => `<tr>${cols.map(([, key]) => `<td class="${['des', 'num', 'u'].includes(key) ? '' : 'n'}">${fmt(key, cellVal(key, it, g, k, o))}</td>`).join('')}</tr>`).join('')}${o.lots && o.subtotal && o.total ? `<tr class="sub"><td colspan="${cols.length - 1}">Sous-total lot ${g.code}</td><td class="n">${eur(g.total)}</td></tr>` : ''}`).join('');
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(state.dqe?.title || 'DQE')}</title><style>
-    @page{size:A4 landscape;margin:14mm}body{font:10pt/1.35 Inter,Arial,sans-serif;color:#17191E}h1{font-size:17pt;margin:0 0 6px}.meta{color:#5E636C;margin:0 0 14px}
-    table{width:100%;border-collapse:collapse}th{background:#2A2E35;color:#fff;text-align:left;padding:6px;font-size:9pt}td{padding:5px 6px;border-bottom:1px solid #E3E5E8;vertical-align:top}
-    td.n,th.n{text-align:right;white-space:nowrap}tr.lot td{background:#EDEFF2;font-weight:700;padding-top:8px}tr.sub td{font-weight:700;background:#E8F2F9}
-    .tot{margin-top:12px;margin-left:auto;width:320px}.tot td{font-weight:600}.tot tr:last-child td{font-size:12pt;font-weight:800}.note{color:#5E636C;font-size:8.5pt;margin-top:14px}</style></head><body>
-    ${o.header ? `<h1>${esc(state.dqe?.title || 'DQE')}</h1><p class="meta">Projet : <b>${esc(state.name)}</b>${state.site?.label ? ' · Lieu : ' + esc(state.site.label) : ''}${state.dqe?.mo ? ' · Maître d\'ouvrage : ' + esc(state.dqe.mo) : ''}${state.dqe?.by ? ' · Rédigé par : ' + esc(state.dqe.by) : ''} · ${new Date().toLocaleDateString('fr-FR')}</p>` : ''}
-    <table><thead><tr>${cols.map(([n, key]) => `<th class="${['des', 'num', 'u'].includes(key) ? '' : 'n'}">${esc(n)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>
-    ${o.ttc && o.total ? `<table class="tot"><tr><td>Total HT</td><td class="n">${eur(ht)}</td></tr><tr><td>TVA ${nf(tva, 1)} %</td><td class="n">${eur(ht * tva / 100)}</td></tr><tr><td>Total TTC</td><td class="n">${eur(ht * (1 + tva / 100))}</td></tr></table>` : ''}
-    <p class="note">Quantités issues de la maquette ARCHIPLAN (ouvertures déduites). Prix unitaires indicatifs à valider par l'entreprise.</p></body></html>`;
+  const cell = (key, it, g, k) => { const v = cellVal(key, it, g, k, o);
+    if (key === 'des'){ const d = o.details && it.det ? `<small>${esc(it.det)}</small>` : ''; return `<td class="des">${esc(it.des)}${d}</td>`; }
+    return `<td class="${isN(key) ? 'n' : ''} c-${key.replace(/\d+/, '')}">${fmt(key, v)}</td>`; };
+  const colgroup = `<colgroup>${cols.map(([, key]) => `<col class="w-${key.replace(/\d+/, '')}">`).join('')}</colgroup>`;
+  const thead = `<thead><tr>${cols.map(([n, key]) => `<th class="${isN(key) ? 'n' : ''}">${esc(n)}</th>`).join('')}</tr></thead>`;
+  const lotTable = g => `<section class="lot">${o.lots ? `<h2><span class="code">${g.code}</span>${esc(g.name)}${o.total ? `<span class="st">${eur(g.total)} HT</span>` : ''}</h2>` : ''}
+    <table class="det">${colgroup}${thead}<tbody>${g.items.map((it, k) => `<tr>${cols.map(([, key]) => cell(key, it, g, k)).join('')}</tr>`).join('')}</tbody>
+    ${o.lots && o.subtotal && o.total ? `<tfoot><tr><td colspan="${cols.length - 1 - (o.mass ? 1 : 0) - (o.co2 ? 1 : 0)}">Sous-total lot ${g.code} · ${esc(g.name)}</td><td class="n">${eur(g.total)}</td>${o.mass ? '<td></td>' : ''}${o.co2 ? '<td></td>' : ''}</tr></tfoot>` : ''}</table></section>`;
+  const info = [['Projet', state.name], site.label && ['Lieu', site.label], site.zone && ['Zone climatique', `${site.zone}${site.alt != null ? ` · altitude ${n0(site.alt)} m` : ''}`], D.mo && ['Maître d\'ouvrage', D.mo], D.by && ['Rédigé par', D.by], ['Date', today]].filter(Boolean);
+  const recap = o.recap !== false && o.lots && o.total && groups.length > 1 ? `<section class="recap"><h3>Récapitulatif par lot</h3><table><thead><tr><th>Lot</th><th>Désignation</th><th class="n">Articles</th><th class="n">Montant € HT</th><th class="n">Part</th></tr></thead><tbody>
+    ${groups.map(g => `<tr><td class="code2">${g.code}</td><td>${esc(g.name)}</td><td class="n">${g.items.length}</td><td class="n">${eur(g.total)}</td><td class="n"><span class="bar"><i style="width:${ht ? Math.round(g.total / ht * 100) : 0}%"></i></span>${ht ? nf(g.total / ht * 100, 1) : '0'} %</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="3">Total HT</td><td class="n">${eur(ht)}</td><td class="n">100 %</td></tr></tfoot></table></section>` : '';
+  const totals = o.ttc && o.total ? `<table class="tot"><tr><td>Total HT</td><td class="n">${eur(ht)}</td></tr><tr><td>TVA ${nf(tva, 1)} %</td><td class="n">${eur(ht * tva / 100)}</td></tr><tr class="ttc"><td>Total TTC</td><td class="n">${eur(ht * (1 + tva / 100))}</td></tr></table>` : '';
+  const sign = o.sign ? `<div class="sign"><div><b>Le maître d'ouvrage</b><span>${esc(D.mo || '')}</span><em>Date, mention « Bon pour accord » et signature</em></div><div><b>L'entreprise</b><span></span><em>Date, cachet et signature</em></div></div>` : '';
+  const title = esc(D.title || 'DQE · ' + state.name);
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${title}</title><style>
+    @page{size:A4 ${wide ? 'landscape' : 'portrait'};margin:16mm 14mm 18mm;@bottom-left{content:"${title.replace(/"/g, '')}";font:8pt Arial,sans-serif;color:#8A8F98}@bottom-right{content:"Page " counter(page) " / " counter(pages);font:8pt Arial,sans-serif;color:#8A8F98}}
+    *{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{margin:0;font:9.5pt/1.4 Inter,"Segoe UI",Arial,sans-serif;color:#1D2026}
+    .hd{display:flex;align-items:center;gap:14px;padding-bottom:12px;border-bottom:2px solid #1D2026}
+    .hd img{width:44px;height:44px;border-radius:10px}.hd .t{flex:1}.hd .k{font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#6B7079;font-weight:700}
+    .hd h1{margin:2px 0 0;font-size:18pt;line-height:1.15;letter-spacing:-.01em}.hd .r{text-align:right;font-size:8.5pt;color:#6B7079}.hd .r b{display:block;font-size:13pt;color:#1D2026}
+    .info{display:grid;grid-template-columns:repeat(${info.length === 4 ? 4 : Math.min(3, info.length)},1fr);gap:0;margin:14px 0 18px;border:1px solid #DADDE2;border-radius:8px;overflow:hidden}
+    .info{margin:14px 0 18px}.info div{padding:8px 11px;border-right:1px solid #DADDE2;border-bottom:1px solid #DADDE2}.info span{display:block;font-size:7.5pt;text-transform:uppercase;letter-spacing:.08em;color:#7A7F88;font-weight:700}.info b{font-weight:600}
+    h3{font-size:10.5pt;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:#4A4F57}
+    table{width:100%;border-collapse:collapse}th{font-size:7.8pt;text-transform:uppercase;letter-spacing:.05em;color:#5C616A;text-align:left;padding:5px 6px;border-bottom:1.5px solid #1D2026;font-weight:700}
+    td{padding:5px 6px;border-bottom:1px solid #E6E8EB;vertical-align:top}td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    thead{display:table-header-group}tfoot{display:table-row-group}tr{break-inside:avoid}
+    .recap{margin-bottom:20px;break-inside:avoid}.recap tbody tr:nth-child(even) td{background:#F6F7F8}.recap tfoot td{font-weight:800;border-top:1.5px solid #1D2026;border-bottom:0;font-size:10.5pt}
+    .code2{font-weight:700;color:#6B7079;width:40px}.bar{display:inline-block;width:46px;height:5px;background:#E6E8EB;border-radius:3px;margin-right:6px;vertical-align:middle;overflow:hidden}.bar i{display:block;height:100%;background:#E2861B}
+    .lot{margin-top:16px}.lot h2{display:flex;align-items:center;gap:9px;margin:0 0 2px;padding:7px 10px;background:#1D2026;color:#fff;font-size:10.5pt;border-radius:6px 6px 0 0;break-after:avoid}
+    .lot h2 .code{background:#E2861B;color:#fff;border-radius:4px;padding:1px 6px;font-size:9pt}.lot h2 .st{margin-left:auto;font-weight:600;font-size:9.5pt;opacity:.9}
+    td.des small{display:block;color:#7A7F88;font-size:8pt;margin-top:1px}td.c-num{color:#6B7079;white-space:nowrap}td.c-tot{font-weight:600}
+    .det tbody tr:nth-child(even) td{background:#FAFAFB}.det tfoot td{font-weight:700;background:#F1F2F4;border-bottom:0}
+    col.w-num{width:44px}col.w-u{width:34px}col.w-q,col.w-pu,col.w-lvl{width:62px}col.w-tot{width:84px}col.w-kg,col.w-co2{width:62px}
+    .end{display:flex;gap:18px;align-items:flex-start;margin-top:18px;break-inside:avoid}.end .note{flex:1;color:#6B7079;font-size:8pt;margin:0}
+    .tot{width:290px;border:1.5px solid #1D2026;border-radius:8px;border-collapse:separate;overflow:hidden}.tot td{border-bottom:1px solid #E6E8EB;padding:7px 10px;font-weight:600}.tot .ttc td{background:#1D2026;color:#fff;font-size:12pt;font-weight:800;border:0}
+    .sign{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;break-inside:avoid}.sign div{border:1px solid #DADDE2;border-radius:8px;padding:10px 12px;height:110px;display:flex;flex-direction:column}.sign span{color:#4A4F57}.sign em{margin-top:auto;font-size:7.5pt;color:#8A8F98}
+    .foot{margin-top:14px;font-size:7.5pt;color:#9A9FA7;text-align:center}</style></head><body>
+    ${o.header ? `<header class="hd">${logo ? `<img src="${logo}" alt="">` : ''}<div class="t"><div class="k">Détail quantitatif estimatif</div><h1>${title}</h1></div>${o.total ? `<div class="r">Montant ${o.ttc ? 'TTC' : 'HT'}<b>${eur(o.ttc ? ht * (1 + tva / 100) : ht)}</b>${groups.length} lot${groups.length > 1 ? 's' : ''} · ${groups.reduce((s, g) => s + g.items.length, 0)} articles</div>` : ''}</header>
+    <div class="info">${info.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
+    ${recap}${groups.map(lotTable).join('')}
+    <div class="end"><p class="note">Quantités issues de la maquette numérique ARCHIPLAN (ouvertures déduites, rampants en vraie grandeur). Prix unitaires indicatifs en euros hors taxes, à valider par les entreprises. Document non contractuel.</p>${totals}</div>
+    ${sign}<p class="foot">Établi avec ARCHIPLAN · Studio Prism · ${today}</p></body></html>`;
 }
 function printDqe(){
   const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);

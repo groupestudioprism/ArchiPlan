@@ -211,7 +211,7 @@ const FirebaseAuth = {
     b.set(lref, {userId:u.uid, productId:k.productId, productName:k.productName, licenseType:k.licenseType, status:'active', activatedAt:now,
       expiresAt:k.expiresAt || (k.durationDays ? TS.fromMillis(Date.now() + k.durationDays * 864e5) : null), keyId:id, orgId:k.orgId || '',
       createdAt:prev?.createdAt || now, updatedAt:now});
-    if (k.orgId) b.update(this.userRef(u.uid), {orgId:k.orgId, orgName:k.orgName, orgKeyId:id, updatedAt:now});
+    if (k.orgId) b.update(this.userRef(u.uid), {orgId:k.orgId, orgName:k.orgName, orgKeyId:id, orgRole:k.role || '', orgClass:k.classe || '', updatedAt:now});
     await b.commit(); return k;
   },
   async getProfile(u){
@@ -706,7 +706,7 @@ function enterApp(msg){
   const wasPending = access.level === 'pending';
   accessReady = refreshAccess();
   if (ctx.libFor !== me.uid){ ctx.libFor = me.uid; loadUserLib(); }
-  accessReady.then(a => { if (wasPending && a.level === 'discovery' && !ctx.discShown && root().hidden && !ctx.pendingLink){ ctx.discShown = true; show('licence', {reason:'welcome'}); } });
+  accessReady.then(() => { if (typeof renderHome === 'function') renderHome(); });   // l'offre gratuite est présentée dans « Mes projets » (bandeau), sans écran intermédiaire
   // Après le code PIN : l'accueil (mes projets) ; retour direct à la maquette si on y était (verrouillage, réglages…)
   if (ctx.where === 'app'){ const hh = $a('#home'); if (hh) hh.inert = false; return; }
   showHome();

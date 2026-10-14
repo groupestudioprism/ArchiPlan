@@ -20,6 +20,8 @@ function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<opt
 $('#lvlSel').addEventListener('change', e => { curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
+$('#rShapeIn').addEventListener('change', e => { defs.roof.shape = e.target.value; updatePreview(); });
+$('#rPitchIn').addEventListener('change', e => { const v = num(e.target.value); if (v >= 3 && v <= 70) defs.roof.pitch = v; else e.target.value = defs.roof.pitch; updatePreview(); });
 $('#stepSel').addEventListener('change', e => { step = +e.target.value; positionGrid(); dirty = true; });
 $('#cmdOk').addEventListener('click', runCmd);
 $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!e.target.value.trim() && tool === 'wall' && draw.start) cancelDraw(); else runCmd(); } else if (e.key === 'Escape'){ e.target.value = ''; e.target.blur(); cancelDraw(); } });
@@ -67,7 +69,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 
@@ -142,7 +144,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {state: () => state, sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};
 
 /* ---------- Paramètres d'affichage : couleur de fond, grille, cotes, arêtes, ombres ---------- */
@@ -152,7 +154,7 @@ function renderViewMenu(){
   m.innerHTML = `<div class="lbl">Couleur du fond</div><div class="bgsw">${BG_PRESETS.map(([c, n]) => `<button type="button" class="bgs${c === cur ? ' on' : ''}" data-bg="${c}" title="${n}" style="background:${c || '#FFFFFF'}" aria-label="${n}"></button>`).join('')}
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
     <hr><div class="lbl">Afficher</div>
-    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }

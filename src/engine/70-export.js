@@ -23,6 +23,8 @@ function buildCSV(){
   for (const [k, w] of Object.entries(q.walls)) lines.push(`${compo(k).nom};${d(w.ml)};${d(w.m2)};${d(w.net)}`);
   lines.push('', 'Composition de plancher;Surface (m2)');
   for (const [k, s] of Object.entries(q.slabs)) lines.push(`${compo(k).nom};${d(s.m2)}`);
+  lines.push('', 'Composition de toiture;Rampants (m2);Projection (m2);Égouts (ml);Faîtages (ml)');
+  for (const [k, r] of Object.entries(q.roofs || {})) lines.push(`${compo(k).nom};${d(r.m2)};${d(r.plan)};${d(r.eave)};${d(r.ridge)}`);
   lines.push('', 'Famille;Type;Quantité;Surface de baie (m2)');
   for (const f of q.fams){ const F = fam(f.fam); lines.push(`${F?.nom || f.fam};${F?.types?.[f.type]?.nom || ''};${f.n};${d(f.area)}`); }
   return '﻿' + lines.join('\r\n');
@@ -70,8 +72,23 @@ function buildIFC(){
     return E(`IFCEXTRUDEDAREASOLID(${prof},${pos},${Z},${R(h)})`);
   };
   const shape = items => E(`IFCPRODUCTDEFINITIONSHAPE($,$,(${E(`IFCSHAPEREPRESENTATION(${BODY},'Body','${items.length > 1 ? 'CSG' : 'SweptSolid'}',(${items.join(',')}))`)}))`);
+  const brep = (top, ext, zRef) => { // prisme quelconque en IfcFacetedBrep (pans de toiture, pignons)
+    const P = q => E(`IFCCARTESIANPOINT((${R(q[0])},${R(q[1])},${R(q[2] - zRef)}))`), T = top.map(P), B = top.map(q => P([q[0] + ext[0], q[1] + ext[1], q[2] + ext[2]])), n = T.length;
+    const face = ids => E(`IFCFACE((${E(`IFCFACEOUTERBOUND(${E(`IFCPOLYLOOP((${ids.join(',')}))`)},.T.)`)}))`);
+    const faces = [face(T), face(B.slice().reverse())]; for (let i = 0; i < n; i++){ const j = (i + 1) % n; faces.push(face([T[i], B[i], B[j], T[j]])); }
+    return E(`IFCFACETEDBREP(${E(`IFCCLOSEDSHELL((${faces.join(',')}))`)})`);
+  };
+  const brepShape = items => E(`IFCPRODUCTDEFINITIONSHAPE($,$,(${E(`IFCSHAPEREPRESENTATION(${BODY},'Body','Brep',(${items.join(',')}))`)}))`);
+  for (const el of state.els.filter(e => e.kind === 'roof')){
+    const st = storeys[el.lvl], rel = lvlZ(el.lvl), G = roofGeom(el), C = compo(el.type), T = C.layers.reduce((s, [, e]) => s + e, 0) / Math.cos(G.a);
+    const items = G.pans.map(pan => brep(pan, [0, 0, -T], rel));
+    const eid = E(`IFCSLAB('${guid()}',$,${ifcS(`Toiture ${el.id}`)},${ifcS(C.nom)},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape(items)},${ifcS(String(el.id))},.ROOF.)`);
+    E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${eid}),${lset(el.type, C.nom, C.layers)})`); st.items.push(eid);
+    G.gables.forEach((g, i) => { const gid = E(`IFCWALL('${guid()}',$,${ifcS(`Pignon ${el.id}.${i + 1}`)},$,$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape([brep(g.tri, [g.dir[0] * 0.2, g.dir[1] * 0.2, 0], rel)])},$,.STANDARD.)`);
+      E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${gid}),${imat(el.gableMat || 'parpaing')})`); st.items.push(gid); });
+  }
   const wallIds = {};
-  for (const el of state.els.filter(e => e.kind !== 'inst')){
+  for (const el of state.els.filter(e => e.kind !== 'inst' && e.kind !== 'roof')){
     const st = storeys[el.lvl], rel = lvlZ(el.lvl);
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }
@@ -142,7 +159,7 @@ function buildGLB(){
         for (const so of instSolids(el)) (geoBy[so.m] ??= []).push(solidGeo(so));
       } else {
         g.name = `${KIND_NAME[el.kind]} ${el.id}`;
-        if (el.kind === 'wall' || el.kind === 'slab'){ const C = compo(el.type), Lr = layersInToOut(el), th = thermal(Lr, elUse(el)); Object.assign(info, {composition:C.nom, couches:C.layers.map(([m, e]) => ({materiau:mat(m).nom, epaisseur:e})), U:Math.round(th.U * 1000) / 1000, lot:C.lot}); }
+        if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){ const C = compo(el.type), Lr = layersInToOut(el), th = thermal(Lr, elUse(el)); Object.assign(info, {composition:C.nom, couches:C.layers.map(([m, e]) => ({materiau:mat(m).nom, epaisseur:e})), U:Math.round(th.U * 1000) / 1000, lot:C.lot}); }
         else Object.assign(info, {materiau:mat(el.mat).nom});
         for (const pc of pieces(el)) (geoBy[pc.mat] ??= []).push(pieceGeo(pc));
       }
@@ -153,7 +170,11 @@ function buildGLB(){
       g.userData = {archiplan:info};
       (lv[el.lvl] || root).add(g);
     }
-    const T = state.site?.terrain; if (T && DISPLAY.terrain !== false){ const vw = view; view = '3d'; buildTerrain(); view = vw; const tm = terrainGroup.children.find(o => o.isMesh); if (tm){ const t = new THREE.Mesh(tm.geometry.clone(), new THREE.MeshStandardMaterial({color:0x6F8A5A, roughness:1})); t.name = 'Terrain'; t.userData = {archiplan:{type:'terrain', taille:T.size, altitudeOrigine:T.alt0, source:'IGN RGE ALTI'}}; root.add(t); } buildTerrain(); }
+    if ((state.site?.terrain && DISPLAY.terrain !== false) || (state.site?.env && DISPLAY.env !== false)){
+      const vw = view; view = '3d'; siteKey = ''; buildTerrain(); view = vw; const T = state.site.terrain, E = state.site.env, sg = new THREE.Group(); sg.name = 'Site';
+      terrainGroup.traverse(o => { if (!o.isMesh || o.isSprite) return; const m = o.material, t = new THREE.Mesh(o.geometry.clone(), new THREE.MeshStandardMaterial({color:m.color?.getHex?.() ?? 0x888888, vertexColors:!!m.vertexColors, roughness:1, side:m.side})); t.name = o.name || 'Site';
+        t.userData = {archiplan:o.userData.terrain ? {type:'terrain', taille:T.size, altitudeOrigine:T.alt0, source:'IGN RGE ALTI'} : o.userData.env ? {type:'environnement', objet:o.userData.env, source:E?.src || ''} : {type:'socle'}}; sg.add(t); });
+      root.add(sg); siteKey = ''; buildTerrain(); }
     if (state.site?.lat) root.userData.archiplan.lieu = {adresse:state.site.label || '', latitude:state.site.lat, longitude:state.site.lon, altitude:state.site.alt ?? null, zoneClimatique:state.site.zone || ''};
     new GLTFExporter().parse(root, r => { disposeGroup(root); res(new Uint8Array(r)); }, err => rej(err), {binary:true, maxTextureSize:1024, onlyVisible:true});
   });

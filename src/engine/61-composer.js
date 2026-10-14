@@ -10,12 +10,12 @@ const PATTERNS = {plain:'Uni', concrete:'Béton', plaster:'Enduit / plâtre', br
 function openComposer({id, apply}){
   const base = id ? compo(id) : {nom:'Nouvelle composition', kind:'wall', lot:'Gros œuvre', layers:[['enduit', 0.015], ['parpaing', 0.2], ['laine', 0.1], ['ba13', 0.013]]};
   const owner = id ? libOwner('compos', id) : 'new';
-  const W = {nom:owner === 'base' ? base.nom : base.nom, kind:base.kind, lot:base.lot, layers:base.layers.map(l => [...l]), use:base.kind === 'wall' ? 'mur' : 'plancherBas', cond:{ti:20, hi:50, te:-5, he:80}};
-  const target = apply ? getEl(apply) : null; if (target && target.kind === 'slab') W.use = elUse(target);
+  const W = {nom:owner === 'base' ? base.nom : base.nom, kind:base.kind, lot:base.lot, layers:base.layers.map(l => [...l]), use:base.kind === 'wall' ? 'mur' : base.kind === 'roof' ? 'toiture' : 'plancherBas', cond:{ti:20, hi:50, te:-5, he:80}};
+  const target = apply ? getEl(apply) : null; if (target && (target.kind === 'slab' || target.kind === 'roof')) W.use = elUse(target);
   const html = `<header class="ed-h"><div><span class="eyebrow">Composition de paroi</span><input class="ed-name" id="cpName" value="${esc(W.nom)}" aria-label="Nom de la composition"></div><button class="ib" data-close aria-label="Fermer">✕</button></header>
     <div class="ed-body cp">
       <section class="cp-l">
-        <div class="cp-row"><label class="f"><span>Type</span><span class="in"><select id="cpKind"><option value="wall"${W.kind === 'wall' ? ' selected' : ''}>Mur / cloison</option><option value="slab"${W.kind === 'slab' ? ' selected' : ''}>Plancher / toiture</option></select></span></label>
+        <div class="cp-row"><label class="f"><span>Type</span><span class="in"><select id="cpKind"><option value="wall"${W.kind === 'wall' ? ' selected' : ''}>Mur / cloison</option><option value="slab"${W.kind === 'slab' ? ' selected' : ''}>Plancher / toiture-terrasse</option><option value="roof"${W.kind === 'roof' ? ' selected' : ''}>Toiture en pente</option></select></span></label>
           <label class="f"><span>Usage (calculs)</span><span class="in"><select id="cpUse"></select></span></label>
           <label class="f"><span>Lot</span><span class="in"><select id="cpLot">${LOT_ORDER.map(l => `<option${l === W.lot ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></span></label></div>
         <p class="hint" id="cpOrder"></p>
@@ -30,7 +30,7 @@ function openComposer({id, apply}){
       <button class="btn" data-close>Annuler</button>${target ? '<button class="btn" id="cpApply">Enregistrer et appliquer à l\'élément</button>' : ''}<button class="btn primary" id="cpSave">${owner === 'perso' ? 'Enregistrer' : 'Enregistrer dans ma bibliothèque'}</button></footer>`;
   const d = openEDlg(html, 'wide');
   const useSel = d.querySelector('#cpUse');
-  const syncUse = () => { const opts = W.kind === 'wall' ? [['mur', USES.mur]] : Object.entries(USES).filter(([k]) => k !== 'mur'); if (!opts.some(([k]) => k === W.use)) W.use = opts[0][0];
+  const syncUse = () => { const opts = W.kind === 'wall' ? [['mur', USES.mur]] : W.kind === 'roof' ? [['toiture', USES.toiture]] : Object.entries(USES).filter(([k]) => k !== 'mur'); if (!opts.some(([k]) => k === W.use)) W.use = opts[0][0];
     useSel.innerHTML = opts.map(([k, n]) => `<option value="${k}"${k === W.use ? ' selected' : ''}>${esc(n)}</option>`).join('');
     d.querySelector('#cpOrder').textContent = W.kind === 'wall' ? 'Couches de l\'extérieur (en haut) vers l\'intérieur (en bas).' : 'Couches du dessus (en haut) vers le dessous (en bas).'; };
   const opts = matOptions();
@@ -63,8 +63,8 @@ function openComposer({id, apply}){
     if (USER_LIB.compos[cid] && state.lib.compos[cid]) state.lib.compos[cid] = JSON.parse(JSON.stringify(data));
     saveUserLib(); return cid;
   };
-  d.querySelector('#cpSave').onclick = () => { const cid = persist(); if (W.kind === 'wall') defs.wall.type = cid; else defs.slab.type = cid; closeEDlg(); pushHist(); embedUsedLib(); rebuild(); syncHud(); toast('Composition enregistrée'); };
-  const ap = d.querySelector('#cpApply'); if (ap) ap.onclick = () => { const cid = persist(); pushHist(); const el = getEl(apply); if (el && ((el.kind === 'wall') === (W.kind === 'wall'))){ el.type = cid; if (el.kind === 'slab') el.use = W.use; } embedUsedLib(); closeEDlg(); rebuild(); toast('Composition appliquée'); };
+  d.querySelector('#cpSave').onclick = () => { const cid = persist(); if (W.kind === 'wall') defs.wall.type = cid; else if (W.kind === 'roof') defs.roof.type = cid; else defs.slab.type = cid; closeEDlg(); pushHist(); embedUsedLib(); rebuild(); syncHud(); toast('Composition enregistrée'); };
+  const ap = d.querySelector('#cpApply'); if (ap) ap.onclick = () => { const cid = persist(); pushHist(); const el = getEl(apply); if (el && (el.kind === W.kind || (el.kind !== 'wall' && W.kind !== 'wall'))){ el.type = cid; if (el.kind === 'slab') el.use = W.use; } embedUsedLib(); closeEDlg(); rebuild(); toast('Composition appliquée'); };
   syncUse(); renderLayers(); calc();
 }
 function renderResults(box, W){

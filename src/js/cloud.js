@@ -377,6 +377,14 @@ function folderHtml(f, shared){
   return `<div class="hfold${f.shared && !shared ? ' sh' : ''}${f.locked ? ' locked' : ''}" data-folder="${esc(f.id)}" data-shared="${shared ? 1 : ''}" tabindex="0">${f.locked ? ICON.lock : ICON.folder}<div><b>${esc(f.name)}</b><small>${f.locked ? 'Email à confirmer' : sub}</small></div>
     ${f.shared && !shared ? `<span class="hb2" title="Dossier partagé">${ICON.share}</span>` : ''}<button type="button" class="hdots" data-fmenu="${esc(f.id)}" data-shared="${shared ? 1 : ''}" aria-label="Gérer le dossier ${esc(f.name)}">${ICON.dots}</button></div>`;
 }
+/* Bandeau « offre gratuite » dans Mes projets (au lieu d'un écran à chaque ouverture) ; masquable */
+function renderOffer(){
+  const el = $a('#homeOffer'); if (!el) return;
+  const hide = planKey() !== 'free' || access.level === 'pending' || !me || store.get('ap.offerHide.' + me.uid);
+  el.hidden = !!hide; if (hide) return;
+  el.innerHTML = `<div class="ho-in"><div><b>Offre gratuite</b><span>Tous les outils de modélisation, 10 Mo de cloud, 5 dossiers et 3 dossiers partagés. Les exports (Archi Vision, IFC, DQE, images) demandent une licence ARCHIPLAN.</span></div>
+    <div class="ho-a"><a class="ho-b" href="${OFFERS_URL}" target="_blank" rel="noopener">Voir les offres</a><button type="button" class="ho-b" data-hact="key">J'ai une clé de licence</button><button type="button" class="ho-x" data-hact="offer-hide" aria-label="Masquer">✕</button></div></div>`;
+}
 function renderHome(){
   const body = $a('#homeBody'); if (!body) return;
   $a('#homeTabs').querySelectorAll('[data-htab]').forEach(b => b.setAttribute('aria-selected', b.dataset.htab === H.tab));
@@ -384,7 +392,7 @@ function renderHome(){
   const inShared = H.tab === 'shared' && H.sharedFolder, sf = inShared ? (H.shared?.folders || []).find(f => f.id === H.sharedFolder) : null;
   const canCreate = canCloud() && (H.tab === 'mine' || (sf && sf.role === 'edit'));
   $a('#homeNewP').disabled = !canCreate; $a('#homeImport').disabled = !canCreate; $a('#homeNewF').disabled = !(canCloud() && H.tab === 'mine' && !curFolderShared());
-  renderQuota();
+  renderQuota(); renderOffer();
   const sub = $a('#homeSub'); if (sub) sub.textContent = H.tab === 'mine' ? 'Vos maquettes s\'enregistrent toutes seules dans le cloud Studio Prism.' : 'Les projets et dossiers que l\'on vous a partagés.';
   if (H.loading && !(H.tab === 'mine' ? H.mine : H.shared)){ body.innerHTML = `<div class="hgrid">${'<div class="hcard sk"><div class="hthumb"></div><div class="hmeta"><b></b><span></span></div></div>'.repeat(4)}</div>`; return; }
   if (H.err){ body.innerHTML = `<div class="hempty"><p>${esc(H.err)}</p><button type="button" class="ap-btn alt" data-hact="reload">Réessayer</button></div>`; return; }
@@ -635,6 +643,7 @@ $a('#homeFile').addEventListener('change', e => {
 });
 $a('#homeLic').addEventListener('click', () => show('licence'));
 $a('#homeQuota').addEventListener('click', e => { if (e.target.closest('[data-hact="upgrade"]')) show('licence'); });
+$a('#homeOffer').addEventListener('click', e => { const a = e.target.closest('[data-hact]'); if (!a) return; if (a.dataset.hact === 'key') show('licence'); if (a.dataset.hact === 'offer-hide'){ store.set('ap.offerHide.' + me.uid, 1); renderOffer(); } });
 $a('#homeBody').addEventListener('click', async e => {
   const t = e.target;
   const pm = t.closest('[data-menu]'); if (pm){ e.stopPropagation(); const p = findP(pm.dataset.menu, !!pm.dataset.shared); if (p) projectMenu(pm, p, !!pm.dataset.shared); return; }

@@ -1,10 +1,11 @@
 /* ============ Panneau : propriétés, bibliothèque, métré ============ */
 let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '';
 const USES = {mur:'Mur extérieur', plancherBas:'Plancher bas (vide sanitaire, extérieur)', terrePlein:'Dallage sur terre-plein', plancherInt:'Plancher intermédiaire', toiture:'Toiture / plancher haut'};
-const elUse = el => el.kind === 'wall' ? 'mur' : (el.use || (el.lvl === 0 ? 'terrePlein' : 'plancherInt'));
+const elUse = el => el.kind === 'wall' ? 'mur' : el.kind === 'roof' ? 'toiture' : (el.use || (el.lvl === 0 ? 'terrePlein' : 'plancherInt'));
 // couches côté intérieur → extérieur pour les calculs
 function layersInToOut(el){
   if (el.kind === 'wall') return wallLayers(el).slice().reverse();         // murs : la composition est saisie extérieur → intérieur
+  if (el.kind === 'roof') return compo(el.type).layers.slice().reverse();   // toitures : couverture (dessus) → parement (dessous)
   const L = compo(el.type).layers.slice();                                   // planchers : haut → bas
   return elUse(el) === 'toiture' ? L.reverse() : L;
 }
@@ -68,7 +69,7 @@ function renderProps(){
       <div class="grp"><h3>Raccourcis</h3><p class="hint"><kbd>V</kbd> sélection · <kbd>M</kbd> mur · <kbd>D</kbd> dalle · <kbd>P</kbd> poteau · <kbd>B</kbd> volume · <kbd>F</kbd> composant · <kbd>U</kbd> pousser/tirer · <kbd>G</kbd> déplacer · <kbd>C</kbd> copier · <kbd>O</kbd> rotation · <kbd>R</kbd> mesure · <kbd>F3</kbd> accroches · <kbd>F8</kbd> ortho · <kbd>F10</kbd> polaire · <kbd>F9</kbd> grille · <kbd>Z</kbd> zoom étendu.</p></div></details>`;
   }
   const {v, m} = elStats(el);
-  const lot = el.kind === 'wall' || el.kind === 'slab' ? compo(el.type).lot : el.kind === 'inst' ? famLot(fam(el.fam)) : el.kind === 'vol' ? 'Industrie' : 'Gros œuvre';
+  const lot = el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof' ? compo(el.type).lot : el.kind === 'inst' ? famLot(fam(el.fam)) : el.kind === 'vol' ? 'Industrie' : 'Gros œuvre';
   const title = el.kind === 'inst' ? esc(fam(el.fam)?.nom || 'Composant') : `${KIND_NAME[el.kind]} ${el.id}`;
   let h = `<div class="ph"><h2>${title}</h2><span class="tag">${esc(lot)}</span></div><div class="fields">`;
   if (el.kind === 'wall'){
@@ -81,6 +82,18 @@ function renderProps(){
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(T * 100, 1)} cm</dd><dt>Surface brute</dt><dd>${nf(L * el.h)} m²</dd><dt>Ouvertures</dt><dd>${ops.length}</dd><dt>Volume net</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, L * el.h, true)}</div>
       <div class="btns"><button class="btn" data-act="flip">Inverser les faces</button><button class="btn" data-act="add-opening">+ Ouverture</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+  } else if (el.kind === 'roof'){
+    const layers = compo(el.type).layers, Q = roofQty(el), r = rect(el.p, el.q);
+    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'roof').map(([k, t]) => [k, t.nom]), el.type);
+    h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
+    h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false) + field('Débord', 'rov', el.ov ?? 0.4, 'm');
+    h += field('Hauteur d\'égout', 'off', el.off ?? 2.7, 'm') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false);
+    h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
+    h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons maçonnés (2 pans et appentis)</label>`;
+    h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
+      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}<dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
+      <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Q.slope, false)}</div>
+      <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers;
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
@@ -156,7 +169,7 @@ function renderLib(){
 
 /* ---------- métré ---------- */
 function quantities(){
-  const mats = {}, walls = {}, slabs = {}, fams = {};
+  const mats = {}, walls = {}, slabs = {}, roofs = {}, fams = {};
   const addM = (lot, m, v) => { const k = lot + '|' + m; mats[k] ??= {lot, mat:m, v:0}; mats[k].v += v; };
   for (const el of state.els){
     if (el.kind === 'inst'){ const F = fam(el.fam); for (const so of instSolids(el)) addM(famLot(F), so.m, solidVol(so));
@@ -164,8 +177,9 @@ function quantities(){
     for (const pc of pieces(el)) addM(pc.lot, pc.mat, area(pc.poly) * pc.h);
     if (el.kind === 'wall'){ const L = wallAxis(el).L, ops = wallOpenings(el).reduce((s, o) => s + (o.t1 - o.t0) * (o.z1 - o.z0), 0); walls[el.type] ??= {ml:0, m2:0, net:0}; walls[el.type].ml += L; walls[el.type].m2 += L * el.h; walls[el.type].net += L * el.h - ops; }
     if (el.kind === 'slab'){ slabs[el.type] ??= {m2:0}; slabs[el.type].m2 += area(rect(el.p, el.q)); }
+    if (el.kind === 'roof'){ const r = roofQty(el); roofs[el.type] ??= {m2:0, plan:0, eave:0, ridge:0}; roofs[el.type].m2 += r.slope; roofs[el.type].plan += r.plan; roofs[el.type].eave += r.eave; roofs[el.type].ridge += r.ridge; }
   }
-  return {mats:Object.values(mats), walls, slabs, fams:Object.values(fams)};
+  return {mats:Object.values(mats), walls, slabs, roofs, fams:Object.values(fams)};
 }
 function renderQty(){
   const q = quantities(); if (!state.els.length) return `<p class="hint">Le métré apparaîtra ici dès que vous aurez dessiné un premier élément.</p>`;
@@ -213,11 +227,12 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
   const el = getEl(sel); if (!el || (!f && !fp)) return;
   if (fp){ const v = num(t.value); if (Number.isNaN(v)) return renderPanel(); pushHist(); el.params = {...(el.params || {}), [fp]:v}; state.isSample = false; rebuild(); return; }
+  if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
   const pos = x => Math.max(0.001, x);
-  if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
+  if (f === 'rshape') el.shape = val; else if (f === 'rpitch') el.pitch = clamp(val, 3, 70); else if (f === 'rdir') el.dir = val; else if (f === 'rov') el.ov = clamp(val, 0, 2); else if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
   else if (f === 'ftype'){ el.type = +val; el.params = {}; }
   else if (f === 'h') el.h = pos(val); else if (f === 'off') el.off = val;
   else if (f === 't'){ const w = getEl(el.host); if (w){ const c = famCut(el), L = wallAxis(w).L; el.t = rnd(clamp(val, c.w / 2, L - c.w / 2)); } }
@@ -227,7 +242,7 @@ $('#pbody').addEventListener('change', e => {
     else if (f === 'ax') el.a = [val, el.a[1]]; else if (f === 'ay') el.a = [el.a[0], val];
     else if (f === 'bx') el.b = [val, el.b[1]]; else if (f === 'by') el.b = [el.b[0], val];
     if (V.len(V.sub(el.a, el.b)) < 0.01){ state = JSON.parse(hist.pop()); updUndo(); renderPanel(); toast('Un mur doit mesurer au moins 1 cm'); return; }
-  } else if (el.kind === 'slab' || el.kind === 'vol'){
+  } else if (el.kind === 'slab' || el.kind === 'vol' || el.kind === 'roof'){
     const r = rect(el.p, el.q); let [x0, y0] = r[0], lx = r[1][0] - x0, ly = r[2][1] - y0;
     if (f === 'lx') lx = pos(val); else if (f === 'ly') ly = pos(val); else if (f === 'px') x0 = val; else if (f === 'py') y0 = val;
     el.p = [x0, y0]; el.q = [rnd(x0 + lx), rnd(y0 + ly)];

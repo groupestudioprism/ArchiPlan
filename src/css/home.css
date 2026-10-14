@@ -165,3 +165,13 @@ a.ap-link{text-decoration:none}
   .hmeta{padding:8px 36px 10px 10px}
 }
 @media (max-width:420px){ .hfolders{grid-template-columns:1fr} }
+/* bandeau offre gratuite */
+.h-offer{max-width:1284px;width:100%;margin:18px auto 0;padding:0 22px}
+.ho-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border:1px solid color-mix(in srgb,var(--accent) 25%,var(--line));background:var(--accent-soft);border-radius:12px;padding:12px 14px}
+.ho-in>div:first-child{flex:1;min-width:240px}
+.ho-in b{display:block;font-size:14px}.ho-in span{font-size:13px;color:var(--mut);line-height:1.45}
+.ho-a{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ho-b{height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:600;font-size:13px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
+.ho-b:hover{border-color:var(--accent);color:var(--accent)}
+.ho-x{width:30px;height:30px;border:0;background:transparent;border-radius:8px;color:var(--mut);cursor:pointer}.ho-x:hover{background:var(--panel)}
+@media (max-width:700px){.h-offer{padding:0 14px}}

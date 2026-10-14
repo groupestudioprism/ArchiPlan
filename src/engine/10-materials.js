@@ -134,5 +134,10 @@ const COMPOS = {
   'PL-BOIS-01': {nom:'Plancher bois : parquet + OSB + solives isolées', kind:'slab', lot:'Gros œuvre', layers:[['parquet',.014],['osb',.022],['laineVerre',.20],['ba13',.013]]},
   'TT-BAC-01':  {nom:'Toiture terrasse bac acier + PIR 12', kind:'slab', lot:'Gros œuvre', layers:[['bitume',.006],['pir',.12],['bacAcier',.0008]]},
   'TT-VEG-01':  {nom:'Toiture végétalisée sur BA', kind:'slab', lot:'Gros œuvre', layers:[['terreVeg',.10],['epdm',.0015],['xps',.14],['bitume',.004],['ba',.20]]},
+  'TOIT-TUILE': {nom:'Toiture tuiles + laine 24 sous rampants', kind:'roof', lot:'Couverture', layers:[['tuile',.02],['airFV',.04],['paraPluie',.001],['laineVerre',.24],['freinVap',.001],['ba13',.013]]},
+  'TOIT-ARDOISE': {nom:'Toiture ardoises + laine de roche 24', kind:'roof', lot:'Couverture', layers:[['ardoise',.01],['airFV',.04],['paraPluie',.001],['laine',.24],['freinVap',.001],['ba13',.013]]},
+  'TOIT-ZINC': {nom:'Toiture zinc + fibre de bois 22', kind:'roof', lot:'Couverture', layers:[['zinc',.0008],['osb',.022],['airFV',.04],['fibreBoisS',.22],['freinVap',.001],['ba13',.013]]},
+  'TOIT-BAC': {nom:'Toiture bac acier + PIR 12 (bâtiment d\'activité)', kind:'roof', lot:'Couverture', layers:[['bacAcier',.0008],['pir',.12],['bacAcier',.0008]]},
+  'TOIT-SARKING': {nom:'Toiture tuiles, sarking fibre de bois 16 + chevrons 10', kind:'roof', lot:'Couverture', layers:[['tuile',.02],['airFV',.04],['fibreBoisR',.16],['bois',.022],['airNV',.10],['ba13',.013]]},
   'DAL-IND':    {nom:'Dallage industriel BA 20 + résine', kind:'slab', lot:'Industrie', layers:[['resine',.003],['ba',.20]]},
 };

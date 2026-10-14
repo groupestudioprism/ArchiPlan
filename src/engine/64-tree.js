@@ -1,9 +1,9 @@
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
-const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|inst']);
+const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
 let treeQuery = '';
-const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles, planchers, toitures'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
+const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
 const TICON = {
-  wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
+  wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', roof:'M2 12l10-7 10 7M5 10v10h14V10', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
   inst:'M4 11h16v4H4zM6 15v5M18 15v5', open:'M4 4h16v16H4zM12 4v16M4 12h16', door:'M7 21V3h10v18M14 12h.01', lvl:'M3 17h18M3 12h18M3 7h18', proj:'M3 21V9l9-6 9 6v12zM9 21v-7h6v7',
   eye:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', eyeOff:'M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.3-1'
 };
@@ -12,12 +12,12 @@ const DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5"
 
 function elName(el){
   if (el.kind === 'inst'){ const F = fam(el.fam); const t = F?.types?.[el.type | 0]?.nom; return `${F?.nom || 'Composant'}${t ? ' · ' + t : ''}`; }
-  if (el.kind === 'wall' || el.kind === 'slab') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
+  if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
   return `${KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
 }
 function forcedPerf(el){ return el.forceU > 0 ? {U:el.forceU, R:null} : el.forceR > 0 ? {U:null, R:el.forceR} : null; }
 function elMeta(el){
-  if (el.kind === 'wall' || el.kind === 'slab'){
+  if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){
     const f = forcedPerf(el); if (f) return f.U ? `U ${nf(f.U, 2)}*` : `R ${nf(f.R, 2)}*`;
     return 'U ' + nf(thermal(layersInToOut(el), elUse(el)).U, 2);
   }
@@ -49,10 +49,10 @@ function renderTree(){
       if (!cOpen) continue;
       for (const el of list){
         const ek = 'E' + el.id, kids = kind === 'wall' ? state.els.filter(x => x.kind === 'inst' && x.host === el.id) : [];
-        const hasKids = kind === 'wall' || kind === 'slab' || kids.length, eOpen = treeOpen.has(ek);
-        h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
+        const hasKids = kind === 'wall' || kind === 'slab' || kind === 'roof' || kids.length, eOpen = treeOpen.has(ek);
+        h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' || kind === 'roof' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
         if (!hasKids || !eOpen) continue;
-        if (kind === 'wall' || kind === 'slab'){
+        if (kind === 'wall' || kind === 'slab' || kind === 'roof'){
           const layers = compo(el.type).layers;
           h += `<div class="tlayers" style="--d:4">${layers.map(([m, e]) => { const M = mat(m); return `<div class="tly"><span class="sw" style="background:${M.color}"></span><span>${esc(M.nom)}</span><em>${nf(e * 1000, 0)} mm</em><em>${M.R != null ? 'R ' + nf(M.R, 2) : 'λ ' + nf(M.lambda, 3)}</em></div>`; }).join('')}
             <button class="tlink" data-tins="${el.id}">Ajuster l'isolant et les performances…</button></div>`;
@@ -72,13 +72,13 @@ function renderProjectTab(){
 
 /* ---------- menus ⋮ ---------- */
 function treeMenuItems(key){
-  if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, exposition au bruit, relief IGN'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
+  if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, bruit, relief NGF, environnement'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
   if (/^L\d+$/.test(key)){ const li = +key.slice(1), on = hiddenLvls.has(li);
     return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
   if (key.includes('|')) return [{k:'selall', t:'Sélectionner toute la catégorie'}, {k:'chide', t:'Masquer la catégorie'}, {k:'cshow', t:'Afficher la catégorie'}, {k:'cframe', t:'Centrer la vue'}];
   const el = getEl(+key.slice(1)); if (!el) return [];
   const it = [{k:'frame', t:'Centrer la vue'}, {k:'hide', t:hiddenIds.has(el.id) ? 'Afficher' : 'Masquer'}, {k:'iso', t:'Isoler', s:'Masquer tout le reste'}, '-'];
-  if (el.kind === 'wall' || el.kind === 'slab'){
+  if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){
     it.push({k:'insul', t:'Ajuster l\'isolant et les performances…', s:'Épaisseur, λ, objectif U ou R, valeurs forcées'}, {k:'compose', t:'Modifier la composition…', s:'Fiche complète : couches, Glaser, acoustique'});
     if (forcedPerf(el)) it.push({k:'unforce', t:'Revenir aux valeurs calculées', s:'Supprime le U / R forcé'});
     if (el.kind === 'wall') it.push({k:'flip', t:'Inverser les faces'}, {k:'opening', t:'+ Porte ou fenêtre'});
@@ -155,7 +155,7 @@ function mainInsulIdx(layers){
   return Math.max(0, best);
 }
 function openInsulAdjust(id){
-  const el = getEl(id); if (!el || !(el.kind === 'wall' || el.kind === 'slab')) return;
+  const el = getEl(id); if (!el || !(el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof')) return;
   const base = compo(el.type), use = elUse(el), layers0 = base.layers.map(l => l.slice());
   const S = {idx:mainInsulIdx(layers0), mode:'e', target:''};
   S.mat = layers0[S.idx][0]; S.e = layers0[S.idx][1]; S.lambda = mat(S.mat).lambda ?? 0.035;
