@@ -40,7 +40,7 @@ ARCHIPLAN utilise **le même projet Firebase que le site Studio Prism** (`archiv
 - **Fiche client** : `clientProfiles/{uid}` (téléphone, profil, société, adresse), demandée une seule fois.
 - **Code PIN du compte** : haché (PBKDF2, 200 000 itérations), enregistré dans `userSecrets/{uid}` (lisible par le seul titulaire, jamais en clair, jamais envoyé par email). Le même code sur tous les appareils ; il confirme aussi la suppression du compte. Empreinte / visage (Face ID, Touch ID, Windows Hello) : **facultatif**, par appareil.
 - **Ouverture rapide** : la session reste ouverte après fermeture du navigateur ; au retour, l'écran du code PIN s'affiche sans attendre le réseau (profil mémorisé, revérifié en arrière-plan). Délais maximum et bouton « Réessayer » si le réseau bloque.
-- **Suppression du compte** : menu du compte → « Supprimer mon compte » → page `compte-suppression.html` du site Studio Prism → lien de confirmation par email → code PIN → suppression (profil, licences, fiche client, code PIN, projets, dossiers, partages, bibliothèque et compteur de stockage ARCHIPLAN).
+- **Suppression du compte** : menu du compte → « Supprimer mon compte » → page `compte-suppression.html` du site Studio Prism → mot de passe du compte → code PIN → suppression (profil, licences, fiche client, code PIN, projets, dossiers, partages, bibliothèque et compteur de stockage ARCHIPLAN).
 
 La configuration Firebase écrite dans `index.html` est publique par conception ; la sécurité repose sur les règles Firestore. **Ne jamais ajouter de clé privée ni de compte de service dans ce dépôt.**
 

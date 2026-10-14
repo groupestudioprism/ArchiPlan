@@ -17,10 +17,10 @@ um.addEventListener('click', e => {
   ({fiche:() => openClient(true), licence:() => show('licence'), home:() => showHome(), security:() => show('security'), lock:() => show('lock', {noAuto:false}), logout:signOutAll, delete:deleteAccount})[b.dataset.um]();
 });
 
-/* Suppression du compte : sur le site Studio Prism (même compte), avec confirmation par lien email puis code PIN */
+/* Suppression du compte : sur le site Studio Prism (même compte), avec confirmation par mot de passe puis code PIN */
 function deleteAccount(){
-  if (Auth.mode === 'demo') return dlg(`<h3>Supprimer mon compte</h3><p class="dlg-p">Avec un vrai compte, ce bouton ouvre la page de suppression du site Studio Prism : un lien de confirmation est envoyé par email, puis votre code PIN est demandé.</p><div class="dlg-acts"><button type="button" class="ap-btn" data-dlg="close">Compris</button></div>`);
-  confirmDlg('Supprimer mon compte Studio Prism', 'La suppression se fait sur le site Studio Prism, pour toutes les apps (ARCHIPLAN, Archi Vision…). Vous recevrez un lien de confirmation par email, puis votre code PIN vous sera demandé. Vos projets ARCHIPLAN seront supprimés avec le compte.', 'Continuer sur le site', async () => {
+  if (Auth.mode === 'demo') return dlg(`<h3>Supprimer mon compte</h3><p class="dlg-p">Avec un vrai compte, ce bouton ouvre la page de suppression du site Studio Prism : votre mot de passe puis votre code PIN sont demandés.</p><div class="dlg-acts"><button type="button" class="ap-btn" data-dlg="close">Compris</button></div>`);
+  confirmDlg('Supprimer mon compte Studio Prism', 'La suppression se fait sur le site Studio Prism, pour toutes les apps (ARCHIPLAN, Archi Vision…). Votre mot de passe puis votre code PIN vous seront demandés. Vos projets ARCHIPLAN seront supprimés avec le compte.', 'Continuer sur le site', async () => {
     try { if (Save.pending()) await withTimeout(Save.flush(true), 8000); } catch(e){}
     location.href = DELETE_URL + '?from=archiplan';
   });
