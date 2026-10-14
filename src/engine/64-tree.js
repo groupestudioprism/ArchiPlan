@@ -101,7 +101,7 @@ function dupEl(el){
   if (el.kind === 'wall'){ const {n} = wallAxis(el), d = wallT(el) + 0.5; c.a = V.add(el.a, V.mul(n, d)); c.b = V.add(el.b, V.mul(n, d)); }
   else if (el.kind === 'inst' && el.host){ const w = getEl(el.host), cut = famCut(el), L = w ? wallAxis(w).L : 0, t = (el.t || 0) + (cut?.w || 1) + 0.3; if (!w || t + (cut?.w || 1) / 2 > L) return null; c.t = rnd(t); }
   else if (el.c) c.c = [el.c[0] + 0.6, el.c[1] - 0.6];
-  else if (el.p){ c.p = [el.p[0] + 0.6, el.p[1] - 0.6]; c.q = [el.q[0] + 0.6, el.q[1] - 0.6]; }
+  else if (el.p){ c.p = [el.p[0] + 0.6, el.p[1] - 0.6]; c.q = [el.q[0] + 0.6, el.q[1] - 0.6]; if (el.poly) c.poly = el.poly.map(q => [q[0] + 0.6, q[1] - 0.6]); }
   state.els.push(c); return c;
 }
 function runTreeAction(k, key){

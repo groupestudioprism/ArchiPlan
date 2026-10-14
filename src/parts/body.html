@@ -52,6 +52,7 @@
       <label class="pill"><span>Niveau</span><select id="lvlSel" aria-label="Niveau de travail"></select></label>
       <label class="pill" id="typePill" hidden><span id="typeLbl">Type</span><select id="typeSel"></select></label>
       <label class="pill" id="hPill" hidden><span id="hLbl">H</span><input id="hIn" type="number" step="0.05" inputmode="decimal" aria-label="Hauteur"><em>m</em></label>
+      <label class="pill" id="roofModePill" hidden><span>Tracé</span><select id="rModeIn" aria-label="Tracé du toit"><option value="rect">Rectangle</option><option value="poly">Contour</option><option value="walls">Sur les murs</option></select></label>
       <label class="pill" id="roofPill" hidden><span>Forme</span><select id="rShapeIn" aria-label="Forme du toit"><option value="2">2 pans</option><option value="4">4 pans</option><option value="1">1 pan</option><option value="0">Plate</option></select><input id="rPitchIn" type="number" min="3" max="70" step="1" aria-label="Pente en degrés" style="width:44px"><em>°</em></label>
       <label class="pill"><span>Pas</span><select id="stepSel" aria-label="Pas de la grille"><option value="0.01">1 cm</option><option value="0.05" selected>5 cm</option><option value="0.1">10 cm</option><option value="0.25">25 cm</option><option value="0.5">50 cm</option><option value="1">1 m</option></select></label>
     </div>
@@ -61,7 +62,7 @@
       <div class="vgrp vset"><button id="viewSet" title="Paramètres d'affichage" aria-haspopup="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Affichage</span></button></div>
     </div>
     <div class="badge" id="coords">x 0,00 · y 0,00</div>
-    <div class="compass" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17"/><path d="M20 6l5 14h-10z"/><text x="20" y="35" text-anchor="middle">N</text></svg></div>
+    <div class="compass" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="20"/><g id="cmpG"><path class="nn" d="M22 9l4.5 13h-9z"/><path class="ns" d="M22 35l4.5-13h-9z"/><text x="22" y="8.2" text-anchor="middle">N</text></g></svg></div>
   </main>
   <footer class="cmd">
     <div id="prompt" aria-live="polite"></div>
@@ -111,8 +112,9 @@
   <button data-um="home"><b>Accueil</b><span>Mes projets et projets partagés</span></button>
   <button data-um="security"><b>Code PIN et sécurité</b><span>Code PIN du compte, empreinte ou visage (facultatif)</span></button>
   <button data-um="lock" id="umLock"><b>Verrouiller</b><span>Le code PIN sera demandé pour revenir</span></button>
+  <button data-um="theme"><b>Thème clair / sombre</b><span>Change l'apparence de l'interface sur cet appareil</span></button>
   <hr><button data-um="logout"><b>Se déconnecter</b><span>Sur cet appareil</span></button>
-  <button data-um="delete" class="danger"><b>Supprimer mon compte</b><span>Sur le site Studio Prism, confirmation par email et code PIN</span></button>
+  <button data-um="delete" class="danger"><b>Supprimer mon compte</b><span>Sur le site Studio Prism, avec votre mot de passe et votre code PIN</span></button>
 </div>
 <section id="home" hidden aria-label="Accueil ARCHIPLAN">
   <header class="h-top">

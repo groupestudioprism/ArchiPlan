@@ -126,8 +126,20 @@ function pieces(el, els = state.els){
       }
       s += e;
     }
+    // tableaux, linteau et appui des baies : habillés avec le parement extérieur du mur (on ne voit plus les couches dans l'ouverture)
+    if (ops.length){
+      const outer = (wallLayers(el).find(([m]) => mat(m).R == null) || wallLayers(el)[0])[0], ep = 0.012;
+      const at = (t, off) => V.add(V.add(el.a, V.mul(u, t)), V.mul(n, off)), box = (t0, t1) => [at(t0, -T/2), at(t1, -T/2), at(t1, T/2), at(t0, T/2)];
+      for (const op of ops){
+        const zh = op.z1 - op.z0; if (zh < 0.02 || op.t1 - op.t0 < 0.03) continue;
+        out.push({mat:outer, poly:box(op.t0, op.t0 + ep), base:z + op.z0, h:zh, lot, reveal:true}, {mat:outer, poly:box(op.t1 - ep, op.t1), base:z + op.z0, h:zh, lot, reveal:true});
+        if (el.h - op.z1 > 0.001) out.push({mat:outer, poly:box(op.t0 + ep, op.t1 - ep), base:z + op.z1 - ep, h:ep, lot, reveal:true});
+        if (op.z0 > 0.001) out.push({mat:outer, poly:box(op.t0 + ep, op.t1 - ep), base:z + op.z0, h:ep, lot, reveal:true});
+      }
+    }
   } else if (el.kind === 'slab'){
-    let top = z; const poly = rect(el.p, el.q), C = compo(el.type);
+    // la dalle est posée AU-DESSUS de son niveau : off = dessous de la dalle ; couches listées du dessus vers le dessous
+    const poly = rect(el.p, el.q), C = compo(el.type); let top = z + slabT(el);
     for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot}); top -= e; }
   } else if (el.kind === 'vol'){
     out.push({mat:el.mat, poly:rect(el.p, el.q), base:z, h:el.h, lot:'Industrie'});
@@ -140,14 +152,14 @@ function pieces(el, els = state.els){
 function elStats(el){
   let v = 0, m = 0;
   if (el.kind === 'inst'){ for (const so of instSolids(el)){ const vv = solidVol(so); v += vv; m += vv * (mat(so.m).R != null ? 0 : mat(so.m).rho); } return {v, m}; }
-  for (const pc of pieces(el)){ const vol = area(pc.poly) * pc.h; v += vol; m += vol * (mat(pc.mat).R != null ? 0 : mat(pc.mat).rho); }
+  for (const pc of pieces(el)){ if (pc.reveal) continue; const vol = pc.vol ?? area(pc.poly) * pc.h; v += vol; m += vol * (mat(pc.mat).R != null ? 0 : mat(pc.mat).rho); }
   return {v, m};
 }
 /* Points caractéristiques d'un élément (accroches, cotes) */
 function elKeyPoints(el){
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
   if (el.kind === 'slab' || el.kind === 'vol'){ const r = rect(el.p, el.q); const segs = r.map((p, i) => [p, r[(i + 1) % 4]]); return {ends:r, segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
-  if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % 4]]), ...o.map((p, i) => [p, o[(i + 1) % 4]])];
+  if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % r.length]]), ...o.map((p, i) => [p, o[(i + 1) % o.length]])];
     return {ends:[...r, ...o, ...G.ridges.flatMap(([a, b]) => [[a[0], a[1]], [b[0], b[1]]])], segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
   if (el.kind === 'col'){ const r = colPoly(el); return {ends:r, segs:r.map((p, i) => [p, r[(i + 1) % 4]]), centers:[el.c], mids:[]}; }
   if (el.kind === 'inst'){ const fr = instFrame(el); if (!fr) return {ends:[]}; const pts = [fr.o];

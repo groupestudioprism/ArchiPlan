@@ -256,7 +256,7 @@ const ERR = {
   'auth/popup-blocked':'La fenêtre Google a été bloquée. Autorisez les fenêtres pour ce site, puis réessayez.',
   'auth/invalid-action-code':'Code incorrect ou expiré. Demandez un nouveau code.',
   'app/suspended':'Ce compte Studio Prism est désactivé. Contactez Studio Prism pour le faire réactiver.',
-  'app/profile-missing':'Votre profil Studio Prism n\'a pas pu être créé. Réessayez dans un instant.',
+  'app/profile-missing':'Ce compte Studio Prism n\'existe plus ou n\'a pas pu être créé. S\'il a été supprimé par Studio Prism, contactez-nous ; sinon réessayez dans un instant.',
   'app/profile-invalid':'Votre profil Studio Prism est incomplet. Contactez Studio Prism.',
   'permission-denied':'Accès refusé. Vérifiez que votre email est bien confirmé.',
   'app/timeout':'Le service Studio Prism met trop de temps à répondre. Vérifiez votre connexion, puis réessayez.',

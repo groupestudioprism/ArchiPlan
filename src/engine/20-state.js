@@ -1,5 +1,5 @@
 /* ============ État du projet ============
-   state = {format:'archiplan', v:2, name, els:[…], nextId, levels:[{n,z}], lib:{mats, compos, fams}}
+   state = {format:'archiplan', v:3, name, els:[…], nextId, levels:[{n,z}], lib:{mats, compos, fams}}
    Éléments : wall {type,a,b,h,lvl,off,flip} · slab {type,p,q,lvl,off} · vol {mat,p,q,h,lvl,off} · col {mat,c,w,d,h,lvl,off}
               inst {fam,type,params,host?,t?,c?,rot,lvl,off,flip,mirror} (famille posée ; hébergée dans un mur si host)
    Bibliothèques : base (code) < bibliothèque personnelle (compte, cloud) < bibliothèque du projet. Un élément de bibliothèque
@@ -41,13 +41,15 @@ function embedUsedLib(){
 
 function migrate(s){
   s = s && typeof s === 'object' ? s : {};
-  const out = {format:'archiplan', v:2, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
+  const out = {format:'archiplan', v:3, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
     levels:Array.isArray(s.levels) && s.levels.length ? s.levels.map(l => ({n:String(l.n || 'Niveau').slice(0, 30), z:+l.z || 0})) : DEFAULT_LEVELS.map(l => ({...l})),
     lib:{mats:{...(s.lib?.mats || {})}, compos:{...(s.lib?.compos || {})}, fams:{...(s.lib?.fams || {})}}, isSample:!!s.isSample,
-    ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {})};
+    ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {}), ...(+s.shab > 0 ? {shab:+s.shab} : {})};
   const okEl = el => el && KIND_NAME[el.kind] && (el.kind !== 'wall' || compo(el.type)) && (el.kind !== 'inst' || el.fam);
   const prev = state; state = out;   // pour que compo()/fam() lisent la bibliothèque du projet en cours de migration
   out.els = out.els.filter(okEl).map(el => ({...el, lvl:Math.max(0, Math.min(out.levels.length - 1, el.lvl | 0)), off:+el.off || 0}));
+  // format 3 : les dalles sont décrites par leur dessous (posées au-dessus du niveau) ; les anciens projets gardent exactement leur géométrie
+  if ((+s.v || 2) < 3) out.els.forEach(el => { if (el.kind === 'slab') el.off = Math.round((el.off - slabT(el)) * 1000) / 1000; });
   out.els = out.els.filter(el => el.kind !== 'inst' || fam(el.fam));
   state = prev;
   out.nextId = Math.max(0, ...out.els.map(x => x.id || 0)) + 1;
@@ -57,25 +59,25 @@ const lvlZ = i => state.levels[i] ? state.levels[i].z : 0;
 const lvlName = i => state.levels[i]?.n || 'Niveau';
 
 function sample(){
-  const s = {name:'Exemple · maison plain-pied', isSample:true, els:[], nextId:1, levels:DEFAULT_LEVELS.map(l => ({...l})), lib:{mats:{}, compos:{}, fams:{}}};
+  const s = {name:'Exemple · maison plain-pied', v:3, isSample:true, els:[], nextId:1, levels:DEFAULT_LEVELS.map(l => ({...l})), lib:{mats:{}, compos:{}, fams:{}}};
   const add = e => { e.id = s.nextId++; s.els.push(e); return e.id; };
-  add({kind:'slab', type:'DAL-ISO', p:[-0.2,-0.2], q:[10.2,8.2], lvl:0, off:0});
+  add({kind:'slab', type:'DAL-ISO', p:[-0.2,-0.2], q:[10.2,8.2], lvl:0, off:0});   // dallage posé sur le terrain : sol fini à +0,30
   const P = [[0,0],[10,0],[10,8],[0,8]], W = [];
-  for (let i = 0; i < 4; i++) W.push(add({kind:'wall', type:'MUR-EXT-01', a:P[i], b:P[(i+1)%4], h:2.7, lvl:0, off:0, flip:false}));
-  const c1 = add({kind:'wall', type:'CLO-72', a:[6,0.164], b:[6,7.836], h:2.5, lvl:0, off:0, flip:false});
-  add({kind:'wall', type:'CLO-72', a:[0.164,4.6], b:[6,4.6], h:2.5, lvl:0, off:0, flip:false});
+  for (let i = 0; i < 4; i++) W.push(add({kind:'wall', type:'MUR-EXT-01', a:P[i], b:P[(i+1)%4], h:2.7, lvl:0, off:0.3, flip:false}));
+  const c1 = add({kind:'wall', type:'CLO-72', a:[6,0.164], b:[6,7.836], h:2.5, lvl:0, off:0.3, flip:false});
+  add({kind:'wall', type:'CLO-72', a:[0.164,4.6], b:[6,4.6], h:2.5, lvl:0, off:0.3, flip:false});
   add({kind:'inst', fam:'porte-entree', type:1, params:{}, host:W[0], t:3, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'baie-coulissante', type:1, params:{}, host:W[0], t:7.8, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'fenetre-2v', type:1, params:{}, host:W[2], t:3, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'fenetre-1v', type:1, params:{}, host:W[3], t:2.2, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'porte-simple', type:1, params:{}, host:c1, t:2.4, lvl:0, off:0, flip:false, mirror:false});
-  add({kind:'inst', fam:'banc-assemblage', type:0, params:{}, c:[8,4.3], rot:0, lvl:0, off:0});
-  add({kind:'inst', fam:'canape', type:0, params:{}, c:[3,1.4], rot:0, lvl:0, off:0});
-  add({kind:'inst', fam:'lit', type:2, params:{}, c:[3,5.2], rot:0, lvl:0, off:0});
-  add({kind:'slab', type:'DAL-BA-20', p:[10.2,2], q:[13.4,6], lvl:0, off:0});
-  add({kind:'col', mat:'ba', c:[13.15,2.25], w:0.25, d:0.25, h:2.7, lvl:0, off:0});
-  add({kind:'col', mat:'ba', c:[13.15,5.75], w:0.25, d:0.25, h:2.7, lvl:0, off:0});
-  add({kind:'vol', mat:'acier', p:[10.2,2], q:[13.4,6], h:0.12, lvl:0, off:2.7});
+  add({kind:'inst', fam:'banc-assemblage', type:0, params:{}, c:[8,4.3], rot:0, lvl:0, off:0.3});
+  add({kind:'inst', fam:'canape', type:0, params:{}, c:[3,1.4], rot:0, lvl:0, off:0.3});
+  add({kind:'inst', fam:'lit', type:2, params:{}, c:[3,5.2], rot:0, lvl:0, off:0.3});
+  add({kind:'slab', type:'DAL-BA-20', p:[10.2,2], q:[13.4,6], lvl:0, off:0.04});
+  add({kind:'col', mat:'ba', c:[13.15,2.25], w:0.25, d:0.25, h:2.7, lvl:0, off:0.3});
+  add({kind:'col', mat:'ba', c:[13.15,5.75], w:0.25, d:0.25, h:2.7, lvl:0, off:0.3});
+  add({kind:'vol', mat:'acier', p:[10.2,2], q:[13.4,6], h:0.12, lvl:0, off:3.0});
   return s;
 }
 

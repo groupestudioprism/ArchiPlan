@@ -58,6 +58,7 @@ function renderProps(){
     return `<div class="ph"><h2>${esc(state.name)}</h2>${state.isSample ? '<span class="tag">Exemple</span>' : ''}</div>
       <div class="fields"><label class="f wide"><span>Nom du projet</span><span class="in"><input id="f-pname" data-f="pname" type="text" value="${esc(state.name)}" style="font-family:var(--f-body)"></span></label></div>
       <div class="grp"><h3>Lieu du projet</h3>${siteSummary()}<div class="btns tight"><button class="btn${state.site?.zone ? '' : ' primary'}" data-act="site">${state.site?.zone ? 'Modifier le lieu, le climat, le bruit…' : 'Définir le lieu du projet'}</button></div></div>
+      ${glazingCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -83,15 +84,21 @@ function renderProps(){
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, L * el.h, true)}</div>
       <div class="btns"><button class="btn" data-act="flip">Inverser les faces</button><button class="btn" data-act="add-opening">+ Ouverture</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'roof'){
-    const layers = compo(el.type).layers, Q = roofQty(el), r = rect(el.p, el.q);
+    const layers = compo(el.type).layers, Q = roofQty(el), r = rect(el.p, el.q), poly = el.poly && el.poly.length >= 4, G = roofGeom(el), FQ = frameQty(el);
+    const wallOpts = [['', 'Comme les murs (automatique)'], ...Object.entries(libCompos()).filter(([, t]) => t.kind === 'wall' && t.lot !== 'Second œuvre').map(([k, t]) => [k, t.nom])];
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'roof').map(([k, t]) => [k, t.nom]), el.type);
     h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
-    h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false) + field('Débord', 'rov', el.ov ?? 0.4, 'm');
-    h += field('Hauteur d\'égout', 'off', el.off ?? 2.7, 'm') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false);
-    h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
-    h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons maçonnés (2 pans et appentis)</label>`;
-    h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
-      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}<dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
+    if (!poly) h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false);
+    h += field('Débord', 'rov', el.ov ?? 0.4, 'm');
+    h += selectField('Posée sur les murs du niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm');
+    if (!poly) h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
+    h += selectField('Plafond', 'rceil', Object.entries(ROOF_CEIL), el.ceil || '', false);
+    h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
+    if (el.gable !== false && (el.shape || '2') !== '4' && (el.shape || '2') !== '0') h += selectField('Mur des pignons', 'rgtype', wallOpts, el.gableType || '', false);
+    h += `</div>${poly ? `<p class="hint">Toit dessiné sur un contour de ${el.poly.length} côtés, découpé en ${G.wings.length} aile${G.wings.length > 1 ? 's' : ''} (noues automatiques).</p>` : ''}
+      <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button></div>
+      <div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
+      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.hip ? `<dt>Arêtiers</dt><dd>${nf(Q.hip)} ml</dd>` : ''}${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}${Q.ceil ? `<dt>Plafond</dt><dd>${nf(Q.ceil)} m²</dd>` : ''}${FQ.length ? `<dt>Charpente</dt><dd>${nf(FQ.reduce((s, x) => s + x.m3, 0), 2)} m³</dd>` : ''}</dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Q.slope, false)}</div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
@@ -174,7 +181,7 @@ function quantities(){
   for (const el of state.els){
     if (el.kind === 'inst'){ const F = fam(el.fam); for (const so of instSolids(el)) addM(famLot(F), so.m, solidVol(so));
       const k = el.fam + '|' + (el.type | 0); fams[k] ??= {fam:el.fam, type:el.type | 0, n:0, area:0}; fams[k].n++; const c = famCut(el); if (c) fams[k].area += c.w * c.h; continue; }
-    for (const pc of pieces(el)) addM(pc.lot, pc.mat, area(pc.poly) * pc.h);
+    for (const pc of pieces(el)) if (!pc.reveal) addM(pc.lot, pc.mat, pc.vol ?? area(pc.poly) * pc.h);
     if (el.kind === 'wall'){ const L = wallAxis(el).L, ops = wallOpenings(el).reduce((s, o) => s + (o.t1 - o.t0) * (o.z1 - o.z0), 0); walls[el.type] ??= {ml:0, m2:0, net:0}; walls[el.type].ml += L; walls[el.type].m2 += L * el.h; walls[el.type].net += L * el.h - ops; }
     if (el.kind === 'slab'){ slabs[el.type] ??= {m2:0}; slabs[el.type].m2 += area(rect(el.p, el.q)); }
     if (el.kind === 'roof'){ const r = roofQty(el); roofs[el.type] ??= {m2:0, plan:0, eave:0, ridge:0}; roofs[el.type].m2 += r.slope; roofs[el.type].plan += r.plan; roofs[el.type].eave += r.eave; roofs[el.type].ridge += r.ridge; }
@@ -224,9 +231,12 @@ $('#pbody').addEventListener('change', e => {
   if (t.dataset.lvn != null){ pushHist(); state.levels[+t.dataset.lvn].n = t.value.trim().slice(0, 30) || 'Niveau'; rebuild(); syncLevels(); return; }
   if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; rebuild(); syncLevels(); return; }
   const f = t.dataset.f, fp = t.dataset.fp;
+  if (f === 'shab'){ const v = num(t.value); pushHist(); state.shab = v > 0 ? Math.round(v * 10) / 10 : 0; state.isSample = false; renderPanel(); return; }
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
   const el = getEl(sel); if (!el || (!f && !fp)) return;
   if (fp){ const v = num(t.value); if (Number.isNaN(v)) return renderPanel(); pushHist(); el.params = {...(el.params || {}), [fp]:v}; state.isSample = false; rebuild(); return; }
+  if (f === 'rceil' || f === 'rgtype'){ pushHist(); if (f === 'rceil') el.ceil = t.value; else el.gableType = t.value; state.isSample = false; rebuild(); return; }
+  if (f === 'lvl' && el.kind === 'roof'){ pushHist(); el.lvl = +t.value; roofFitWalls(el); state.isSample = false; rebuild(); syncLevels?.(); return; }
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
@@ -271,6 +281,9 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'site') openSiteDialog();
+  else if (act === 'roof-fit' && el){ pushHist(); if (roofFitWalls(el)){ rebuild(); toast(`Toiture calée sur les murs : appui à ${nf(el.off)} m`); } else toast('Aucun mur sous cette toiture sur ce niveau'); }
+  else if (act === 'roof-2pts' && el){ setTool('move'); toast('Cliquez un point de la toiture, puis l\'endroit où il doit aller'); }
+  else if (act === 'roof-frame' && el) openFrameDialog(el.id);
   else if (act === 'fam-edit' && el) openFamEditor(el.fam, el.id);
   else if (act === 'fam-new') openFamEditor(null);
   else if (act === 'compo-new') openComposer({id:null});

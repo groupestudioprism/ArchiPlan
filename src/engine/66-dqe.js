@@ -129,10 +129,18 @@ function dqeItems(){
         else { lot = '04'; des = M.nom; }
         add(`R|${lot}|${m}|${Math.round(e * 1000)}|${des}`, lot, des, e >= 0.005 ? `ép. ${cm(e)} cm · rampants` : 'surface des rampants', 'm²', A, el.lvl, Math.round(pricePerM2(m, e)), kg, co);
       });
-      if (!layers.some(([m]) => mat(m).cat === 'Bois et dérivés' && !isWoodFrameish(m) && m !== 'bois') && !flat) add('R|charpente', '03', 'Charpente bois (fermettes industrielles ou traditionnelle)', 'au m² de rampant', 'm²', A, el.lvl, 60);
+      if (!flat){ const FQ = frameQty(el), O = frameOpts(el);
+        if (O.mode === 'none'){} else if (O.kind === 'fermettes' && FQ.some(f => f.kind === 'entrait')){ const nT = FQ.filter(f => f.kind === 'entrait').reduce((s, f) => s + f.n, 0), v = FQ.reduce((s, f) => s + f.m3, 0);
+          add('R|fermettes', '03', 'Fermettes industrielles en W, posées et contreventées', `entraxe ${n0(O.sp * 100)} cm · ${nf(v, 2)} m³ de bois`, 'u', nT, el.lvl, 95, v * 450, v * 450 * 0.26);
+          FQ.filter(f => !['arbal', 'entrait', 'diag'].includes(f.kind)).forEach(f => add(`R|fr|${f.kind}|${n0(f.w * 1000)}x${n0(f.h * 1000)}`, '03', FRAME_NAMES[f.kind], `section ${n0(f.w * 1000)} × ${n0(f.h * 1000)} mm`, 'ml', f.ml, el.lvl, Math.round(f.w * f.h * 1600 + 6), f.m3 * 450, f.m3 * 450 * 0.26)); }
+        else FQ.forEach(f => add(`R|fr|${f.kind}|${n0(f.w * 1000)}x${n0(f.h * 1000)}`, '03', `${FRAME_NAMES[f.kind]}${f.kind === 'chevron' ? 's' : f.kind === 'panne' ? 's' : ''}`, `section ${n0(f.w * 1000)} × ${n0(f.h * 1000)} mm · ${f.n} pièce${f.n > 1 ? 's' : ''}`, 'ml', f.ml, el.lvl, Math.round(f.w * f.h * 1600 + 6), f.m3 * 450, f.m3 * 450 * 0.26));
+        if (O.mode !== 'none' && Q.hip > 0) add('R|arret', '04', 'Arêtiers (closoirs et tuiles d\'arêtier)', 'linéaire d\'arêtier', 'ml', Q.hip, el.lvl, 45); }
+      if (el.ceil){ add('R|ceil', '06', 'Plafond plaque de plâtre sur ossature', 'BA13 sur fourrures', 'm²', Q.ceil, el.lvl, 38); add('P|ceil', '09', 'Peinture sur plafonds', 'impression + 2 couches', 'm²', Q.ceil, el.lvl, 16);
+        if (el.ceil === 'combles') add('R|combles', '06', 'Isolation des combles perdus : laine soufflée', 'ép. 30 cm (R ≈ 7)', 'm²', Q.ceil, el.lvl, 28); }
       if (Q.eave > 0) add('R|zing', '04', 'Gouttières et descentes (zinguerie)', 'linéaire d\'égout', 'ml', Q.eave, el.lvl, 55);
       if (Q.ridge > 0) add('R|faitage', '04', 'Faîtage et closoirs', 'linéaire de faîtage', 'ml', Q.ridge, el.lvl, 38);
-      if (Q.gable > 0){ const gm = el.gableMat || 'parpaing', M = mat(gm), kg = (M.rho || 0) * 0.2 * Q.gable; add(`R|pignon|${gm}`, '02', `Pignons en ${lc(M.nom)}`, 'ép. 20 cm, triangles', 'm²', Q.gable, el.lvl, Math.round(pricePerM2(gm, 0.2) + 10), kg, kg * (M.gwp || 0)); }
+      if (Q.gable > 0){ const G = roofGeom(el), gt = G.gables.length ? gableType(el, G.gables[0]) : 'MUR-EXT-01', GC = compo(gt), kg = GC.layers.reduce((s, [m, e]) => s + (isAir(m) ? 0 : (mat(m).rho || 0) * e), 0) * Q.gable;
+        add(`R|pignon|${gt}`, '02', `Pignons : ${lc(GC.nom)}`, `ép. ${cm(GC.layers.reduce((s, l) => s + l[1], 0))} cm, triangles`, 'm²', Q.gable, el.lvl, Math.round(GC.layers.reduce((s, [m, e]) => s + (isAir(m) ? 0 : pricePerM2(m, e)), 0) + 15), kg, kg * 0.2); }
       if (plaster) add('P|ceil', '09', 'Peinture sur plafonds', 'impression + 2 couches', 'm²', A, el.lvl, 16);
     } else if (el.kind === 'col'){
       const M = mat(el.mat), v = el.w * el.d * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : '02';
@@ -171,6 +179,7 @@ function renderDqePanel(){
         ${open ? `<div class="dqe-rows">${g.items.map((it, k) => `<div class="dqe-r"><div class="dqe-d"><span class="dqe-n">${g.code}.${k + 1}</span> ${esc(it.des)}${it.det ? `<small>${esc(it.det)}</small>` : ''}</div>
           <div class="dqe-m"><span>${qtyFmt(it.q, it.u)} ${it.u} ×</span><input class="pu" data-pu="${esc(it.key)}" type="text" inputmode="decimal" value="${nf(it.pu, 2)}" aria-label="Prix unitaire € HT"><span>€ =</span><b>${eur(it.total)}</b></div></div>`).join('')}</div>` : ''}</section>`; }).join('')}</div>
     <dl class="kv dqe-sum"><dt>Total HT</dt><dd class="big">${eur(ht)}</dd><dt>TVA ${nf(tva, 1)} %</dt><dd>${eur(ht * tva / 100)}</dd><dt>Total TTC</dt><dd class="big">${eur(ht * (1 + tva / 100))}</dd></dl>
+    ${glazingCard()}
     <details class="help"><summary>Matériaux : volumes, masses, carbone</summary>${renderQty().replace(/<div class="ph">[\s\S]*?<\/div>/, '').replace(/<div class="btns">[\s\S]*?<\/div>/, '')}</details>`;
 }
 $('#pbody').addEventListener('change', e => {
@@ -191,7 +200,7 @@ const DQE_OPTS = [['lots', 'Regrouper par lots (corps d\'état)', true], ['num',
   ['qty', 'Quantités', true], ['unit', 'Unités', true], ['pu', 'Prix unitaires', true], ['total', 'Montant par article', true], ['subtotal', 'Sous-totaux par lot', true],
   ['ttc', 'Total HT, TVA et TTC', true], ['levels', 'Quantités par niveau (une colonne par niveau)', false], ['mass', 'Masses (kg)', false], ['co2', 'Carbone (kg CO₂e)', false],
   ['matsheet', 'Tableau des matériaux (volumes, masses, carbone)', false], ['header', 'En-tête : projet, lieu, date, rédacteur', true],
-  ['recap', 'Récapitulatif par lot en tête du document', true], ['sign', 'Cadre de signatures (PDF)', false]];
+  ['recap', 'Récapitulatif par lot en tête du document', true], ['pct', 'Part de chaque article et de chaque lot en % du total', true], ['sign', 'Cadre de signatures (PDF)', false]];
 function openDqeExport(){
   const items = dqeItems(), groups = dqeGroups(items), o = {...Object.fromEntries(DQE_OPTS.map(([k, , d]) => [k, d])), ...(state.dqe?.opts || {})};
   const lotsOn = new Set(state.dqe?.lotsOff ? groups.map(g => g.code).filter(c => !state.dqe.lotsOff.includes(c)) : groups.map(g => g.code));
@@ -220,7 +229,8 @@ function dqeTable(){
   const D = state.dqe || {}, o = {...Object.fromEntries(DQE_OPTS.map(([k, , d]) => [k, d])), ...(D.opts || {})}, off = new Set(D.lotsOff || []), tva = D.tva ?? 20;
   const items = dqeItems().filter(i => !off.has(i.lot)), groups = o.lots ? dqeGroups(items) : [{code:'', name:'', items, total:items.reduce((s, i) => s + i.total, 0)}];
   const lv = o.levels ? state.levels.map((l, i) => [i, l.n]).filter(([i]) => items.some(it => it.byLvl[i])) : [];
-  const cols = [o.num && ['N°', 'num'], ['Désignation', 'des'], o.unit && ['U', 'u'], ...lv.map(([i, n]) => [n, 'lvl' + i]), o.qty && ['Qté', 'q'], o.pu && ['PU € HT', 'pu'], o.total && ['Montant € HT', 'tot'], o.mass && ['Masse kg', 'kg'], o.co2 && ['kg CO₂e', 'co2']].filter(Boolean);
+  const cols = [o.num && ['N°', 'num'], ['Désignation', 'des'], o.unit && ['U', 'u'], ...lv.map(([i, n]) => [n, 'lvl' + i]), o.qty && ['Qté', 'q'], o.pu && ['PU € HT', 'pu'], o.total && ['Montant € HT', 'tot'], o.pct && o.total && ['% du total', 'pct'], o.mass && ['Masse kg', 'kg'], o.co2 && ['kg CO₂e', 'co2']].filter(Boolean);
+  o._ht = groups.reduce((s, g) => s + g.total, 0);
   return {o, tva, items, groups, cols, lv};
 }
 function dqeCSV(){
@@ -240,6 +250,7 @@ function cellVal(key, it, g, k, o){
   if (key === 'des') return it.des + (o.details && it.det ? ` (${it.det})` : '');
   if (key === 'u') return it.u; if (key === 'q') return round2(it.q); if (key === 'pu') return round2(it.pu); if (key === 'tot') return round2(it.total);
   if (key === 'kg') return Math.round(it.mass); if (key === 'co2') return Math.round(it.co2);
+  if (key === 'pct') return o._ht ? Math.round(it.total / o._ht * 1000) / 10 : 0;
   if (key.startsWith('lvl')) return round2(it.byLvl[+key.slice(3)] || 0);
   return '';
 }
@@ -330,7 +341,7 @@ function dqeHTML(){
   const {o, tva, groups, cols} = dqeTable(), ht = groups.reduce((s, g) => s + g.total, 0), D = state.dqe || {}, today = new Date().toLocaleDateString('fr-FR');
   const logo = document.querySelector('.brand-mark img')?.src || '', site = state.site || {}, wide = cols.length > 7;
   const isN = key => !['des', 'num', 'u'].includes(key);
-  const fmt = (key, v) => typeof v === 'number' ? (key === 'pu' || key === 'tot' ? eur(v) : nf(v, key === 'kg' || key === 'co2' ? 0 : 2)) : esc(v);
+  const fmt = (key, v) => typeof v === 'number' ? (key === 'pu' || key === 'tot' ? eur(v) : key === 'pct' ? nf(v, 1) + ' %' : nf(v, key === 'kg' || key === 'co2' ? 0 : 2)) : esc(v);
   const cell = (key, it, g, k) => { const v = cellVal(key, it, g, k, o);
     if (key === 'des'){ const d = o.details && it.det ? `<small>${esc(it.det)}</small>` : ''; return `<td class="des">${esc(it.des)}${d}</td>`; }
     return `<td class="${isN(key) ? 'n' : ''} c-${key.replace(/\d+/, '')}">${fmt(key, v)}</td>`; };
@@ -338,16 +349,16 @@ function dqeHTML(){
   const thead = `<thead><tr>${cols.map(([n, key]) => `<th class="${isN(key) ? 'n' : ''}">${esc(n)}</th>`).join('')}</tr></thead>`;
   const lotTable = g => `<section class="lot">${o.lots ? `<h2><span class="code">${g.code}</span>${esc(g.name)}${o.total ? `<span class="st">${eur(g.total)} HT</span>` : ''}</h2>` : ''}
     <table class="det">${colgroup}${thead}<tbody>${g.items.map((it, k) => `<tr>${cols.map(([, key]) => cell(key, it, g, k)).join('')}</tr>`).join('')}</tbody>
-    ${o.lots && o.subtotal && o.total ? `<tfoot><tr><td colspan="${cols.length - 1 - (o.mass ? 1 : 0) - (o.co2 ? 1 : 0)}">Sous-total lot ${g.code} · ${esc(g.name)}</td><td class="n">${eur(g.total)}</td>${o.mass ? '<td></td>' : ''}${o.co2 ? '<td></td>' : ''}</tr></tfoot>` : ''}</table></section>`;
+    ${o.lots && o.subtotal && o.total ? `<tfoot><tr><td colspan="${cols.findIndex(c => c[1] === 'tot')}">Sous-total lot ${g.code} · ${esc(g.name)}</td><td class="n">${eur(g.total)}</td>${cols.slice(cols.findIndex(c => c[1] === 'tot') + 1).map(c => c[1] === 'pct' ? `<td class="n">${ht ? nf(g.total / ht * 100, 1) : '0'} %</td>` : '<td></td>').join('')}</tr></tfoot>` : ''}</table></section>`;
   const info = [['Projet', state.name], site.label && ['Lieu', site.label], site.zone && ['Zone climatique', `${site.zone}${site.alt != null ? ` · altitude ${n0(site.alt)} m` : ''}`], D.mo && ['Maître d\'ouvrage', D.mo], D.by && ['Rédigé par', D.by], ['Date', today]].filter(Boolean);
-  const recap = o.recap !== false && o.lots && o.total && groups.length > 1 ? `<section class="recap"><h3>Récapitulatif par lot</h3><table><thead><tr><th>Lot</th><th>Désignation</th><th class="n">Articles</th><th class="n">Montant € HT</th><th class="n">Part</th></tr></thead><tbody>
-    ${groups.map(g => `<tr><td class="code2">${g.code}</td><td>${esc(g.name)}</td><td class="n">${g.items.length}</td><td class="n">${eur(g.total)}</td><td class="n"><span class="bar"><i style="width:${ht ? Math.round(g.total / ht * 100) : 0}%"></i></span>${ht ? nf(g.total / ht * 100, 1) : '0'} %</td></tr>`).join('')}</tbody>
-    <tfoot><tr><td colspan="3">Total HT</td><td class="n">${eur(ht)}</td><td class="n">100 %</td></tr></tfoot></table></section>` : '';
+  const recap = o.recap !== false && o.lots && o.total && groups.length > 1 ? `<section class="recap"><h3>Récapitulatif par lot</h3><table><thead><tr><th>Lot</th><th>Désignation</th><th class="n">Articles</th><th class="n">Montant € HT</th>${o.pct ? '<th class="n">Part</th>' : ''}</tr></thead><tbody>
+    ${groups.map(g => `<tr><td class="code2">${g.code}</td><td>${esc(g.name)}</td><td class="n">${g.items.length}</td><td class="n">${eur(g.total)}</td>${o.pct ? `<td class=\"n\"><span class=\"bar\"><i style="width:${ht ? Math.round(g.total / ht * 100) : 0}%"></i></span>${ht ? nf(g.total / ht * 100, 1) : '0'} %</td>` : ''}</tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="3">Total HT</td><td class="n">${eur(ht)}</td>${o.pct ? '<td class="n">100 %</td>' : ''}</tr></tfoot></table></section>` : '';
   const totals = o.ttc && o.total ? `<table class="tot"><tr><td>Total HT</td><td class="n">${eur(ht)}</td></tr><tr><td>TVA ${nf(tva, 1)} %</td><td class="n">${eur(ht * tva / 100)}</td></tr><tr class="ttc"><td>Total TTC</td><td class="n">${eur(ht * (1 + tva / 100))}</td></tr></table>` : '';
   const sign = o.sign ? `<div class="sign"><div><b>Le maître d'ouvrage</b><span>${esc(D.mo || '')}</span><em>Date, mention « Bon pour accord » et signature</em></div><div><b>L'entreprise</b><span></span><em>Date, cachet et signature</em></div></div>` : '';
   const title = esc(D.title || 'DQE · ' + state.name);
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${title}</title><style>
-    @page{size:A4 ${wide ? 'landscape' : 'portrait'};margin:16mm 14mm 18mm;@bottom-left{content:"${title.replace(/"/g, '')}";font:8pt Arial,sans-serif;color:#8A8F98}@bottom-right{content:"Page " counter(page) " / " counter(pages);font:8pt Arial,sans-serif;color:#8A8F98}}
+    @page{size:A4 ${wide ? 'landscape' : 'portrait'};margin:20mm 15mm 22mm 20mm;@bottom-left{content:"${title.replace(/"/g, '')}";font:8pt Arial,sans-serif;color:#8A8F98}@bottom-right{content:"Page " counter(page) " / " counter(pages);font:8pt Arial,sans-serif;color:#8A8F98}}
     *{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     body{margin:0;font:9.5pt/1.4 Inter,"Segoe UI",Arial,sans-serif;color:#1D2026}
     .hd{display:flex;align-items:center;gap:14px;padding-bottom:12px;border-bottom:2px solid #1D2026}
@@ -365,7 +376,7 @@ function dqeHTML(){
     .lot h2 .code{background:#E2861B;color:#fff;border-radius:4px;padding:1px 6px;font-size:9pt}.lot h2 .st{margin-left:auto;font-weight:600;font-size:9.5pt;opacity:.9}
     td.des small{display:block;color:#7A7F88;font-size:8pt;margin-top:1px}td.c-num{color:#6B7079;white-space:nowrap}td.c-tot{font-weight:600}
     .det tbody tr:nth-child(even) td{background:#FAFAFB}.det tfoot td{font-weight:700;background:#F1F2F4;border-bottom:0}
-    col.w-num{width:44px}col.w-u{width:34px}col.w-q,col.w-pu,col.w-lvl{width:62px}col.w-tot{width:84px}col.w-kg,col.w-co2{width:62px}
+    col.w-num{width:44px}col.w-u{width:34px}col.w-q,col.w-pu,col.w-lvl{width:62px}col.w-tot{width:84px}col.w-kg,col.w-co2{width:62px}col.w-pct{width:58px}td.c-pct{color:#6B7079}
     .end{display:flex;gap:18px;align-items:flex-start;margin-top:18px;break-inside:avoid}.end .note{flex:1;color:#6B7079;font-size:8pt;margin:0}
     .tot{width:290px;border:1.5px solid #1D2026;border-radius:8px;border-collapse:separate;overflow:hidden}.tot td{border-bottom:1px solid #E6E8EB;padding:7px 10px;font-weight:600}.tot .ttc td{background:#1D2026;color:#fff;font-size:12pt;font-weight:800;border:0}
     .sign{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;break-inside:avoid}.sign div{border:1px solid #DADDE2;border-radius:8px;padding:10px 12px;height:110px;display:flex;flex-direction:column}.sign span{color:#4A4F57}.sign em{margin-top:auto;font-size:7.5pt;color:#8A8F98}

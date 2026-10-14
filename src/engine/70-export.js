@@ -84,15 +84,16 @@ function buildIFC(){
     const items = G.pans.map(pan => brep(pan, [0, 0, -T], rel));
     const eid = E(`IFCSLAB('${guid()}',$,${ifcS(`Toiture ${el.id}`)},${ifcS(C.nom)},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape(items)},${ifcS(String(el.id))},.ROOF.)`);
     E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${eid}),${lset(el.type, C.nom, C.layers)})`); st.items.push(eid);
-    G.gables.forEach((g, i) => { const gid = E(`IFCWALL('${guid()}',$,${ifcS(`Pignon ${el.id}.${i + 1}`)},$,$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape([brep(g.tri, [g.dir[0] * 0.2, g.dir[1] * 0.2, 0], rel)])},$,.STANDARD.)`);
-      E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${gid}),${imat(el.gableMat || 'parpaing')})`); st.items.push(gid); });
+    G.gables.forEach((g, i) => { const GC = compo(gableType(el, g)), Tg = GC.layers.reduce((s, [, e]) => s + e, 0), o = [-g.dir[0], -g.dir[1]], tri = g.tri.map(q => [q[0] + o[0] * Tg / 2, q[1] + o[1] * Tg / 2, q[2]]);
+      const gid = E(`IFCWALL('${guid()}',$,${ifcS(`Pignon ${el.id}.${i + 1}`)},${ifcS(GC.nom)},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape([brep(tri, [g.dir[0] * Tg, g.dir[1] * Tg, 0], rel)])},$,.STANDARD.)`);
+      E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${gid}),${lset(gableType(el, g), GC.nom, GC.layers)})`); st.items.push(gid); });
   }
   const wallIds = {};
   for (const el of state.els.filter(e => e.kind !== 'inst' && e.kind !== 'roof')){
     const st = storeys[el.lvl], rel = lvlZ(el.lvl);
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }
-    else if (el.kind === 'slab'){ const T = slabT(el); item = extrudePoly(rect(el.p, el.q), (el.off || 0) - T, T); ent = 'IFCSLAB'; desc = compo(el.type).nom; matSel = lset(el.type, compo(el.type).nom, compo(el.type).layers); }
+    else if (el.kind === 'slab'){ const T = slabT(el); item = extrudePoly(rect(el.p, el.q), (el.off || 0), T); ent = 'IFCSLAB'; desc = compo(el.type).nom; matSel = lset(el.type, compo(el.type).nom, compo(el.type).layers); }
     else if (el.kind === 'vol'){ item = extrudePoly(rect(el.p, el.q), el.off || 0, el.h); ent = 'IFCBUILDINGELEMENTPROXY'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     else { item = extrudePoly(colPoly(el), el.off || 0, el.h); ent = 'IFCCOLUMN'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     const epl = E(`IFCLOCALPLACEMENT(${st.pl},${AX})`);
@@ -199,7 +200,7 @@ function makeZip(files){
   [[0,0x06054b50,4],[4,0,2],[6,0,2],[8,files.length,2],[10,files.length,2],[12,cs,4],[16,off,4],[20,0,2]].forEach(([o,v,s]) => s === 4 ? end.setUint32(o,v,true) : end.setUint16(o,v,true));
   return new Blob([...parts, ...cen, end], {type:'application/zip'});
 }
-const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:2}, null, 2); };
+const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:3}, null, 2); };
 async function doExport(kind, arg){
   if (!window.SPAccess?.canExport){ window.SPLicense?.prompt('export'); return; }
   if (!state.els.length && kind !== 'json'){ toast('Le modèle est vide : dessinez au moins un élément'); return; }

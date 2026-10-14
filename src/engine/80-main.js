@@ -20,13 +20,14 @@ function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<opt
 $('#lvlSel').addEventListener('change', e => { curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
+$('#rModeIn').addEventListener('change', e => { defs.roof.mode = e.target.value; cancelDraw(); updatePreview(); setPrompt(); });
 $('#rShapeIn').addEventListener('change', e => { defs.roof.shape = e.target.value; updatePreview(); });
 $('#rPitchIn').addEventListener('change', e => { const v = num(e.target.value); if (v >= 3 && v <= 70) defs.roof.pitch = v; else e.target.value = defs.roof.pitch; updatePreview(); });
 $('#stepSel').addEventListener('change', e => { step = +e.target.value; positionGrid(); dirty = true; });
 $('#cmdOk').addEventListener('click', runCmd);
 $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!e.target.value.trim() && tool === 'wall' && draw.start) cancelDraw(); else runCmd(); } else if (e.key === 'Escape'){ e.target.value = ''; e.target.blur(); cancelDraw(); } });
 $('#endBtn').addEventListener('click', cancelDraw);
-$('#closeBtn').addEventListener('click', () => { if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
+$('#closeBtn').addEventListener('click', () => { if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
 
 /* barre d'état : accroches (façon AutoCAD) */
 function syncStatus(){
@@ -67,6 +68,7 @@ document.addEventListener('keydown', e => {
   if ((k === 'Delete' || k === 'Backspace') && (sel || multi.length)){ e.preventDefault(); deleteSel(); return; }
   if (k === ' ' && tool === 'comp'){ e.preventDefault(); defs.comp.rot = (defs.comp.rot + 90) % 360; updatePreview(); return; }
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
+  if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
   const map = {v:'select', m:'wall', d:'slab', t:'roof', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
@@ -104,11 +106,18 @@ $('#fileIn').addEventListener('change', e => {
   rd.readAsText(f);
 });
 
+/* boussole : le nord (+y du plan) suit l'orientation de la caméra */
+const cmpG = document.getElementById('cmpG'); let cmpA = null;
+function updateCompass(){
+  if (!cmpG) return; const c = cam(), t = (view === '2d' ? c2 : c3).target, a = t.clone().project(c), b = t.clone().add(new THREE.Vector3(0, 0, -1)).project(c);
+  const dx = b.x - a.x, dy = -(b.y - a.y); if (Math.hypot(dx, dy) < 1e-6) return;
+  const ang = Math.atan2(dx, -dy) * 180 / Math.PI; if (cmpA !== null && Math.abs(ang - cmpA) < 0.2) return; cmpA = ang; cmpG.style.transform = `rotate(${ang.toFixed(1)}deg)`;
+}
 /* boucle de rendu */
 function loop(){
   requestAnimationFrame(loop);
   const moved = ctl().update();
-  if (moved || dirty){ renderer.render(scene, cam()); updateLabels(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
+  if (moved || dirty){ renderer.render(scene, cam()); updateLabels(); updateCompass(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
 }
 new MutationObserver(() => { resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 
@@ -153,17 +162,20 @@ function renderViewMenu(){
   const m = $('#viewMenu'), cur = DISPLAY.bg || '';
   m.innerHTML = `<div class="lbl">Couleur du fond</div><div class="bgsw">${BG_PRESETS.map(([c, n]) => `<button type="button" class="bgs${c === cur ? ' on' : ''}" data-bg="${c}" title="${n}" style="background:${c || '#FFFFFF'}" aria-label="${n}"></button>`).join('')}
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
+    <hr><div class="lbl">Thème de l'interface</div><div class="thm">${[['light', 'Clair'], ['dark', 'Sombre']].map(([k, n]) => `<button type="button" data-thm="${k}" aria-pressed="${(document.documentElement.dataset.theme || 'light') === k}">${n}</button>`).join('')}</div>
     <hr><div class="lbl">Afficher</div>
     ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
+function setTheme(t){ document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; try { localStorage.setItem('ap.theme', document.documentElement.dataset.theme); } catch(e){} }
+window.APTheme = setTheme;
 function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }
 $('#viewSet').addEventListener('click', e => {
   e.stopPropagation(); const m = $('#viewMenu'); if (!m.hidden){ m.hidden = true; return; }
   renderViewMenu(); m.hidden = false; const r = e.currentTarget.getBoundingClientRect();
   m.style.width = '250px'; m.style.left = Math.max(12, Math.min(r.right - 250, innerWidth - 262)) + 'px'; m.style.top = Math.min(r.bottom + 6, innerHeight - m.offsetHeight - 12) + 'px';
 });
-$('#viewMenu').addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-bg]'); if (b){ DISPLAY.bg = b.dataset.bg; applyDisplay(); renderViewMenu(); } });
+$('#viewMenu').addEventListener('click', e => { e.stopPropagation(); const tb = e.target.closest('[data-thm]'); if (tb){ setTheme(tb.dataset.thm); renderViewMenu(); return; } const b = e.target.closest('[data-bg]'); if (b){ DISPLAY.bg = b.dataset.bg; applyDisplay(); renderViewMenu(); } });
 $('#viewMenu').addEventListener('input', e => { if (e.target.matches('[data-bgc]')){ DISPLAY.bg = e.target.value; applyDisplay(); } });
 $('#viewMenu').addEventListener('change', e => {
   const k = e.target.dataset.vopt; if (!k) return;
