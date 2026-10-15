@@ -51,7 +51,7 @@ window.addEventListener('keydown', e => {
     me = u;
     // Profil vérifié en arrière-plan : un compte désactivé entre-temps est déconnecté
     Auth.verifying?.then(v => { if (me?.uid === v.uid && v.firstName){ me.firstName = v.firstName; me.lastName = v.lastName; } })
-      .catch(async e => { if (e?.code === 'app/suspended' && me){ Save.end(); $a('#home').hidden = true; ctx.where = ''; me = null; show('login', {err:errMsg(e)}); } });
+      .catch(async e => { if (isGone(e) && me?.uid === u.uid) kickOut(e); });   // supprimé, désactivé ou en attente : déconnexion et oubli local
     if (Lock.get(u.uid)?.pin) return show('lock');
     return afterLogin(u);
   } catch(e){

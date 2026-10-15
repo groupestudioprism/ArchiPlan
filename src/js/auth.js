@@ -202,7 +202,7 @@ const FirebaseAuth = {
   async resendVerification(){ await this.fa.currentUser.sendEmailVerification(); },
   // Droits ARCHIPLAN : administrateur actif → tout ; sinon licence licenses/{uid}_archiplan active et non expirée.
   async getAccess(u){
-    const p = (await this.userRef(u.uid).get()).data() || {};
+    const p = await this.liveProfile(u);
     const info = {accountKind:p.accountKind || 'individual', subscription:p.subscription || 'free', role:p.role || 'user', companyName:p.companyName || '', orgName:p.orgName || ''};
     let lic = null;
     try { const s = await this.db.collection('licenses').doc(`${u.uid}_${LICENSE_PRODUCT}`).get(); lic = s.exists ? s.data() : null; }
@@ -231,8 +231,18 @@ const FirebaseAuth = {
     if (k.orgId) b.update(this.userRef(u.uid), {orgId:k.orgId, orgName:k.orgName, orgKeyId:id, orgRole:k.role || '', orgClass:k.classe || '', updatedAt:now});
     await b.commit(); return k;
   },
+  // Profil Studio Prism encore valable ? Sinon le compte n'a plus rien à faire dans l'app (supprimé, désactivé, en attente).
+  async liveProfile(u){
+    const snap = await this.userRef(u.uid).get();
+    if (!snap.exists){ if (await this.wasDeleted(u)){ await this.purgeDeleted(u); throw {code:'app/account-deleted'}; } throw {code:'app/profile-missing'}; }
+    const d = snap.data();
+    if (d.status === 'suspended') throw {code:'app/suspended'};
+    if (d.status === 'pending') throw {code:'app/pending'};
+    if (d.status !== 'active') throw {code:'app/profile-invalid'};
+    return d;
+  },
   async getProfile(u){
-    const p = (await this.userRef(u.uid).get()).data() || {};
+    const p = await this.liveProfile(u);
     let fiche = null; try { const s = await this.db.collection('clientProfiles').doc(u.uid).get(); fiche = s.exists ? s.data() : null; } catch(e){}
     return {firstName:p.firstName, lastName:p.lastName, clientDone:!!fiche};
   },
@@ -644,12 +654,12 @@ async function afterLogin(u, unlocked){
   let prof = null;
   if (unlocked && cached?.clientDone){
     prof = cached;   // déjà vérifié sur cet appareil : on ouvre tout de suite, et on rafraîchit en arrière-plan
-    const uid = me.uid; Auth.getProfile(me).then(p => p && profCache.set(uid, {firstName:p.firstName, lastName:p.lastName, clientDone:!!p.clientDone})).catch(() => {});
+    const uid = me.uid; Auth.getProfile(me).then(p => p && profCache.set(uid, {firstName:p.firstName, lastName:p.lastName, clientDone:!!p.clientDone})).catch(e => { if (isGone(e) && me?.uid === uid) kickOut(e); });
     syncPin();
   } else {
     show('loading', {text:'Chargement de votre compte…'});
     try { prof = await withTimeout(Auth.getProfile(me), 12000); if (prof) profCache.set(me.uid, {firstName:prof.firstName, lastName:prof.lastName, clientDone:!!prof.clientDone}); }
-    catch(e){ prof = cached || null; if (!prof) return show('neterr'); }
+    catch(e){ if (isGone(e)) return kickOut(e); prof = cached || null; if (!prof) return show('neterr'); }
     await syncPin();
   }
   if (prof?.firstName){ me.firstName = prof.firstName; me.lastName = prof.lastName || ''; }
@@ -692,6 +702,20 @@ function publishAccess(a){
   if (ctx.where === 'home' && !$a('#home').hidden) renderHome();
   if (Save.pid) Save.set(Save.canWrite() ? 'saved' : 'ro');
 }
+/* Compte supprimé, désactivé ou en attente : on ferme tout et on oublie ce que l'appareil gardait de ce compte (nom, droits, code PIN). */
+const GONE = ['app/account-deleted', 'app/profile-missing', 'app/suspended', 'app/pending', 'app/profile-invalid'];
+const isGone = e => GONE.includes(e?.code);
+async function kickOut(e){
+  const uid = me?.uid;
+  try { Save.end(); } catch(x){}
+  ctx.where = ''; const h = $a('#home'); if (h) h.hidden = true; window.APCloudActive = false;
+  if (uid){ store.del(profCache.key(uid)); Lock.clear(uid); store.del(accessKey(uid)); }
+  try { sessionStorage.removeItem('at.pendingLink'); } catch(x){}
+  me = null; try { await Auth.signOut(); } catch(x){}
+  const ub = $a('#userBtn'); if (ub) ub.hidden = true; const um = $a('#userMenu'); if (um) um.hidden = true;
+  publishAccess({level:'pending'});
+  show('login', {err:errMsg(e)});
+}
 async function refreshAccess(){
   if (!me) return access;
   const who = me;
@@ -701,6 +725,7 @@ async function refreshAccess(){
     store.set(accessKey(who.uid), {...a, at:Date.now()}); publishAccess(a);
   } catch(e){
     if (me?.uid !== who.uid) return access;
+    if (isGone(e)){ kickOut(e); return access; }
     // Hors ligne : on garde les droits vérifiés il y a moins de 7 jours, sinon mode découverte.
     const c = store.get(accessKey(who.uid));
     publishAccess(c && Date.now() - c.at < 7 * 864e5 ? {...c, offline:true} : {level:'discovery', info:null, license:null, offline:true});
