@@ -1112,12 +1112,18 @@ const FirebaseAuth = {
   // Lit (ou crée) le profil Studio Prism ; refuse un compte désactivé, comme le site.
   async readProfile(u){
     const ref = this.userRef(u.uid); let snap = await ref.get(); this.existedBefore = snap.exists;
+    if (!snap.exists && await this.wasDeleted(u)){ await this.purgeDeleted(u); throw {code:'app/account-deleted'}; }
     if (!snap.exists){ try { await ref.set(this.defaultProfile(u)); } catch(e){} snap = await ref.get(); if (!snap.exists) throw {code:'app/profile-missing'}; }
     const d = snap.data();
     if (d.status === 'suspended'){ await this.fa.signOut(); throw {code:'app/suspended'}; }
     if (d.status !== 'active') throw {code:'app/profile-invalid'};
     return d;
   },
+  // Compte supprimé depuis l'administration (trace deletedAccounts/{uid}, écrite par le site) : le profil ne doit jamais être recréé.
+  async wasDeleted(u){ try { return (await this.db.collection('deletedAccounts').doc(u.uid).get()).exists; } catch(e){ return false; } },
+  // Sans serveur, l'administration ne peut pas supprimer le compte de connexion d'un autre : la personne le supprime elle-même ici, à sa
+  // connexion (connexion récente exigée par Firebase). L'adresse email est ainsi libérée pour une nouvelle inscription, comme sur le site.
+  async purgeDeleted(u){ try { await u.delete(); } catch(e){ await this.fa.signOut().catch(() => {}); } },
   async after(user){
     const d = await this.readProfile(user);
     this.userRef(user.uid).update({lastLogin:this.ts()}).catch(() => {});
@@ -1139,7 +1145,17 @@ const FirebaseAuth = {
   async signIn(e, p){ const c = await this.fa.signInWithEmailAndPassword(e.trim(), p); try { return await this.after(c.user); } catch(err){ if (err.code !== 'app/suspended') await this.fa.signOut().catch(() => {}); throw err; } },
   async signInGoogle(){ const c = await this.fa.signInWithPopup(new firebase.auth.GoogleAuthProvider()); return this.after(c.user); },
   async signUp({firstName, lastName, email, password}){
-    const c = await this.fa.createUserWithEmailAndPassword(email.trim(), password);
+    let c;
+    try { c = await this.fa.createUserWithEmailAndPassword(email.trim(), password); }
+    catch(err){
+      if (err?.code !== 'auth/email-already-in-use') throw err;
+      // Adresse encore prise par un compte supprimé par l'administration : avec le bon mot de passe, on libère l'adresse et on recrée.
+      let old = null; try { old = (await this.fa.signInWithEmailAndPassword(email.trim(), password)).user; } catch(e){ throw err; }
+      const gone = !(await this.userRef(old.uid).get().catch(() => null))?.exists && await this.wasDeleted(old);
+      if (!gone){ await this.fa.signOut().catch(() => {}); throw err; }
+      await old.delete();
+      c = await this.fa.createUserWithEmailAndPassword(email.trim(), password);
+    }
     try {
       await this.userRef(c.user.uid).set(this.defaultProfile(c.user, {firstName, lastName, terms:true}));
     } catch(err){ await c.user.delete().catch(() => this.fa.signOut().catch(() => {})); throw err; }  // pas de compte à moitié créé
@@ -1225,6 +1241,7 @@ const ERR = {
   'auth/popup-blocked':'La fenêtre Google a été bloquée. Autorisez les fenêtres pour ce site, puis réessayez.',
   'auth/invalid-action-code':'Code incorrect ou expiré. Demandez un nouveau code.',
   'app/suspended':'Ce compte Studio Prism est désactivé. Contactez Studio Prism pour le faire réactiver.',
+  'app/account-deleted':'Ce compte a été supprimé par Studio Prism. L\'adresse email est maintenant libre : vous pouvez créer un nouveau compte avec elle.',
   'app/profile-missing':'Ce compte Studio Prism n\'existe plus ou n\'a pas pu être créé. S\'il a été supprimé par Studio Prism, contactez-nous ; sinon réessayez dans un instant.',
   'app/profile-invalid':'Votre profil Studio Prism est incomplet. Contactez Studio Prism.',
   'permission-denied':'Accès refusé. Vérifiez que votre email est bien confirmé.',
