@@ -185,7 +185,8 @@ const FirebaseAuth = {
       if (err?.code !== 'auth/email-already-in-use') throw err;
       // Adresse encore prise par un compte supprimé par l'administration : avec le bon mot de passe, on libère l'adresse et on recrée.
       let old = null; try { old = (await this.fa.signInWithEmailAndPassword(email.trim(), password)).user; } catch(e){ throw err; }
-      const gone = !(await this.userRef(old.uid).get().catch(() => null))?.exists && await this.wasDeleted(old);
+      // profil absent = compte supprimé (par l'administration ou par la personne), avec ou sans trace de suppression
+      const gone = !(await this.userRef(old.uid).get().catch(() => null))?.exists;
       if (!gone){ await this.fa.signOut().catch(() => {}); throw err; }
       // Firebase refuse parfois de supprimer l'ancien compte de connexion : on le reprend alors avec un profil neuf (même compte).
       try { await old.delete(); c = await this.fa.createUserWithEmailAndPassword(email.trim(), password); }
