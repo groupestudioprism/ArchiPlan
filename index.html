@@ -638,6 +638,7 @@ body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .
 /* inscription : entreprise → sur le site ; on masque le formulaire particulier */
 .ap-form.ap-co-mode > .ap-grid2, .ap-form.ap-co-mode > .ap-field, .ap-form.ap-co-mode > .ap-rules, .ap-form.ap-co-mode > .ap-check, .ap-form.ap-co-mode > button[type=submit], .ap-form.ap-co-mode > .ap-err{display:none}
 #ap-co .ap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;margin:10px 0}
+.dlg-row .ap-in{flex:1;min-width:180px}
 /* ===== Accueil cloud — habillage Studio Prism ===== */
 #home{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
 #home[hidden]{display:none!important}
@@ -2309,6 +2310,9 @@ function showBusy(t){ const b = $a('#homeBusy'); b.querySelector('span').textCon
 function hideBusy(){ $a('#homeBusy').hidden = true; }
 
 /* Boîte de dialogue */
+function eyes(root){
+  root.querySelectorAll('[data-eye]').forEach(b => b.onclick = () => { const i = root.querySelector('#' + b.dataset.eye); if (!i) return; const on = i.type === 'password'; i.type = on ? 'text' : 'password'; i.classList.add('pw'); b.textContent = on ? 'Masquer' : 'Afficher'; b.setAttribute('aria-label', on ? 'Masquer le mot de passe' : 'Afficher le mot de passe'); i.focus(); });
+}
 function dlg(html, wire){
   const d = $a('#apDlg'); d.querySelector('.dlg-card').innerHTML = html; d.hidden = false;
   d.querySelectorAll('[data-dlg="close"]').forEach(b => b.onclick = closeDlg);
@@ -2361,7 +2365,7 @@ async function shareDlg(target){
     <div class="dlg-sec"><b>Accès par lien</b>
       <div class="dlg-row"><select id="lkMode" aria-label="Accès par lien"><option value="off"${target.linkMode === 'off' || !target.linkMode ? ' selected' : ''}>Désactivé</option><option value="view"${target.linkMode === 'view' ? ' selected' : ''}>Toute personne avec le lien · Lecture</option><option value="edit"${target.linkMode === 'edit' ? ' selected' : ''}>Toute personne avec le lien · Modification</option></select></div>
       <label class="ap-check"><input type="checkbox" id="lkPwOn"${target.linkPw ? ' checked' : ''}><span>Protéger par un mot de passe</span></label>
-      <div class="dlg-row" id="lkPwRow"${target.linkPw ? '' : ' hidden'}><input id="lkPw" type="text" placeholder="${target.linkPw ? 'Nouveau mot de passe (vide = garder le lien actuel)' : 'Mot de passe du lien'}" autocomplete="off"></div>
+      <div class="dlg-row" id="lkPwRow"${target.linkPw ? '' : ' hidden'}><span class="ap-in"><input id="lkPw" type="password" placeholder="${target.linkPw ? 'Nouveau mot de passe (vide = garder le lien actuel)' : 'Mot de passe du lien'}" autocomplete="new-password"><button type="button" class="ap-eye" data-eye="lkPw" aria-label="Afficher le mot de passe">Afficher</button></span></div>
       <div class="dlg-row"><input id="lkUrl" readonly value="${esc(linkUrl(target))}" placeholder="Aucun lien actif" aria-label="Lien de partage"><button type="button" class="ap-btn alt" id="lkCopy"${target.linkToken ? '' : ' disabled'}>Copier</button></div>
       <div class="dlg-row"><button type="button" class="ap-btn" id="lkApply">Appliquer</button></div>
       <p class="dlg-p small">Changer le mode ou le mot de passe crée un nouveau lien : l'ancien cesse de fonctionner. Les personnes ayant le lien doivent être connectées avec un compte Studio Prism vérifié.</p></div>
@@ -2376,6 +2380,7 @@ async function shareDlg(target){
     };
     d.querySelectorAll('[data-role]').forEach(s => s.onchange = async () => { try { await Cloud().addShare(target, s.dataset.role, s.value); shares.find(x => x.email === s.dataset.role).role = s.value; toastA('Droits modifiés'); } catch(x){ err(errMsg(x)); } });
     d.querySelectorAll('[data-rm]').forEach(b => b.onclick = async () => { try { await Cloud().removeShare(target, b.dataset.rm); shares = shares.filter(s => s.email !== b.dataset.rm); dlg(render(), wire); renderHome(); } catch(x){ err(errMsg(x)); } });
+    eyes(d);
     const pwOn = d.querySelector('#lkPwOn'); pwOn.onchange = () => d.querySelector('#lkPwRow').hidden = !pwOn.checked;
     d.querySelector('#lkCopy').onclick = async () => { const u = d.querySelector('#lkUrl').value; if (!u) return; try { await navigator.clipboard.writeText(u); toastA('Lien copié'); } catch(e){ d.querySelector('#lkUrl').select(); document.execCommand('copy'); toastA('Lien copié'); } };
     d.querySelector('#lkApply').onclick = async e => {
@@ -2481,8 +2486,9 @@ async function openPendingLink(){
     const claim = async pw => { await Cloud().claimLink(L.kind, L.pid, L.token, pw); await tryOpen(); };
     if (!L.pw){ try { await claim(''); return true; } catch(x){ toastA('Ce lien n\'est plus valide. Demandez un nouveau lien.'); return false; } }
     dlg(`<h3>${folder ? 'Dossier' : 'Projet'} protégé</h3><p class="dlg-p">Ce lien est protégé par un mot de passe. Saisissez celui que le propriétaire vous a communiqué.</p>
-      <form id="dlgF"><label class="ap-field"><span>Mot de passe du lien</span><span class="ap-in"><input id="dlgIn" type="password" autocomplete="off"></span></label><p class="ap-err" id="dlgErr"></p>
+      <form id="dlgF"><label class="ap-field"><span>Mot de passe du lien</span><span class="ap-in"><input id="dlgIn" type="password" autocomplete="off"><button type="button" class="ap-eye" data-eye="dlgIn" aria-label="Afficher le mot de passe">Afficher</button></span></label><p class="ap-err" id="dlgErr"></p>
       <div class="dlg-acts"><button type="button" class="ap-btn alt" data-dlg="close">Annuler</button><button class="ap-btn" type="submit">Ouvrir</button></div></form>`, d => {
+      eyes(d);
       d.querySelector('#dlgF').onsubmit = async ev => { ev.preventDefault(); const b = d.querySelector('[type=submit]'); busy(b, true, 'Vérification…');
         try { await claim(d.querySelector('#dlgIn').value); closeDlg(); } catch(x){ busy(b, false); d.querySelector('#dlgErr').textContent = 'Mot de passe incorrect, ou lien qui n\'est plus valide.'; } };
     });

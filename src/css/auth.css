@@ -125,3 +125,4 @@
 /* inscription : entreprise → sur le site ; on masque le formulaire particulier */
 .ap-form.ap-co-mode > .ap-grid2, .ap-form.ap-co-mode > .ap-field, .ap-form.ap-co-mode > .ap-rules, .ap-form.ap-co-mode > .ap-check, .ap-form.ap-co-mode > button[type=submit], .ap-form.ap-co-mode > .ap-err{display:none}
 #ap-co .ap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;margin:10px 0}
+.dlg-row .ap-in{flex:1;min-width:180px}
