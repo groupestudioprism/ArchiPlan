@@ -634,6 +634,10 @@ body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .
 .ap-kopt:has(input:checked){border-color:currentColor}
 .ap-acct{font-size:13.5px;padding:10px 12px;border-radius:10px;background:rgba(127,140,160,.12);margin:0 0 14px;line-height:1.5}
 .ap-acct .ap-link{margin-left:6px}
+
+/* inscription : entreprise → sur le site ; on masque le formulaire particulier */
+.ap-form.ap-co-mode > .ap-grid2, .ap-form.ap-co-mode > .ap-field, .ap-form.ap-co-mode > .ap-rules, .ap-form.ap-co-mode > .ap-check, .ap-form.ap-co-mode > button[type=submit], .ap-form.ap-co-mode > .ap-err{display:none}
+#ap-co .ap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;margin:10px 0}
 /* ===== Accueil cloud — habillage Studio Prism ===== */
 #home{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
 #home[hidden]{display:none!important}
@@ -1362,12 +1366,11 @@ const PRO_TYPES = ['pro', 'pro_entreprise'];
 function usageOf(a = access){
   const i = a.info || {}, l = a.license, lt = l && l.status === 'active' && !l.expired ? l.type : '';
   if (a.level === 'admin') return {commercial:true, label:'Usage commercial autorisé (compte administrateur).'};
-  const pro = PRO_TYPES.includes(lt) || PRO_TYPES.includes(i.subscription);
-  if (i.accountKind === 'company') return pro ? {commercial:true, label:'Usage commercial autorisé : compte Entreprise avec licence Pro Entreprise.'}
-    : {commercial:false, label:'Compte Entreprise sans licence Pro Entreprise : usage commercial non inclus.'};
-  if (!pro) return {commercial:false, label:'Compte Particulier : usage personnel uniquement. Vendre des plans, des études ou des prestations réalisés avec l\'app demande la licence Pro (avec SIRET) ou un compte Entreprise.'};
-  if (!siretOK(i.siret)) return {commercial:false, needSiret:true, label:'Licence Pro : ajoutez votre numéro SIRET dans votre fiche client pour pouvoir vendre ce que vous réalisez avec l\'app.'};
-  return {commercial:true, label:`Usage commercial autorisé : licence Pro, SIRET ${i.siret}.`};
+  const ent = lt === 'pro_entreprise' || i.subscription === 'pro_entreprise';
+  if (ent && (i.accountKind === 'company' || i.orgName)) return {commercial:true, label:'Usage commercial autorisé : licence Pro Entreprise de votre entreprise.'};
+  if (i.accountKind === 'company') return {commercial:false, label:'Compte Entreprise sans licence Pro Entreprise : usage commercial non inclus.'};
+  if (lt === 'pro' || i.subscription === 'pro') return {commercial:false, label:'Licence Pro : toutes les fonctions, pour un usage personnel. Vendre ce que vous réalisez avec l\'app est réservé aux entreprises (licence Pro Entreprise).'};
+  return {commercial:false, label:'Compte Particulier : usage personnel uniquement. Vendre ce que vous réalisez avec l\'app est réservé aux entreprises (licence Pro Entreprise).'};
 }
 const field = (id, label, type = 'text', attrs = '', val = '') =>
   `<label class="ap-field" for="${id}"><span>${label}</span><span class="ap-in"><input id="${id}" name="${id}" type="${type}" value="${esc(val)}" ${attrs}>${type === 'password' ? `<button type="button" class="ap-eye" data-eye="${id}" aria-label="Afficher le mot de passe">Afficher</button>` : ''}</span></label>`;
@@ -1405,9 +1408,9 @@ const SCREENS = {
         <label class="ap-kopt"><input type="radio" name="ap-kind" value="individual" checked><span><b>Particulier</b><small>Usage personnel, non commercial. Pour vendre vos réalisations : licence Pro avec un numéro SIRET.</small></span></label>
         <label class="ap-kopt"><input type="radio" name="ap-kind" value="company"><span><b>Entreprise</b><small>Société, bureau d'études, collectivité… Le compte est vérifié par Studio Prism avant la première connexion.</small></span></label>
       </fieldset>
-      <div id="ap-co" hidden>${field('ap-coname', 'Nom de l\'entreprise', 'text', 'autocomplete="organization" maxlength="120"')}
-        <div class="ap-grid2">${field('ap-coemail', 'Email de l\'entreprise <small>(facultatif)</small>', 'email', 'inputmode="email" autocapitalize="off" maxlength="160"')}${field('ap-cojob', 'Votre fonction <small>(facultatif)</small>', 'text', 'autocomplete="organization-title" maxlength="80"')}</div>
-        <label class="ap-field" for="ap-cotier"><span>Nombre de comptes nécessaires</span><span class="ap-in"><select id="ap-cotier"><option value="">Choisir…</option>${TIERS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></span></label></div>
+      <div id="ap-co" hidden><p class="ap-note">L’inscription d’une entreprise se fait sur le site Studio Prism, par son <b>représentant</b> ou par le <b>responsable d’une agence, d’un service ou d’une branche</b>, avec le numéro SIRET et les licences souhaitées. Studio Prism vérifie la demande, puis délivre les clés de licence ; vous pourrez ensuite ajouter vos collaborateurs.</p>
+        <a class="ap-btn" href="${SITE_URL}#/compte/inscription" target="_blank" rel="noopener">Inscrire mon entreprise sur le site Studio Prism</a>
+        <p class="ap-note">Collaborateur d’une entreprise déjà inscrite ? Créez un compte <b>Particulier</b> ci-dessus, puis saisissez la clé de licence que votre responsable vous a transmise.</p></div>
       <div class="ap-grid2">${field('ap-first', 'Prénom', 'text', 'autocomplete="given-name" required')}${field('ap-last', 'Nom', 'text', 'autocomplete="family-name" required')}</div>
       ${field('ap-email', 'Email', 'email', 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required', ctx.email)}
       ${field('ap-pw', 'Mot de passe', 'password', 'autocomplete="new-password" required')}
@@ -1453,14 +1456,14 @@ const SCREENS = {
   client:() => { const c = view.fiche || {}; const ed = view.edit; return `${ed ? '' : steps(1)}<h2>Votre fiche client</h2>
     <p class="ap-sub">${ed ? 'Ces informations sont partagées entre les apps Studio Prism.' : 'Quelques informations pour vos devis, vos commandes et le suivi de vos projets.'}</p>
     ${view.found ? note('Nous avons retrouvé vos informations Studio Prism. Vérifiez-les et complétez votre fiche.', 'ok') : ''}
-    <div class="ap-acct">${me.kind === 'company' ? `Compte <b>Entreprise</b>${me.companyName ? ' · ' + esc(me.companyName) : ''}` : `Compte <b>Particulier</b> · usage personnel, non commercial <button type="button" class="ap-link" id="apToCo">Vous êtes une entreprise ?</button>`}</div>
+    <div class="ap-acct">${me.kind === 'company' ? `Compte <b>Entreprise</b>${me.companyName ? ' · ' + esc(me.companyName) : ''}` : `Compte <b>Particulier</b> · usage personnel, non commercial <a class="ap-link" href="${ACCOUNT_URL}" target="_blank" rel="noopener">Vous êtes une entreprise ? Faites la demande sur le site</a>`}</div>
     <form class="ap-form" id="apForm" novalidate>
       ${field('ap-email', 'Email du compte', 'email', 'readonly', me.email)}
       <div class="ap-grid2">${field('ap-first', 'Prénom', 'text', 'autocomplete="given-name" required', c.firstName || me.firstName || '')}${field('ap-last', 'Nom', 'text', 'autocomplete="family-name" required', c.lastName || me.lastName || '')}</div>
       ${field('ap-phone', 'Téléphone', 'tel', 'autocomplete="tel" inputmode="tel" required', c.phone || '')}
       <label class="ap-field" for="ap-prof"><span>Vous êtes</span><span class="ap-in"><select id="ap-prof">${PROFILES.map(p => `<option${p === c.profile ? ' selected' : ''}>${esc(p)}</option>`).join('')}</select></span></label>
       ${field('ap-company', 'Société <small>(facultatif)</small>', 'text', 'autocomplete="organization"', c.company || me.companyName || '')}
-      ${field('ap-siret', me.kind === 'company' ? 'SIRET de l\'entreprise <small>(facultatif)</small>' : 'Numéro SIRET <small>(facultatif — obligatoire pour vendre avec la licence Pro)</small>', 'text', 'inputmode="numeric" maxlength="17" placeholder="14 chiffres"', c.siret || '')}
+<input type="hidden" id="ap-siret" value="${esc(c.siret || '')}">
       ${field('ap-address', 'Adresse <small>(facultatif)</small>', 'text', 'autocomplete="street-address"', c.address || '')}
       <div class="ap-grid2">${field('ap-zip', 'Code postal', 'text', 'autocomplete="postal-code" inputmode="numeric"', c.postalCode || '')}${field('ap-city', 'Ville', 'text', 'autocomplete="address-level2"', c.city || '')}</div>
       ${field('ap-country', 'Pays', 'text', 'autocomplete="country-name"', c.country || 'France')}
@@ -1482,7 +1485,7 @@ const SCREENS = {
       : view.reason === 'welcome' ? '<p class="ap-sub">Bienvenue ! Votre compte gratuit vous donne accès à tous les outils et à 10 Mo de cloud.</p>' : view.reason === 'quota' ? '<p class="ap-sub">Votre espace cloud est plein. Une licence ARCHIPLAN le porte à 50 Mo.</p>' : '';
     return `<h2>${esc(ls.title)}</h2>${lead}
     <div class="ap-lic ${ls.cls}"><b>${esc(ls.short)}</b>${esc(ls.text)}${acct ? `<br><span style="color:#5B6B7F">${acct}</span>` : ''}${access.offline ? '<br><span style="color:#5B6B7F">Hors ligne : derniers droits connus.</span>' : ''}</div>
-    ${access.level !== 'pending' ? (u => `<p class="ap-note ${u.commercial ? 'ok' : 'warn'}">${esc(u.label)}${u.needSiret || !u.commercial ? ' <button type="button" class="ap-link" data-act="fiche">Ma fiche client</button>' : ''}</p>`)(usageOf()) : ''}
+    ${access.level !== 'pending' ? (u => `<p class="ap-note ${u.commercial ? 'ok' : 'warn'}">${esc(u.label)}</p>`)(usageOf()) : ''}
     ${full ? '<ul class="ap-list"><li>Cloud : 50 Mo de projets (1 Go pour un administrateur), 5 dossiers et 3 dossiers partagés.</li><li>Tous les exports : Archi Vision (.glb), IFC, métré, images, sauvegardes.</li></ul>' : `<ul class="ap-list"><li>Offre gratuite : tous les outils de modélisation, bibliothèque, compositions et familles, rendus à l'écran.</li><li>Cloud de 10 Mo, 5 dossiers et 3 dossiers partagés ; partage de projets.</li><li>Les exports (Archi Vision, IFC, métré, images, sauvegardes) demandent une licence ARCHIPLAN, à obtenir sur le site Studio Prism et activée sur ce même compte.</li></ul>
     <a class="ap-btn" href="${OFFERS_URL}" target="_blank" rel="noopener" style="text-decoration:none">Voir les offres ARCHIPLAN</a>`}
     <details class="ap-key"${full ? '' : ' open'}><summary>J'ai une clé de licence</summary><form id="apKeyF" novalidate><label class="ap-field"><span>Clé reçue de Studio Prism ou de votre établissement</span><span class="ap-in"><input id="apKey" autocomplete="off" autocapitalize="characters" placeholder="ARCH-XXXX-XXXX-XXXX" style="font-family:var(--f-mono,monospace);letter-spacing:.05em"></span></label><p class="ap-err" id="apKeyErr"></p><button class="ap-btn alt" type="submit">Activer la clé</button></form></details>
@@ -1546,11 +1549,12 @@ const WIRE = {
   },
   signup(){
     wireRules();
-    card().querySelectorAll('[name="ap-kind"]').forEach(r => r.onchange = () => { $a('#ap-co').hidden = ($a('[name="ap-kind"]:checked') || {}).value !== 'company'; });
+    card().querySelectorAll('[name="ap-kind"]').forEach(r => r.onchange = () => { const co = ($a('[name="ap-kind"]:checked') || {}).value === 'company'; $a('#ap-co').hidden = !co; $a('#apForm').classList.toggle('ap-co-mode', co); });
     $a('#apForm').onsubmit = async e => {
       e.preventDefault();
       const firstName = $a('#ap-first').value.trim(), lastName = $a('#ap-last').value.trim(), email = $a('#ap-email').value, password = $a('#ap-pw').value;
       const kind = ($a('[name="ap-kind"]:checked') || {}).value || 'individual'; let company = null;
+      if (kind === 'company') return setErr('L\'inscription d\'une entreprise se fait sur le site Studio Prism (bouton ci-dessus).');
       if (kind === 'company'){
         const t = TIERS.find(x => x[0] === $a('#ap-cotier').value), ce = $a('#ap-coemail').value.trim();
         company = {name:$a('#ap-coname').value.trim(), email:(ce || email).trim().toLowerCase(), job:$a('#ap-cojob').value.trim(), range:t && t[0], limit:t ? t[2] : null};
@@ -1601,7 +1605,7 @@ const WIRE = {
       const fiche = {siret:v('#ap-siret').replace(/\s/g, ''), firstName:v('#ap-first'), lastName:v('#ap-last'), phone:v('#ap-phone'), profile:$a('#ap-prof').value, company:v('#ap-company'), address:v('#ap-address'), postalCode:v('#ap-zip'), city:v('#ap-city'), country:v('#ap-country')};
       if (!fiche.firstName || !fiche.lastName) return setErr('Indiquez votre prénom et votre nom.');
       if (!phoneOK(fiche.phone)) return setErr('Entrez un numéro de téléphone valide, par exemple 06 12 34 56 78.');
-      if (fiche.siret && !siretOK(fiche.siret)) return setErr('Numéro SIRET invalide : 14 chiffres (vérifiez la saisie).');
+
       const b = $a('#apForm .ap-btn'); busy(b, true, 'Enregistrement…');
       try {
         await Auth.saveClient(me, fiche, view.clientId); me.firstName = fiche.firstName; me.lastName = fiche.lastName;

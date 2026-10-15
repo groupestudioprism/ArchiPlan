@@ -121,3 +121,7 @@
 .ap-kopt:has(input:checked){border-color:currentColor}
 .ap-acct{font-size:13.5px;padding:10px 12px;border-radius:10px;background:rgba(127,140,160,.12);margin:0 0 14px;line-height:1.5}
 .ap-acct .ap-link{margin-left:6px}
+
+/* inscription : entreprise → sur le site ; on masque le formulaire particulier */
+.ap-form.ap-co-mode > .ap-grid2, .ap-form.ap-co-mode > .ap-field, .ap-form.ap-co-mode > .ap-rules, .ap-form.ap-co-mode > .ap-check, .ap-form.ap-co-mode > button[type=submit], .ap-form.ap-co-mode > .ap-err{display:none}
+#ap-co .ap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;margin:10px 0}
