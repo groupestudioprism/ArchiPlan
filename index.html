@@ -3926,6 +3926,8 @@ c2.zoomToCursor = true; c2.minZoom = 0.03; c2.maxZoom = 120; c2.target.set(5, 0,
 const orthoS = new THREE.OrthographicCamera(-10, 10, 10, -10, -1000, 1000);   // coupes et élévations
 const c4 = new OrbitControls(orthoS, canvas); c4.enableRotate = false; c4.screenSpacePanning = true; c4.zoomToCursor = true; c4.minZoom = 0.03; c4.maxZoom = 120; c4.enabled = false;
 c4.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.PAN, RIGHT:THREE.MOUSE.PAN}; c4.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_PAN};
+// zoom à la molette plus doux (1 cran ≈ 2 % au lieu de 5 %) : navigation plus fine, surtout au pavé tactile
+[c2, c3, c4].forEach(c => { c.zoomSpeed = 0.4; });
 [c2, c3, c4].forEach(c => c.addEventListener('change', () => dirty = true));
 let view = '3d';                // '2d' plan | '3d' | 'render'
 const cam = () => view === '2d' ? ortho : view === 'sec' ? orthoS : persp;
