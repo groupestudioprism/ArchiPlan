@@ -177,7 +177,7 @@ const FirebaseAuth = {
   async signIn(e, p){ const c = await this.fa.signInWithEmailAndPassword(e.trim(), p); try { return await this.after(c.user); } catch(err){ if (err.code !== 'app/suspended') await this.fa.signOut().catch(() => {}); throw err; } },
   async signInGoogle(){ const c = await this.fa.signInWithPopup(new firebase.auth.GoogleAuthProvider()); return this.after(c.user); },
   async signUp({firstName, lastName, email, password}){
-    let c;
+    let c, reused = false;
     try { c = await this.fa.createUserWithEmailAndPassword(email.trim(), password); }
     catch(err){
       if (err?.code !== 'auth/email-already-in-use') throw err;
@@ -185,12 +185,16 @@ const FirebaseAuth = {
       let old = null; try { old = (await this.fa.signInWithEmailAndPassword(email.trim(), password)).user; } catch(e){ throw err; }
       const gone = !(await this.userRef(old.uid).get().catch(() => null))?.exists && await this.wasDeleted(old);
       if (!gone){ await this.fa.signOut().catch(() => {}); throw err; }
-      await old.delete();
-      c = await this.fa.createUserWithEmailAndPassword(email.trim(), password);
+      // Firebase refuse parfois de supprimer l'ancien compte de connexion : on le reprend alors avec un profil neuf (même compte).
+      try { await old.delete(); c = await this.fa.createUserWithEmailAndPassword(email.trim(), password); }
+      catch(e2){ c = {user:old}; reused = true; }
     }
     try {
-      await this.userRef(c.user.uid).set(this.defaultProfile(c.user, {firstName, lastName, terms:true}));
-    } catch(err){ await c.user.delete().catch(() => this.fa.signOut().catch(() => {})); throw err; }  // pas de compte à moitié créé
+      const b = this.db.batch();
+      b.set(this.userRef(c.user.uid), this.defaultProfile(c.user, {firstName, lastName, terms:true}));
+      if (reused) b.delete(this.db.collection('deletedAccounts').doc(c.user.uid));   // compte repris : la trace de suppression disparaît
+      await b.commit();
+    } catch(err){ if (reused) await this.fa.signOut().catch(() => {}); else await c.user.delete().catch(() => this.fa.signOut().catch(() => {})); throw err; }  // pas de compte à moitié créé
     c.user.updateProfile({displayName:`${firstName} ${lastName}`.trim()}).catch(() => {});
     c.user.sendEmailVerification().catch(() => {});
     this.existedBefore = false;
@@ -275,7 +279,7 @@ const ERR = {
   'auth/wrong-password':'Email ou mot de passe incorrect.',
   'auth/user-not-found':'Email ou mot de passe incorrect.',
   'auth/invalid-email':'Cette adresse email n\'est pas valide.',
-  'auth/email-already-in-use':'Un compte Studio Prism existe déjà avec cet email. Connectez-vous, ou utilisez « Mot de passe oublié ».',
+  'auth/email-already-in-use':'Un compte Studio Prism existe déjà avec cet email. Connectez-vous, ou utilisez « Mot de passe oublié ». Si ce compte a été supprimé par Studio Prism, recréez-le avec le même mot de passe qu\'avant (ou choisissez-en un nouveau avec « Mot de passe oublié », puis recréez le compte).',
   'auth/weak-password':'Mot de passe trop faible : 8 caractères minimum, avec une lettre et un chiffre.',
   'auth/too-many-requests':'Trop de tentatives. Patientez quelques minutes, puis réessayez.',
   'auth/network-request-failed':'Connexion impossible. Vérifiez votre réseau, puis réessayez.',
@@ -283,7 +287,7 @@ const ERR = {
   'auth/popup-blocked':'La fenêtre Google a été bloquée. Autorisez les fenêtres pour ce site, puis réessayez.',
   'auth/invalid-action-code':'Code incorrect ou expiré. Demandez un nouveau code.',
   'app/suspended':'Ce compte Studio Prism est désactivé. Contactez Studio Prism pour le faire réactiver.',
-  'app/account-deleted':'Ce compte a été supprimé par Studio Prism. L\'adresse email est maintenant libre : vous pouvez créer un nouveau compte avec elle.',
+  'app/account-deleted':'Ce compte a été supprimé par Studio Prism. Pour revenir, créez un compte avec la même adresse email et le même mot de passe (mot de passe oublié ? Utilisez d\'abord « Mot de passe oublié »).',
   'app/profile-missing':'Ce compte Studio Prism n\'existe plus ou n\'a pas pu être créé. S\'il a été supprimé par Studio Prism, contactez-nous ; sinon réessayez dans un instant.',
   'app/pending':'Votre compte entreprise est en attente de validation par Studio Prism. Vous pourrez vous connecter dès qu\'il sera validé.',
   'app/profile-invalid':'Votre profil Studio Prism est incomplet. Contactez Studio Prism.',
