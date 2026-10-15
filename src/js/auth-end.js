@@ -48,7 +48,7 @@ window.addEventListener('keydown', e => {
   try {
     const u = await Auth.init();
     if (!u) return show('login');
-    me = u;
+    me = u; startWatchP();
     // Profil vérifié en arrière-plan : un compte désactivé entre-temps est déconnecté
     Auth.verifying?.then(v => { if (me?.uid === v.uid && v.firstName){ me.firstName = v.firstName; me.lastName = v.lastName; } })
       .catch(async e => { if (isGone(e) && me?.uid === u.uid) kickOut(e); });   // supprimé, désactivé ou en attente : déconnexion et oubli local

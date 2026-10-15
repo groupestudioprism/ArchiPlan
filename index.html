@@ -1113,7 +1113,8 @@ const FirebaseAuth = {
   async readProfile(u){
     const ref = this.userRef(u.uid); let snap = await ref.get(); this.existedBefore = snap.exists;
     if (!snap.exists && await this.wasDeleted(u)){ await this.purgeDeleted(u); throw {code:'app/account-deleted'}; }
-    if (!snap.exists){ try { await ref.set(this.defaultProfile(u)); } catch(e){} snap = await ref.get(); if (!snap.exists) throw {code:'app/profile-missing'}; }
+    // profil absent : jamais recréé automatiquement (un compte supprimé ne doit pas « revenir » tout seul) ; seule l'inscription le crée
+    if (!snap.exists){ await this.fa.signOut().catch(() => {}); throw {code:'app/account-deleted'}; }
     const d = snap.data();
     if (d.status === 'suspended'){ await this.fa.signOut(); throw {code:'app/suspended'}; }
     if (d.status === 'pending'){ await this.fa.signOut(); throw {code:'app/pending'}; }   // compte Entreprise pas encore validé par Studio Prism
@@ -1205,6 +1206,8 @@ const FirebaseAuth = {
     await b.commit(); return k;
   },
   // Profil Studio Prism encore valable ? Sinon le compte n'a plus rien à faire dans l'app (supprimé, désactivé, en attente).
+  // Surveillance du profil pendant la session (suppression, désactivation, mise en attente par l'administration)
+  watch(uid, cb){ try { return this.userRef(uid).onSnapshot(s => cb(s.exists ? s.data() : null), () => {}); } catch(e){ return () => {}; } },
   async liveProfile(u){
     const snap = await this.userRef(u.uid).get();
     if (!snap.exists){ if (await this.wasDeleted(u)){ await this.purgeDeleted(u); throw {code:'app/account-deleted'}; } throw {code:'app/profile-missing'}; }
@@ -1622,7 +1625,7 @@ async function pinKey(k){
 }
 
 async function afterLogin(u, unlocked){
-  me = {...me, ...u};
+  me = {...me, ...u}; startWatchP();
   const cached = profCache.get(me.uid);
   let prof = null;
   if (unlocked && cached?.clientDone){
@@ -1678,7 +1681,18 @@ function publishAccess(a){
 /* Compte supprimé, désactivé ou en attente : on ferme tout et on oublie ce que l'appareil gardait de ce compte (nom, droits, code PIN). */
 const GONE = ['app/account-deleted', 'app/profile-missing', 'app/suspended', 'app/pending', 'app/profile-invalid'];
 const isGone = e => GONE.includes(e?.code);
+let unwatchP = null;
+function stopWatchP(){ if (unwatchP){ try { unwatchP(); } catch(x){} } unwatchP = null; }
+function startWatchP(){
+  stopWatchP(); if (!me || !Auth.watch) return; const uid = me.uid;
+  unwatchP = Auth.watch(uid, d => {
+    if (me?.uid !== uid) return;
+    const code = !d ? 'app/account-deleted' : d.status === 'suspended' ? 'app/suspended' : d.status === 'pending' ? 'app/pending' : d.status !== 'active' ? 'app/profile-invalid' : '';
+    if (code) kickOut({code});
+  });
+}
 async function kickOut(e){
+  stopWatchP();
   const uid = me?.uid;
   try { Save.end(); } catch(x){}
   ctx.where = ''; const h = $a('#home'); if (h) h.hidden = true; window.APCloudActive = false;
@@ -1733,6 +1747,7 @@ function enterApp(msg){
   if (ctx.pendingLink) accessReady.then(() => openPendingLink());
 }
 async function signOutAll(){
+  stopWatchP();
   try { if (Save.pending()) await withTimeout(Save.flush(true), 8000); } catch(e){}
   Save.end(); ctx.where = ''; H.mine = H.shared = null; H.folder = ''; H.tab = 'mine'; $a('#home').hidden = true; window.APCloudActive = false;
   ctx.email = me?.email || ctx.email; try { await Auth.signOut(); } catch(e){}
@@ -2455,7 +2470,7 @@ window.addEventListener('keydown', e => {
   try {
     const u = await Auth.init();
     if (!u) return show('login');
-    me = u;
+    me = u; startWatchP();
     // Profil vérifié en arrière-plan : un compte désactivé entre-temps est déconnecté
     Auth.verifying?.then(v => { if (me?.uid === v.uid && v.firstName){ me.firstName = v.firstName; me.lastName = v.lastName; } })
       .catch(async e => { if (isGone(e) && me?.uid === u.uid) kickOut(e); });   // supprimé, désactivé ou en attente : déconnexion et oubli local
