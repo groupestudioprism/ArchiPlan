@@ -147,6 +147,7 @@ const FirebaseAuth = {
     if (!snap.exists){ try { await ref.set(this.defaultProfile(u)); } catch(e){} snap = await ref.get(); if (!snap.exists) throw {code:'app/profile-missing'}; }
     const d = snap.data();
     if (d.status === 'suspended'){ await this.fa.signOut(); throw {code:'app/suspended'}; }
+    if (d.status === 'pending'){ await this.fa.signOut(); throw {code:'app/pending'}; }   // compte Entreprise pas encore validé par Studio Prism
     if (d.status !== 'active') throw {code:'app/profile-invalid'};
     return d;
   },
@@ -274,6 +275,7 @@ const ERR = {
   'app/suspended':'Ce compte Studio Prism est désactivé. Contactez Studio Prism pour le faire réactiver.',
   'app/account-deleted':'Ce compte a été supprimé par Studio Prism. L\'adresse email est maintenant libre : vous pouvez créer un nouveau compte avec elle.',
   'app/profile-missing':'Ce compte Studio Prism n\'existe plus ou n\'a pas pu être créé. S\'il a été supprimé par Studio Prism, contactez-nous ; sinon réessayez dans un instant.',
+  'app/pending':'Votre compte entreprise est en attente de validation par Studio Prism. Vous pourrez vous connecter dès qu\'il sera validé.',
   'app/profile-invalid':'Votre profil Studio Prism est incomplet. Contactez Studio Prism.',
   'permission-denied':'Accès refusé. Vérifiez que votre email est bien confirmé.',
   'app/timeout':'Le service Studio Prism met trop de temps à répondre. Vérifiez votre connexion, puis réessayez.',
