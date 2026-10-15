@@ -209,6 +209,7 @@ function makeZip(files){
 const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:3}, null, 2); };
 async function doExport(kind, arg){
   if (!window.SPAccess?.canExport){ window.SPLicense?.prompt('export'); return; }
+  window.SPLicense?.usage?.();   // rappel d'usage (non commercial) une fois par session
   if (!state.els.length && kind !== 'json'){ toast('Le modèle est vide : dessinez au moins un élément'); return; }
   const base = fileBase();
   try {

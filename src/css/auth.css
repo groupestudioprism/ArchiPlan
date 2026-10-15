@@ -110,3 +110,14 @@
 .ap-key{margin:4px 0 14px;border:1px solid #DDE5EA;border-radius:10px;padding:10px 12px}
 .ap-key summary{cursor:pointer;font-weight:600;font-size:14px;color:#071A45}
 .ap-key form{margin-top:10px}
+
+/* inscription : particulier ou entreprise ; type de compte sur la fiche client */
+.ap-kind{border:0;padding:0;margin:0 0 14px}
+.ap-kind legend{font-weight:600;font-size:14px;margin-bottom:8px}
+.ap-kopt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid rgba(127,140,160,.35);border-radius:10px;margin-bottom:8px;cursor:pointer}
+.ap-kopt input{margin-top:3px}
+.ap-kopt b{display:block;font-size:14px}
+.ap-kopt small{display:block;opacity:.75;font-size:12.5px;line-height:1.4;margin-top:2px}
+.ap-kopt:has(input:checked){border-color:currentColor}
+.ap-acct{font-size:13.5px;padding:10px 12px;border-radius:10px;background:rgba(127,140,160,.12);margin:0 0 14px;line-height:1.5}
+.ap-acct .ap-link{margin-left:6px}

@@ -623,6 +623,17 @@ body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .
 .ap-key{margin:4px 0 14px;border:1px solid #DDE5EA;border-radius:10px;padding:10px 12px}
 .ap-key summary{cursor:pointer;font-weight:600;font-size:14px;color:#071A45}
 .ap-key form{margin-top:10px}
+
+/* inscription : particulier ou entreprise ; type de compte sur la fiche client */
+.ap-kind{border:0;padding:0;margin:0 0 14px}
+.ap-kind legend{font-weight:600;font-size:14px;margin-bottom:8px}
+.ap-kopt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid rgba(127,140,160,.35);border-radius:10px;margin-bottom:8px;cursor:pointer}
+.ap-kopt input{margin-top:3px}
+.ap-kopt b{display:block;font-size:14px}
+.ap-kopt small{display:block;opacity:.75;font-size:12.5px;line-height:1.4;margin-top:2px}
+.ap-kopt:has(input:checked){border-color:currentColor}
+.ap-acct{font-size:13.5px;padding:10px 12px;border-radius:10px;background:rgba(127,140,160,.12);margin:0 0 14px;line-height:1.5}
+.ap-acct .ap-link{margin-left:6px}
 /* ===== Accueil cloud — habillage Studio Prism ===== */
 #home{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
 #home[hidden]{display:none!important}
@@ -1069,6 +1080,7 @@ const DemoAuth = {
     const all = store.get('sp.demo.keys') || {}; all[u.uid] = n; store.set('sp.demo.keys', all); return {productName:'ARCHIPLAN', licenseType:'pro', durationDays:365, orgName:''};
   },
   async findClient(email){ await sleep(250); const c = (store.get('sp.demo.clients') || {})[email.trim().toLowerCase()]; return c ? {...c} : null; },
+  async requestCompany(){ throw {code:'app/demo-only'}; },
   async saveClient(u, fiche, existingId){
     await sleep(300); const all = store.get('sp.demo.clients') || {}, k = u.email.toLowerCase();
     const id = existingId || randId('cli_');
@@ -1146,7 +1158,7 @@ const FirebaseAuth = {
   async setPin(uid, r){ await this.db.collection('userSecrets').doc(uid).set({pinHash:r.pinHash, pinSalt:r.pinSalt, pinIter:r.pinIter, updatedAt:this.ts()}); },
   async signIn(e, p){ const c = await this.fa.signInWithEmailAndPassword(e.trim(), p); try { return await this.after(c.user); } catch(err){ if (err.code !== 'app/suspended') await this.fa.signOut().catch(() => {}); throw err; } },
   async signInGoogle(){ const c = await this.fa.signInWithPopup(new firebase.auth.GoogleAuthProvider()); return this.after(c.user); },
-  async signUp({firstName, lastName, email, password}){
+  async signUp({firstName, lastName, email, password, kind, company}){
     let c, reused = false;
     try { c = await this.fa.createUserWithEmailAndPassword(email.trim(), password); }
     catch(err){
@@ -1160,14 +1172,22 @@ const FirebaseAuth = {
       catch(e2){ c = {user:old}; reused = true; }
     }
     try {
-      const b = this.db.batch();
-      b.set(this.userRef(c.user.uid), this.defaultProfile(c.user, {firstName, lastName, terms:true}));
+      const b = this.db.batch(), prof = this.defaultProfile(c.user, {firstName, lastName, terms:true});
+      if (kind === 'company' && company){
+        // compte Entreprise : fiche entreprise + profil « en attente » (validé à la main par l'administration, comme sur le site)
+        const cref = this.db.collection('companies').doc();
+        b.set(cref, {name:company.name.slice(0, 120), email:company.email, ownerUid:c.user.uid, userRange:company.range, userLimit:company.limit, subscription:'free', createdAt:this.ts(), updatedAt:this.ts()});
+        Object.assign(prof, {accountKind:'company', status:'pending', companyId:cref.id, companyName:company.name.slice(0, 120), companyEmail:company.email, companyUserRange:company.range, companyUserLimit:company.limit});
+        if (company.job) prof.jobTitle = company.job.slice(0, 80);
+      }
+      b.set(this.userRef(c.user.uid), prof);
       if (reused) b.delete(this.db.collection('deletedAccounts').doc(c.user.uid));   // compte repris : la trace de suppression disparaît
       await b.commit();
     } catch(err){ if (reused) await this.fa.signOut().catch(() => {}); else await c.user.delete().catch(() => this.fa.signOut().catch(() => {})); throw err; }  // pas de compte à moitié créé
     c.user.updateProfile({displayName:`${firstName} ${lastName}`.trim()}).catch(() => {});
     c.user.sendEmailVerification().catch(() => {});
     this.existedBefore = false;
+    if (kind === 'company'){ await this.fa.signOut().catch(() => {}); throw {code:'app/pending-signup'}; }   // pas de connexion avant la validation
     return {...this.norm(c.user), firstName, lastName, verified:true};
   },
   async sendReset(email){ try { await this.fa.sendPasswordResetEmail(email.trim()); } catch(e){ if (e?.code !== 'auth/user-not-found') throw e; } return {mode:'link'}; },
@@ -1178,6 +1198,7 @@ const FirebaseAuth = {
   async getAccess(u){
     const p = await this.liveProfile(u);
     const info = {accountKind:p.accountKind || 'individual', subscription:p.subscription || 'free', role:p.role || 'user', companyName:p.companyName || '', orgName:p.orgName || ''};
+    try { const f = await this.db.collection('clientProfiles').doc(u.uid).get(); info.siret = f.exists ? (f.data().siret || '') : ''; } catch(e){ info.siret = ''; }
     let lic = null;
     try { const s = await this.db.collection('licenses').doc(`${u.uid}_${LICENSE_PRODUCT}`).get(); lic = s.exists ? s.data() : null; }
     catch(e){ if (e?.code !== 'permission-denied') throw e; }   // pas de licence : les règles refusent la lecture d'un document absent
@@ -1220,7 +1241,7 @@ const FirebaseAuth = {
   async getProfile(u){
     const p = await this.liveProfile(u);
     let fiche = null; try { const s = await this.db.collection('clientProfiles').doc(u.uid).get(); fiche = s.exists ? s.data() : null; } catch(e){}
-    return {firstName:p.firstName, lastName:p.lastName, clientDone:!!fiche};
+    return {firstName:p.firstName, lastName:p.lastName, clientDone:!!fiche, kind:p.accountKind || 'individual', companyName:p.companyName || ''};
   },
   // « Fiche déjà présente » = compte Studio Prism créé avant (sur le site) : on reprend ses informations.
   async findClient(){
@@ -1229,10 +1250,20 @@ const FirebaseAuth = {
     if (!f && !this.existedBefore) return null;
     return {...(f || {}), firstName:p.firstName, lastName:p.lastName, company:f?.company || p.companyName || '', id:uid, uid:f ? uid : undefined};
   },
+  // Particulier → Entreprise : fiche entreprise créée et compte remis « en attente » dans le même lot (validation par l'administration).
+  async requestCompany(u, co){
+    const cref = this.db.collection('companies').doc(), b = this.db.batch();
+    b.set(cref, {name:co.name.slice(0, 120), email:co.email, ownerUid:u.uid, userRange:co.range, userLimit:co.limit, subscription:'free', createdAt:this.ts(), updatedAt:this.ts()});
+    const up = {accountKind:'company', status:'pending', companyId:cref.id, companyName:co.name.slice(0, 120), companyEmail:co.email, companyUserRange:co.range, companyUserLimit:co.limit, updatedAt:this.ts()};
+    if (co.job) up.jobTitle = co.job.slice(0, 80);
+    b.update(this.userRef(u.uid), up);
+    await b.commit();
+  },
   async saveClient(u, fiche){
     const ref = this.db.collection('clientProfiles').doc(u.uid), snap = await ref.get();
     const keep = ['phone', 'profile', 'company', 'address', 'postalCode', 'city', 'country'];
     const data = {}; keep.forEach(k => data[k] = String(fiche[k] || '').slice(0, k === 'address' ? 200 : 120));
+    data.siret = String(fiche.siret || '').replace(/\s/g, '').slice(0, 14);   // SIRET (facultatif) : usage commercial d'une licence Pro
     data.updatedAt = this.ts(); data.createdAt = snap.exists ? snap.data().createdAt : this.ts();
     await ref.set(data);
     const p = (await this.userRef(u.uid).get()).data() || {};
@@ -1261,6 +1292,8 @@ const ERR = {
   'app/suspended':'Ce compte Studio Prism est désactivé. Contactez Studio Prism pour le faire réactiver.',
   'app/account-deleted':'Ce compte a été supprimé par Studio Prism. Pour revenir, créez un compte avec la même adresse email et le même mot de passe (mot de passe oublié ? Utilisez d\'abord « Mot de passe oublié »).',
   'app/profile-missing':'Ce compte Studio Prism n\'existe plus ou n\'a pas pu être créé. S\'il a été supprimé par Studio Prism, contactez-nous ; sinon réessayez dans un instant.',
+  'app/demo-only':'Indisponible en mode démo.',
+  'app/pending-signup':'Demande envoyée : votre compte Entreprise doit être vérifié par Studio Prism. Vous pourrez vous connecter dès sa validation.',
   'app/pending':'Votre compte entreprise est en attente de validation par Studio Prism. Vous pourrez vous connecter dès qu\'il sera validé.',
   'app/profile-invalid':'Votre profil Studio Prism est incomplet. Contactez Studio Prism.',
   'permission-denied':'Accès refusé. Vérifiez que votre email est bien confirmé.',
@@ -1318,6 +1351,23 @@ const phoneOK = p => /^\+?[\d\s().-]{8,20}$/.test(p.trim()) && (p.match(/\d/g) |
 const pwRules = p => ({len:p.length >= 8, let:/[A-Za-zÀ-ÿ]/.test(p), num:/\d/.test(p)});
 const weakPin = p => /^(\d)\1+$/.test(p) || '01234567890'.includes(p) || '09876543210'.includes(p);
 
+/* Particulier / entreprise. Un particulier utilise les apps pour un usage personnel, non commercial. Vendre des plans, des études
+   ou des prestations réalisés avec les apps est un usage commercial : il demande une licence Pro avec un numéro SIRET (activité
+   déclarée : micro-entrepreneur, profession libérale…) ou un compte Entreprise avec la licence Pro Entreprise. */
+const TIERS = [['1', '1 compte', 1], ['2-10', '2 à 10 comptes', 10], ['11-25', '11 à 25 comptes', 25], ['26-50', '26 à 50 comptes', 50], ['51-100', '51 à 100 comptes', 100], ['100+', 'Plus de 100 comptes', null]];
+const siretOK = raw => { const d = String(raw || '').replace(/\s/g, ''); if (!/^\d{14}$/.test(d)) return false; if (d.startsWith('356000000')) return true;
+  let sum = 0; for (let i = 0; i < 14; i++){ let n = +d[13 - i]; if (i % 2){ n *= 2; if (n > 9) n -= 9; } sum += n; } return sum % 10 === 0; };
+const PRO_TYPES = ['pro', 'pro_entreprise'];
+function usageOf(a = access){
+  const i = a.info || {}, l = a.license, lt = l && l.status === 'active' && !l.expired ? l.type : '';
+  if (a.level === 'admin') return {commercial:true, label:'Usage commercial autorisé (compte administrateur).'};
+  const pro = PRO_TYPES.includes(lt) || PRO_TYPES.includes(i.subscription);
+  if (i.accountKind === 'company') return pro ? {commercial:true, label:'Usage commercial autorisé : compte Entreprise avec licence Pro Entreprise.'}
+    : {commercial:false, label:'Compte Entreprise sans licence Pro Entreprise : usage commercial non inclus.'};
+  if (!pro) return {commercial:false, label:'Compte Particulier : usage personnel uniquement. Vendre des plans, des études ou des prestations réalisés avec l\'app demande la licence Pro (avec SIRET) ou un compte Entreprise.'};
+  if (!siretOK(i.siret)) return {commercial:false, needSiret:true, label:'Licence Pro : ajoutez votre numéro SIRET dans votre fiche client pour pouvoir vendre ce que vous réalisez avec l\'app.'};
+  return {commercial:true, label:`Usage commercial autorisé : licence Pro, SIRET ${i.siret}.`};
+}
 const field = (id, label, type = 'text', attrs = '', val = '') =>
   `<label class="ap-field" for="${id}"><span>${label}</span><span class="ap-in"><input id="${id}" name="${id}" type="${type}" value="${esc(val)}" ${attrs}>${type === 'password' ? `<button type="button" class="ap-eye" data-eye="${id}" aria-label="Afficher le mot de passe">Afficher</button>` : ''}</span></label>`;
 const note = (t, cls = '') => t ? `<p class="ap-note ${cls}">${t}</p>` : '';
@@ -1350,6 +1400,13 @@ const SCREENS = {
 
   signup:() => `${tabs('signup')}${steps(0, true)}<h2>Créer votre compte</h2><p class="ap-sub">Un seul compte pour toutes les apps Studio Prism.</p>
     <form class="ap-form" id="apForm" novalidate>
+      <fieldset class="ap-kind"><legend>Vous créez un compte</legend>
+        <label class="ap-kopt"><input type="radio" name="ap-kind" value="individual" checked><span><b>Particulier</b><small>Usage personnel, non commercial. Pour vendre vos réalisations : licence Pro avec un numéro SIRET.</small></span></label>
+        <label class="ap-kopt"><input type="radio" name="ap-kind" value="company"><span><b>Entreprise</b><small>Société, bureau d'études, collectivité… Le compte est vérifié par Studio Prism avant la première connexion.</small></span></label>
+      </fieldset>
+      <div id="ap-co" hidden>${field('ap-coname', 'Nom de l\'entreprise', 'text', 'autocomplete="organization" maxlength="120"')}
+        <div class="ap-grid2">${field('ap-coemail', 'Email de l\'entreprise <small>(facultatif)</small>', 'email', 'inputmode="email" autocapitalize="off" maxlength="160"')}${field('ap-cojob', 'Votre fonction <small>(facultatif)</small>', 'text', 'autocomplete="organization-title" maxlength="80"')}</div>
+        <label class="ap-field" for="ap-cotier"><span>Nombre de comptes nécessaires</span><span class="ap-in"><select id="ap-cotier"><option value="">Choisir…</option>${TIERS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></span></label></div>
       <div class="ap-grid2">${field('ap-first', 'Prénom', 'text', 'autocomplete="given-name" required')}${field('ap-last', 'Nom', 'text', 'autocomplete="family-name" required')}</div>
       ${field('ap-email', 'Email', 'email', 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required', ctx.email)}
       ${field('ap-pw', 'Mot de passe', 'password', 'autocomplete="new-password" required')}
@@ -1395,12 +1452,14 @@ const SCREENS = {
   client:() => { const c = view.fiche || {}; const ed = view.edit; return `${ed ? '' : steps(1)}<h2>Votre fiche client</h2>
     <p class="ap-sub">${ed ? 'Ces informations sont partagées entre les apps Studio Prism.' : 'Quelques informations pour vos devis, vos commandes et le suivi de vos projets.'}</p>
     ${view.found ? note('Nous avons retrouvé vos informations Studio Prism. Vérifiez-les et complétez votre fiche.', 'ok') : ''}
+    <div class="ap-acct">${me.kind === 'company' ? `Compte <b>Entreprise</b>${me.companyName ? ' · ' + esc(me.companyName) : ''}` : `Compte <b>Particulier</b> · usage personnel, non commercial <button type="button" class="ap-link" id="apToCo">Vous êtes une entreprise ?</button>`}</div>
     <form class="ap-form" id="apForm" novalidate>
       ${field('ap-email', 'Email du compte', 'email', 'readonly', me.email)}
       <div class="ap-grid2">${field('ap-first', 'Prénom', 'text', 'autocomplete="given-name" required', c.firstName || me.firstName || '')}${field('ap-last', 'Nom', 'text', 'autocomplete="family-name" required', c.lastName || me.lastName || '')}</div>
       ${field('ap-phone', 'Téléphone', 'tel', 'autocomplete="tel" inputmode="tel" required', c.phone || '')}
       <label class="ap-field" for="ap-prof"><span>Vous êtes</span><span class="ap-in"><select id="ap-prof">${PROFILES.map(p => `<option${p === c.profile ? ' selected' : ''}>${esc(p)}</option>`).join('')}</select></span></label>
-      ${field('ap-company', 'Société <small>(facultatif)</small>', 'text', 'autocomplete="organization"', c.company || '')}
+      ${field('ap-company', 'Société <small>(facultatif)</small>', 'text', 'autocomplete="organization"', c.company || me.companyName || '')}
+      ${field('ap-siret', me.kind === 'company' ? 'SIRET de l\'entreprise <small>(facultatif)</small>' : 'Numéro SIRET <small>(facultatif — obligatoire pour vendre avec la licence Pro)</small>', 'text', 'inputmode="numeric" maxlength="17" placeholder="14 chiffres"', c.siret || '')}
       ${field('ap-address', 'Adresse <small>(facultatif)</small>', 'text', 'autocomplete="street-address"', c.address || '')}
       <div class="ap-grid2">${field('ap-zip', 'Code postal', 'text', 'autocomplete="postal-code" inputmode="numeric"', c.postalCode || '')}${field('ap-city', 'Ville', 'text', 'autocomplete="address-level2"', c.city || '')}</div>
       ${field('ap-country', 'Pays', 'text', 'autocomplete="country-name"', c.country || 'France')}
@@ -1408,12 +1467,21 @@ const SCREENS = {
       <button class="ap-btn" type="submit">${ed ? 'Enregistrer' : 'Enregistrer et continuer'}</button>
     </form>${ed ? '<div class="ap-links"><button type="button" class="ap-link" data-act="toapp">Annuler</button></div>' : ''}`; },
 
+  'to-company':() => `<h2>Passer en compte Entreprise</h2><p class="ap-sub">Votre compte devient un compte Entreprise. Studio Prism vérifie les informations avant de le réactiver : vous serez déconnecté en attendant la validation. Vos projets sont conservés.</p>
+    <form class="ap-form" id="apForm" novalidate>
+      ${field('ap-coname', 'Nom de l\'entreprise', 'text', 'autocomplete="organization" maxlength="120"', me.companyName || '')}
+      <div class="ap-grid2">${field('ap-coemail', 'Email de l\'entreprise <small>(facultatif)</small>', 'email', 'inputmode="email" autocapitalize="off" maxlength="160"')}${field('ap-cojob', 'Votre fonction <small>(facultatif)</small>', 'text', 'autocomplete="organization-title" maxlength="80"')}</div>
+      <label class="ap-field" for="ap-cotier"><span>Nombre de comptes nécessaires</span><span class="ap-in"><select id="ap-cotier"><option value="">Choisir…</option>${TIERS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></span></label>
+      ${errBox()}
+      <button class="ap-btn" type="submit">Envoyer la demande</button>
+    </form><div class="ap-links"><button type="button" class="ap-link" id="apBack">Retour à ma fiche</button></div>`,
   licence:() => { const ls = licSummary(), full = access.level === 'admin' || access.level === 'licensed', i = access.info || {};
     const acct = [i.orgName ? `Établissement · ${esc(i.orgName)}` : i.accountKind === 'company' ? `Entreprise${i.companyName ? ' · ' + esc(i.companyName) : ''}` : 'Particulier', i.subscription ? 'abonnement Studio Prism ' + esc(licLabel(i.subscription)) : ''].filter(Boolean).join(' · ');
     const lead = view.reason === 'export' ? '<p class="ap-sub">L\'export est réservé aux comptes disposant d\'une licence ARCHIPLAN active.</p>'
       : view.reason === 'welcome' ? '<p class="ap-sub">Bienvenue ! Votre compte gratuit vous donne accès à tous les outils et à 10 Mo de cloud.</p>' : view.reason === 'quota' ? '<p class="ap-sub">Votre espace cloud est plein. Une licence ARCHIPLAN le porte à 50 Mo.</p>' : '';
     return `<h2>${esc(ls.title)}</h2>${lead}
     <div class="ap-lic ${ls.cls}"><b>${esc(ls.short)}</b>${esc(ls.text)}${acct ? `<br><span style="color:#5B6B7F">${acct}</span>` : ''}${access.offline ? '<br><span style="color:#5B6B7F">Hors ligne : derniers droits connus.</span>' : ''}</div>
+    ${access.level !== 'pending' ? (u => `<p class="ap-note ${u.commercial ? 'ok' : 'warn'}">${esc(u.label)}${u.needSiret || !u.commercial ? ' <button type="button" class="ap-link" data-act="fiche">Ma fiche client</button>' : ''}</p>`)(usageOf()) : ''}
     ${full ? '<ul class="ap-list"><li>Cloud : 50 Mo de projets (1 Go pour un administrateur), 5 dossiers et 3 dossiers partagés.</li><li>Tous les exports : Archi Vision (.glb), IFC, métré, images, sauvegardes.</li></ul>' : `<ul class="ap-list"><li>Offre gratuite : tous les outils de modélisation, bibliothèque, compositions et familles, rendus à l'écran.</li><li>Cloud de 10 Mo, 5 dossiers et 3 dossiers partagés ; partage de projets.</li><li>Les exports (Archi Vision, IFC, métré, images, sauvegardes) demandent une licence ARCHIPLAN, à obtenir sur le site Studio Prism et activée sur ce même compte.</li></ul>
     <a class="ap-btn" href="${OFFERS_URL}" target="_blank" rel="noopener" style="text-decoration:none">Voir les offres ARCHIPLAN</a>`}
     <details class="ap-key"${full ? '' : ' open'}><summary>J'ai une clé de licence</summary><form id="apKeyF" novalidate><label class="ap-field"><span>Clé reçue de Studio Prism ou de votre établissement</span><span class="ap-in"><input id="apKey" autocomplete="off" autocapitalize="characters" placeholder="ARCH-XXXX-XXXX-XXXX" style="font-family:var(--f-mono,monospace);letter-spacing:.05em"></span></label><p class="ap-err" id="apKeyErr"></p><button class="ap-btn alt" type="submit">Activer la clé</button></form></details>
@@ -1477,9 +1545,18 @@ const WIRE = {
   },
   signup(){
     wireRules();
+    card().querySelectorAll('[name="ap-kind"]').forEach(r => r.onchange = () => { $a('#ap-co').hidden = ($a('[name="ap-kind"]:checked') || {}).value !== 'company'; });
     $a('#apForm').onsubmit = async e => {
       e.preventDefault();
       const firstName = $a('#ap-first').value.trim(), lastName = $a('#ap-last').value.trim(), email = $a('#ap-email').value, password = $a('#ap-pw').value;
+      const kind = ($a('[name="ap-kind"]:checked') || {}).value || 'individual'; let company = null;
+      if (kind === 'company'){
+        const t = TIERS.find(x => x[0] === $a('#ap-cotier').value), ce = $a('#ap-coemail').value.trim();
+        company = {name:$a('#ap-coname').value.trim(), email:(ce || email).trim().toLowerCase(), job:$a('#ap-cojob').value.trim(), range:t && t[0], limit:t ? t[2] : null};
+        if (!company.name) return setErr('Indiquez le nom de l\'entreprise.');
+        if (ce && !emailOK(ce)) return setErr('L\'email de l\'entreprise n\'est pas valide.');
+        if (!t) return setErr('Choisissez le nombre de comptes nécessaires.');
+      }
       ctx.email = email.trim(); const r = pwRules(password);
       if (!firstName || !lastName) return setErr('Indiquez votre prénom et votre nom.');
       if (!emailOK(email)) return setErr('Entrez une adresse email valide.');
@@ -1487,8 +1564,8 @@ const WIRE = {
       if (password !== $a('#ap-pw2').value) return setErr('Les deux mots de passe ne correspondent pas.');
       if (!$a('#ap-cgu').checked) return setErr('Acceptez les conditions d\'utilisation pour créer votre compte.');
       const b = $a('#apForm .ap-btn'); busy(b, true, 'Création du compte…');
-      try { const u = await Auth.signUp({firstName, lastName, email, password}); ctx.onboarding = true; await afterLogin(u); }
-      catch(err){ busy(b, false); setErr(errMsg(err)); }
+      try { const u = await Auth.signUp({firstName, lastName, email, password, kind, company}); ctx.onboarding = true; await afterLogin(u); }
+      catch(err){ busy(b, false); if (err?.code === 'app/pending-signup') return show('login', {msg:errMsg(err), msgCls:'ok'}); setErr(errMsg(err)); }
     };
   },
   reset(){
@@ -1517,11 +1594,13 @@ const WIRE = {
     $a('#apResend').onclick = async () => { try { await Auth.resendVerification(); show('verify', {msg:'Email renvoyé.', msgCls:'ok'}); } catch(err){ setErr(errMsg(err)); } };
   },
   client(){
+    const tc = $a('#apToCo'); if (tc) tc.onclick = () => show('to-company', {back:view});
     $a('#apForm').onsubmit = async e => {
       e.preventDefault(); const v = id => $a(id).value.trim();
-      const fiche = {firstName:v('#ap-first'), lastName:v('#ap-last'), phone:v('#ap-phone'), profile:$a('#ap-prof').value, company:v('#ap-company'), address:v('#ap-address'), postalCode:v('#ap-zip'), city:v('#ap-city'), country:v('#ap-country')};
+      const fiche = {siret:v('#ap-siret').replace(/\s/g, ''), firstName:v('#ap-first'), lastName:v('#ap-last'), phone:v('#ap-phone'), profile:$a('#ap-prof').value, company:v('#ap-company'), address:v('#ap-address'), postalCode:v('#ap-zip'), city:v('#ap-city'), country:v('#ap-country')};
       if (!fiche.firstName || !fiche.lastName) return setErr('Indiquez votre prénom et votre nom.');
       if (!phoneOK(fiche.phone)) return setErr('Entrez un numéro de téléphone valide, par exemple 06 12 34 56 78.');
+      if (fiche.siret && !siretOK(fiche.siret)) return setErr('Numéro SIRET invalide : 14 chiffres (vérifiez la saisie).');
       const b = $a('#apForm .ap-btn'); busy(b, true, 'Enregistrement…');
       try {
         await Auth.saveClient(me, fiche, view.clientId); me.firstName = fiche.firstName; me.lastName = fiche.lastName;
@@ -1530,10 +1609,25 @@ const WIRE = {
     };
   },
   licence(){
+    card().querySelectorAll('[data-act="fiche"]').forEach(b => b.onclick = () => openClient(true));
     $a('#apKeyF').onsubmit = async e => { e.preventDefault(); const b = e.currentTarget.querySelector('button'), err = $a('#apKeyErr'); err.textContent = ''; busy(b, true, 'Activation…');
       try { const k = await Auth.redeemKey(me, $a('#apKey').value); await refreshAccess(); show('licence', {}); toastA(`Clé activée : ${k.productName} ${licLabel(k.licenseType)}${k.orgName ? ' · ' + k.orgName : ''}`); }
       catch(x){ busy(b, false); err.textContent = errMsg(x); } };
     $a('#apLicCheck').onclick = async e => { busy(e.currentTarget, true, 'Vérification…'); await refreshAccess(); show('licence', {reason:view.reason === 'export' ? 'export' : ''}); toastA(access.level === 'discovery' ? 'Toujours aucune licence active' : 'Licence active : ARCHIPLAN est débloqué'); };
+  },
+  'to-company'(){
+    $a('#apBack').onclick = () => show('client', view.back || {edit:true});
+    $a('#apForm').onsubmit = async e => {
+      e.preventDefault();
+      const t = TIERS.find(x => x[0] === $a('#ap-cotier').value), ce = $a('#ap-coemail').value.trim();
+      const co = {name:$a('#ap-coname').value.trim(), email:(ce || me.email).toLowerCase(), job:$a('#ap-cojob').value.trim(), range:t && t[0], limit:t ? t[2] : null};
+      if (!co.name) return setErr('Indiquez le nom de l\'entreprise.');
+      if (ce && !emailOK(ce)) return setErr('L\'email de l\'entreprise n\'est pas valide.');
+      if (!t) return setErr('Choisissez le nombre de comptes nécessaires.');
+      const b = $a('#apForm .ap-btn'); busy(b, true, 'Envoi de la demande…');
+      try { await Auth.requestCompany(me, co); kickOut({code:'app/pending'}); }
+      catch(err){ busy(b, false); setErr(errMsg(err)); }
+    };
   },
   'pin-offer'(){
     $a('#apPinNew').onclick = () => show('pin-setup', {stage:1});
@@ -1639,6 +1733,7 @@ async function afterLogin(u, unlocked){
     await syncPin();
   }
   if (prof?.firstName){ me.firstName = prof.firstName; me.lastName = prof.lastName || ''; }
+  if (prof?.kind){ me.kind = prof.kind; me.companyName = prof.companyName || ''; }
   if (!prof?.clientDone) return openClient(false);
   return afterClient(unlocked);
 }
@@ -1671,7 +1766,8 @@ let access = {level:'pending'}, accessReady = Promise.resolve(access);
 const accessKey = uid => `sp.access.${uid}`;
 function publishAccess(a){
   access = a; const full = a.level === 'admin' || a.level === 'licensed';
-  window.SPAccess = Object.freeze({level:a.level, canSave:a.level !== 'pending', canExport:full});
+  const us = a.level === 'pending' ? {commercial:false} : usageOf(a);
+  window.SPAccess = Object.freeze({level:a.level, canSave:a.level !== 'pending', canExport:full, commercial:!!us.commercial, needSiret:!!us.needSiret});
   window.dispatchEvent(new CustomEvent('sp:access', {detail:window.SPAccess}));
   const b = $a('#licBadge'); if (b) b.hidden = full || a.level === 'pending' || !me;
   const ubd = $a('#userBtn'); if (ubd) ubd.classList.toggle('disc', a.level === 'discovery');
@@ -1731,7 +1827,11 @@ function licSummary(a = access){
     : l.status === 'suspended' ? `Votre licence ${licLabel(l.type)} est suspendue.` : `Votre licence ${licLabel(l.type)} n'est pas active.`;
   return {cls:'warn', short:'Offre gratuite · 10 Mo de cloud, sans export', title:'Offre gratuite', text:why};
 }
-window.SPLicense = {prompt(reason){ if (me) show('licence', {reason}); }};
+/* Rappel avant un export, une fois par session, pour un compte sans droit d'usage commercial. */
+let usageShown = false;
+window.SPLicense = {prompt(reason){ if (me) show('licence', {reason}); },
+  usage(){ if (usageShown || !me || window.SPAccess?.commercial || window.SPAccess?.level === 'pending') return; usageShown = true; const u = usageOf();
+    dlg(`<h3>Usage de cet export</h3><p class="dlg-p">${esc(u.label)}</p><p class="dlg-p">Un usage personnel reste libre : vous pouvez exporter vos fichiers. Les vendre, ou les remettre à un client dans le cadre d'une prestation, n'est pas couvert par votre licence actuelle.</p><div class="dlg-acts"><button type="button" class="ap-btn" data-dlg="close">Compris</button></div>`); }};
 
 function enterApp(msg){
   root().hidden = true; const app = $a('#app'); if (app) app.inert = false; const hh = $a('#home'); if (hh) hh.inert = false; ctx.onboarding = false;
@@ -7064,6 +7164,7 @@ function makeZip(files){
 const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:3}, null, 2); };
 async function doExport(kind, arg){
   if (!window.SPAccess?.canExport){ window.SPLicense?.prompt('export'); return; }
+  window.SPLicense?.usage?.();   // rappel d'usage (non commercial) une fois par session
   if (!state.els.length && kind !== 'json'){ toast('Le modèle est vide : dessinez au moins un élément'); return; }
   const base = fileBase();
   try {
