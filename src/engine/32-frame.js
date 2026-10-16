@@ -82,17 +82,17 @@ function makeFramePreview(cv, onPick){
   const r = new THREE.WebGLRenderer({canvas:cv, antialias:true}); r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.outputColorSpace = THREE.SRGBColorSpace;
   const sc = new THREE.Scene(); sc.background = new THREE.Color(isDark() ? '#1C2027' : '#F1F3F5');
   sc.add(new THREE.HemisphereLight(0xffffff, 0x8a8a7a, 1.15)); const dl = new THREE.DirectionalLight(0xffffff, 1.5); dl.position.set(-6, 10, 8); sc.add(dl);
-  const cm = new THREE.PerspectiveCamera(40, 1, 0.05, 400); const oc = new OrbitControls(cm, cv); oc.enableDamping = true;
-  const grp = new THREE.Group(); sc.add(grp); let raf = 0, alive = true, framed = false;
+  const cm = new THREE.PerspectiveCamera(40, 1, 0.05, 400); const oc = new OrbitControls(cm, cv); oc.enableDamping = true; oc.addEventListener('change', () => { need = 2; });
+  const grp = new THREE.Group(); sc.add(grp); let raf = 0, alive = true, framed = false; let need = 2;   // dessin à la demande : seulement quand la vue ou le contenu change
   const ray = new THREE.Raycaster(), mp = new THREE.Vector2(); let downAt = null;
   cv.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
   cv.addEventListener('pointerup', e => { if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) return; const b = cv.getBoundingClientRect(); mp.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); ray.setFromCamera(mp, cm); const h = ray.intersectObjects(grp.children, false).find(x => x.object.userData.mid); if (h) onPick(h.object.userData.mid); });
-  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); } oc.update(); r.render(sc, cm); };
+  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); need = 2; } if (oc.update() || need > 0){ r.render(sc, cm); if (need > 0) need--; } };
   loop();
   const COL = {sabliere:'#B8834F', faitiere:'#9C6B3C', panne:'#A87443', chevron:'#D7AE72', arretier:'#9C6B3C', arbal:'#D7AE72', entrait:'#C99A5E', diag:'#E2BF8A'};
   return {
     show(el){
-      disposeGroup(grp);
+      need = 2; disposeGroup(grp);
       const wp = roofWallPoly(el), b = roofBase(el);
       const sh = new THREE.Shape(wp.map(q => new THREE.Vector2(q[0], q[1]))), fg = new THREE.ShapeGeometry(sh); fg.rotateX(-Math.PI / 2); fg.translate(0, b - 0.002, 0);
       grp.add(new THREE.Mesh(fg, new THREE.MeshStandardMaterial({color:'#C9CED4', transparent:true, opacity:0.35, side:THREE.DoubleSide})));

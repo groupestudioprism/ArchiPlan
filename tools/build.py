@@ -34,7 +34,7 @@ def assemble(engine_dir='engine', css=CSS_ORDER, body='parts/body.html', cloud='
             + '<script>\n' + rd('js/auth.js') + rd(cloud) + rd('js/auth-end.js') + '</script>\n'
             + rd('parts/importmap.html') + '<script type="module">\n' + engine + '</script>\n')
 HEAD = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">'
         '<meta name="description" content="ARCHIPLAN · Studio Prism : conception de plans et modélisation 3D sur téléphone, tablette et ordinateur.">'
         '<meta name="theme-color" content="#071B55">'
         '<link rel="preconnect" href="https://www.gstatic.com" crossorigin>'
@@ -43,7 +43,7 @@ HEAD = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<link rel="preconnect" href="https://securetoken.googleapis.com">'
         '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>'
         + ''.join(f'<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/{FB}/firebase-{n}-compat.js">' for n in ('app', 'auth', 'firestore')) +
-        '<style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style></head><body>\n')
+        '<style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}body{margin:0}</style></head><body>\n')
 def main(argv):
     demo = assemble()
     assert demo.count('const FIREBASE_CONFIG = null;') == 1 and f"FIREBASE_VERSION = '{FB}'" in demo

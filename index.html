@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="ARCHIPLAN · Studio Prism : conception de plans et modélisation 3D sur téléphone, tablette et ordinateur."><meta name="theme-color" content="#071B55"><link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com"><link rel="preconnect" href="https://identitytoolkit.googleapis.com"><link rel="preconnect" href="https://securetoken.googleapis.com"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"><style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style></head><body>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="description" content="ARCHIPLAN · Studio Prism : conception de plans et modélisation 3D sur téléphone, tablette et ordinateur."><meta name="theme-color" content="#071B55"><link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com"><link rel="preconnect" href="https://identitytoolkit.googleapis.com"><link rel="preconnect" href="https://securetoken.googleapis.com"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"><link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"><style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}body{margin:0}</style></head><body>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('ap.theme')==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <title>ARCHIPLAN · Studio Prism</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -340,6 +340,13 @@ body[data-mode="2d"] .vtools .vgrp:first-child{display:none}
 }
 @media (max-width:560px){ .top .brand{flex:none} .top .brand>div{display:none} #redo,#licBadge{display:none} .cs{display:none} #userBtn.disc{box-shadow:0 0 0 2px var(--panel),0 0 0 4px #E0A526} }
 @media (max-width:420px){ .top .brand{display:none!important} .top{gap:4px;padding:6px 6px} .modes button{padding:7px 8px;font-size:12.5px} .top .ib{min-width:34px;padding:0 7px} #homeBtn{padding:0 6px} }
+/* téléphone : l'en-tête tient toujours dans la largeur de l'écran (sinon le navigateur élargit toute la page) */
+#userMenu .um-narrow{display:none}
+.top{min-width:0;max-width:100%}
+@media (max-width:420px){ .top .acts{gap:4px;margin-left:auto} .modes button{padding:7px 6px} .top .ib{min-width:32px;padding:0 6px} }
+@media (max-width:400px){ .top .prism-gear:has(+ #userBtn:not([hidden])){display:none} #userMenu .um-narrow{display:flex} .top .modes + .acts{margin-left:6px} }
+@media (max-width:380px){ .modes button{padding:7px 5px;font-size:12px} .top{gap:3px;padding:6px 4px} .top .ib{min-width:31px;padding:0 5px} }
+@media (max-width:350px){ .modes button{padding:6px 4px;font-size:11.5px} .top .acts{gap:2px} .top .ib{min-width:30px;padding:0 4px} }
 @media (prefers-reduced-motion: reduce){.panel{transition:none}}
 /* paramètres d'affichage */
 .vset button span{display:inline}
@@ -481,6 +488,15 @@ body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .
 .patlib{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto;padding:2px}.patg em{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.04em;margin:2px 0 4px}
 .patgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
 .pat{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:3px 3px 4px;display:flex;flex-direction:column;gap:3px;cursor:pointer;color:var(--ink)}.pat img{width:100%;aspect-ratio:1;border-radius:5px;object-fit:cover;background:var(--line)}.pat span{font-size:10px;line-height:1.15}.pat.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
+/* Tactile : zones de toucher agrandies sans changer le dessin des boutons (pseudo-élément invisible) */
+#c{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+@media (pointer:coarse){
+  .tw,.te,.td,.status button,.status select,.modes button,.vgrp button,.tree-h .ib,#userMenu button,.tool{position:relative;-webkit-tap-highlight-color:transparent}
+  .tw::after{content:"";position:absolute;inset:-9px -6px}
+  .te::after,.td::after{content:"";position:absolute;inset:-6px -4px}
+  .status button::after,.status select::after{content:"";position:absolute;inset:-7px -1px}
+  .modes button::after,.vgrp button::after{content:"";position:absolute;inset:-5px 0}
+}
 /* intro : le symbole se dessine comme un plan (balayage de bas en haut), puis ARCHIPLAN est tracé de gauche à droite, puis la signature */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;transition:opacity .55s ease,visibility .55s}
 #splash.done{opacity:0;visibility:hidden}
@@ -890,7 +906,7 @@ a.ap-link{text-decoration:none}
   <footer class="cmd">
     <div id="prompt" aria-live="polite"></div>
     <div class="cmdrow">
-      <div class="cmdin"><span>›</span><input id="cmd" autocomplete="off" spellcheck="false" placeholder="4,20 · 4,2&lt;90 · @5;3 · MUR · DEP" aria-label="Ligne de commande"></div>
+      <div class="cmdin"><span>›</span><input id="cmd" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="go" spellcheck="false" placeholder="4,20 · 4,2&lt;90 · @5;3 · MUR · DEP" aria-label="Ligne de commande"></div>
       <button class="ib primary" id="cmdOk" aria-label="Valider">↵</button>
       <button class="ib" id="closeBtn" hidden>Fermer</button><button class="ib" id="endBtn" hidden>Terminer</button>
     </div>
@@ -937,6 +953,7 @@ a.ap-link{text-decoration:none}
   <button data-um="security"><b>Code PIN et sécurité</b><span>Code PIN du compte, empreinte ou visage (facultatif)</span></button>
   <button data-um="lock" id="umLock"><b>Verrouiller</b><span>Le code PIN sera demandé pour revenir</span></button>
   <button data-um="theme"><b>Thème clair / sombre</b><span>Change l'apparence de l'interface sur cet appareil</span></button>
+  <button data-um="settings" class="um-narrow"><b>Réglages</b><span>Thème, taille de l'interface, molette, qualité graphique…</span></button>
   <hr><button data-um="logout"><b>Se déconnecter</b><span>Sur cet appareil</span></button>
   <button data-um="delete" class="danger"><b>Supprimer mon compte</b><span>Sur le site Studio Prism, avec votre mot de passe et votre code PIN</span></button>
 </div>
@@ -2548,7 +2565,7 @@ document.addEventListener('click', e => { if (!um.hidden && !um.contains(e.targe
 $a('#licBadge').addEventListener('click', () => show('licence'));
 um.addEventListener('click', e => {
   const b = e.target.closest('[data-um]'); if (!b) return; um.hidden = true;
-  ({fiche:() => openClient(true), licence:() => show('licence'), home:() => showHome(), security:() => show('security'), lock:() => show('lock', {noAuto:false}), logout:signOutAll, delete:deleteAccount, theme:() => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; if (window.APTheme) window.APTheme(t); else { document.documentElement.dataset.theme = t; try { localStorage.setItem('ap.theme', t); } catch(e){} } }})[b.dataset.um]();
+  ({settings:() => window.PrismSettings?.open(), fiche:() => openClient(true), licence:() => show('licence'), home:() => showHome(), security:() => show('security'), lock:() => show('lock', {noAuto:false}), logout:signOutAll, delete:deleteAccount, theme:() => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; if (window.APTheme) window.APTheme(t); else { document.documentElement.dataset.theme = t; try { localStorage.setItem('ap.theme', t); } catch(e){} } }})[b.dataset.um]();
 });
 
 /* Suppression du compte : sur le site Studio Prism (même compte), avec confirmation par mot de passe puis code PIN */
@@ -2632,7 +2649,21 @@ const V = {
   norm:a=>{ const l = Math.hypot(a[0],a[1]) || 1; return [a[0]/l, a[1]/l]; }, rot:(a,ang)=>[a[0]*Math.cos(ang)-a[1]*Math.sin(ang), a[0]*Math.sin(ang)+a[1]*Math.cos(ang)],
 };
 let toastT;
-function toast(msg){ const t = $('#toast'); if (!t) return; t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
+/* Appareil tactile sans souris ni pavé (téléphone, tablette) : les consignes parlent du doigt, pas de la souris */
+const MQ_COARSE = matchMedia('(pointer: coarse)'), MQ_FINE = matchMedia('(any-pointer: fine)');
+const touchOnly = () => MQ_COARSE.matches && !MQ_FINE.matches;
+const TOUCH_TXT = [
+  [/ \(Maj pour en ajouter\)/g, ' (appui long pour en ajouter)'],
+  [/Clic droit : déplacer la vue, ou tourner autour de l'élément sélectionné\./g, 'Glissez pour tourner, deux doigts pour déplacer et zoomer.'],
+  [/\(Échap pour finir\)/g, '(bouton Terminer pour finir)'],
+  [/([Cc])liquez (sur|dans) un mur/g, (m, c) => (c === 'C' ? 'T' : 't') + 'ouchez un mur'],
+  [/([Cc])liquez sur /g, (m, c) => (c === 'C' ? 'T' : 't') + 'ouchez '],
+  [/([Cc])liquez/g, (m, c) => (c === 'C' ? 'T' : 't') + 'ouchez'],
+  [/([Ss])urvolez/g, (m, c) => (c === 'S' ? 'T' : 't') + 'ouchez'],
+  [/\(clic ou degrés\)/g, '(toucher ou degrés)'],
+];
+const forTouch = s => { if (typeof s !== 'string' || !touchOnly()) return s; for (const [a, b] of TOUCH_TXT) s = s.replace(a, b); return s; };
+function toast(msg){ const t = $('#toast'); if (!t) return; t.textContent = forTouch(msg); t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
 function segClosest(p, a, b){ const d = V.sub(b, a), L2 = V.dot(d, d) || 1e-12; const t = clamp(V.dot(V.sub(p, a), d) / L2, 0, 1); return {pt:V.add(a, V.mul(d, t)), t}; }
 function segInter(a, b, c, d){ // intersection de deux segments (ou null)
   const r = V.sub(b, a), s = V.sub(d, c), den = V.cross(r, s); if (Math.abs(den) < 1e-9) return null;
@@ -3881,17 +3912,17 @@ function makeFramePreview(cv, onPick){
   const r = new THREE.WebGLRenderer({canvas:cv, antialias:true}); r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.outputColorSpace = THREE.SRGBColorSpace;
   const sc = new THREE.Scene(); sc.background = new THREE.Color(isDark() ? '#1C2027' : '#F1F3F5');
   sc.add(new THREE.HemisphereLight(0xffffff, 0x8a8a7a, 1.15)); const dl = new THREE.DirectionalLight(0xffffff, 1.5); dl.position.set(-6, 10, 8); sc.add(dl);
-  const cm = new THREE.PerspectiveCamera(40, 1, 0.05, 400); const oc = new OrbitControls(cm, cv); oc.enableDamping = true;
-  const grp = new THREE.Group(); sc.add(grp); let raf = 0, alive = true, framed = false;
+  const cm = new THREE.PerspectiveCamera(40, 1, 0.05, 400); const oc = new OrbitControls(cm, cv); oc.enableDamping = true; oc.addEventListener('change', () => { need = 2; });
+  const grp = new THREE.Group(); sc.add(grp); let raf = 0, alive = true, framed = false; let need = 2;   // dessin à la demande : seulement quand la vue ou le contenu change
   const ray = new THREE.Raycaster(), mp = new THREE.Vector2(); let downAt = null;
   cv.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
   cv.addEventListener('pointerup', e => { if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) return; const b = cv.getBoundingClientRect(); mp.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); ray.setFromCamera(mp, cm); const h = ray.intersectObjects(grp.children, false).find(x => x.object.userData.mid); if (h) onPick(h.object.userData.mid); });
-  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); } oc.update(); r.render(sc, cm); };
+  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); need = 2; } if (oc.update() || need > 0){ r.render(sc, cm); if (need > 0) need--; } };
   loop();
   const COL = {sabliere:'#B8834F', faitiere:'#9C6B3C', panne:'#A87443', chevron:'#D7AE72', arretier:'#9C6B3C', arbal:'#D7AE72', entrait:'#C99A5E', diag:'#E2BF8A'};
   return {
     show(el){
-      disposeGroup(grp);
+      need = 2; disposeGroup(grp);
       const wp = roofWallPoly(el), b = roofBase(el);
       const sh = new THREE.Shape(wp.map(q => new THREE.Vector2(q[0], q[1]))), fg = new THREE.ShapeGeometry(sh); fg.rotateX(-Math.PI / 2); fg.translate(0, b - 0.002, 0);
       grp.add(new THREE.Mesh(fg, new THREE.MeshStandardMaterial({color:'#C9CED4', transparent:true, opacity:0.35, side:THREE.DoubleSide})));
@@ -4641,6 +4672,29 @@ function endHQ(){
   if (p.style !== DISPLAY.style){ DISPLAY.style = p.style; resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }
   dirty = true;
 }
+/* ---------- Résolution adaptative (qualité « Auto » sur téléphone et tablette) ----------
+   On démarre à 1× (prudent) puis, pendant que l'on manipule la vue, on mesure la cadence des images : si l'appareil reste
+   fluide (< 19 ms par image), la netteté monte d'un cran (1× → 1,5× → 2×, jamais au-delà de l'écran) ; s'il peine
+   (> 30 ms), elle redescend et ne remonte plus pendant la session. Le cran retenu est mémorisé pour cet appareil. */
+const ADAPT = {steps:[1, 1.5, 2], i:0, cap:2, t:[], last:0};
+const adaptOn = () => APP_PREFS.gfx === 'auto' && LOWPOW;
+try { const k = ADAPT.steps.indexOf(+localStorage.getItem('ap.gfxpr')); if (k >= 0) ADAPT.i = k; } catch(e){}
+const adaptPR = () => Math.min(devicePixelRatio || 1, ADAPT.steps[ADAPT.i]);
+if (adaptOn()) renderer.setPixelRatio(adaptPR());
+function adaptTick(now, moving){
+  if (!moving || !adaptOn()){ ADAPT.t.length = 0; ADAPT.last = 0; return; }
+  if (ADAPT.last){ const dt = now - ADAPT.last; if (dt < 250) ADAPT.t.push(dt); }
+  ADAPT.last = now;
+  if (ADAPT.t.length < 45) return;
+  const a = ADAPT.t.sort((x, y) => x - y), med = a[a.length >> 1]; ADAPT.t = [];
+  let k = ADAPT.i;
+  if (med < 19 && k + 1 <= ADAPT.cap && ADAPT.steps[k + 1] <= (devicePixelRatio || 1) + 0.01) k++;
+  else if (med > 30 && k > 0){ k--; ADAPT.cap = k; }
+  if (k === ADAPT.i) return;
+  ADAPT.i = k; try { localStorage.setItem('ap.gfxpr', String(ADAPT.steps[k])); } catch(e){}
+  const w = vpEl.clientWidth, h = vpEl.clientHeight; renderer.setPixelRatio(adaptPR()); if (w && h){ renderer.setSize(w, h, false); fxResize(w, h); }
+  dirty = true;
+}
 
 /* ==== 43-batch.js ==== */
 /* ============ Affichage groupé : beaucoup moins d'objets à dessiner à chaque image ============
@@ -4905,7 +4959,7 @@ function updatePreview(){
   const p3 = new THREE.Vector3(cur[0], curZ(), -cur[1]);
   drawSnapGlyph(p3, draw.snap?.kind, draw.snap?.how);
   const [sx, sy] = toScreen(p3);
-  live.textContent = text; live.style.left = sx + 'px'; live.style.top = sy + 'px'; live.hidden = !text;
+  live.textContent = forTouch(text); live.style.left = sx + 'px'; live.style.top = sy + 'px'; live.hidden = !text;
   dirty = true;
 }
 
@@ -5047,7 +5101,7 @@ const PROMPTS = {
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
 };
 function setPrompt(){
-  $('#prompt').innerHTML = PROMPTS[tool]();
+  $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
   $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4));
 }
@@ -5197,7 +5251,9 @@ canvas.addEventListener('pointermove', e => {
 canvas.addEventListener('pointerup', e => {
   if (push){ pushEnd(); down = null; return; }
   if (!down) return; const d = down; down = null;
-  if (d.b !== 0 || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 7 || performance.now() - d.t > 700) return;
+  const longTouch = e.pointerType !== 'mouse' && tool === 'select' && performance.now() - d.t >= 480 && performance.now() - d.t < 1500;
+  if (d.b !== 0 || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 7 || (performance.now() - d.t > 700 && !longTouch)) return;
+  if (longTouch){ pick(e, true); try { navigator.vibrate?.(12); } catch(_){} return; }   // appui long au doigt : ajouter / retirer de la sélection
   if (tool === 'select' || tool === 'push'){ pick(e); return; }
   const g = cursorPoint(e); if (!g) return;
   const s = tool === 'comp' ? {pt:g} : snap(g); draw.snap = s; placePoint(s.pt);
@@ -5205,12 +5261,13 @@ canvas.addEventListener('pointerup', e => {
 canvas.addEventListener('dblclick', () => { if (tool === 'wall' && draw.start) cancelDraw(); else if (tool === 'select' && sel){ const el = getEl(sel); if (el?.kind === 'inst' && !el.host){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); } } });
 canvas.addEventListener('pointerleave', () => { if (tool !== 'select'){ $('#live').hidden = true; drawSnapGlyph(null); } });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-function pick(e){
+function pick(e, add = false){
   const h = hitModel(e); const id = h?.id ?? null;
-  if (e.shiftKey && id){ if (sel === id){ sel = multi.shift() || null; } else if (multi.includes(id)) multi = multi.filter(x => x !== id); else { if (sel) multi.push(sel); sel = id; } }
+  if (add && !id) return;
+  if ((e.shiftKey || add) && id){ if (sel === id){ sel = multi.shift() || null; } else if (multi.includes(id)) multi = multi.filter(x => x !== id); else { if (sel) multi.push(sel); sel = id; } }
   else { sel = id; multi = []; }
   activeTab = 'props'; applySel(); buildLabels(); renderPanel();
-  if (id && isNarrow.matches) openSheet(true);
+  if (id && isNarrow.matches && !add) openSheet(true);   // appui long : on compose la sélection sans ouvrir le panneau
 }
 function select(id){ sel = id; multi = []; activeTab = 'props'; if (id) revealInTree(id); applySel(); buildLabels(); renderPanel(); requestAnimationFrame(() => $('#pbody .tree .tr.on')?.scrollIntoView({block:'nearest'})); }
 function deleteSel(){ const ids = selIds(); if (!ids.length) return; pushHist(); removeEls(ids); sel = null; multi = []; rebuild(); toast(ids.length > 1 ? `${ids.length} éléments supprimés` : 'Élément supprimé'); }
@@ -5767,14 +5824,14 @@ function makeFamPreview(cv){
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#EEF3F7');
   sc.add(new THREE.HemisphereLight(0xffffff, 0x8a8a7a, 1.2)); const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(-4, 8, 6); sc.add(dl);
   const cm = new THREE.PerspectiveCamera(40, 1, 0.01, 200); cm.position.set(-3, 2.5, 4);
-  const oc = new OrbitControls(cm, cv); oc.enableDamping = true;
+  const oc = new OrbitControls(cm, cv); oc.enableDamping = true; oc.addEventListener('change', () => { need = 2; });
   const grp = new THREE.Group(); sc.add(grp); const grid = new THREE.GridHelper(10, 20, '#C9D6E0', '#DDE6EE'); sc.add(grid);
-  let raf = 0, alive = true;
-  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); } oc.update(); r.render(sc, cm); };
+  let raf = 0, alive = true; let need = 2;   // dessin à la demande : seulement quand la vue ou le contenu change
+  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); need = 2; } if (oc.update() || need > 0){ r.render(sc, cm); if (need > 0) need--; } };
   loop();
   return {
     show(F, scope){
-      disposeGroup(grp);
+      need = 2; disposeGroup(grp);
       const by = {}; for (const so of famSolids(F, scope)) (by[so.m] ??= []).push(solidGeo({...so, c:[so.c[0], so.c[1], so.c[2]]}));
       for (const [m, geos] of Object.entries(by)) grp.add(meshOf(geos.length === 1 ? geos[0] : mergeGeos(geos), m, false, 30));
       if (F.host === 'wall'){ // mur fantôme autour de l'ouverture
@@ -7668,7 +7725,7 @@ function updateCompass(){
 /* boucle de rendu */
 function loop(){
   requestAnimationFrame(loop);
-  const moved = ctl().update();
+  const moved = ctl().update(); adaptTick(performance.now(), moved);
   if (moved || dirty){ renderFrame(); updateLabels(); updateCompass(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
 }
 new MutationObserver(() => { resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
@@ -7750,7 +7807,7 @@ PrismSettings.init({
   onResize:() => window.dispatchEvent(new Event('resize')),
   sections:[
     {title:'Graphismes', fields:[
-      {type:'seg', label:'Qualité graphique', sub:'Le lissage des bords change au prochain chargement', options:[['auto', 'Auto'], ['eco', 'Économie'], ['std', 'Équilibrée'], ['high', 'Élevée']], get:() => APP_PREFS.gfx, set:v => { APP_PREFS.gfx = v; savePrefs(); const G = GFX(); renderer.setPixelRatio(Math.min(devicePixelRatio, G.pr)); renderer.shadowMap.type = G.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap; if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } DISPLAY.shadows = G.shadows; DISPLAY.fx = G.fx; resize(); applyDisplay(); }},
+      {type:'seg', label:'Qualité graphique', sub:'Le lissage des bords change au prochain chargement', options:[['auto', 'Auto'], ['eco', 'Économie'], ['std', 'Équilibrée'], ['high', 'Élevée']], get:() => APP_PREFS.gfx, set:v => { APP_PREFS.gfx = v; savePrefs(); const G = GFX(); renderer.setPixelRatio(adaptOn() ? adaptPR() : Math.min(devicePixelRatio, G.pr)); renderer.shadowMap.type = G.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap; if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } DISPLAY.shadows = G.shadows; DISPLAY.fx = G.fx; resize(); applyDisplay(); }},
       {type:'switch', label:'Ombres portées', get:() => DISPLAY.shadows !== false, set:v => { DISPLAY.shadows = v; applyDisplay(); }}]},
     {title:'Grille et aimantation de base', fields:[
       {type:'select', label:'Pas de la grille', sub:'Pas utilisé à l\'ouverture de l\'app (modifiable dans la barre du bas)', options:[...($('#stepSel')?.options || [])].map(o => [+o.value, o.textContent]), get:() => step, set:v => setStepDef(+v)},

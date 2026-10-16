@@ -163,7 +163,7 @@ function updatePreview(){
   const p3 = new THREE.Vector3(cur[0], curZ(), -cur[1]);
   drawSnapGlyph(p3, draw.snap?.kind, draw.snap?.how);
   const [sx, sy] = toScreen(p3);
-  live.textContent = text; live.style.left = sx + 'px'; live.style.top = sy + 'px'; live.hidden = !text;
+  live.textContent = forTouch(text); live.style.left = sx + 'px'; live.style.top = sy + 'px'; live.hidden = !text;
   dirty = true;
 }
 
@@ -305,7 +305,7 @@ const PROMPTS = {
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
 };
 function setPrompt(){
-  $('#prompt').innerHTML = PROMPTS[tool]();
+  $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
   $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4));
 }
@@ -455,7 +455,9 @@ canvas.addEventListener('pointermove', e => {
 canvas.addEventListener('pointerup', e => {
   if (push){ pushEnd(); down = null; return; }
   if (!down) return; const d = down; down = null;
-  if (d.b !== 0 || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 7 || performance.now() - d.t > 700) return;
+  const longTouch = e.pointerType !== 'mouse' && tool === 'select' && performance.now() - d.t >= 480 && performance.now() - d.t < 1500;
+  if (d.b !== 0 || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 7 || (performance.now() - d.t > 700 && !longTouch)) return;
+  if (longTouch){ pick(e, true); try { navigator.vibrate?.(12); } catch(_){} return; }   // appui long au doigt : ajouter / retirer de la sélection
   if (tool === 'select' || tool === 'push'){ pick(e); return; }
   const g = cursorPoint(e); if (!g) return;
   const s = tool === 'comp' ? {pt:g} : snap(g); draw.snap = s; placePoint(s.pt);
@@ -463,12 +465,13 @@ canvas.addEventListener('pointerup', e => {
 canvas.addEventListener('dblclick', () => { if (tool === 'wall' && draw.start) cancelDraw(); else if (tool === 'select' && sel){ const el = getEl(sel); if (el?.kind === 'inst' && !el.host){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); } } });
 canvas.addEventListener('pointerleave', () => { if (tool !== 'select'){ $('#live').hidden = true; drawSnapGlyph(null); } });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-function pick(e){
+function pick(e, add = false){
   const h = hitModel(e); const id = h?.id ?? null;
-  if (e.shiftKey && id){ if (sel === id){ sel = multi.shift() || null; } else if (multi.includes(id)) multi = multi.filter(x => x !== id); else { if (sel) multi.push(sel); sel = id; } }
+  if (add && !id) return;
+  if ((e.shiftKey || add) && id){ if (sel === id){ sel = multi.shift() || null; } else if (multi.includes(id)) multi = multi.filter(x => x !== id); else { if (sel) multi.push(sel); sel = id; } }
   else { sel = id; multi = []; }
   activeTab = 'props'; applySel(); buildLabels(); renderPanel();
-  if (id && isNarrow.matches) openSheet(true);
+  if (id && isNarrow.matches && !add) openSheet(true);   // appui long : on compose la sélection sans ouvrir le panneau
 }
 function select(id){ sel = id; multi = []; activeTab = 'props'; if (id) revealInTree(id); applySel(); buildLabels(); renderPanel(); requestAnimationFrame(() => $('#pbody .tree .tr.on')?.scrollIntoView({block:'nearest'})); }
 function deleteSel(){ const ids = selIds(); if (!ids.length) return; pushHist(); removeEls(ids); sel = null; multi = []; rebuild(); toast(ids.length > 1 ? `${ids.length} éléments supprimés` : 'Élément supprimé'); }

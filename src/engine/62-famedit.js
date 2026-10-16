@@ -5,14 +5,14 @@ function makeFamPreview(cv){
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#EEF3F7');
   sc.add(new THREE.HemisphereLight(0xffffff, 0x8a8a7a, 1.2)); const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(-4, 8, 6); sc.add(dl);
   const cm = new THREE.PerspectiveCamera(40, 1, 0.01, 200); cm.position.set(-3, 2.5, 4);
-  const oc = new OrbitControls(cm, cv); oc.enableDamping = true;
+  const oc = new OrbitControls(cm, cv); oc.enableDamping = true; oc.addEventListener('change', () => { need = 2; });
   const grp = new THREE.Group(); sc.add(grp); const grid = new THREE.GridHelper(10, 20, '#C9D6E0', '#DDE6EE'); sc.add(grid);
-  let raf = 0, alive = true;
-  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); } oc.update(); r.render(sc, cm); };
+  let raf = 0, alive = true; let need = 2;   // dessin à la demande : seulement quand la vue ou le contenu change
+  const loop = () => { if (!alive) return; raf = requestAnimationFrame(loop); const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * r.getPixelRatio()) || cv.height !== Math.round(h * r.getPixelRatio())){ r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); need = 2; } if (oc.update() || need > 0){ r.render(sc, cm); if (need > 0) need--; } };
   loop();
   return {
     show(F, scope){
-      disposeGroup(grp);
+      need = 2; disposeGroup(grp);
       const by = {}; for (const so of famSolids(F, scope)) (by[so.m] ??= []).push(solidGeo({...so, c:[so.c[0], so.c[1], so.c[2]]}));
       for (const [m, geos] of Object.entries(by)) grp.add(meshOf(geos.length === 1 ? geos[0] : mergeGeos(geos), m, false, 30));
       if (F.host === 'wall'){ // mur fantôme autour de l'ouverture

@@ -121,7 +121,7 @@ function updateCompass(){
 /* boucle de rendu */
 function loop(){
   requestAnimationFrame(loop);
-  const moved = ctl().update();
+  const moved = ctl().update(); adaptTick(performance.now(), moved);
   if (moved || dirty){ renderFrame(); updateLabels(); updateCompass(); if (draw.cursor && tool !== 'select') { const p = new THREE.Vector3(draw.cursor[0], curZ(), -draw.cursor[1]); drawSnapGlyph(p, draw.snap?.kind, draw.snap?.how); } dirty = false; }
 }
 new MutationObserver(() => { resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
@@ -203,7 +203,7 @@ PrismSettings.init({
   onResize:() => window.dispatchEvent(new Event('resize')),
   sections:[
     {title:'Graphismes', fields:[
-      {type:'seg', label:'Qualité graphique', sub:'Le lissage des bords change au prochain chargement', options:[['auto', 'Auto'], ['eco', 'Économie'], ['std', 'Équilibrée'], ['high', 'Élevée']], get:() => APP_PREFS.gfx, set:v => { APP_PREFS.gfx = v; savePrefs(); const G = GFX(); renderer.setPixelRatio(Math.min(devicePixelRatio, G.pr)); renderer.shadowMap.type = G.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap; if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } DISPLAY.shadows = G.shadows; DISPLAY.fx = G.fx; resize(); applyDisplay(); }},
+      {type:'seg', label:'Qualité graphique', sub:'Le lissage des bords change au prochain chargement', options:[['auto', 'Auto'], ['eco', 'Économie'], ['std', 'Équilibrée'], ['high', 'Élevée']], get:() => APP_PREFS.gfx, set:v => { APP_PREFS.gfx = v; savePrefs(); const G = GFX(); renderer.setPixelRatio(adaptOn() ? adaptPR() : Math.min(devicePixelRatio, G.pr)); renderer.shadowMap.type = G.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap; if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } DISPLAY.shadows = G.shadows; DISPLAY.fx = G.fx; resize(); applyDisplay(); }},
       {type:'switch', label:'Ombres portées', get:() => DISPLAY.shadows !== false, set:v => { DISPLAY.shadows = v; applyDisplay(); }}]},
     {title:'Grille et aimantation de base', fields:[
       {type:'select', label:'Pas de la grille', sub:'Pas utilisé à l\'ouverture de l\'app (modifiable dans la barre du bas)', options:[...($('#stepSel')?.options || [])].map(o => [+o.value, o.textContent]), get:() => step, set:v => setStepDef(+v)},

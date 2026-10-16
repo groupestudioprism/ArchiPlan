@@ -17,7 +17,21 @@ const V = {
   norm:a=>{ const l = Math.hypot(a[0],a[1]) || 1; return [a[0]/l, a[1]/l]; }, rot:(a,ang)=>[a[0]*Math.cos(ang)-a[1]*Math.sin(ang), a[0]*Math.sin(ang)+a[1]*Math.cos(ang)],
 };
 let toastT;
-function toast(msg){ const t = $('#toast'); if (!t) return; t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
+/* Appareil tactile sans souris ni pavé (téléphone, tablette) : les consignes parlent du doigt, pas de la souris */
+const MQ_COARSE = matchMedia('(pointer: coarse)'), MQ_FINE = matchMedia('(any-pointer: fine)');
+const touchOnly = () => MQ_COARSE.matches && !MQ_FINE.matches;
+const TOUCH_TXT = [
+  [/ \(Maj pour en ajouter\)/g, ' (appui long pour en ajouter)'],
+  [/Clic droit : déplacer la vue, ou tourner autour de l'élément sélectionné\./g, 'Glissez pour tourner, deux doigts pour déplacer et zoomer.'],
+  [/\(Échap pour finir\)/g, '(bouton Terminer pour finir)'],
+  [/([Cc])liquez (sur|dans) un mur/g, (m, c) => (c === 'C' ? 'T' : 't') + 'ouchez un mur'],
+  [/([Cc])liquez sur /g, (m, c) => (c === 'C' ? 'T' : 't') + 'ouchez '],
+  [/([Cc])liquez/g, (m, c) => (c === 'C' ? 'T' : 't') + 'ouchez'],
+  [/([Ss])urvolez/g, (m, c) => (c === 'S' ? 'T' : 't') + 'ouchez'],
+  [/\(clic ou degrés\)/g, '(toucher ou degrés)'],
+];
+const forTouch = s => { if (typeof s !== 'string' || !touchOnly()) return s; for (const [a, b] of TOUCH_TXT) s = s.replace(a, b); return s; };
+function toast(msg){ const t = $('#toast'); if (!t) return; t.textContent = forTouch(msg); t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
 function segClosest(p, a, b){ const d = V.sub(b, a), L2 = V.dot(d, d) || 1e-12; const t = clamp(V.dot(V.sub(p, a), d) / L2, 0, 1); return {pt:V.add(a, V.mul(d, t)), t}; }
 function segInter(a, b, c, d){ // intersection de deux segments (ou null)
   const r = V.sub(b, a), s = V.sub(d, c), den = V.cross(r, s); if (Math.abs(den) < 1e-9) return null;

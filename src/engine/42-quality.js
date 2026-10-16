@@ -33,3 +33,26 @@ function endHQ(){
   if (p.style !== DISPLAY.style){ DISPLAY.style = p.style; resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }
   dirty = true;
 }
+/* ---------- Résolution adaptative (qualité « Auto » sur téléphone et tablette) ----------
+   On démarre à 1× (prudent) puis, pendant que l'on manipule la vue, on mesure la cadence des images : si l'appareil reste
+   fluide (< 19 ms par image), la netteté monte d'un cran (1× → 1,5× → 2×, jamais au-delà de l'écran) ; s'il peine
+   (> 30 ms), elle redescend et ne remonte plus pendant la session. Le cran retenu est mémorisé pour cet appareil. */
+const ADAPT = {steps:[1, 1.5, 2], i:0, cap:2, t:[], last:0};
+const adaptOn = () => APP_PREFS.gfx === 'auto' && LOWPOW;
+try { const k = ADAPT.steps.indexOf(+localStorage.getItem('ap.gfxpr')); if (k >= 0) ADAPT.i = k; } catch(e){}
+const adaptPR = () => Math.min(devicePixelRatio || 1, ADAPT.steps[ADAPT.i]);
+if (adaptOn()) renderer.setPixelRatio(adaptPR());
+function adaptTick(now, moving){
+  if (!moving || !adaptOn()){ ADAPT.t.length = 0; ADAPT.last = 0; return; }
+  if (ADAPT.last){ const dt = now - ADAPT.last; if (dt < 250) ADAPT.t.push(dt); }
+  ADAPT.last = now;
+  if (ADAPT.t.length < 45) return;
+  const a = ADAPT.t.sort((x, y) => x - y), med = a[a.length >> 1]; ADAPT.t = [];
+  let k = ADAPT.i;
+  if (med < 19 && k + 1 <= ADAPT.cap && ADAPT.steps[k + 1] <= (devicePixelRatio || 1) + 0.01) k++;
+  else if (med > 30 && k > 0){ k--; ADAPT.cap = k; }
+  if (k === ADAPT.i) return;
+  ADAPT.i = k; try { localStorage.setItem('ap.gfxpr', String(ADAPT.steps[k])); } catch(e){}
+  const w = vpEl.clientWidth, h = vpEl.clientHeight; renderer.setPixelRatio(adaptPR()); if (w && h){ renderer.setSize(w, h, false); fxResize(w, h); }
+  dirty = true;
+}
