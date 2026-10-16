@@ -29,7 +29,7 @@
   /* glissement : chaque cran ajoute son zoom à une réserve, consommée en douceur sur ≈ 150 ms (même amplitude qu'avant, sans à-coup) */
   let pend = 0, pc = null, px = 0, py = 0, raf = 0, last = 0;
   const tick = now => { const dt = Math.min(50, now - (last || now)); last = now; if (!pc || Math.abs(pend) < 1e-4){ pend = 0; raf = 0; last = 0; return; }
-    const part = pend * (1 - Math.exp(-dt / 55)); pend -= part; zoomBy(pc, Math.exp(part), px, py); raf = requestAnimationFrame(tick); };
+    const part = Math.abs(pend) < 2e-3 ? pend : pend * (1 - Math.exp(-dt / 55));   /* fin du glissement : on applique le reste, le pas par cran est exact */ pend -= part; zoomBy(pc, Math.exp(part), px, py); raf = requestAnimationFrame(tick); };
   canvas.addEventListener('wheel', ev => {
     const c = ctls.find(x => x.enabled && x.enableZoom);
     if (!c || ev.defaultPrevented) return;
