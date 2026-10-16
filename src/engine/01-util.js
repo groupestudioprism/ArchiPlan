@@ -1,8 +1,10 @@
 /* ============ Utilitaires ============ */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-const nf = (x, d = 2) => (Math.round(x * 10 ** d) / 10 ** d).toLocaleString('fr-FR', {minimumFractionDigits:d, maximumFractionDigits:d});
-const n0 = x => Math.round(x).toLocaleString('fr-FR');
+const NF_CACHE = new Map(), nfmt = d => { let f = NF_CACHE.get(d); if (!f) NF_CACHE.set(d, f = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:d, maximumFractionDigits:d})); return f; };   // un formateur par précision (toLocaleString en recrée un à chaque appel)
+const NF0 = new Intl.NumberFormat('fr-FR');
+const nf = (x, d = 2) => nfmt(d).format(Math.round(x * 10 ** d) / 10 ** d);
+const n0 = x => NF0.format(Math.round(x));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = s => { const v = parseFloat(String(s).trim().replace(',', '.')); return Number.isFinite(v) ? v : NaN; };
 const rnd = x => Math.round(x * 1e5) / 1e5;

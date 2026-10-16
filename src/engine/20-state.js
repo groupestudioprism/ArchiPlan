@@ -87,7 +87,14 @@ function pushHist(){ hist.push(snapshot()); if (hist.length > 150) hist.shift();
 function undo(){ if (!hist.length) return; redoS.push(snapshot()); state = JSON.parse(hist.pop()); if (sel && !getEl(sel)) sel = null; multi = multi.filter(getEl); rebuild(); }
 function redo(){ if (!redoS.length) return; hist.push(snapshot()); state = JSON.parse(redoS.pop()); if (sel && !getEl(sel)) sel = null; multi = multi.filter(getEl); rebuild(); }
 function updUndo(){ const u = $('#undo'), r = $('#redo'); if (u) u.disabled = !hist.length; if (r) r.disabled = !redoS.length; }
-const getEl = id => state.els.find(e => e.id === id);
+/* recherche d'un élément par numéro : index id → position, vérifié à chaque lecture et refait si la liste a changé */
+let elIdx = new Map(), elIdxOf = null;
+function elIdxBuild(){ elIdx = new Map(); elIdxOf = state.els; state.els.forEach((e, i) => { if (!elIdx.has(e.id)) elIdx.set(e.id, i); }); }
+const getEl = id => {
+  const els = state.els;
+  if (elIdxOf === els){ const i = elIdx.get(id); if (i !== undefined && els[i]?.id === id) return els[i]; if (i === undefined && elIdx.size === els.length) return els.find(e => e.id === id); }
+  elIdxBuild(); const i = elIdx.get(id); return i === undefined ? undefined : els[i];
+};
 function addEl(e){ pushHist(); e.id = state.nextId++; state.els.push(e); state.isSample = false; rebuild(); return e.id; }
 function removeEls(ids){
   const set = new Set(ids);

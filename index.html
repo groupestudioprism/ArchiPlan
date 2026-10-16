@@ -2616,8 +2616,10 @@ const APP_VERSION = '0.7';
 /* ============ Utilitaires ============ */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-const nf = (x, d = 2) => (Math.round(x * 10 ** d) / 10 ** d).toLocaleString('fr-FR', {minimumFractionDigits:d, maximumFractionDigits:d});
-const n0 = x => Math.round(x).toLocaleString('fr-FR');
+const NF_CACHE = new Map(), nfmt = d => { let f = NF_CACHE.get(d); if (!f) NF_CACHE.set(d, f = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:d, maximumFractionDigits:d})); return f; };   // un formateur par précision (toLocaleString en recrée un à chaque appel)
+const NF0 = new Intl.NumberFormat('fr-FR');
+const nf = (x, d = 2) => nfmt(d).format(Math.round(x * 10 ** d) / 10 ** d);
+const n0 = x => NF0.format(Math.round(x));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = s => { const v = parseFloat(String(s).trim().replace(',', '.')); return Number.isFinite(v) ? v : NaN; };
 const rnd = x => Math.round(x * 1e5) / 1e5;
@@ -3401,7 +3403,14 @@ function pushHist(){ hist.push(snapshot()); if (hist.length > 150) hist.shift();
 function undo(){ if (!hist.length) return; redoS.push(snapshot()); state = JSON.parse(hist.pop()); if (sel && !getEl(sel)) sel = null; multi = multi.filter(getEl); rebuild(); }
 function redo(){ if (!redoS.length) return; hist.push(snapshot()); state = JSON.parse(redoS.pop()); if (sel && !getEl(sel)) sel = null; multi = multi.filter(getEl); rebuild(); }
 function updUndo(){ const u = $('#undo'), r = $('#redo'); if (u) u.disabled = !hist.length; if (r) r.disabled = !redoS.length; }
-const getEl = id => state.els.find(e => e.id === id);
+/* recherche d'un élément par numéro : index id → position, vérifié à chaque lecture et refait si la liste a changé */
+let elIdx = new Map(), elIdxOf = null;
+function elIdxBuild(){ elIdx = new Map(); elIdxOf = state.els; state.els.forEach((e, i) => { if (!elIdx.has(e.id)) elIdx.set(e.id, i); }); }
+const getEl = id => {
+  const els = state.els;
+  if (elIdxOf === els){ const i = elIdx.get(id); if (i !== undefined && els[i]?.id === id) return els[i]; if (i === undefined && elIdx.size === els.length) return els.find(e => e.id === id); }
+  elIdxBuild(); const i = elIdx.get(id); return i === undefined ? undefined : els[i];
+};
 function addEl(e){ pushHist(); e.id = state.nextId++; state.els.push(e); state.isSample = false; rebuild(); return e.id; }
 function removeEls(ids){
   const set = new Set(ids);
@@ -4194,35 +4203,78 @@ function pieceGeo(pc){
 }
 function solidGeo(so){
   let g;
+  // (correctif : les cylindres et cônes verticaux étaient remplacés par une boîte — poteau rond, tronc d'arbre)
   if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
   else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
-  if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2);
   else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
   else g = boxGeo(so.w, so.d, so.h);
+  if (so.s === 'cyl' || so.s === 'cone'){ if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2); }
   if (so.rz) g.rotateY(so.rz);
   g.translate(so.c[0], so.c[2], -so.c[1]);
   return g;
 }
-function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0){
+/* Arêtes d'une pièce : même résultat que THREE.EdgesGeometry, mais une forme déjà rencontrée (même géométrie à une
+   translation près : murs, montants, chevrons répétés…) reprend les arêtes déjà calculées, simplement décalées. */
+const EDGE_CACHE = new Map();
+function edgesOf(geo, angle){
+  const P = geo.attributes.position, idx = geo.index, n = P.count;
+  if (!n || P.isInterleavedBufferAttribute || n > 20000) return new THREE.EdgesGeometry(geo, angle);
+  const a = P.array, x0 = a[0], y0 = a[1], z0 = a[2];
+  let h1 = 0x811c9dc5 ^ n, h2 = (angle * 1000) | 0;
+  for (let i = 0; i < n * 3; i += 3){
+    const qx = Math.round((a[i] - x0) * 1e5), qy = Math.round((a[i + 1] - y0) * 1e5), qz = Math.round((a[i + 2] - z0) * 1e5);
+    h1 = Math.imul(h1 ^ qx, 16777619); h1 = Math.imul(h1 ^ qy, 16777619); h1 = Math.imul(h1 ^ qz, 16777619);
+    h2 = (Math.imul(h2, 31) + qx * 7 + qy * 13 + qz * 17) | 0;
+  }
+  if (idx){ const ia = idx.array; for (let i = 0; i < ia.length; i++){ h1 = Math.imul(h1 ^ ia[i], 16777619); h2 = (Math.imul(h2, 31) + ia[i]) | 0; } }
+  const key = n + ':' + (idx ? idx.count : 0) + ':' + angle + ':' + (h1 >>> 0).toString(36) + ':' + (h2 >>> 0).toString(36);
+  let rel = EDGE_CACHE.get(key);
+  if (!rel){
+    const E = new THREE.EdgesGeometry(geo, angle), ea = E.attributes.position.array;
+    rel = new Float32Array(ea.length); for (let i = 0; i < ea.length; i += 3){ rel[i] = ea[i] - x0; rel[i + 1] = ea[i + 1] - y0; rel[i + 2] = ea[i + 2] - z0; }
+    if (EDGE_CACHE.size > 6000) EDGE_CACHE.delete(EDGE_CACHE.keys().next().value);
+    EDGE_CACHE.set(key, rel);
+    if (!x0 && !y0 && !z0) return E;
+    E.dispose();
+  }
+  const out = new Float32Array(rel.length); for (let i = 0; i < rel.length; i += 3){ out[i] = rel[i] + x0; out[i + 1] = rel[i + 1] + y0; out[i + 2] = rel[i + 2] + z0; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(out, 3)); return g;
+}
+/* Géométries de la maquette réutilisées d'une reconstruction à l'autre : la clé est la description complète de la pièce
+   (contour, hauteurs, jonctions et ouvertures déjà résolues), donc une pièce inchangée garde sa géométrie et ses arêtes.
+   Les entrées non utilisées par la dernière reconstruction sont libérées à la fin de celle-ci. */
+const GEO_CACHE = new Map(); let geoGen = 0;
+function cachedGeo(key, make){
+  let e = GEO_CACHE.get(key);
+  if (!e){ const g = make(); g.userData.apCached = true; GEO_CACHE.set(key, e = {g, gen:geoGen}); }
+  e.gen = geoGen; return e.g;
+}
+function geoCachePrune(){ for (const [k, e] of GEO_CACHE) if (e.gen !== geoGen){ e.g.dispose(); GEO_CACHE.delete(k); } }
+function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0, key = null){
   const mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light));
   mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.light = light;
   if (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn() || view === 'sec'){
-    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
+    const edges = new THREE.LineSegments(key ? cachedGeo(key + '|e' + edgeAngle, () => edgesOf(geo, edgeAngle)) : edgesOf(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
     edges.userData.isEdge = true; mesh.add(edges);
   }
   return mesh;
 }
-const pieceMesh = (pc, ghost, light = 0) => meshOf(pieceGeo(pc), pc.mat, ghost, 25, light);
-function disposeGroup(g){ g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); g.clear(); }
+function pieceMesh(pc, ghost, light = 0){
+  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, 25, light);
+  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, 25, light, key);
+}
+let GEO_ON = true, geoBuilding = false;
+function disposeGroup(g){ g.traverse(o => { if (o.geometry && !o.geometry.userData.apCached) o.geometry.dispose(); }); g.clear(); }
 
 /* Regroupe les solides d'une famille par matériau (moins d'objets à dessiner) */
 function instMeshes(el, ghost, light = 0){
   const by = {};
-  for (const so of instSolids(el)) (by[so.m] ??= []).push(solidGeo(so));
+  for (const so of instSolids(el)) (by[so.m] ??= []).push(so);
   const out = [];
-  for (const [m, geos] of Object.entries(by)){
-    const g = geos.length === 1 ? geos[0] : mergeGeos(geos);
-    out.push(meshOf(g, m, ghost, 30, light));
+  for (const [m, sos] of Object.entries(by)){
+    const make = () => { const geos = sos.map(solidGeo); return geos.length === 1 ? geos[0] : mergeGeos(geos); };
+    if (ghost || !GEO_ON || !geoBuilding){ out.push(meshOf(make(), m, ghost, 30, light)); continue; }
+    const key = 'i' + JSON.stringify(sos); out.push(meshOf(cachedGeo(key, make), m, false, 30, light, key));
   }
   return out;
 }
@@ -4284,7 +4336,7 @@ function positionGrid(){
 /* ---------- reconstruction ---------- */
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
-  rebuildSeq++; disposeGroup(modelGroup);
+  rebuildSeq++; disposeGroup(modelGroup); geoGen++; geoBuilding = true;
   const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
   for (const el of state.els){
     if (plan && el.lvl !== curLvl) continue; // plan : seulement le niveau courant
@@ -4299,14 +4351,15 @@ function rebuild(opts = {}){
     if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
     modelGroup.add(g);
   }
-  applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
+  geoBuilding = false; geoCachePrune();
+  batchBuild(); applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
   const lines = [];
-  g.traverse(o => { if (o.isMesh){ const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 30), dashMat); e.computeLineDistances(); e.userData.isOver = true; lines.push(e); } });
+  g.traverse(o => { if (o.isMesh){ const e = new THREE.LineSegments(edgesOf(o.geometry, 30), dashMat); e.computeLineDistances(); e.userData.isOver = true; lines.push(e); } });
   disposeGroup(g); lines.forEach(l => g.add(l)); g.userData.overhead = true;
 }
 function applySel(){
@@ -4315,7 +4368,7 @@ function applySel(){
     const on = set.has(g.userData.id);
     g.traverse(o => { if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
   }
-  dirty = true;
+  batchLive(set); dirty = true;
 }
 function bbox(){ const b = new THREE.Box3().setFromObject(modelGroup); return b.isEmpty() ? new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 3, 5)) : b; }
 function updateSunTarget(){ const b = bbox(), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3()); sun.target.position.copy(c);
@@ -4366,7 +4419,7 @@ let labels = [];
 const showDimsOn = () => DISPLAY.dims !== false;
 function buildLabels(){
   const box = $('#labels'); box.textContent = ''; labels = [];
-  const nf = v => APP_PREFS.dimUnit === 'cm' ? (Math.round(v * 100 * 10 ** Math.max(0, APP_PREFS.dimDec - 2)) / 10 ** Math.max(0, APP_PREFS.dimDec - 2)).toLocaleString('fr-FR') : (Math.round(v * 10 ** APP_PREFS.dimDec) / 10 ** APP_PREFS.dimDec).toLocaleString('fr-FR', {minimumFractionDigits:APP_PREFS.dimDec, maximumFractionDigits:APP_PREFS.dimDec});   // Réglages : unité et précision des cotes
+  const nf = v => APP_PREFS.dimUnit === 'cm' ? NF0.format(Math.round(v * 100 * 10 ** Math.max(0, APP_PREFS.dimDec - 2)) / 10 ** Math.max(0, APP_PREFS.dimDec - 2)) : nfmt(APP_PREFS.dimDec).format(Math.round(v * 10 ** APP_PREFS.dimDec) / 10 ** APP_PREFS.dimDec);   // Réglages : unité et précision des cotes
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const el of state.els){
     const isSel = set.has(el.id);
@@ -4394,7 +4447,20 @@ function buildLabels(){
 }
 const tmpV = new THREE.Vector3();
 function toScreen(v){ tmpV.copy(v).project(cam()); return [(tmpV.x + 1) / 2 * vpEl.clientWidth, (1 - tmpV.y) / 2 * vpEl.clientHeight, tmpV.z]; }
-function updateLabels(){ for (const l of labels){ const [x, y, z] = toScreen(l.pos); l.d.style.left = x + 'px'; l.d.style.top = y + 'px'; l.d.hidden = z > 1 || z < -1; } }
+/* position des cotes : dimensions de la vue lues une seule fois (les lire après chaque écriture forçait le navigateur à
+   recalculer toute la mise en page pour chaque cote), et seules les valeurs qui changent sont réécrites */
+function updateLabels(){
+  if (!labels.length) return;
+  const W = vpEl.clientWidth, H = vpEl.clientHeight, c = cam();
+  for (const l of labels){
+    tmpV.copy(l.pos).project(c); const off = tmpV.z > 1 || tmpV.z < -1;
+    if (off !== l.off){ l.d.hidden = l.off = off; }
+    if (off) continue;
+    const x = ((tmpV.x + 1) / 2 * W).toFixed(1), y = ((1 - tmpV.y) / 2 * H).toFixed(1);
+    if (x !== l.x){ l.d.style.left = x + 'px'; l.x = x; }
+    if (y !== l.y){ l.d.style.top = y + 'px'; l.y = y; }
+  }
+}
 
 /* ---------- capture d'image (rendu haute définition) ---------- */
 async function captureImage(scale = 2){
@@ -4574,6 +4640,103 @@ function endHQ(){
   if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } sun.shadow.mapSize.set(p.shadow, p.shadow);
   if (p.style !== DISPLAY.style){ DISPLAY.style = p.style; resetMats(); applyThemeToScene(); rebuild({noPanel:true}); }
   dirty = true;
+}
+
+/* ==== 43-batch.js ==== */
+/* ============ Affichage groupé : beaucoup moins d'objets à dessiner à chaque image ============
+   La maquette garde un groupe d'objets par élément (sélection, accroches, mesures, exports, coupes). Pour l'affichage,
+   les pièces opaques sont fusionnées par matériau, par paquets de BATCH_N éléments : une maison de 15 éléments passe de
+   ~170 à ~25 appels de dessin, un projet de 1 200 éléments de ~14 000 à ~600. Les objets d'origine fusionnés sont
+   seulement masqués (le lancer de rayons les voit toujours).
+   - Le paquet qui contient la sélection s'affiche « en direct » (objets d'origine) : la mise en évidence est inchangée.
+   - Les matériaux transparents (vitrages, rayons X) ne sont jamais fusionnés : leur tri d'affichage reste le même.
+   - Les matrices de la maquette ne sont recalculées qu'à la reconstruction (les objets ne bougent pas entre deux). */
+const BATCH_N = 32;
+let BATCH_ON = true, batchChunks = [];
+const batchGroup = new THREE.Group(); batchGroup.name = 'affichage-groupe'; batchGroup.matrixWorldAutoUpdate = false; scene.add(batchGroup);
+modelGroup.matrixWorldAutoUpdate = false;
+const batchNoRay = () => {};
+function batchClear(){
+  for (const c of batchChunks) for (const o of c.objs) o.geometry.dispose();
+  batchGroup.clear(); batchChunks = [];
+}
+const isIdent = m => { const e = m.elements; return e[0] === 1 && e[5] === 1 && e[10] === 1 && e[15] === 1 && !e[1] && !e[2] && !e[3] && !e[4] && !e[6] && !e[7] && !e[8] && !e[9] && !e[11] && !e[12] && !e[13] && !e[14]; };
+/* copie d'un attribut (éventuellement entrelacé ou indexé) dans un tableau plat */
+function batchCopy(attr, idx, dst, at, size){
+  const n = idx ? idx.count : attr.count;
+  if (!idx && !attr.isInterleavedBufferAttribute && attr.itemSize === size && attr.array.length === n * size && attr.array instanceof Float32Array){ dst.set(attr.array, at * size); return n; }
+  for (let i = 0; i < n; i++){ const k = idx ? idx.getX(i) : i; for (let s = 0; s < size; s++) dst[(at + i) * size + s] = s < attr.itemSize ? attr.getComponent(k, s) : 0; }
+  return n;
+}
+const vtxCount = g => g.index ? g.index.count : g.attributes.position.count;
+function batchMerge(list, lines){
+  let n = 0; for (const it of list) n += vtxCount(it.geo);
+  const pos = new Float32Array(n * 3), nor = lines ? null : new Float32Array(n * 3), uv = lines ? null : new Float32Array(n * 2);
+  const v = new THREE.Vector3(), nm = new THREE.Matrix3(); let at = 0;
+  for (const {geo, mw} of list){
+    const idx = geo.index, A = geo.attributes, c = batchCopy(A.position, idx, pos, at, 3);
+    if (nor && A.normal) batchCopy(A.normal, idx, nor, at, 3);
+    if (uv && A.uv) batchCopy(A.uv, idx, uv, at, 2);
+    if (!isIdent(mw)){
+      nm.getNormalMatrix(mw);
+      for (let i = at; i < at + c; i++){
+        v.fromArray(pos, i * 3).applyMatrix4(mw).toArray(pos, i * 3);
+        if (nor && A.normal) v.fromArray(nor, i * 3).applyMatrix3(nm).normalize().toArray(nor, i * 3);
+      }
+    }
+    at += c;
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  if (nor){ g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); }
+  g.computeBoundingSphere(); return g;
+}
+function batchBuild(){
+  batchClear(); modelGroup.updateMatrixWorld(true);
+  if (!BATCH_ON) return;
+  const gs = modelGroup.children;
+  for (let i = 0; i < gs.length; i += BATCH_N){
+    const ch = {ids:new Set(), hide:[], objs:[], grp:new THREE.Group(), live:false}, merged = new Set(), buckets = new Map();
+    const put = (key, M, o, line, cast, recv) => { let b = buckets.get(key); if (!b) buckets.set(key, b = {M, line, cast, recv, list:[]}); b.list.push({geo:o.geometry, mw:o.matrixWorld}); };
+    for (const g of gs.slice(i, i + BATCH_N)){
+      ch.ids.add(g.userData.id);
+      g.traverse(o => {
+        if (o === g || !o.visible || !o.geometry?.attributes?.position) return;
+        if (o.isMesh){
+          if (o.isInstancedMesh || o.isSkinnedMesh || Array.isArray(o.material) || o.geometry.morphAttributes?.position) return;
+          const M = o.userData.mat != null ? matFor(o.userData.mat, false, o.userData.light || 0) : o.material;
+          if (!M || M.transparent || o.material.transparent || o.renderOrder) return;   // transparents : tri inchangé
+          put('m' + M.uuid + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0), M, o, false, o.castShadow, o.receiveShadow);
+          merged.add(o); ch.hide.push(o);
+        } else if (o.isLineSegments){
+          if (o.renderOrder) return;
+          const viaParent = o.parent !== g;               // arêtes d'une pièce : suivent leur pièce
+          if (viaParent && !merged.has(o.parent)) return;
+          const M = o.userData.isEdge ? edgeMat : o.material;
+          if (!M || Array.isArray(M)) return;
+          put('l' + M.uuid, M, o, true, false, false);
+          if (!viaParent) ch.hide.push(o);
+        }
+      });
+    }
+    for (const b of buckets.values()){
+      const geo = batchMerge(b.list, b.line);
+      const o = b.line ? new THREE.LineSegments(geo, b.M) : new THREE.Mesh(geo, b.M);
+      if (b.line && b.M.isLineDashedMaterial) o.computeLineDistances();
+      o.castShadow = b.cast; o.receiveShadow = b.recv; o.raycast = batchNoRay; o.matrixAutoUpdate = false;
+      ch.grp.add(o); ch.objs.push(o);
+    }
+    for (const o of ch.hide) o.visible = false;
+    batchGroup.add(ch.grp); batchChunks.push(ch);
+  }
+  batchGroup.updateMatrixWorld(true);
+}
+/* le paquet qui contient la sélection s'affiche en direct */
+function batchLive(set){
+  for (const ch of batchChunks){
+    let live = false; for (const id of set) if (ch.ids.has(id)){ live = true; break; }
+    if (live === ch.live) continue;
+    ch.live = live; ch.grp.visible = !live; for (const o of ch.hide) o.visible = live;
+  }
 }
 
 /* ==== 50-input.js ==== */
@@ -5304,9 +5467,23 @@ function renderPanel(){
   const body = $('#pbody'); const st = body.scrollTop;
   const tp = body.querySelector('.tree-pane'), pp = body.querySelector('.prop-pane'), tst = tp?.scrollTop, pst = pp?.scrollTop;
   body.classList.toggle('splitmode', activeTab === 'props');
+  /* onglet Projet : si l'arborescence n'a pas changé (simple changement de sélection), on garde ses lignes à l'écran,
+     on déplace seulement le surlignage et on refait les propriétés — au lieu de réécrire des centaines de lignes */
+  if (activeTab === 'props' && tp && pp){
+    TREE_NOSEL = true; let tree; try { tree = renderTree(); } finally { TREE_NOSEL = false; }
+    const tq = tp.querySelector('[data-treeq]');
+    if (tree === treeHtmlLast && tq && tq.value === treeQuery){
+      const ids = new Set(selIds());
+      for (const r of tp.querySelectorAll('.tr.on')) r.classList.remove('on');
+      for (const id of ids) tp.querySelector(`.tr[data-tk="E${id}"]`)?.classList.add('on');
+      pp.innerHTML = renderProps(); pp.scrollTop = pst; body.scrollTop = st; return;
+    }
+  }
   body.innerHTML = activeTab === 'props' ? renderProjectTab() : activeTab === 'qty' ? renderDqePanel() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
+  if (activeTab === 'props'){ TREE_NOSEL = true; try { treeHtmlLast = renderTree(); } finally { TREE_NOSEL = false; } } else treeHtmlLast = null;
   body.scrollTop = st; if (tst != null){ const a = body.querySelector('.tree-pane'), b = body.querySelector('.prop-pane'); if (a) a.scrollTop = tst; if (b) b.scrollTop = pst; }
 }
+let TREE_NOSEL = false, treeHtmlLast = null;
 $('#pbody').addEventListener('input', e => {
   if (e.target.matches('[data-libq]')){ libQuery = e.target.value; const pos = e.target.selectionStart; renderPanel(); const i = $('#pbody [data-libq]'); if (i){ i.focus(); i.setSelectionRange(pos, pos); } }
   if (e.target.matches('[data-rset]')) onRenderInput(e.target);
@@ -5837,7 +6014,9 @@ function treeRow({key, depth, icon, label, meta = '', open = null, selected = fa
 }
 function renderTree(){
   const q = treeQuery.trim().toLowerCase(), match = el => !q || elName(el).toLowerCase().includes(q) || String(el.id) === q;
-  const ids = new Set(selIds()); let h = '';
+  const ids = TREE_NOSEL ? new Set() : new Set(selIds()); let h = '';
+  const byId = new Map(state.els.map(e => [e.id, e])), kidsOf = new Map();
+  for (const x of state.els) if (x.kind === 'inst' && x.host != null){ let a = kidsOf.get(x.host); if (!a) kidsOf.set(x.host, a = []); a.push(x); }
   h += treeRow({key:'P', depth:0, icon:ico('proj'), label:`<b>${esc(state.name)}</b>`, meta:`${state.els.length} él.`, open:treeOpen.has('P'), menu:'P'});
   if (treeOpen.has('P') || q) state.levels.forEach((L, li) => {
     const lk = 'L' + li, els = state.els.filter(e => e.lvl === li && match(e)), lOpen = treeOpen.has(lk) || !!q;
@@ -5845,13 +6024,13 @@ function renderTree(){
     h += treeRow({key:lk, depth:1, icon:ico('lvl'), label:`${esc(L.n)} <em>${nf(L.z)} m</em>`, meta:String(els.length), open:lOpen, hidden:hiddenLvls.has(li), menu:lk, cls:li === curLvl ? 'cur' : '', selected:false});
     if (!lOpen) return;
     for (const [kind, cname] of TREE_CATS){
-      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && getEl(e.host)));
+      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && byId.get(e.host)));
       if (!list.length) continue;
       const ck = lk + '|' + kind, cOpen = treeOpen.has(ck) || !!q;
       h += treeRow({key:ck, depth:2, icon:ico(kind), label:cname, meta:String(list.length), open:cOpen, menu:ck, cls:'cat'});
       if (!cOpen) continue;
       for (const el of list){
-        const ek = 'E' + el.id, kids = kind === 'wall' ? state.els.filter(x => x.kind === 'inst' && x.host === el.id) : [];
+        const ek = 'E' + el.id, kids = kind === 'wall' ? kidsOf.get(el.id) || [] : [];
         const hasKids = kind === 'wall' || kind === 'slab' || kind === 'roof' || kids.length, eOpen = treeOpen.has(ek);
         h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' || kind === 'roof' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
         if (!hasKids || !eOpen) continue;
@@ -6537,7 +6716,7 @@ function dqeItems(){
   return out.sort((a, b) => a.lot.localeCompare(b.lot) || a.des.localeCompare(b.des, 'fr'));
 }
 function dqeGroups(items){ const g = []; for (const [code, name] of DQE_LOTS){ const l = items.filter(i => i.lot === code); if (l.length) g.push({code, name, items:l, total:l.reduce((s, i) => s + i.total, 0)}); } return g; }
-const eur = v => (Math.round(v * 100) / 100).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+const eur = v => nfmt(2).format(Math.round(v * 100) / 100) + ' €';
 const qtyFmt = (q, u) => nf(q, u === 'u' ? 0 : 2);
 
 /* ---------- onglet Métré : aperçu du DQE, prix modifiables ---------- */
@@ -7527,6 +7706,8 @@ window.__apReady = true;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
 window.APDebug = {famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+  batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
+  gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};
 
 /* ---------- Paramètres d'affichage : couleur de fond, grille, cotes, arêtes, ombres ---------- */

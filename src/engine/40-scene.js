@@ -175,35 +175,78 @@ function pieceGeo(pc){
 }
 function solidGeo(so){
   let g;
+  // (correctif : les cylindres et cônes verticaux étaient remplacés par une boîte — poteau rond, tronc d'arbre)
   if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
   else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
-  if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2);
   else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
   else g = boxGeo(so.w, so.d, so.h);
+  if (so.s === 'cyl' || so.s === 'cone'){ if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2); }
   if (so.rz) g.rotateY(so.rz);
   g.translate(so.c[0], so.c[2], -so.c[1]);
   return g;
 }
-function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0){
+/* Arêtes d'une pièce : même résultat que THREE.EdgesGeometry, mais une forme déjà rencontrée (même géométrie à une
+   translation près : murs, montants, chevrons répétés…) reprend les arêtes déjà calculées, simplement décalées. */
+const EDGE_CACHE = new Map();
+function edgesOf(geo, angle){
+  const P = geo.attributes.position, idx = geo.index, n = P.count;
+  if (!n || P.isInterleavedBufferAttribute || n > 20000) return new THREE.EdgesGeometry(geo, angle);
+  const a = P.array, x0 = a[0], y0 = a[1], z0 = a[2];
+  let h1 = 0x811c9dc5 ^ n, h2 = (angle * 1000) | 0;
+  for (let i = 0; i < n * 3; i += 3){
+    const qx = Math.round((a[i] - x0) * 1e5), qy = Math.round((a[i + 1] - y0) * 1e5), qz = Math.round((a[i + 2] - z0) * 1e5);
+    h1 = Math.imul(h1 ^ qx, 16777619); h1 = Math.imul(h1 ^ qy, 16777619); h1 = Math.imul(h1 ^ qz, 16777619);
+    h2 = (Math.imul(h2, 31) + qx * 7 + qy * 13 + qz * 17) | 0;
+  }
+  if (idx){ const ia = idx.array; for (let i = 0; i < ia.length; i++){ h1 = Math.imul(h1 ^ ia[i], 16777619); h2 = (Math.imul(h2, 31) + ia[i]) | 0; } }
+  const key = n + ':' + (idx ? idx.count : 0) + ':' + angle + ':' + (h1 >>> 0).toString(36) + ':' + (h2 >>> 0).toString(36);
+  let rel = EDGE_CACHE.get(key);
+  if (!rel){
+    const E = new THREE.EdgesGeometry(geo, angle), ea = E.attributes.position.array;
+    rel = new Float32Array(ea.length); for (let i = 0; i < ea.length; i += 3){ rel[i] = ea[i] - x0; rel[i + 1] = ea[i + 1] - y0; rel[i + 2] = ea[i + 2] - z0; }
+    if (EDGE_CACHE.size > 6000) EDGE_CACHE.delete(EDGE_CACHE.keys().next().value);
+    EDGE_CACHE.set(key, rel);
+    if (!x0 && !y0 && !z0) return E;
+    E.dispose();
+  }
+  const out = new Float32Array(rel.length); for (let i = 0; i < rel.length; i += 3){ out[i] = rel[i] + x0; out[i + 1] = rel[i + 1] + y0; out[i + 2] = rel[i + 2] + z0; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(out, 3)); return g;
+}
+/* Géométries de la maquette réutilisées d'une reconstruction à l'autre : la clé est la description complète de la pièce
+   (contour, hauteurs, jonctions et ouvertures déjà résolues), donc une pièce inchangée garde sa géométrie et ses arêtes.
+   Les entrées non utilisées par la dernière reconstruction sont libérées à la fin de celle-ci. */
+const GEO_CACHE = new Map(); let geoGen = 0;
+function cachedGeo(key, make){
+  let e = GEO_CACHE.get(key);
+  if (!e){ const g = make(); g.userData.apCached = true; GEO_CACHE.set(key, e = {g, gen:geoGen}); }
+  e.gen = geoGen; return e.g;
+}
+function geoCachePrune(){ for (const [k, e] of GEO_CACHE) if (e.gen !== geoGen){ e.g.dispose(); GEO_CACHE.delete(k); } }
+function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0, key = null){
   const mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light));
   mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.light = light;
   if (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn() || view === 'sec'){
-    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
+    const edges = new THREE.LineSegments(key ? cachedGeo(key + '|e' + edgeAngle, () => edgesOf(geo, edgeAngle)) : edgesOf(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
     edges.userData.isEdge = true; mesh.add(edges);
   }
   return mesh;
 }
-const pieceMesh = (pc, ghost, light = 0) => meshOf(pieceGeo(pc), pc.mat, ghost, 25, light);
-function disposeGroup(g){ g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); g.clear(); }
+function pieceMesh(pc, ghost, light = 0){
+  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, 25, light);
+  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, 25, light, key);
+}
+let GEO_ON = true, geoBuilding = false;
+function disposeGroup(g){ g.traverse(o => { if (o.geometry && !o.geometry.userData.apCached) o.geometry.dispose(); }); g.clear(); }
 
 /* Regroupe les solides d'une famille par matériau (moins d'objets à dessiner) */
 function instMeshes(el, ghost, light = 0){
   const by = {};
-  for (const so of instSolids(el)) (by[so.m] ??= []).push(solidGeo(so));
+  for (const so of instSolids(el)) (by[so.m] ??= []).push(so);
   const out = [];
-  for (const [m, geos] of Object.entries(by)){
-    const g = geos.length === 1 ? geos[0] : mergeGeos(geos);
-    out.push(meshOf(g, m, ghost, 30, light));
+  for (const [m, sos] of Object.entries(by)){
+    const make = () => { const geos = sos.map(solidGeo); return geos.length === 1 ? geos[0] : mergeGeos(geos); };
+    if (ghost || !GEO_ON || !geoBuilding){ out.push(meshOf(make(), m, ghost, 30, light)); continue; }
+    const key = 'i' + JSON.stringify(sos); out.push(meshOf(cachedGeo(key, make), m, false, 30, light, key));
   }
   return out;
 }
@@ -265,7 +308,7 @@ function positionGrid(){
 /* ---------- reconstruction ---------- */
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
-  rebuildSeq++; disposeGroup(modelGroup);
+  rebuildSeq++; disposeGroup(modelGroup); geoGen++; geoBuilding = true;
   const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
   for (const el of state.els){
     if (plan && el.lvl !== curLvl) continue; // plan : seulement le niveau courant
@@ -280,14 +323,15 @@ function rebuild(opts = {}){
     if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
     modelGroup.add(g);
   }
-  applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
+  geoBuilding = false; geoCachePrune();
+  batchBuild(); applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
   const lines = [];
-  g.traverse(o => { if (o.isMesh){ const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 30), dashMat); e.computeLineDistances(); e.userData.isOver = true; lines.push(e); } });
+  g.traverse(o => { if (o.isMesh){ const e = new THREE.LineSegments(edgesOf(o.geometry, 30), dashMat); e.computeLineDistances(); e.userData.isOver = true; lines.push(e); } });
   disposeGroup(g); lines.forEach(l => g.add(l)); g.userData.overhead = true;
 }
 function applySel(){
@@ -296,7 +340,7 @@ function applySel(){
     const on = set.has(g.userData.id);
     g.traverse(o => { if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
   }
-  dirty = true;
+  batchLive(set); dirty = true;
 }
 function bbox(){ const b = new THREE.Box3().setFromObject(modelGroup); return b.isEmpty() ? new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 3, 5)) : b; }
 function updateSunTarget(){ const b = bbox(), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3()); sun.target.position.copy(c);
@@ -347,7 +391,7 @@ let labels = [];
 const showDimsOn = () => DISPLAY.dims !== false;
 function buildLabels(){
   const box = $('#labels'); box.textContent = ''; labels = [];
-  const nf = v => APP_PREFS.dimUnit === 'cm' ? (Math.round(v * 100 * 10 ** Math.max(0, APP_PREFS.dimDec - 2)) / 10 ** Math.max(0, APP_PREFS.dimDec - 2)).toLocaleString('fr-FR') : (Math.round(v * 10 ** APP_PREFS.dimDec) / 10 ** APP_PREFS.dimDec).toLocaleString('fr-FR', {minimumFractionDigits:APP_PREFS.dimDec, maximumFractionDigits:APP_PREFS.dimDec});   // Réglages : unité et précision des cotes
+  const nf = v => APP_PREFS.dimUnit === 'cm' ? NF0.format(Math.round(v * 100 * 10 ** Math.max(0, APP_PREFS.dimDec - 2)) / 10 ** Math.max(0, APP_PREFS.dimDec - 2)) : nfmt(APP_PREFS.dimDec).format(Math.round(v * 10 ** APP_PREFS.dimDec) / 10 ** APP_PREFS.dimDec);   // Réglages : unité et précision des cotes
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const el of state.els){
     const isSel = set.has(el.id);
@@ -375,7 +419,20 @@ function buildLabels(){
 }
 const tmpV = new THREE.Vector3();
 function toScreen(v){ tmpV.copy(v).project(cam()); return [(tmpV.x + 1) / 2 * vpEl.clientWidth, (1 - tmpV.y) / 2 * vpEl.clientHeight, tmpV.z]; }
-function updateLabels(){ for (const l of labels){ const [x, y, z] = toScreen(l.pos); l.d.style.left = x + 'px'; l.d.style.top = y + 'px'; l.d.hidden = z > 1 || z < -1; } }
+/* position des cotes : dimensions de la vue lues une seule fois (les lire après chaque écriture forçait le navigateur à
+   recalculer toute la mise en page pour chaque cote), et seules les valeurs qui changent sont réécrites */
+function updateLabels(){
+  if (!labels.length) return;
+  const W = vpEl.clientWidth, H = vpEl.clientHeight, c = cam();
+  for (const l of labels){
+    tmpV.copy(l.pos).project(c); const off = tmpV.z > 1 || tmpV.z < -1;
+    if (off !== l.off){ l.d.hidden = l.off = off; }
+    if (off) continue;
+    const x = ((tmpV.x + 1) / 2 * W).toFixed(1), y = ((1 - tmpV.y) / 2 * H).toFixed(1);
+    if (x !== l.x){ l.d.style.left = x + 'px'; l.x = x; }
+    if (y !== l.y){ l.d.style.top = y + 'px'; l.y = y; }
+  }
+}
 
 /* ---------- capture d'image (rendu haute définition) ---------- */
 async function captureImage(scale = 2){

@@ -167,7 +167,7 @@ function dqeItems(){
   return out.sort((a, b) => a.lot.localeCompare(b.lot) || a.des.localeCompare(b.des, 'fr'));
 }
 function dqeGroups(items){ const g = []; for (const [code, name] of DQE_LOTS){ const l = items.filter(i => i.lot === code); if (l.length) g.push({code, name, items:l, total:l.reduce((s, i) => s + i.total, 0)}); } return g; }
-const eur = v => (Math.round(v * 100) / 100).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+const eur = v => nfmt(2).format(Math.round(v * 100) / 100) + ' €';
 const qtyFmt = (q, u) => nf(q, u === 'u' ? 0 : 2);
 
 /* ---------- onglet Métré : aperçu du DQE, prix modifiables ---------- */

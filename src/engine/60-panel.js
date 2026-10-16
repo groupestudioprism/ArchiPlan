@@ -238,9 +238,23 @@ function renderPanel(){
   const body = $('#pbody'); const st = body.scrollTop;
   const tp = body.querySelector('.tree-pane'), pp = body.querySelector('.prop-pane'), tst = tp?.scrollTop, pst = pp?.scrollTop;
   body.classList.toggle('splitmode', activeTab === 'props');
+  /* onglet Projet : si l'arborescence n'a pas changé (simple changement de sélection), on garde ses lignes à l'écran,
+     on déplace seulement le surlignage et on refait les propriétés — au lieu de réécrire des centaines de lignes */
+  if (activeTab === 'props' && tp && pp){
+    TREE_NOSEL = true; let tree; try { tree = renderTree(); } finally { TREE_NOSEL = false; }
+    const tq = tp.querySelector('[data-treeq]');
+    if (tree === treeHtmlLast && tq && tq.value === treeQuery){
+      const ids = new Set(selIds());
+      for (const r of tp.querySelectorAll('.tr.on')) r.classList.remove('on');
+      for (const id of ids) tp.querySelector(`.tr[data-tk="E${id}"]`)?.classList.add('on');
+      pp.innerHTML = renderProps(); pp.scrollTop = pst; body.scrollTop = st; return;
+    }
+  }
   body.innerHTML = activeTab === 'props' ? renderProjectTab() : activeTab === 'qty' ? renderDqePanel() : activeTab === 'lib' ? renderLib() : renderRenderPanel();
+  if (activeTab === 'props'){ TREE_NOSEL = true; try { treeHtmlLast = renderTree(); } finally { TREE_NOSEL = false; } } else treeHtmlLast = null;
   body.scrollTop = st; if (tst != null){ const a = body.querySelector('.tree-pane'), b = body.querySelector('.prop-pane'); if (a) a.scrollTop = tst; if (b) b.scrollTop = pst; }
 }
+let TREE_NOSEL = false, treeHtmlLast = null;
 $('#pbody').addEventListener('input', e => {
   if (e.target.matches('[data-libq]')){ libQuery = e.target.value; const pos = e.target.selectionStart; renderPanel(); const i = $('#pbody [data-libq]'); if (i){ i.focus(); i.setSelectionRange(pos, pos); } }
   if (e.target.matches('[data-rset]')) onRenderInput(e.target);

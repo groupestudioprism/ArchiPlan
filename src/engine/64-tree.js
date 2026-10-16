@@ -36,7 +36,9 @@ function treeRow({key, depth, icon, label, meta = '', open = null, selected = fa
 }
 function renderTree(){
   const q = treeQuery.trim().toLowerCase(), match = el => !q || elName(el).toLowerCase().includes(q) || String(el.id) === q;
-  const ids = new Set(selIds()); let h = '';
+  const ids = TREE_NOSEL ? new Set() : new Set(selIds()); let h = '';
+  const byId = new Map(state.els.map(e => [e.id, e])), kidsOf = new Map();
+  for (const x of state.els) if (x.kind === 'inst' && x.host != null){ let a = kidsOf.get(x.host); if (!a) kidsOf.set(x.host, a = []); a.push(x); }
   h += treeRow({key:'P', depth:0, icon:ico('proj'), label:`<b>${esc(state.name)}</b>`, meta:`${state.els.length} él.`, open:treeOpen.has('P'), menu:'P'});
   if (treeOpen.has('P') || q) state.levels.forEach((L, li) => {
     const lk = 'L' + li, els = state.els.filter(e => e.lvl === li && match(e)), lOpen = treeOpen.has(lk) || !!q;
@@ -44,13 +46,13 @@ function renderTree(){
     h += treeRow({key:lk, depth:1, icon:ico('lvl'), label:`${esc(L.n)} <em>${nf(L.z)} m</em>`, meta:String(els.length), open:lOpen, hidden:hiddenLvls.has(li), menu:lk, cls:li === curLvl ? 'cur' : '', selected:false});
     if (!lOpen) return;
     for (const [kind, cname] of TREE_CATS){
-      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && getEl(e.host)));
+      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && byId.get(e.host)));
       if (!list.length) continue;
       const ck = lk + '|' + kind, cOpen = treeOpen.has(ck) || !!q;
       h += treeRow({key:ck, depth:2, icon:ico(kind), label:cname, meta:String(list.length), open:cOpen, menu:ck, cls:'cat'});
       if (!cOpen) continue;
       for (const el of list){
-        const ek = 'E' + el.id, kids = kind === 'wall' ? state.els.filter(x => x.kind === 'inst' && x.host === el.id) : [];
+        const ek = 'E' + el.id, kids = kind === 'wall' ? kidsOf.get(el.id) || [] : [];
         const hasKids = kind === 'wall' || kind === 'slab' || kind === 'roof' || kids.length, eOpen = treeOpen.has(ek);
         h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' || kind === 'roof' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
         if (!hasKids || !eOpen) continue;
