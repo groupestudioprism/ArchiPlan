@@ -180,7 +180,7 @@ $('#viewSet').addEventListener('click', e => {
   renderViewMenu(); m.hidden = false; const r = e.currentTarget.getBoundingClientRect();
   m.style.width = '250px'; m.style.left = Math.max(12, Math.min(r.right - 250, innerWidth - 262)) + 'px'; m.style.top = Math.min(r.bottom + 6, innerHeight - m.offsetHeight - 12) + 'px';
 });
-$('#viewMenu').addEventListener('click', e => { e.stopPropagation(); const tb = e.target.closest('[data-thm]'); if (tb){ setTheme(tb.dataset.thm); renderViewMenu(); return; } const b = e.target.closest('[data-bg]'); if (b){ DISPLAY.bg = b.dataset.bg; applyDisplay(); renderViewMenu(); } });
+$('#viewMenu').addEventListener('click', e => { e.stopPropagation(); const tb = e.target.closest('[data-thm]'); if (tb){ setTheme(tb.dataset.thm); window.PrismSettings?.themeChanged(); renderViewMenu(); return; } const b = e.target.closest('[data-bg]'); if (b){ DISPLAY.bg = b.dataset.bg; applyDisplay(); renderViewMenu(); } });
 $('#viewMenu').addEventListener('input', e => { if (e.target.matches('[data-bgc]')){ DISPLAY.bg = e.target.value; applyDisplay(); } });
 $('#viewMenu').addEventListener('change', e => {
   const k = e.target.dataset.vopt; if (!k) return;
@@ -189,3 +189,34 @@ $('#viewMenu').addEventListener('change', e => {
   applyDisplay();
 });
 document.addEventListener('click', e => { const m = $('#viewMenu'); if (!m.hidden && !m.contains(e.target)) m.hidden = true; });
+
+/* ---------- bouton Réglages (module commun Studio Prism) ---------- */
+{ const ss = $('#stepSel'); if (ss && [...ss.options].some(o => +o.value === step)) ss.value = String(step); }
+const setStepDef = v => { APP_PREFS.step = v; savePrefs(); step = v; const ss = $('#stepSel'); if (ss) ss.value = String(v); positionGrid(); dirty = true; };
+const snapSw = (k, label, sub) => ({type:'switch', label, sub, get:() => !!SNAP[k], set:v => { SNAP[k] = v; if (k === 'grid'){ DISPLAY.grid = v; saveDisplay(); positionGrid(); } if (k === 'ortho' && v) SNAP.polar = false; if (k === 'polar' && v) SNAP.ortho = false; saveSnap(); syncStatus(); dirty = true; }});
+PrismSettings.init({
+  app:'ARCHIPLAN',
+  theme:{get:() => document.documentElement.dataset.theme || 'light', set:t => { setTheme(t); applyThemeToScene?.(); buildGrid?.(); dirty = true; }},
+  scaleSel:'.top, .ap-side, .panel, .status, .vtools, .menu, .tools',
+  onResize:() => window.dispatchEvent(new Event('resize')),
+  sections:[
+    {title:'Graphismes', fields:[
+      {type:'seg', label:'Qualité graphique', sub:'Le lissage des bords change au prochain chargement', options:[['auto', 'Auto'], ['eco', 'Économie'], ['std', 'Équilibrée'], ['high', 'Élevée']], get:() => APP_PREFS.gfx, set:v => { APP_PREFS.gfx = v; savePrefs(); const G = GFX(); renderer.setPixelRatio(Math.min(devicePixelRatio, G.pr)); renderer.shadowMap.type = G.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap; if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; } DISPLAY.shadows = G.shadows; DISPLAY.fx = G.fx; resize(); applyDisplay(); }},
+      {type:'switch', label:'Ombres portées', get:() => DISPLAY.shadows !== false, set:v => { DISPLAY.shadows = v; applyDisplay(); }}]},
+    {title:'Grille et aimantation de base', fields:[
+      {type:'select', label:'Pas de la grille', sub:'Pas utilisé à l\'ouverture de l\'app (modifiable dans la barre du bas)', options:[...($('#stepSel')?.options || [])].map(o => [+o.value, o.textContent]), get:() => step, set:v => setStepDef(+v)},
+      {type:'switch', label:'Afficher la grille', get:() => DISPLAY.grid !== false, set:v => { DISPLAY.grid = v; applyDisplay(); }},
+      snapSw('grid', 'Aimantation à la grille'),
+      snapSw('osnap', 'Accroches aux objets', 'Extrémités, milieux, intersections…'),
+      snapSw('track', 'Repérage d\'objets'),
+      snapSw('ortho', 'Ortho', 'Tracés à 0° et 90° seulement'),
+      snapSw('polar', 'Repérage polaire'),
+      {type:'select', label:'Incrément polaire', options:[5, 10, 15, 30, 45, 90].map(a => [a, a + '°']), get:() => SNAP.polarInc, set:v => { SNAP.polarInc = +v; saveSnap(); const p = $('#polarInc'); if (p) p.value = String(+v); }}]},
+    {title:'Cotes', fields:[
+      {type:'seg', label:'Unité', options:[['m', 'Mètres'], ['cm', 'Centimètres']], get:() => APP_PREFS.dimUnit, set:v => { APP_PREFS.dimUnit = v; savePrefs(); buildLabels(); dirty = true; }},
+      {type:'seg', label:'Précision', options:[[1, '0,1 m'], [2, '1 cm'], [3, '1 mm']], get:() => APP_PREFS.dimDec, set:v => { APP_PREFS.dimDec = v; savePrefs(); buildLabels(); dirty = true; }},
+      {type:'switch', label:'Afficher les cotes en plan', get:() => DISPLAY.dims !== false, set:v => { DISPLAY.dims = v; applyDisplay(); }}]}],
+  shortcuts:() => [...document.querySelectorAll('.tool[data-tool]')].map(b => [b.querySelector('kbd')?.textContent || '', b.querySelector('span')?.textContent || '']).filter(r => r[0])
+    .concat([...document.querySelectorAll('[data-snap][title]')].map(b => { const m = b.title.match(/^(.*)\((F\d+)\)/); return m ? [m[2], m[1].trim()] : null; }).filter(Boolean))
+    .concat([['Suppr', 'Effacer la sélection'], ['Ctrl+Z', 'Annuler'], ['Ctrl+Y', 'Rétablir'], ['Échap', 'Quitter l\'outil en cours']])
+});

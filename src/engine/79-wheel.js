@@ -35,6 +35,7 @@
     if (!c || ev.defaultPrevented) return;
     ev.preventDefault(); ev.stopImmediatePropagation();
     let d = ev.deltaY * (ev.deltaMode === 1 ? 33 : ev.deltaMode === 2 ? 400 : 1);
+    { const W = (window.PrismSettings?.wheel?.() || {k:1, inv:false}); d *= W.k * (W.inv ? -1 : 1); }   // Réglages : vitesse et sens de la molette
     if (!d || !isFinite(d)) return;
     if (ev.ctrlKey) d *= 2.5;         // pincement sur pavé tactile : petits écarts
     const n = Math.max(-1.5, Math.min(1.5, d / 100));   // au plus 1,5 cran par évènement

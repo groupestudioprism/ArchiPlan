@@ -1,9 +1,15 @@
 /* ============ Scène 3D, styles d'affichage, textures ============ */
 const canvas = $('#c'), vpEl = $('#vp');
 const isNarrow = matchMedia('(max-width: 860px)');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:false});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+/* préférences de l'appareil (bouton Réglages) : qualité graphique, pas de grille, cotes */
+const APP_PREFS = (() => { try { return {gfx:'auto', step:0.05, dimDec:2, dimUnit:'m', ...JSON.parse(localStorage.getItem('ap.prefs') || '{}')}; } catch(e){ return {gfx:'auto', step:0.05, dimDec:2, dimUnit:'m'}; } })();
+const savePrefs = () => { try { localStorage.setItem('ap.prefs', JSON.stringify(APP_PREFS)); } catch(e){} };
+const LOWPOW = (matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches) || /iPad|Android|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (navigator.deviceMemory || 8) <= 2;
+const GFX_PRESETS = {eco:{n:'Économie', pr:1, aa:false, soft:false, shadows:false, fx:false}, std:{n:'Équilibrée', pr:1.5, aa:true, soft:false, shadows:true, fx:true}, high:{n:'Élevée', pr:2, aa:true, soft:true, shadows:true, fx:true}};
+const GFX = () => GFX_PRESETS[APP_PREFS.gfx === 'auto' ? (LOWPOW ? 'eco' : 'high') : APP_PREFS.gfx] || GFX_PRESETS.high;
+const renderer = new THREE.WebGLRenderer({canvas, antialias:GFX().aa, preserveDrawingBuffer:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio, GFX().pr));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = GFX().soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
@@ -257,7 +263,7 @@ function positionGrid(){
 }
 
 /* ---------- reconstruction ---------- */
-let curLvl = 0, step = 0.05;
+let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
   rebuildSeq++; disposeGroup(modelGroup);
   const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
@@ -341,6 +347,7 @@ let labels = [];
 const showDimsOn = () => DISPLAY.dims !== false;
 function buildLabels(){
   const box = $('#labels'); box.textContent = ''; labels = [];
+  const nf = v => APP_PREFS.dimUnit === 'cm' ? (Math.round(v * 100 * 10 ** Math.max(0, APP_PREFS.dimDec - 2)) / 10 ** Math.max(0, APP_PREFS.dimDec - 2)).toLocaleString('fr-FR') : (Math.round(v * 10 ** APP_PREFS.dimDec) / 10 ** APP_PREFS.dimDec).toLocaleString('fr-FR', {minimumFractionDigits:APP_PREFS.dimDec, maximumFractionDigits:APP_PREFS.dimDec});   // Réglages : unité et précision des cotes
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const el of state.els){
     const isSel = set.has(el.id);
