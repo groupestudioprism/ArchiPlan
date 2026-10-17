@@ -8,6 +8,10 @@
 (() => {
   const STEP = 0.96;                  // facteur par cran « standard » (100 px)
   const ctls = [c2, c3, c4];
+  /* jamais sous la maquette : la caméra 3D reste au-dessus du sol (niveau 0) et du point visé */
+  const keepAbove = (cam, c) => { if (!cam.isPerspectiveCamera || c !== c3) return; const floor = 0.35; if (cam.position.y < floor) cam.position.y = floor; };
+  c3.addEventListener('change', () => keepAbove(persp, c3));
+  let hitP = null, hitC = null;
   const rc = new THREE.Raycaster(), ndc = new THREE.Vector2(), v = new THREE.Vector3(), w = new THREE.Vector3(), pl = new THREE.Plane();
   /* zoom d'un facteur k (k < 1 : rapprocher) en gardant fixe le point sous le curseur */
   const zoomBy = (c, k, nx, ny) => {
@@ -17,12 +21,17 @@
       cam.zoom = Math.max(c.minZoom, Math.min(c.maxZoom, cam.zoom / k)); cam.updateProjectionMatrix();
       if (c.zoomToCursor !== false){ w.set(ndc.x, ndc.y, 0).unproject(cam); v.sub(w); cam.position.add(v); c.target.add(v); }
     } else {
-      const dist = cam.position.distanceTo(c.target), nd = Math.max(c.minDistance, Math.min(c.maxDistance, dist * k));
-      const hit = () => { rc.setFromCamera(ndc, cam); return rc.ray.intersectPlane(pl, new THREE.Vector3()); };
-      if (c.zoomToCursor){ cam.getWorldDirection(w); pl.setFromNormalAndCoplanarPoint(w, c.target); }
-      const p0 = c.zoomToCursor ? hit() : null;
-      v.subVectors(cam.position, c.target).setLength(nd); cam.position.copy(c.target).add(v); cam.updateMatrixWorld();
-      const p1 = p0 && hit(); if (p0 && p1){ v.subVectors(p0, p1); cam.position.add(v); c.target.add(v); }
+      /* perspective : on rapproche caméra ET cible du point visé sous le curseur (maquette, sinon sol, sinon cible).
+         Ainsi on peut toujours s'approcher au plus près de ce qu'on regarde, quel que soit l'endroit où était la cible. */
+      let P = c === hitC && hitP ? hitP : null;
+      if (!P){ rc.setFromCamera(ndc, cam); const objs = [modelGroup];
+        P = rc.intersectObjects(objs, true).find(h => h.object.visible && h.object.isMesh)?.point || null;
+        if (!P){ pl.set(w.set(0, 1, 0), 0); P = rc.ray.intersectPlane(pl, new THREE.Vector3()); }
+        if (!P || P.distanceTo(cam.position) > c.maxDistance * 2) P = c.target.clone();
+        hitP = P.clone(); hitC = c; }
+      const dist = cam.position.distanceTo(P);
+      let kk = k; if (dist * kk < 0.6) kk = 0.6 / Math.max(dist, 1e-6); if (cam.position.distanceTo(c.target) * kk > c.maxDistance) kk = c.maxDistance / Math.max(1e-6, cam.position.distanceTo(c.target));
+      cam.position.sub(P).multiplyScalar(kk).add(P); c.target.sub(P).multiplyScalar(kk).add(P); keepAbove(cam, c);
     }
     c.update();
   };
@@ -40,6 +49,7 @@
     if (ev.ctrlKey) d *= 2.5;         // pincement sur pavé tactile : petits écarts
     const n = Math.max(-1.5, Math.min(1.5, d / 100));   // au plus 1,5 cran par évènement
     const r = canvas.getBoundingClientRect();
+    if (pc !== c || Math.abs(pend) < 1e-3) hitP = null;   // nouveau geste : on revise le point visé
     if (pc !== c) pend = 0; pc = c; px = ((ev.clientX - r.left) / r.width) * 2 - 1; py = -((ev.clientY - r.top) / r.height) * 2 + 1;
     pend += Math.abs(n) * Math.log(STEP) * (n < 0 ? 1 : -1);   // < 0 : rapprocher
     pend = Math.max(-1.2, Math.min(1.2, pend));                   // molette lancée très vite : pas d'emballement
