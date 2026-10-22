@@ -712,6 +712,7 @@ function afterIntro(){ return new Promise(res => { const t0 = performance.now();
   if ((!sp || sp.classList.contains('done')) && ready) setTimeout(res, sp ? 700 : 250); else setTimeout(tick, 120); }; tick(); }); }
 function hideSplashSoon(){ // l'écran de compte n'attend pas le moteur 3D
   if (splashT) return; const sp = $a('#splash'); if (!sp) return;
+  if (window.__spClose){ splashT = 1; window.__spClose(); return; }   // intro : le script du bloc #splash ferme après la fin de la scène
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   splashT = setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(0, (reduce ? 600 : 2900) - performance.now()));
 }

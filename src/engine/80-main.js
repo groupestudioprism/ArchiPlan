@@ -155,6 +155,7 @@ window.APModel = {
 window.dispatchEvent(new Event('ap:ready'));
 window.__apReady = true;
 (() => { const sp = document.getElementById('splash'); if (!sp) return;
+  if (window.__spClose) return window.__spClose();   // intro : fermeture pilotée par le script du bloc #splash (après la scène)
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
