@@ -1,4 +1,4 @@
-/* ============ Réglages Studio Prism (module commun ARCHITRAFIC · ARCHIPLAN · ARCHIINDUS) ============
+/* ============ Réglages Studio Prism (module commun ARCHITRAFIC · ARCHIPLAN) ============
    Petit bouton ⚙ dans la barre du haut et sur l'accueil, à côté du compte. Les réglages d'interface (thème, taille,
    molette, animations) sont partagés entre les apps Studio Prism de cet appareil ; chaque app ajoute ses propres sections
    (qualité graphique, grille, cotes…) par PrismSettings.init({...}). Même fichier copié tel quel dans chaque app. */
