@@ -5,9 +5,6 @@
   <div class="sp-stage" role="img" aria-label="ARCHIPLAN, conception de plans et modélisation 3D">
     <div class="sp-img sp-static"></div>
     <div class="sp-plan" aria-hidden="true"></div>
-    <div class="sp-clip sp-c-word" aria-hidden="true"><div class="sp-img sp-i-word"></div></div>
-    <i class="sp-scan" aria-hidden="true"></i>
-    <div class="sp-clip sp-c-tag" aria-hidden="true"><div class="sp-img sp-i-tag"></div></div>
     <svg class="sp-pen" aria-hidden="true" focusable="false"></svg>
   </div>
   <div class="sp-bar" aria-hidden="true"><i></i></div>
@@ -17,7 +14,7 @@
 (function(){
 'use strict';
 var sp=document.getElementById('splash'); if(!sp) return;
-var KEY='prism-intro-archiplan', CLOSE_AFTER=3100, T=2.7, TD=T*1000;
+var KEY='prism-intro-archiplan', CLOSE_AFTER=4100, T=3.7, TD=T*1000;
 var closed=false, want=false, timer=0, A=[], cleaned=false, closeAt=performance.now()+600;
 var reduce=false, forced=/[?&]intro=1(?:&|$)/.test(location.search), seen=false;
 try{reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
@@ -25,11 +22,13 @@ try{var ui=JSON.parse(localStorage.getItem('prism.ui')||'{}'); if(ui&&ui.motion=
 try{seen=sessionStorage.getItem(KEY)==='1';}catch(e){}
 
 /* ---- fermeture : appelée par l'authentification ou par le moteur (une fois prêts) ; jamais avant la fin de la scène ---- */
-function close(){
+function close(){   // le contenu (logo, texte, barre) disparaît d'abord (200 ms), puis le fond du splash (350 ms)
   if(closed) return; closed=true; clearTimeout(timer);
   try{if(sp.contains(document.activeElement)) document.activeElement.blur();}catch(e){}
   document.removeEventListener('keydown',onKey,true);
-  sp.classList.add('done'); setTimeout(function(){try{sp.remove();}catch(e){}},520);
+  sp.classList.add('sp-leave');
+  setTimeout(function(){sp.classList.add('done');},200);
+  setTimeout(function(){try{sp.remove();}catch(e){} document.querySelectorAll('#spBoot').forEach(function(n){n.remove();});},620);
 }
 function sched(){ if(closed||!want) return; clearTimeout(timer); timer=setTimeout(close,Math.max(0,closeAt-performance.now())); }
 window.__spClose=function(){ want=true; sched(); };
@@ -75,7 +74,7 @@ function prep(n,L){n.setAttribute('stroke-dasharray',L+' '+(L+2));n.setAttribute
 
 /* carrés des cotes (espace du logo 1200×346) */
 var SQ=[[256.5,22.5],[31,180],[22.5,308],[421,307.5],[417,91]];
-/* phase 1 : lignes de construction fines, qui s'encrent juste derrière la pointe */
+/* phase 1 : lignes de construction fines, qui s'encrent juste derrière la pointe ; puis repères de l'écriture (ligne de capitales, ligne de base) */
 var P1=[
  {p:[[256,22],[256,90]],w:22,sq:[0,'s']},
  {p:[[178,28],[178,92]],w:16},
@@ -88,7 +87,9 @@ var P1=[
  {p:[[378,277],[421,308]],w:18,sq:[3,'e']},
  {p:[[402,278],[402,104]],w:28},
  {p:[[378,91],[417,91]],w:18,sq:[4,'e']},
- {p:[[351,78],[281,78]],w:28}
+ {p:[[351,78],[281,78]],w:28},
+ {p:[[445,122],[1190,122]],g:1,v:6500},
+ {p:[[1190,214],[445,214]],g:1,v:6500}
 ];
 /* phase 2 : le crayon repasse en gros trait ; la révélation du logo suit exactement la pointe */
 var P2=[
@@ -99,20 +100,25 @@ var P2=[
  {p:[[376,284],[338,268],[220,62],[88,293]],w:78},
  {p:[[78,250],[343,143]],w:56}
 ];
+/* phase 3 : le crayon écrit ARCHIPLAN, lettre par lettre (traits issus du squelette des lettres du logo officiel) */
+var WORD=[[[[459,210],[494,132],[531,210]],34],[[[466,184],[524,184]],18],[[[561,122],[561,214]],30],[[[561,135],[597,135],[610,141],[613,155],[608,169],[596,178],[561,178]],30],[[[594,176],[616,214]],34],[[[706,141],[698,138],[687,133],[673,133],[658,142],[648,152],[640,168],[645,185],[657,198],[673,203],[687,202],[706,196]],32],[[[730,122],[730,214]],30],[[[730,167],[785,167]],26],[[[785,122],[785,214]],30],[[[822,122],[822,214]],30],[[[860,122],[860,214]],30],[[[860,134],[895,134],[908,142],[912,155],[905,170],[893,177],[860,177]],30],[[[942,122],[942,201],[994,201]],30],[[[1008,210],[1043,132],[1080,210]],34],[[[1015,184],[1073,184]],18],[[[1111,214],[1111,127],[1170,209],[1170,122]],30]];
+var P3=WORD.map(function(s){return {p:s[0],w:s[1],ng:1,v:1500};});
+/* signature : balayage d'écriture le long de sa ligne */
+var P4=[{p:[[448,252],[1186,252]],w:50,ng:1,v:2600}];
 
 function build(){
   var m=/url\(\s*["']?([^"')]+)["']?\s*\)/.exec(getComputedStyle(sp).getPropertyValue('--logo')||''); if(!m) throw new Error('logo');
-  var stage=sp.querySelector('.sp-stage'), plan=sp.querySelector('.sp-plan'), pen=sp.querySelector('.sp-pen'), W=stage.getBoundingClientRect().width||600;
+  var stage=sp.querySelector('.sp-stage'), plan=sp.querySelector('.sp-plan'), pen=sp.querySelector('.sp-pen');
   sp.classList.add('sp-on'); try{sessionStorage.setItem(KEY,'1');}catch(e){}
   closeAt=performance.now()+CLOSE_AFTER;
 
-  /* calques d'extrusion (volume du plan) : copies du symbole officiel, sans nouvelle ressource */
-  var ext=[],i; for(i=0;i<16;i++){var x=document.createElement('div');x.className='sp-img sp-ext sp-c-mark';plan.insertBefore(x,plan.firstChild);ext.push(x);}
   var svg=el('svg',{'class':'sp-ink',viewBox:'0 0 1200 346',preserveAspectRatio:'none','aria-hidden':'true'},plan);
   var defs=el('defs',{},svg);
-  var mask=el('mask',{id:'spM',maskUnits:'userSpaceOnUse',x:-80,y:-80,width:620,height:520},defs);
-  var gm=el('g',{fill:'none',stroke:'#fff','stroke-linejoin':'miter','stroke-linecap':'butt'},mask);
-  var guides=el('g',{'class':'sp-guides',fill:'none',stroke:'#0A5E8E','stroke-opacity':'.55','stroke-width':'2.2','stroke-linecap':'round','stroke-linejoin':'round'},svg);
+  var mask=el('mask',{id:'spM',maskUnits:'userSpaceOnUse',x:-80,y:-80,width:1360,height:520},defs);
+  var gm=el('g',{fill:'none',stroke:'#fff','stroke-linejoin':'round','stroke-linecap':'butt'},mask);
+  var gattr={fill:'none',stroke:'#0A5E8E','stroke-opacity':'.55','stroke-width':'2.2','stroke-linecap':'round','stroke-linejoin':'round'};
+  var guides=el('g',gattr,svg); guides.setAttribute('class','sp-guides');
+  var guidesT=el('g',gattr,svg); guidesT.setAttribute('class','sp-guides');
   var gi=el('g',{mask:'url(#spM)'},svg);
   var img=el('image',{x:0,y:0,width:1200,height:346,preserveAspectRatio:'none'},gi); img.setAttribute('href',m[1]);
   var rings=el('g',{'class':'sp-guides',fill:'none',stroke:'#03A2AC','stroke-width':'1.8'},svg);
@@ -131,12 +137,11 @@ function build(){
    +'<path d="M-8,-164 V-176 Q-8,-182 -2,-182 H2 Q8,-182 8,-176 V-164Z" fill="url(#spPe)"/></g></g>';
   var penpos=pen.querySelector('.sp-penpos');
 
-  /* construction de l'itinéraire */
   var PF=[];  // trajectoire de la pointe
   function sched1(items,t0,t1,from){
     var segs=[],cur=from,tot=0;
     items.forEach(function(it){var s=it.p[0],dm=Math.hypot(s[0]-cur[0],s[1]-cur[1]),L=len(it.p);
-      var a={k:'m',a:cur,b:s,w:dm/2600+.012},b={k:'d',it:it,L:L,w:L/2000+.02};segs.push(a,b);tot+=a.w+b.w;cur=it.p[it.p.length-1];});
+      var a={k:'m',a:cur,b:s,w:dm/2600+.012},b={k:'d',it:it,L:L,w:L/(it.v||2000)+.02};segs.push(a,b);tot+=a.w+b.w;cur=it.p[it.p.length-1];});
     var k=(t1-t0)/tot,t=t0; segs.forEach(function(s){s.t0=t;t+=s.w*k;s.t1=t;});
     return {segs:segs,end:cur};
   }
@@ -151,46 +156,35 @@ function build(){
       var k,u,n=steps(s.t0,s.t1,60);
       if(s.k==='m'){for(k=0;k<=n;k++){u=ease(k/n);PF.push([s.t0+(s.t1-s.t0)*k/n,s.a[0]+(s.b[0]-s.a[0])*u,s.a[1]+(s.b[1]-s.a[1])*u]);}return;}
       var it=s.it,L=s.L,d=dd(it.p);
-      var g=el('path',{d:d},guides); prep(g,L); reveal(g,L,s.t0,s.t1);
-      var mk=el('path',{d:d,'stroke-width':it.w},gm); prep(mk,L);
-      if(thin) reveal(mk,L,s.t0+.1,Math.max(s.t1+.07,s.t0+.13)); else reveal(mk,L,s.t0,s.t1);
+      if(!it.ng){var g=el('path',{d:d},it.g&&it.p[0][0]>400||it.g?guidesT:guides); prep(g,L); reveal(g,L,s.t0,s.t1);}
+      if(!it.g){var mk=el('path',{d:d,'stroke-width':it.w},gm); prep(mk,L);
+        if(thin) reveal(mk,L,s.t0+.1,Math.max(s.t1+.07,s.t0+.13)); else reveal(mk,L,s.t0,s.t1);}
       for(k=0;k<=n;k++){u=ease(k/n);var q=at(it.p,L*u);PF.push([s.t0+(s.t1-s.t0)*k/n,q[0],q[1]]);}
       if(it.sq) pop(it.sq[0],it.sq[1]==='s'?s.t0+.02:s.t1-.015);
     });
   }
-  var ENTRY=[640,-110];
-  var r1=sched1(P1,.30,.98,P1[0].p[0]), r2=sched1(P2,.98,1.78,r1.end);
-  // entrée du crayon
-  var first=P1[0].p[0],i2,n0=14; for(i2=0;i2<=n0;i2++){var u0=ease(i2/n0);PF.push([.12+.18*i2/n0,ENTRY[0]+(first[0]-ENTRY[0])*u0,ENTRY[1]+(first[1]-ENTRY[1])*u0]);}
-  r1.segs.shift();  // le premier déplacement est remplacé par l'entrée
-  lay(r1,true); lay(r2,false);
-  // sortie du crayon
-  var e0=r2.end,EXIT=[720,-170],n1=16; for(i2=1;i2<=n1;i2++){var u1=i2/n1,uu=u1*u1;PF.push([1.80+.27*u1,e0[0]+(EXIT[0]-e0[0])*uu,e0[1]+(EXIT[1]-e0[1])*uu]);}
+  var ENTRY=[700,-120];
+  var r1=sched1(P1,.2,.92,P1[0].p[0]), r2=sched1(P2,.92,1.88,r1.end), r3=sched1(P3,2.2,3.08,r2.end), r4=sched1(P4,3.08,3.42,r3.end);
+  var first=P1[0].p[0],i2,n0=14; for(i2=0;i2<=n0;i2++){var u0=ease(i2/n0);PF.push([.06+.14*i2/n0,ENTRY[0]+(first[0]-ENTRY[0])*u0,ENTRY[1]+(first[1]-ENTRY[1])*u0]);}
+  r1.segs.shift();
+  lay(r1,true); lay(r2,false); lay(r3,false); lay(r4,false);
+  var e0=r4.end,EXIT=[1450,-230],n1=16; for(i2=1;i2<=n1;i2++){var u1=i2/n1,uu=u1*u1;PF.push([3.42+.26*u1,e0[0]+(EXIT[0]-e0[0])*uu,e0[1]+(EXIT[1]-e0[1])*uu]);}
   PF.sort(function(a,b){return a[0]-b[0];});
   anim(penpos,PF.map(function(q){return {offset:Math.min(1,q[0]/T),transform:'translate('+q[1].toFixed(1)+'px,'+q[2].toFixed(1)+'px)'};}).filter(function(f,i,a){return i===0||f.offset>=a[i-1].offset;}));
-  anim(penpos,[{offset:0,opacity:0},{offset:.12/T,opacity:0},{offset:.2/T,opacity:1},{offset:2.0/T,opacity:1},{offset:2.09/T,opacity:0},{offset:1,opacity:0}]);
+  anim(penpos,[{offset:0,opacity:0},{offset:.1/T,opacity:0},{offset:.2/T,opacity:1},{offset:3.56/T,opacity:1},{offset:3.67/T,opacity:0},{offset:1,opacity:0}]);
 
-  /* finition du symbole : complète d'éventuels détails entre les tracés, le logo devient strictement l'officiel */
-  var full=el('rect',{x:0,y:0,width:438,height:346,fill:'#fff',stroke:'none',opacity:0},gm); fade(full,1.76,1.9,0,1);
-  fade(guides,1.7,1.95,1,0); fade(rings,1.7,1.9,1,0);
+  /* finitions du masque : le symbole, puis tout le logo, deviennent strictement l'officiel */
+  var full=el('rect',{x:0,y:0,width:438,height:346,fill:'#fff',stroke:'none',opacity:0},gm); fade(full,1.76,1.88,0,1);
+  var full2=el('rect',{x:-10,y:-10,width:1220,height:366,fill:'#fff',stroke:'none',opacity:0},gm); fade(full2,3.4,3.5,0,1);
+  fade(guides,1.7,1.95,1,0); fade(rings,1.7,1.9,1,0); fade(guidesT,3.1,3.45,1,0);
 
   /* feuille */
   var sh=sp.querySelectorAll('.sp-grid,.sp-frame,.sp-rule,.sp-cart');
   fade(sh[0],0,.45,0,1); fade(sh[1],.05,.4,0,1); fade(sh[2],.1,.45,0,1); fade(sh[3],.1,.45,0,1); fade(sh[4],.3,.6,0,1);
 
-  /* 2D → 3D : le plan prend du volume puis revient à plat, position finale exacte */
-  var up='cubic-bezier(.22,.8,.2,1)',io='cubic-bezier(.65,0,.35,1)',TILT='perspective(1100px) rotateX(40deg) rotateZ(-10deg) scale(.96)';
-  anim(plan,[{offset:0,transform:'none'},{offset:1.82/T,transform:'none',easing:up},{offset:2.1/T,transform:TILT},{offset:2.2/T,transform:TILT,easing:io},{offset:2.58/T,transform:'none'},{offset:1,transform:'none'}]);
-  var D=W/1700;
-  ext.forEach(function(x,j){var z=-(j+1)*D;
-    anim(x,[{offset:0,opacity:0,transform:'translateZ(0)'},{offset:1.81/T,opacity:0,transform:'translateZ(0)',easing:up},{offset:1.82/T,opacity:1,transform:'translateZ(0)',easing:up},{offset:2.1/T,opacity:1,transform:'translateZ('+z.toFixed(1)+'px)'},{offset:2.2/T,opacity:1,transform:'translateZ('+z.toFixed(1)+'px)',easing:io},{offset:2.34/T,opacity:1,transform:'translateZ(0)'},{offset:2.35/T,opacity:0,transform:'translateZ(0)'},{offset:1,opacity:0,transform:'translateZ(0)'}]);});
-
-  /* nom, puis signature */
-  var cw='cubic-bezier(.6,.05,.3,1)',wd=sp.querySelector('.sp-i-word'),tg=sp.querySelector('.sp-i-tag'),sc=sp.querySelector('.sp-scan');
-  anim(wd,[{offset:0,clipPath:'inset(0 100% 0 0)'},{offset:2.05/T,clipPath:'inset(0 100% 0 0)',easing:cw},{offset:2.5/T,clipPath:'inset(0 0% 0 0)'},{offset:1,clipPath:'inset(0 0% 0 0)'}]);
-  var sw=W*.623;
-  anim(sc,[{offset:0,opacity:0,transform:'translateX(0)'},{offset:2.05/T,opacity:0,transform:'translateX(0)',easing:cw},{offset:2.1/T,opacity:1,transform:'translateX('+(sw*.05).toFixed(1)+'px)'},{offset:2.42/T,opacity:1,transform:'translateX('+(sw*.9).toFixed(1)+'px)'},{offset:2.5/T,opacity:0,transform:'translateX('+sw.toFixed(1)+'px)'},{offset:1,opacity:0,transform:'translateX('+sw.toFixed(1)+'px)'}]);
-  anim(tg,[{offset:0,opacity:0,transform:'translateY(6px)'},{offset:2.3/T,opacity:0,transform:'translateY(6px)',easing:up},{offset:2.62/T,opacity:1,transform:'none'},{offset:1,opacity:1,transform:'none'}]);
+  /* 2D → 3D : brève bascule en perspective du plan entier, ombre portée douce, retour exact à plat (aucune copie empilée) */
+  var up='cubic-bezier(.22,.8,.2,1)',io='cubic-bezier(.65,0,.35,1)',TILT='perspective(1100px) rotateX(20deg) rotateY(-14deg)',SH='drop-shadow(10px 16px 10px rgba(4,65,105,.28))',SH0='drop-shadow(0px 0px 0px rgba(4,65,105,0))';
+  anim(plan,[{offset:0,transform:'none',filter:SH0},{offset:1.9/T,transform:'none',filter:SH0,easing:up},{offset:2.08/T,transform:TILT,filter:SH},{offset:2.1/T,transform:TILT,filter:SH,easing:io},{offset:2.3/T,transform:'none',filter:SH0},{offset:1,transform:'none',filter:SH0}]);
 
   A[0].onfinish=function(){cleanup();};
   A[0].ready.then(function(){ if(!closed&&!cleaned&&A[0].startTime!=null){ closeAt=A[0].startTime+CLOSE_AFTER; sched(); } }).catch(function(){});   // la durée se mesure depuis le premier affichage réel de la scène
