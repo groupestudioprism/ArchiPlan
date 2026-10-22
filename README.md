@@ -14,7 +14,7 @@ Modeleur 3D multi-appareil (téléphone, tablette, ordinateur) pour le bâtiment
 | `src/engine/` | Moteur 3D (module ES, fichiers concaténés dans l'ordre) : matériaux, familles, calculs physiques, état, géométrie, scène et rendus, saisie et accroches, panneau, compositeur de parois, éditeur de familles, rendu, exports |
 | `tools/build.py` | Assemble le tout : `python3 tools/build.py` → `index.html` (en ligne, Firebase branché) et `dist/archiplan-demo.html` (démo autonome) |
 | `index.html` | **Version en ligne** (générée, ne pas modifier à la main) |
-| `firebase/firestore.rules` | Copie de référence des règles Firestore communes au site et à ARCHIPLAN |
+| `Studio-Prism/firebase/firestore.rules (source unique)` | Copie de référence des règles Firestore communes au site et à ARCHIPLAN |
 | `.nojekyll` | Publication telle quelle par GitHub Pages |
 
 On modifie `src/`, on lance `python3 tools/build.py`, on enregistre (commit) sur `main` : GitHub Pages met le site à jour en une minute environ.
@@ -74,7 +74,7 @@ Au moment de la connexion, ARCHIPLAN lit `licenses/{uid}_archiplan`, la licence 
 
 ## Règles Firestore
 
-Les règles sont communes au site et à ARCHIPLAN. La référence est le dépôt du site (`firebase/firestore.rules`) : il contient les blocs ARCHIPLAN (`clientProfiles`, cloud, quotas). Publication : `bash ~/Documents/ARCHIPLAN/regles-firestore/publier-regles.sh`.
+Les règles sont communes au site et à ARCHIPLAN. La référence est le dépôt du site (`Studio-Prism/firebase/firestore.rules (source unique)`) : il contient les blocs ARCHIPLAN (`clientProfiles`, cloud, quotas). Publication : `bash ~/Documents/ARCHIPLAN/regles-firestore/publier-regles.sh`.
 
 ## Domaine
 
