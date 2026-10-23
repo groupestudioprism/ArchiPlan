@@ -5659,21 +5659,6 @@ function slabOnWalls(){
   addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs) - e), rnd(Math.min(...ys) - e)], q:[rnd(Math.max(...xs) + e), rnd(Math.max(...ys) + e)], lvl:curLvl, off:offFromZ()});
 }
 
-/* ---------- menu clic droit sur la maquette ---------- */
-let rdown = null;
-canvas.addEventListener('pointerdown', e => { if (e.button === 2) rdown = {x:e.clientX, y:e.clientY, t:performance.now()}; });
-canvas.addEventListener('pointerup', e => {
-  if (e.button !== 2 || !rdown) return; const r = rdown; rdown = null;
-  if (Math.hypot(e.clientX - r.x, e.clientY - r.y) > 5 || performance.now() - r.t > 600) return;
-  if (tool !== 'select' && (draw.start || draw.base || draw.poly?.length)){ cancelDraw(); return; }   // clic droit pendant un tracé : on l'arrête
-  const h = hitModel(e); if (!h?.id) return;
-  if (!selIds().includes(h.id)) select(h.id);
-  const m = $('#treeMenu'), key = 'E' + h.id, items = treeMenuItems(key);
-  m.innerHTML = items.map(i => i === '-' ? '<hr>' : `<button type="button" data-tmi="${i.k}" class="${i.danger ? 'danger' : ''}"${i.off ? ' disabled' : ''}><b>${esc(i.t)}</b>${i.s ? `<span>${esc(i.s)}</span>` : ''}</button>`).join('');
-  m.dataset.key = key; m.hidden = false; m.style.width = '270px';
-  m.style.left = Math.max(8, Math.min(e.clientX + 4, innerWidth - 280)) + 'px'; m.style.top = Math.max(8, Math.min(e.clientY + 4, innerHeight - m.offsetHeight - 8)) + 'px';
-});
-
 /* ---------- cote modifiable : clic sur la longueur d'un mur sélectionné ---------- */
 function editWallLength(el, d){
   const inp = document.createElement('input'); inp.className = 'dim-in'; inp.value = nf(wallAxis(el).L, 2).replace(/\s/g, ''); d.textContent = ''; d.appendChild(inp); inp.focus(); inp.select();
