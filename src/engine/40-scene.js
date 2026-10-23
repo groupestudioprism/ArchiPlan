@@ -408,8 +408,8 @@ function buildLabels(){
       const m = V.add(V.mul(V.add(el.a, el.b), .5), V.mul(n, side * (T/2 + 0.28)));
       add(new THREE.Vector3(m[0], y3, -m[1]), nf(L));
       if (isSel && !multi.length){ const d = labels[labels.length - 1].d; d.classList.add('edit'); d.title = 'Cliquer pour changer la longueur'; d.onclick = ev => { ev.stopPropagation(); editWallLength(el, d); }; }
-    } else if (el.kind === 'vol' && el.poly){
-      const c = polyCentroid(el.poly); add(new THREE.Vector3(c[0], y3, -c[1]), el.shape === 'circ' ? `⌀ ${nf(el.q[0] - el.p[0])}` : `${nf(area(el.poly))} m²`);
+    } else if ((el.kind === 'vol' || el.kind === 'slab') && el.poly){
+      const c = polyCentroid(el.poly); add(new THREE.Vector3(c[0], el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) : y3, -c[1]), el.shape === 'circ' ? `⌀ ${nf(el.q[0] - el.p[0])}` : `${nf(area(el.poly))} m²`);
     } else if (el.kind === 'slab' || el.kind === 'vol'){
       const r = rect(el.p, el.q), y = el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) : y3;
       add(new THREE.Vector3((r[0][0] + r[1][0]) / 2, y, -(r[0][1] - 0.3)), nf(r[1][0] - r[0][0]));

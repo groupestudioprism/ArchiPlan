@@ -10,7 +10,7 @@ function shabEstimate(){
   state.levels.forEach((_, li) => {
     const slabs = state.els.filter(e => e.kind === 'slab' && e.lvl === li && elUse(e) !== 'toiture');
     const walls = state.els.filter(e => e.kind === 'wall' && e.lvl === li);
-    let floor = slabs.reduce((s, e) => s + Math.abs(area(rect(e.p, e.q))), 0);
+    let floor = slabs.reduce((s, e) => s + Math.abs(area(volPoly(e))), 0);
     if (!floor && walls.length){ // pas de plancher dessiné : rectangle englobant des murs
       const xs = walls.flatMap(w => [w.a[0], w.b[0]]), ys = walls.flatMap(w => [w.a[1], w.b[1]]);
       floor = (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));

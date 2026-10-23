@@ -137,6 +137,14 @@ function updatePreview(){
   const S = draw.start || draw.base;
   if (tool === 'comp') text = previewComp(cur);
   else if (tool === 'wall' && defs.wall.rect && draw.start){ const S0 = draw.start, r = rect(S0, cur); if (Math.abs(cur[0] - S0[0]) > 0.05 && Math.abs(cur[1] - S0[1]) > 0.05){ const ws = r.map((p, i) => tempEl(p, r[(i + 1) % 4])); for (const t of ws) for (const pc of pieces(t, state.els.concat(ws))) previewGroup.add(pieceMesh(pc, true)); } markGroup.add(makeMarker(S0, ac)); text = `Pièce ${nf(Math.abs(cur[0] - S0[0]))} × ${nf(Math.abs(cur[1] - S0[1]))} m · ${nf(Math.abs((cur[0] - S0[0]) * (cur[1] - S0[1])))} m²`; }
+  else if (tool === 'slab' && defs.slab.mode === 'poly'){
+    const P = draw.poly || []; if (P.length){ const pts = [...P, cur]; for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); markGroup.add(makeMarker(P[0], ac)); if (pts.length >= 3){ markGroup.add(lineObj(cur, P[0], ac, null, true)); try { const t = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), p:[0, 0], q:[1, 1]}; setSlabPoly(t, pts); pieces(t).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } catch(e){} } }
+    text = P.length ? `${nf(V.len(V.sub(cur, P.at(-1))))} m · ${P.length} point${P.length > 1 ? 's' : ''}` : 'Premier point du contour';
+  }
+  else if (tool === 'slab' && defs.slab.mode === 'hole'){
+    const s = slabAt(draw.start || cur); if (s){ const o = volPoly(s); for (let i = 0; i < o.length; i++) markGroup.add(lineObj(o[i], o[(i + 1) % o.length], sc, lvlZ(s.lvl) + (s.off || 0) + slabT(s), false)); }
+    if (draw.start){ const r = rect(draw.start, cur); for (let i = 0; i < 4; i++) markGroup.add(lineObj(r[i], r[(i + 1) % 4], '#C0392B', s ? lvlZ(s.lvl) + (s.off || 0) + slabT(s) : null, false)); text = `Trou ${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m`; } else text = s ? `Dalle ${s.id} : premier coin du trou` : 'Survolez une dalle';
+  }
   else if (tool === 'slab' && defs.slab.mode !== 'rect'){ const r = defs.slab.mode === 'room' ? roomAt(cur) : null; if (r){ const sh = r.poly; for (let i = 0; i < sh.length; i++) markGroup.add(lineObj(sh[i], sh[(i + 1) % sh.length], ac, null, false)); text = `${r.name} · ${nf(r.net, 2)} m² : cliquez pour poser la dalle`; } else text = defs.slab.mode === 'room' ? 'Survolez une pièce fermée' : 'Cliquez pour poser la dalle sous tous les murs du niveau'; }
   else if (tool === 'stair'){ const t = draw.start ? tempEl(draw.start, cur) : tempEl(cur, null); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); const D = stairDims(t); text = `${STAIR_TYPES[t.st]} · ${D.n} marches de ${nf(D.h * 100, 1)} cm${draw.start ? ` · ${nf(t.rot, 0)}°` : ''}`; if (draw.start) markGroup.add(makeMarker(draw.start, ac)); }
   else if (tool === 'vol'){
@@ -242,7 +250,7 @@ function rotatedEl(el, base, ang){
   else if (m.kind === 'stair'){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI + 360) % 360; }
   else if (m.kind === 'col'){ m.c = rp(m.c); if (Math.abs(Math.sin(ang)) > 0.7) [m.w, m.d] = [m.d, m.w]; }
   else if (m.kind === 'inst' && !m.host){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI) % 360; }
-  if (m.kind === 'vol' && m.poly){ const xs = m.poly.map(p => p[0]), ys = m.poly.map(p => p[1]); m.p = [Math.min(...xs), Math.min(...ys)]; m.q = [Math.max(...xs), Math.max(...ys)]; }
+  if ((m.kind === 'vol' || m.kind === 'slab') && m.poly){ const xs = m.poly.map(p => p[0]), ys = m.poly.map(p => p[1]); m.p = [Math.min(...xs), Math.min(...ys)]; m.q = [Math.max(...xs), Math.max(...ys)]; }
   if (m.bind?.room) m.bind = {room:rp(m.bind.room)};
   return m;
 }
@@ -307,7 +315,7 @@ function pushEnd(){ if (!push) return; push = null; c3.enabled = view !== '2d'; 
 const PROMPTS = {
   select:() => 'Sélection : cliquez un élément (Maj pour en ajouter). Clic droit : déplacer la vue, ou tourner autour de l\'élément sélectionné.',
   wall:() => defs.wall.rect ? (draw.start ? '<b>Pièce</b> : coin opposé (ou <code>L;l</code>)' : '<b>Pièce</b> : premier coin de la pièce (4 murs d\'un coup)') : defs.wall.arc ? (draw.arcB ? '<b>Mur courbe</b> : un point de la courbe (sa flèche)' : draw.start ? '<b>Mur courbe</b> : point d\'arrivée' : '<b>Mur courbe</b> : point de départ') : draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
-  slab:() => draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
+  slab:() => defs.slab.mode === 'poly' ? (draw.poly?.length ? '<b>Dalle (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Dalle (contour)</b> : premier point du contour') : defs.slab.mode === 'hole' ? (draw.start ? '<b>Trou</b> : coin opposé du trou' : '<b>Trou / trémie</b> : premier coin, dans la dalle à percer') : defs.slab.mode === 'room' ? '<b>Dalle sur une pièce</b> : cliquez dans la pièce (la dalle suit son contour exact)' : defs.slab.mode === 'walls' ? '<b>Dalle sous les murs</b> : cliquez pour poser la dalle sur le contour des murs' : draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
   roof:() => defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
   mirror:() => !selIds().length ? '<b>Symétrie</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Symétrie</b> : second point de l\'axe' : '<b>Symétrie</b> : premier point de l\'axe de symétrie',
   cut:() => draw.start ? '<b>Coupe</b> : second point du trait de coupe (on regarde vers la gauche du trait)' : '<b>Coupe</b> : premier point du trait de coupe',
@@ -324,7 +332,7 @@ const PROMPTS = {
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
-  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || (tool === 'vol' && (draw.poly?.length || 0) >= 3));
+  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
 function cancelDraw(){ draw.ext = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
 function setTool(t){
@@ -368,6 +376,10 @@ function placePoint(pt){
     }
   } else if (tool === 'wall' && defs.wall.rect){
     if (!S) draw.start = pt; else if (Math.abs(pt[0] - S[0]) > 0.05 && Math.abs(pt[1] - S[1]) > 0.05){ const r = rect(S, pt); pushHist(); r.forEach((p, i) => { const t = tempEl(p.slice(), r[(i + 1) % 4].slice()); t.id = state.nextId++; state.els.push(t); }); state.isSample = false; draw.start = null; draw.workZ = null; rebuild(); toast('Pièce tracée : 4 murs'); } else toast('La pièce doit avoir deux côtés non nuls');
+  } else if (tool === 'slab' && defs.slab.mode === 'poly'){
+    draw.poly ??= []; if (draw.poly.length >= 3 && V.len(V.sub(pt, draw.poly[0])) < 0.05) return finishSlabPoly();
+    if (!draw.poly.length || V.len(V.sub(pt, draw.poly.at(-1))) > 0.01) draw.poly.push(pt.slice()); draw.start = pt; updatePreview(); setPrompt();
+  } else if (tool === 'slab' && defs.slab.mode === 'hole'){ if (!S) draw.start = pt; else { addSlabHole(S, pt); draw.start = null; }
   } else if (tool === 'slab' && defs.slab.mode !== 'rect'){ if (defs.slab.mode === 'room') slabOnRoom(pt); else slabOnWalls();
   } else if (tool === 'mirror'){
     if (!selIds().length){ toast('Sélectionnez d\'abord les éléments'); return; }

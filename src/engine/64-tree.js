@@ -25,7 +25,7 @@ function elMeta(el){
   if (el.kind === 'inst'){ const c = famCut(el); return c ? `${n0(c.w * 100)}×${n0(c.h * 100)}` : ''; }
   if (el.kind === 'col') return `${n0(el.w * 100)}×${n0(el.d * 100)}`;
   if (el.kind === 'stair') return `${stairDims(el).n} m.`;
-  const r = rect(el.p, el.q); return `${nf(r[1][0] - r[0][0], 1)}×${nf(r[2][1] - r[1][1], 1)}`;
+  if (el.poly) return `${nf(area(el.poly), 1)} m²`; const r = rect(el.p, el.q); return `${nf(r[1][0] - r[0][0], 1)}×${nf(r[2][1] - r[1][1], 1)}`;
 }
 function treeRow({key, depth, icon, label, meta = '', open = null, selected = false, hidden = null, menu = '', cls = '', title = ''}){
   return `<div class="tr${selected ? ' on' : ''}${hidden ? ' off' : ''} ${cls}" style="--d:${depth}" data-tk="${esc(key)}"${title ? ` title="${esc(title)}"` : ''}>

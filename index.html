@@ -1134,7 +1134,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
       <label class="pill" id="shapePill" hidden><span>Forme</span><select id="shapeIn" aria-label="Forme"><option value="rect">Rectangle</option><option value="circ">Cercle</option><option value="poly">Polygone</option></select></label>
       <label class="pill" id="topPill" hidden><span>Haut</span><select id="topIn" aria-label="Contrainte haute"><option value="next">Niveau supérieur</option><option value="">Hauteur libre</option><option value="above">Sous l'élément au-dessus</option></select></label>
       <label class="pill" id="wallArcPill" hidden><span>Tracé</span><select id="wArcIn" aria-label="Tracé du mur"><option value="">Droit</option><option value="1">Courbe (3 points)</option><option value="r">Pièce (rectangle)</option></select></label>
-      <label class="pill" id="slabModePill" hidden><span>Pose</span><select id="sModeIn" aria-label="Pose de la dalle"><option value="rect">Rectangle</option><option value="room">Sur une pièce</option><option value="walls">Sous tous les murs</option></select></label>
+      <label class="pill" id="slabModePill" hidden><span>Pose</span><select id="sModeIn" aria-label="Pose de la dalle"><option value="rect">Rectangle</option><option value="room">Sur une pièce</option><option value="walls">Sous tous les murs</option><option value="poly">Contour (point par point)</option><option value="hole">Trou / trémie dans une dalle</option></select></label>
       <label class="pill" id="mirrorPill" hidden><span>Original</span><select id="mKeepIn" aria-label="Garder l'original"><option value="1">Garder (copie)</option><option value="">Déplacer</option></select></label>
       <label class="pill" id="stairPill" hidden><span>Escalier</span><select id="sTypeIn" aria-label="Type d'escalier"><option value="droit">Droit</option><option value="quart">1/4 tournant</option><option value="demi">2/4 tournant</option><option value="tq">3/4 tournant</option><option value="helico">Colimaçon</option></select><select id="sSideIn" aria-label="Sens"><option value="d">à droite</option><option value="g">à gauche</option></select><select id="sMatIn" aria-label="Matériau"><option value="bois">Bois</option><option value="beton">Béton</option><option value="acier">Acier</option></select></label>
       <label class="pill" id="roofModePill" hidden><span>Tracé</span><select id="rModeIn" aria-label="Tracé du toit"><option value="rect">Rectangle</option><option value="poly">Contour</option><option value="walls">Sur les murs</option></select></label>
@@ -3854,7 +3854,7 @@ function pieces(el, els = state.els){
     }
   } else if (el.kind === 'slab'){
     // la dalle est posée AU-DESSUS de son niveau : off = dessous de la dalle ; couches listées du dessus vers le dessous
-    const poly = rect(el.p, el.q), C = compo(el.type), holes = slabHoles(el), net = area(poly) - holes.reduce((s, h) => s + area(h), 0); let top = z + slabT(el);
+    const poly = volPoly(el), C = compo(el.type), holes = slabHoles(el).concat(el.holes || []), net = area(poly) - holes.reduce((s, h) => s + area(h), 0); let top = z + slabT(el);
     for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot, ...(holes.length ? {holes, vol:net * e} : {})}); top -= e; }
   } else if (el.kind === 'vol'){
     out.push({mat:el.mat, poly:volPoly(el), base:z, h:el.h, lot:'Industrie'});
@@ -3874,7 +3874,7 @@ function elStats(el){
 function elKeyPoints(el){
   if (el.kind === 'wall' && wallArc(el)){ const P = arcPts(el, 0); return {ends:[el.a, el.b], segs:P.slice(1).map((p, i) => [P[i], p]), mids:[P[Math.floor(P.length / 2)]], faces:[]}; }
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
-  if (el.kind === 'vol' && el.poly){ const r = el.poly, segs = r.map((p, i) => [p, r[(i + 1) % r.length]]), circ = el.shape === 'circ'; return {ends:circ ? [] : r, segs, mids:circ ? [] : segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[polyCentroid(r)]}; }
+  if ((el.kind === 'vol' || el.kind === 'slab') && el.poly){ const r = el.poly, segs = r.map((p, i) => [p, r[(i + 1) % r.length]]), circ = el.shape === 'circ'; return {ends:circ ? [] : r, segs, mids:circ ? [] : segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[polyCentroid(r)]}; }
   if (el.kind === 'slab' || el.kind === 'vol'){ const r = rect(el.p, el.q); const segs = r.map((p, i) => [p, r[(i + 1) % 4]]); return {ends:r, segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
   if (el.kind === 'stair'){ const F = stairFootprint(el); if (!F) return {ends:[], segs:[], mids:[]}; const r = [[F.x0, F.y0], [F.x1, F.y0], [F.x1, F.y1], [F.x0, F.y1]]; return {ends:[el.c, ...r], segs:r.map((p, i) => [p, r[(i + 1) % 4]]), mids:[[(F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2]]}; }
   if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % r.length]]), ...o.map((p, i) => [p, o[(i + 1) % o.length]])];
@@ -4717,8 +4717,8 @@ function buildLabels(){
       const m = V.add(V.mul(V.add(el.a, el.b), .5), V.mul(n, side * (T/2 + 0.28)));
       add(new THREE.Vector3(m[0], y3, -m[1]), nf(L));
       if (isSel && !multi.length){ const d = labels[labels.length - 1].d; d.classList.add('edit'); d.title = 'Cliquer pour changer la longueur'; d.onclick = ev => { ev.stopPropagation(); editWallLength(el, d); }; }
-    } else if (el.kind === 'vol' && el.poly){
-      const c = polyCentroid(el.poly); add(new THREE.Vector3(c[0], y3, -c[1]), el.shape === 'circ' ? `⌀ ${nf(el.q[0] - el.p[0])}` : `${nf(area(el.poly))} m²`);
+    } else if ((el.kind === 'vol' || el.kind === 'slab') && el.poly){
+      const c = polyCentroid(el.poly); add(new THREE.Vector3(c[0], el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) : y3, -c[1]), el.shape === 'circ' ? `⌀ ${nf(el.q[0] - el.p[0])}` : `${nf(area(el.poly))} m²`);
     } else if (el.kind === 'slab' || el.kind === 'vol'){
       const r = rect(el.p, el.q), y = el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) : y3;
       add(new THREE.Vector3((r[0][0] + r[1][0]) / 2, y, -(r[0][1] - 0.3)), nf(r[1][0] - r[0][0]));
@@ -5195,6 +5195,14 @@ function updatePreview(){
   const S = draw.start || draw.base;
   if (tool === 'comp') text = previewComp(cur);
   else if (tool === 'wall' && defs.wall.rect && draw.start){ const S0 = draw.start, r = rect(S0, cur); if (Math.abs(cur[0] - S0[0]) > 0.05 && Math.abs(cur[1] - S0[1]) > 0.05){ const ws = r.map((p, i) => tempEl(p, r[(i + 1) % 4])); for (const t of ws) for (const pc of pieces(t, state.els.concat(ws))) previewGroup.add(pieceMesh(pc, true)); } markGroup.add(makeMarker(S0, ac)); text = `Pièce ${nf(Math.abs(cur[0] - S0[0]))} × ${nf(Math.abs(cur[1] - S0[1]))} m · ${nf(Math.abs((cur[0] - S0[0]) * (cur[1] - S0[1])))} m²`; }
+  else if (tool === 'slab' && defs.slab.mode === 'poly'){
+    const P = draw.poly || []; if (P.length){ const pts = [...P, cur]; for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); markGroup.add(makeMarker(P[0], ac)); if (pts.length >= 3){ markGroup.add(lineObj(cur, P[0], ac, null, true)); try { const t = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), p:[0, 0], q:[1, 1]}; setSlabPoly(t, pts); pieces(t).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } catch(e){} } }
+    text = P.length ? `${nf(V.len(V.sub(cur, P.at(-1))))} m · ${P.length} point${P.length > 1 ? 's' : ''}` : 'Premier point du contour';
+  }
+  else if (tool === 'slab' && defs.slab.mode === 'hole'){
+    const s = slabAt(draw.start || cur); if (s){ const o = volPoly(s); for (let i = 0; i < o.length; i++) markGroup.add(lineObj(o[i], o[(i + 1) % o.length], sc, lvlZ(s.lvl) + (s.off || 0) + slabT(s), false)); }
+    if (draw.start){ const r = rect(draw.start, cur); for (let i = 0; i < 4; i++) markGroup.add(lineObj(r[i], r[(i + 1) % 4], '#C0392B', s ? lvlZ(s.lvl) + (s.off || 0) + slabT(s) : null, false)); text = `Trou ${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m`; } else text = s ? `Dalle ${s.id} : premier coin du trou` : 'Survolez une dalle';
+  }
   else if (tool === 'slab' && defs.slab.mode !== 'rect'){ const r = defs.slab.mode === 'room' ? roomAt(cur) : null; if (r){ const sh = r.poly; for (let i = 0; i < sh.length; i++) markGroup.add(lineObj(sh[i], sh[(i + 1) % sh.length], ac, null, false)); text = `${r.name} · ${nf(r.net, 2)} m² : cliquez pour poser la dalle`; } else text = defs.slab.mode === 'room' ? 'Survolez une pièce fermée' : 'Cliquez pour poser la dalle sous tous les murs du niveau'; }
   else if (tool === 'stair'){ const t = draw.start ? tempEl(draw.start, cur) : tempEl(cur, null); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); const D = stairDims(t); text = `${STAIR_TYPES[t.st]} · ${D.n} marches de ${nf(D.h * 100, 1)} cm${draw.start ? ` · ${nf(t.rot, 0)}°` : ''}`; if (draw.start) markGroup.add(makeMarker(draw.start, ac)); }
   else if (tool === 'vol'){
@@ -5300,7 +5308,7 @@ function rotatedEl(el, base, ang){
   else if (m.kind === 'stair'){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI + 360) % 360; }
   else if (m.kind === 'col'){ m.c = rp(m.c); if (Math.abs(Math.sin(ang)) > 0.7) [m.w, m.d] = [m.d, m.w]; }
   else if (m.kind === 'inst' && !m.host){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI) % 360; }
-  if (m.kind === 'vol' && m.poly){ const xs = m.poly.map(p => p[0]), ys = m.poly.map(p => p[1]); m.p = [Math.min(...xs), Math.min(...ys)]; m.q = [Math.max(...xs), Math.max(...ys)]; }
+  if ((m.kind === 'vol' || m.kind === 'slab') && m.poly){ const xs = m.poly.map(p => p[0]), ys = m.poly.map(p => p[1]); m.p = [Math.min(...xs), Math.min(...ys)]; m.q = [Math.max(...xs), Math.max(...ys)]; }
   if (m.bind?.room) m.bind = {room:rp(m.bind.room)};
   return m;
 }
@@ -5365,7 +5373,7 @@ function pushEnd(){ if (!push) return; push = null; c3.enabled = view !== '2d'; 
 const PROMPTS = {
   select:() => 'Sélection : cliquez un élément (Maj pour en ajouter). Clic droit : déplacer la vue, ou tourner autour de l\'élément sélectionné.',
   wall:() => defs.wall.rect ? (draw.start ? '<b>Pièce</b> : coin opposé (ou <code>L;l</code>)' : '<b>Pièce</b> : premier coin de la pièce (4 murs d\'un coup)') : defs.wall.arc ? (draw.arcB ? '<b>Mur courbe</b> : un point de la courbe (sa flèche)' : draw.start ? '<b>Mur courbe</b> : point d\'arrivée' : '<b>Mur courbe</b> : point de départ') : draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
-  slab:() => draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
+  slab:() => defs.slab.mode === 'poly' ? (draw.poly?.length ? '<b>Dalle (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Dalle (contour)</b> : premier point du contour') : defs.slab.mode === 'hole' ? (draw.start ? '<b>Trou</b> : coin opposé du trou' : '<b>Trou / trémie</b> : premier coin, dans la dalle à percer') : defs.slab.mode === 'room' ? '<b>Dalle sur une pièce</b> : cliquez dans la pièce (la dalle suit son contour exact)' : defs.slab.mode === 'walls' ? '<b>Dalle sous les murs</b> : cliquez pour poser la dalle sur le contour des murs' : draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
   roof:() => defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
   mirror:() => !selIds().length ? '<b>Symétrie</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Symétrie</b> : second point de l\'axe' : '<b>Symétrie</b> : premier point de l\'axe de symétrie',
   cut:() => draw.start ? '<b>Coupe</b> : second point du trait de coupe (on regarde vers la gauche du trait)' : '<b>Coupe</b> : premier point du trait de coupe',
@@ -5382,7 +5390,7 @@ const PROMPTS = {
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
-  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || (tool === 'vol' && (draw.poly?.length || 0) >= 3));
+  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
 function cancelDraw(){ draw.ext = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
 function setTool(t){
@@ -5426,6 +5434,10 @@ function placePoint(pt){
     }
   } else if (tool === 'wall' && defs.wall.rect){
     if (!S) draw.start = pt; else if (Math.abs(pt[0] - S[0]) > 0.05 && Math.abs(pt[1] - S[1]) > 0.05){ const r = rect(S, pt); pushHist(); r.forEach((p, i) => { const t = tempEl(p.slice(), r[(i + 1) % 4].slice()); t.id = state.nextId++; state.els.push(t); }); state.isSample = false; draw.start = null; draw.workZ = null; rebuild(); toast('Pièce tracée : 4 murs'); } else toast('La pièce doit avoir deux côtés non nuls');
+  } else if (tool === 'slab' && defs.slab.mode === 'poly'){
+    draw.poly ??= []; if (draw.poly.length >= 3 && V.len(V.sub(pt, draw.poly[0])) < 0.05) return finishSlabPoly();
+    if (!draw.poly.length || V.len(V.sub(pt, draw.poly.at(-1))) > 0.01) draw.poly.push(pt.slice()); draw.start = pt; updatePreview(); setPrompt();
+  } else if (tool === 'slab' && defs.slab.mode === 'hole'){ if (!S) draw.start = pt; else { addSlabHole(S, pt); draw.start = null; }
   } else if (tool === 'slab' && defs.slab.mode !== 'rect'){ if (defs.slab.mode === 'room') slabOnRoom(pt); else slabOnWalls();
   } else if (tool === 'mirror'){
     if (!selIds().length){ toast('Sélectionnez d\'abord les éléments'); return; }
@@ -5697,17 +5709,12 @@ function previewMirror(A, B){ for (const id of selIds()){ const el = getEl(id); 
 /* ---------- dalle sur une pièce / sur l'emprise des murs ---------- */
 function slabOnRoom(pt){
   const r = roomAt(pt); if (!r){ toast('Cliquez à l\'intérieur d\'une pièce fermée par des murs'); return; }
-  const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]);
-  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs)), rnd(Math.min(...ys))], q:[rnd(Math.max(...xs)), rnd(Math.max(...ys))], lvl:curLvl, off:offFromZ(), bind:{room:[rnd(pt[0]), rnd(pt[1])]}});
-  if (r.poly.length > 4 || !isOrtho(r.poly)) toast('Pièce non rectangulaire : la dalle couvre son rectangle englobant');
+  const el = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), bind:{room:[rnd(pt[0]), rnd(pt[1])]}, p:[0, 0], q:[1, 1]}; setSlabPoly(el, r.poly); addEl(el);
 }
 function slabOnWalls(){
-  const o = wallsOutline(curLvl); if (!o){ toast('Aucun mur sur ce niveau'); return; }
-  const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === curLvl), e = ws.length ? Math.max(...ws.map(wallT)) / 2 : 0;
-  const xs = o.map(p => p[0]), ys = o.map(p => p[1]);
-  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs) - e), rnd(Math.min(...ys) - e)], q:[rnd(Math.max(...xs) + e), rnd(Math.max(...ys) + e)], lvl:curLvl, off:offFromZ(), bind:'walls'});
+  const P = slabBindPoly({bind:'walls', lvl:curLvl}); if (!P){ toast('Aucun mur sur ce niveau'); return; }
+  const el = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), bind:'walls', p:[0, 0], q:[1, 1]}; setSlabPoly(el, P); addEl(el);
 }
-
 /* ---------- cote modifiable : clic sur la longueur d'un mur sélectionné ---------- */
 function editWallLength(el, d){
   const inp = document.createElement('input'); inp.className = 'dim-in'; inp.value = nf(wallAxis(el).L, 2).replace(/\s/g, ''); d.textContent = ''; d.appendChild(inp); inp.focus(); inp.select();
@@ -5726,14 +5733,16 @@ function editWallLength(el, d){
    Murs joints : quand un mur bouge, les murs raccordés (angles et T) suivent.
    Poignées : extrémités d'un mur, coins d'une dalle ou d'un volume, à tirer directement. */
 
-const inRect = (pt, el, m = 1e-6) => { const r = rect(el.p, el.q); return pt[0] >= r[0][0] - m && pt[0] <= r[2][0] + m && pt[1] >= r[0][1] - m && pt[1] <= r[2][1] + m; };
+const inRect = (pt, el, m = 1e-6) => { if (el.poly && el.kind !== 'roof' && m < 0.01) return ptInPoly(pt[0], pt[1], el.poly) || el.poly.some((a, i) => segClosest(pt, a, el.poly[(i + 1) % el.poly.length]).t >= 0 && V.len(V.sub(segClosest(pt, a, el.poly[(i + 1) % el.poly.length]).pt, pt)) < 0.01); const r = rect(el.p, el.q); return pt[0] >= r[0][0] - m && pt[0] <= r[2][0] + m && pt[1] >= r[0][1] - m && pt[1] <= r[2][1] + m; };
+/* point nettement à l'intérieur d'une dalle (à plus de 2 cm de son bord) */
+function strictIn(pt, el){ const P = volPoly(el); if (!ptInPoly(pt[0], pt[1], P)) return false; for (let i = 0; i < P.length; i++){ const c = segClosest(pt, P[i], P[(i + 1) % P.length]); if (V.len(V.sub(c.pt, pt)) < 0.02) return false; } return true; }
 const topLvl = el => el.top === 'next' ? el.lvl + 1 : Number.isInteger(el.top) ? el.top : null;
 /* dessus du plancher posé sur ce niveau sous le point (cote relative au niveau), ou null */
 function floorTopAt(lvl, pts, excl){
   let best = null;
   for (const s of state.els){
     if (s.kind !== 'slab' || s.lvl !== lvl || s.id === excl || elUse(s) === 'toiture' || (s.off || 0) > 1.2) continue;
-    if (!pts.some(p => inRect(p, s))) continue;
+    if (!pts.some(p => strictIn(p, s))) continue;   // le mur doit être sur la dalle, pas seulement contre son bord (dalle de pièce)
     const top = (s.off || 0) + slabT(s); if (best == null || top > best) best = top;
   }
   return best;
@@ -5751,23 +5760,10 @@ function undersideAbove(pt, z, excl){
   return best;
 }
 const volPoly = el => el.poly && el.poly.length >= 3 ? el.poly : rect(el.p, el.q);
-function slabBindRect(el){
-  if (el.bind === 'walls'){
-    const bl = el.bindLvl ?? el.lvl, o = wallsOutline(bl); if (!o) return null;
-    const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === bl), e = ws.length ? Math.max(...ws.map(wallT)) / 2 : 0, xs = o.map(p => p[0]), ys = o.map(p => p[1]);
-    return [[Math.min(...xs) - e, Math.min(...ys) - e], [Math.max(...xs) + e, Math.max(...ys) + e]];
-  }
-  if (el.bind?.room){
-    const r = roomAt(el.bind.room, el.lvl); if (!r) return null;
-    const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]);
-    return [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]];
-  }
-  return null;
-}
 function applyLinks(){
   if (!state?.els) return;
   const R = v => Math.round(v * 1000) / 1000;
-  for (const el of state.els) if (el.kind === 'slab' && el.bind){ const r = slabBindRect(el); if (r){ el.p = r[0].map(R); el.q = r[1].map(R); } }
+  for (const el of state.els) if (el.kind === 'slab' && el.bind){ const P = slabBindPoly(el); if (P) setSlabPoly(el, P); }
   for (const el of state.els){
     if (el.kind === 'wall' || el.kind === 'col'){
       if (el.onSlab){ const pts = el.kind === 'col' ? [el.c] : [V.mul(V.add(el.a, el.b), 0.5), el.a, el.b]; el.off = R(floorTopAt(el.lvl, pts) ?? 0); }
@@ -5822,7 +5818,7 @@ function withJoins(ids, fn){ const before = wallEnds(ids); const r = fn(); follo
 let gripDrag = null;
 function gripPoints(el){
   if (el.kind === 'wall') return [{k:'a', pt:el.a}, {k:'b', pt:el.b}];
-  if ((el.kind === 'slab' || (el.kind === 'vol' && !el.poly)) && !el.bind){ const r = rect(el.p, el.q); return r.map((pt, i) => ({k:'c' + i, pt})); }
+  if ((el.kind === 'slab' || el.kind === 'vol') && !el.poly && !el.bind){ const r = rect(el.p, el.q); return r.map((pt, i) => ({k:'c' + i, pt})); }
   return [];
 }
 function addGrips(el, add){
@@ -6032,7 +6028,7 @@ canvas.addEventListener('pointerup', e => {
   if (moved > 7) return; e.stopImmediatePropagation(); endExtrude(draw.ext.h);
 }, {capture:true});
 $('#cmd').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !draw.ext && tool === 'vol' && (draw.poly?.length || 0) >= 3 && !e.target.value.trim()){ e.preventDefault(); e.stopImmediatePropagation(); finishShapePoly(); return; }
+  if (e.key === 'Enter' && !draw.ext && (tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3 && !e.target.value.trim()){ e.preventDefault(); e.stopImmediatePropagation(); tool === 'vol' ? finishShapePoly() : finishSlabPoly(); return; }
   if (!draw.ext || e.key !== 'Enter') return; const v = num(e.target.value.replace(/^[hH]\s*/, ''));
   e.preventDefault(); e.stopImmediatePropagation(); e.target.value = ''; endExtrude(v > 0 ? v : draw.ext.h);
 }, {capture:true});
@@ -6095,6 +6091,62 @@ function makeComponent(els, nom, cat, replace = true){
   inst.id = state.nextId++; state.els.push(inst); state.isSample = false; embedUsedLib();
   sel = replace ? inst.id : sel; multi = replace ? [] : multi; rebuild(); fxCache?.clear?.();
   return fid;
+}
+
+/* ==== 54-slabs.js ==== */
+/* ============ Dalles au contour exact ============
+   Une dalle peut suivre un contour quelconque (el.poly : pièce en L, contour tracé point par point, emprise des murs)
+   et recevoir des trous (el.holes : trémies, patios, gaines) en plus des trémies d'escalier automatiques. */
+/* décalage d'un contour (d > 0 : vers l'extérieur), angles vifs */
+function offsetPoly(P, d){
+  const n = P.length, s = sArea(P) > 0 ? 1 : -1;
+  const L = P.map((a, i) => { const b = P[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = s * dy / l, ny = -s * dx / l; return [[a[0] + nx * d, a[1] + ny * d], [dx / l, dy / l]]; });
+  return P.map((_, i) => { const l1 = L[(i - 1 + n) % n], l2 = L[i]; return lineInter(l1[0], l1[1], l2[0], l2[1]) || l2[0]; });
+}
+/* sommets alignés retirés (contour plus propre) */
+function cleanPoly(P){ const out = []; for (let i = 0; i < P.length; i++){ const a = P[(i - 1 + P.length) % P.length], b = P[i], c = P[(i + 1) % P.length]; if (V.len(V.sub(b, a)) < 1e-4) continue; if (Math.abs(V.cross(V.sub(b, a), V.sub(c, b))) > 1e-6 * (V.len(V.sub(b, a)) + V.len(V.sub(c, b)))) out.push(b); } return out.length >= 3 ? out : P; }
+const isAxisRect = P => P.length === 4 && isOrtho(P);
+/* contour fermé des murs porteurs / extérieurs d'un niveau (axes), quelle que soit sa forme ; sinon rectangle englobant */
+function wallsLoop(lvl){
+  const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === lvl && compo(w.type).lot !== 'Second œuvre' && !wallArc(w));
+  if (!ws.length) return null;
+  // la plus grande pièce « extérieure » : réunion des pièces détectées → on prend le contour de la plus grande face du graphe
+  const key = p => `${p[0].toFixed(3)};${p[1].toFixed(3)}`, adj = {};
+  ws.forEach(w => { (adj[key(w.a)] ??= []).push(w.b); (adj[key(w.b)] ??= []).push(w.a); });
+  const start = ws[0].a, path = [start]; let prev = null, cur = start;
+  for (let k = 0; k < ws.length + 2; k++){
+    const nx = (adj[key(cur)] || []).find(p => !prev || key(p) !== key(prev)); if (!nx) break;
+    if (key(nx) === key(start)){ if (path.length >= 3) return cleanPoly(path.map(q => [q[0], q[1]])); break; }
+    path.push(nx); prev = cur; cur = nx;
+  }
+  return wallsOutline(lvl);
+}
+function setSlabPoly(el, P){
+  const R = v => Math.round(v * 1000) / 1000, Q = cleanPoly(P).map(p => [R(p[0]), R(p[1])]), xs = Q.map(p => p[0]), ys = Q.map(p => p[1]);
+  el.p = [Math.min(...xs), Math.min(...ys)]; el.q = [Math.max(...xs), Math.max(...ys)];
+  if (isAxisRect(Q)) delete el.poly; else el.poly = Q;
+}
+function slabBindPoly(el){
+  if (el.bind === 'walls'){
+    const bl = el.bindLvl ?? el.lvl, o = wallsLoop(bl); if (!o) return null;
+    const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === bl && compo(w.type).lot !== 'Second œuvre'), e = ws.length ? Math.max(...ws.map(wallT)) / 2 : 0;
+    return offsetPoly(o, e);
+  }
+  if (el.bind?.room){ const r = roomAt(el.bind.room, el.lvl); return r ? r.poly.map(p => p.slice()) : null; }
+  return null;
+}
+/* outil Dalle : contour tracé point par point, ou trou dans une dalle existante */
+function finishSlabPoly(){
+  const p = draw.poly || []; if (p.length < 3){ toast('Il faut au moins 3 points'); return; }
+  const el = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), p:[0, 0], q:[1, 1]}; setSlabPoly(el, p);
+  draw.poly = null; draw.start = null; addEl(el); draw.workZ = null; updatePreview(); setPrompt();
+}
+function slabAt(pt, lvl = curLvl){ return state.els.filter(s => s.kind === 'slab' && s.lvl === lvl && ptInPoly(pt[0], pt[1], volPoly(s))).sort((a, b) => area(volPoly(a)) - area(volPoly(b)))[0] || null; }
+function addSlabHole(a, b){
+  const r = rect(a, b), c = V.mul(V.add(r[0], r[2]), 0.5), s = slabAt(c);
+  if (!s){ toast('Tracez le trou à l\'intérieur d\'une dalle du niveau'); return; }
+  if (area(r) < 0.01){ toast('Trou trop petit'); return; }
+  pushHist(); (s.holes ??= []).push(r.map(p => [rnd(p[0]), rnd(p[1])])); state.isSample = false; rebuild(); toast(`Trou ajouté à la dalle ${s.id} (${nf(area(r))} m²)`);
 }
 
 /* ==== 60-panel.js ==== */
@@ -6212,16 +6264,16 @@ function renderProps(){
       ${F ? `<p class="hint">Emprise ${nf(F.x1 - F.x0)} × ${nf(F.y1 - F.y0)} m. ${el.tremie !== false ? 'La trémie est découpée dans la dalle traversée à l\'arrivée.' : ''}</p>` : ''}</div>
       <div class="btns"><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
-    const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers;
+    const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers, nh = (el.holes || []).length, SA = area(volPoly(el)) - (el.holes || []).reduce((s, x) => s + area(x), 0);
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
     h += slabLinkField(el);
     { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
-      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(Lx * Ly)} m²</dd><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
-      <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Lx * Ly, false)}</div>
-      <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
+      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(SA)} m²</dd>${el.poly ? `<dt>Contour</dt><dd>${el.poly.length} côtés</dd>` : ''}${nh ? `<dt>Trous</dt><dd>${nh}</dd>` : ''}<dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
+      <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, SA, false)}</div>
+      <div class="btns"><button class="btn" data-act="slab-hole">+ Trou / trémie</button>${nh ? '<button class="btn" data-act="slab-unhole">Retirer les trous</button>' : ''}<button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'vol'){
     const r = rect(el.p, el.q);
     h += matSelect('Matériau', 'mat', el.mat);
@@ -6306,7 +6358,7 @@ function quantities(){
       const k = el.fam + '|' + (el.type | 0); fams[k] ??= {fam:el.fam, type:el.type | 0, n:0, area:0}; fams[k].n++; const c = famCut(el); if (c) fams[k].area += c.w * c.h; continue; }
     for (const pc of pieces(el)) if (!pc.reveal) addM(pc.lot, pc.mat, pc.vol ?? area(pc.poly) * pc.h);
     if (el.kind === 'wall'){ const L = wallAxis(el).L, ops = wallOpenings(el).reduce((s, o) => s + (o.t1 - o.t0) * (o.z1 - o.z0), 0); walls[el.type] ??= {ml:0, m2:0, net:0}; walls[el.type].ml += L; walls[el.type].m2 += L * el.h; walls[el.type].net += L * el.h - ops; }
-    if (el.kind === 'slab'){ slabs[el.type] ??= {m2:0}; slabs[el.type].m2 += area(rect(el.p, el.q)); }
+    if (el.kind === 'slab'){ slabs[el.type] ??= {m2:0}; slabs[el.type].m2 += area(volPoly(el)) - (el.holes || []).reduce((s, h) => s + area(h), 0); }
     if (el.kind === 'roof'){ const r = roofQty(el); roofs[el.type] ??= {m2:0, plan:0, eave:0, ridge:0}; roofs[el.type].m2 += r.slope; roofs[el.type].plan += r.plan; roofs[el.type].eave += r.eave; roofs[el.type].ridge += r.ridge; }
   }
   return {mats:Object.values(mats), walls, slabs, roofs, fams:Object.values(fams)};
@@ -6442,6 +6494,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
   else if (act === 'levels') openLevels();
+  else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }
+  else if (act === 'slab-unhole'){ pushHist(); delete el.holes; rebuild(); }
   else if (act === 'mkcomp') openMakeComp(selIds());
   else if (act === 'lvl-add'){ pushHist(); const last = state.levels[state.levels.length - 1]; state.levels.push({n:`R+${state.levels.length}`, z:rnd((last?.z || 0) + 2.8)}); rebuild(); syncLevels(); }
   else if (act === 'csv') doExport('csv');
@@ -6886,7 +6940,7 @@ function elMeta(el){
   if (el.kind === 'inst'){ const c = famCut(el); return c ? `${n0(c.w * 100)}×${n0(c.h * 100)}` : ''; }
   if (el.kind === 'col') return `${n0(el.w * 100)}×${n0(el.d * 100)}`;
   if (el.kind === 'stair') return `${stairDims(el).n} m.`;
-  const r = rect(el.p, el.q); return `${nf(r[1][0] - r[0][0], 1)}×${nf(r[2][1] - r[1][1], 1)}`;
+  if (el.poly) return `${nf(area(el.poly), 1)} m²`; const r = rect(el.p, el.q); return `${nf(r[1][0] - r[0][0], 1)}×${nf(r[2][1] - r[1][1], 1)}`;
 }
 function treeRow({key, depth, icon, label, meta = '', open = null, selected = false, hidden = null, menu = '', cls = '', title = ''}){
   return `<div class="tr${selected ? ' on' : ''}${hidden ? ' off' : ''} ${cls}" style="--d:${depth}" data-tk="${esc(key)}"${title ? ` title="${esc(title)}"` : ''}>
@@ -7539,7 +7593,7 @@ function dqeItems(){
       }
       if (el.lvl === 0 && el.off <= 0.01){ groundPerim += L; add('T|fouilles', '01', 'Fouilles en rigole et semelles filantes', 'sous murs porteurs, ~0,5 × 0,6 m', 'ml', L, el.lvl, 95); }
     } else if (el.kind === 'slab'){
-      const C = compo(el.type), use = elUse(el), r = rect(el.p, el.q), A = area(r), layers = C.layers, si = structIndex(layers);
+      const C = compo(el.type), use = elUse(el), r = volPoly(el), A = area(r) - (el.holes || []).reduce((s, h) => s + area(h), 0), layers = C.layers, si = structIndex(layers);
       if (el.lvl === 0 && (use === 'terrePlein' || use === 'plancherBas')) groundArea += A;
       layers.forEach(([m, e], i) => {
         if (isAir(m)) return;
@@ -8042,7 +8096,7 @@ function shabEstimate(){
   state.levels.forEach((_, li) => {
     const slabs = state.els.filter(e => e.kind === 'slab' && e.lvl === li && elUse(e) !== 'toiture');
     const walls = state.els.filter(e => e.kind === 'wall' && e.lvl === li);
-    let floor = slabs.reduce((s, e) => s + Math.abs(area(rect(e.p, e.q))), 0);
+    let floor = slabs.reduce((s, e) => s + Math.abs(area(volPoly(e))), 0);
     if (!floor && walls.length){ // pas de plancher dessiné : rectangle englobant des murs
       const xs = walls.flatMap(w => [w.a[0], w.b[0]]), ys = walls.flatMap(w => [w.a[1], w.b[1]]);
       floor = (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
@@ -8255,7 +8309,7 @@ function buildIFC(){
     const st = storeys[el.lvl], rel = lvlZ(el.lvl);
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }
-    else if (el.kind === 'slab'){ const T = slabT(el); item = extrudePoly(rect(el.p, el.q), (el.off || 0), T); ent = 'IFCSLAB'; desc = compo(el.type).nom; matSel = lset(el.type, compo(el.type).nom, compo(el.type).layers); }
+    else if (el.kind === 'slab'){ const T = slabT(el); item = extrudePoly(volPoly(el), (el.off || 0), T); ent = 'IFCSLAB'; desc = compo(el.type).nom; matSel = lset(el.type, compo(el.type).nom, compo(el.type).layers); }
     else if (el.kind === 'vol'){ item = extrudePoly(volPoly(el), el.off || 0, el.h); ent = 'IFCBUILDINGELEMENTPROXY'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     else { item = extrudePoly(colPoly(el), el.off || 0, el.h); ent = 'IFCCOLUMN'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     const epl = E(`IFCLOCALPLACEMENT(${st.pl},${AX})`);
@@ -8646,7 +8700,7 @@ $('#stepSel').addEventListener('change', e => { step = +e.target.value; position
 $('#cmdOk').addEventListener('click', runCmd);
 $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!e.target.value.trim() && tool === 'wall' && draw.start) cancelDraw(); else runCmd(); } else if (e.key === 'Escape'){ e.target.value = ''; e.target.blur(); cancelDraw(); } });
 $('#endBtn').addEventListener('click', cancelDraw);
-$('#closeBtn').addEventListener('click', () => { if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (tool === 'vol' && draw.poly?.length) return finishShapePoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
+$('#closeBtn').addEventListener('click', () => { if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (tool === 'vol' && draw.poly?.length) return finishShapePoly(); if (tool === 'slab' && draw.poly?.length) return finishSlabPoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
 
 /* barre d'état : accroches (façon AutoCAD) */
 function syncStatus(){
@@ -8689,6 +8743,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
   if (k === 'Enter' && tool === 'vol' && draw.poly?.length >= 3 && !draw.ext){ finishShapePoly(); return; }
+  if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
   const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};

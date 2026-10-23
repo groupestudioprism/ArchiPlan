@@ -44,7 +44,7 @@ canvas.addEventListener('pointerup', e => {
   if (moved > 7) return; e.stopImmediatePropagation(); endExtrude(draw.ext.h);
 }, {capture:true});
 $('#cmd').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !draw.ext && tool === 'vol' && (draw.poly?.length || 0) >= 3 && !e.target.value.trim()){ e.preventDefault(); e.stopImmediatePropagation(); finishShapePoly(); return; }
+  if (e.key === 'Enter' && !draw.ext && (tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3 && !e.target.value.trim()){ e.preventDefault(); e.stopImmediatePropagation(); tool === 'vol' ? finishShapePoly() : finishSlabPoly(); return; }
   if (!draw.ext || e.key !== 'Enter') return; const v = num(e.target.value.replace(/^[hH]\s*/, ''));
   e.preventDefault(); e.stopImmediatePropagation(); e.target.value = ''; endExtrude(v > 0 ? v : draw.ext.h);
 }, {capture:true});

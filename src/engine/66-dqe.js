@@ -100,7 +100,7 @@ function dqeItems(){
       }
       if (el.lvl === 0 && el.off <= 0.01){ groundPerim += L; add('T|fouilles', '01', 'Fouilles en rigole et semelles filantes', 'sous murs porteurs, ~0,5 × 0,6 m', 'ml', L, el.lvl, 95); }
     } else if (el.kind === 'slab'){
-      const C = compo(el.type), use = elUse(el), r = rect(el.p, el.q), A = area(r), layers = C.layers, si = structIndex(layers);
+      const C = compo(el.type), use = elUse(el), r = volPoly(el), A = area(r) - (el.holes || []).reduce((s, h) => s + area(h), 0), layers = C.layers, si = structIndex(layers);
       if (el.lvl === 0 && (use === 'terrePlein' || use === 'plancherBas')) groundArea += A;
       layers.forEach(([m, e], i) => {
         if (isAir(m)) return;

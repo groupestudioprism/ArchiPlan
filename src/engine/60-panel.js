@@ -112,16 +112,16 @@ function renderProps(){
       ${F ? `<p class="hint">Emprise ${nf(F.x1 - F.x0)} × ${nf(F.y1 - F.y0)} m. ${el.tremie !== false ? 'La trémie est découpée dans la dalle traversée à l\'arrivée.' : ''}</p>` : ''}</div>
       <div class="btns"><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
-    const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers;
+    const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers, nh = (el.holes || []).length, SA = area(volPoly(el)) - (el.holes || []).reduce((s, x) => s + area(x), 0);
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
     h += slabLinkField(el);
     { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
-      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(Lx * Ly)} m²</dd><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
-      <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Lx * Ly, false)}</div>
-      <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
+      <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(SA)} m²</dd>${el.poly ? `<dt>Contour</dt><dd>${el.poly.length} côtés</dd>` : ''}${nh ? `<dt>Trous</dt><dd>${nh}</dd>` : ''}<dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
+      <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, SA, false)}</div>
+      <div class="btns"><button class="btn" data-act="slab-hole">+ Trou / trémie</button>${nh ? '<button class="btn" data-act="slab-unhole">Retirer les trous</button>' : ''}<button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'vol'){
     const r = rect(el.p, el.q);
     h += matSelect('Matériau', 'mat', el.mat);
@@ -206,7 +206,7 @@ function quantities(){
       const k = el.fam + '|' + (el.type | 0); fams[k] ??= {fam:el.fam, type:el.type | 0, n:0, area:0}; fams[k].n++; const c = famCut(el); if (c) fams[k].area += c.w * c.h; continue; }
     for (const pc of pieces(el)) if (!pc.reveal) addM(pc.lot, pc.mat, pc.vol ?? area(pc.poly) * pc.h);
     if (el.kind === 'wall'){ const L = wallAxis(el).L, ops = wallOpenings(el).reduce((s, o) => s + (o.t1 - o.t0) * (o.z1 - o.z0), 0); walls[el.type] ??= {ml:0, m2:0, net:0}; walls[el.type].ml += L; walls[el.type].m2 += L * el.h; walls[el.type].net += L * el.h - ops; }
-    if (el.kind === 'slab'){ slabs[el.type] ??= {m2:0}; slabs[el.type].m2 += area(rect(el.p, el.q)); }
+    if (el.kind === 'slab'){ slabs[el.type] ??= {m2:0}; slabs[el.type].m2 += area(volPoly(el)) - (el.holes || []).reduce((s, h) => s + area(h), 0); }
     if (el.kind === 'roof'){ const r = roofQty(el); roofs[el.type] ??= {m2:0, plan:0, eave:0, ridge:0}; roofs[el.type].m2 += r.slope; roofs[el.type].plan += r.plan; roofs[el.type].eave += r.eave; roofs[el.type].ridge += r.ridge; }
   }
   return {mats:Object.values(mats), walls, slabs, roofs, fams:Object.values(fams)};
@@ -342,6 +342,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
   else if (act === 'levels') openLevels();
+  else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }
+  else if (act === 'slab-unhole'){ pushHist(); delete el.holes; rebuild(); }
   else if (act === 'mkcomp') openMakeComp(selIds());
   else if (act === 'lvl-add'){ pushHist(); const last = state.levels[state.levels.length - 1]; state.levels.push({n:`R+${state.levels.length}`, z:rnd((last?.z || 0) + 2.8)}); rebuild(); syncLevels(); }
   else if (act === 'csv') doExport('csv');

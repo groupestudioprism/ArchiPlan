@@ -122,17 +122,12 @@ function previewMirror(A, B){ for (const id of selIds()){ const el = getEl(id); 
 /* ---------- dalle sur une pièce / sur l'emprise des murs ---------- */
 function slabOnRoom(pt){
   const r = roomAt(pt); if (!r){ toast('Cliquez à l\'intérieur d\'une pièce fermée par des murs'); return; }
-  const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]);
-  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs)), rnd(Math.min(...ys))], q:[rnd(Math.max(...xs)), rnd(Math.max(...ys))], lvl:curLvl, off:offFromZ(), bind:{room:[rnd(pt[0]), rnd(pt[1])]}});
-  if (r.poly.length > 4 || !isOrtho(r.poly)) toast('Pièce non rectangulaire : la dalle couvre son rectangle englobant');
+  const el = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), bind:{room:[rnd(pt[0]), rnd(pt[1])]}, p:[0, 0], q:[1, 1]}; setSlabPoly(el, r.poly); addEl(el);
 }
 function slabOnWalls(){
-  const o = wallsOutline(curLvl); if (!o){ toast('Aucun mur sur ce niveau'); return; }
-  const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === curLvl), e = ws.length ? Math.max(...ws.map(wallT)) / 2 : 0;
-  const xs = o.map(p => p[0]), ys = o.map(p => p[1]);
-  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs) - e), rnd(Math.min(...ys) - e)], q:[rnd(Math.max(...xs) + e), rnd(Math.max(...ys) + e)], lvl:curLvl, off:offFromZ(), bind:'walls'});
+  const P = slabBindPoly({bind:'walls', lvl:curLvl}); if (!P){ toast('Aucun mur sur ce niveau'); return; }
+  const el = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), bind:'walls', p:[0, 0], q:[1, 1]}; setSlabPoly(el, P); addEl(el);
 }
-
 /* ---------- cote modifiable : clic sur la longueur d'un mur sélectionné ---------- */
 function editWallLength(el, d){
   const inp = document.createElement('input'); inp.className = 'dim-in'; inp.value = nf(wallAxis(el).L, 2).replace(/\s/g, ''); d.textContent = ''; d.appendChild(inp); inp.focus(); inp.select();

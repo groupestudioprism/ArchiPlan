@@ -7,14 +7,16 @@
    Murs joints : quand un mur bouge, les murs raccordés (angles et T) suivent.
    Poignées : extrémités d'un mur, coins d'une dalle ou d'un volume, à tirer directement. */
 
-const inRect = (pt, el, m = 1e-6) => { const r = rect(el.p, el.q); return pt[0] >= r[0][0] - m && pt[0] <= r[2][0] + m && pt[1] >= r[0][1] - m && pt[1] <= r[2][1] + m; };
+const inRect = (pt, el, m = 1e-6) => { if (el.poly && el.kind !== 'roof' && m < 0.01) return ptInPoly(pt[0], pt[1], el.poly) || el.poly.some((a, i) => segClosest(pt, a, el.poly[(i + 1) % el.poly.length]).t >= 0 && V.len(V.sub(segClosest(pt, a, el.poly[(i + 1) % el.poly.length]).pt, pt)) < 0.01); const r = rect(el.p, el.q); return pt[0] >= r[0][0] - m && pt[0] <= r[2][0] + m && pt[1] >= r[0][1] - m && pt[1] <= r[2][1] + m; };
+/* point nettement à l'intérieur d'une dalle (à plus de 2 cm de son bord) */
+function strictIn(pt, el){ const P = volPoly(el); if (!ptInPoly(pt[0], pt[1], P)) return false; for (let i = 0; i < P.length; i++){ const c = segClosest(pt, P[i], P[(i + 1) % P.length]); if (V.len(V.sub(c.pt, pt)) < 0.02) return false; } return true; }
 const topLvl = el => el.top === 'next' ? el.lvl + 1 : Number.isInteger(el.top) ? el.top : null;
 /* dessus du plancher posé sur ce niveau sous le point (cote relative au niveau), ou null */
 function floorTopAt(lvl, pts, excl){
   let best = null;
   for (const s of state.els){
     if (s.kind !== 'slab' || s.lvl !== lvl || s.id === excl || elUse(s) === 'toiture' || (s.off || 0) > 1.2) continue;
-    if (!pts.some(p => inRect(p, s))) continue;
+    if (!pts.some(p => strictIn(p, s))) continue;   // le mur doit être sur la dalle, pas seulement contre son bord (dalle de pièce)
     const top = (s.off || 0) + slabT(s); if (best == null || top > best) best = top;
   }
   return best;
@@ -32,23 +34,10 @@ function undersideAbove(pt, z, excl){
   return best;
 }
 const volPoly = el => el.poly && el.poly.length >= 3 ? el.poly : rect(el.p, el.q);
-function slabBindRect(el){
-  if (el.bind === 'walls'){
-    const bl = el.bindLvl ?? el.lvl, o = wallsOutline(bl); if (!o) return null;
-    const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === bl), e = ws.length ? Math.max(...ws.map(wallT)) / 2 : 0, xs = o.map(p => p[0]), ys = o.map(p => p[1]);
-    return [[Math.min(...xs) - e, Math.min(...ys) - e], [Math.max(...xs) + e, Math.max(...ys) + e]];
-  }
-  if (el.bind?.room){
-    const r = roomAt(el.bind.room, el.lvl); if (!r) return null;
-    const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]);
-    return [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]];
-  }
-  return null;
-}
 function applyLinks(){
   if (!state?.els) return;
   const R = v => Math.round(v * 1000) / 1000;
-  for (const el of state.els) if (el.kind === 'slab' && el.bind){ const r = slabBindRect(el); if (r){ el.p = r[0].map(R); el.q = r[1].map(R); } }
+  for (const el of state.els) if (el.kind === 'slab' && el.bind){ const P = slabBindPoly(el); if (P) setSlabPoly(el, P); }
   for (const el of state.els){
     if (el.kind === 'wall' || el.kind === 'col'){
       if (el.onSlab){ const pts = el.kind === 'col' ? [el.c] : [V.mul(V.add(el.a, el.b), 0.5), el.a, el.b]; el.off = R(floorTopAt(el.lvl, pts) ?? 0); }
@@ -103,7 +92,7 @@ function withJoins(ids, fn){ const before = wallEnds(ids); const r = fn(); follo
 let gripDrag = null;
 function gripPoints(el){
   if (el.kind === 'wall') return [{k:'a', pt:el.a}, {k:'b', pt:el.b}];
-  if ((el.kind === 'slab' || (el.kind === 'vol' && !el.poly)) && !el.bind){ const r = rect(el.p, el.q); return r.map((pt, i) => ({k:'c' + i, pt})); }
+  if ((el.kind === 'slab' || el.kind === 'vol') && !el.poly && !el.bind){ const r = rect(el.p, el.q); return r.map((pt, i) => ({k:'c' + i, pt})); }
   return [];
 }
 function addGrips(el, add){
