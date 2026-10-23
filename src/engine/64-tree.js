@@ -1,7 +1,7 @@
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
 const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
 let treeQuery = '';
-const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['stair', 'Escaliers'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
+const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['stair', 'Escaliers'], ['col', 'Poteaux'], ['vol', 'Formes et volumes'], ['inst', 'Composants et mobilier']];
 const TICON = {
   wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', roof:'M2 12l10-7 10 7M5 10v10h14V10', stair:'M3 20h5v-4h4v-4h4V8h5M3 20V9', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
   inst:'M4 11h16v4H4zM6 15v5M18 15v5', open:'M4 4h16v16H4zM12 4v16M4 12h16', door:'M7 21V3h10v18M14 12h.01', lvl:'M3 17h18M3 12h18M3 7h18', proj:'M3 21V9l9-6 9 6v12zM9 21v-7h6v7',
@@ -78,7 +78,7 @@ function renderProjectTab(){
 function treeMenuItems(key){
   if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, bruit, relief NGF, environnement'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
   if (/^L\d+$/.test(key)){ const li = +key.slice(1), on = hiddenLvls.has(li);
-    return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
+    return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'levels', t:'Gérer les niveaux…', s:'Altitudes, hauteurs d\'étage, nouveau niveau avec plancher'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
   if (key.includes('|')) return [{k:'selall', t:'Sélectionner toute la catégorie'}, {k:'chide', t:'Masquer la catégorie'}, {k:'cshow', t:'Afficher la catégorie'}, {k:'cframe', t:'Centrer la vue'}];
   const el = getEl(+key.slice(1)); if (!el) return [];
   const it = [{k:'frame', t:'Centrer la vue'}, {k:'hide', t:hiddenIds.has(el.id) ? 'Afficher' : 'Masquer'}, {k:'iso', t:'Isoler', s:'Masquer tout le reste'}, '-',
@@ -88,6 +88,7 @@ function treeMenuItems(key){
     if (forcedPerf(el)) it.push({k:'unforce', t:'Revenir aux valeurs calculées', s:'Supprime le U / R forcé'});
     if (el.kind === 'wall') it.push({k:'flip', t:'Inverser les faces'}, {k:'opening', t:'+ Porte ou fenêtre'});
   }
+  if (el.kind === 'vol') it.push({k:'mkcomp', t:'Créer un composant…', s:'Regrouper les formes sélectionnées en un composant réutilisable'}, {k:'tpush', t:'Pousser / Tirer'});
   if (el.kind === 'inst') it.push({k:'famedit', t:'Modifier la famille…'}, ...(el.host ? [{k:'iflip', t:'Côté d\'ouverture'}] : [{k:'rot90', t:'Pivoter de 90°'}]));
   it.push('-', {k:'dup', t:'Dupliquer'}, {k:'del', t:'Supprimer', danger:true});
   return it;
@@ -121,6 +122,9 @@ function runTreeAction(k, key){
     case 'solo': hiddenLvls.clear(); state.levels.forEach((_, i) => { if (i !== li) hiddenLvls.add(i); }); return re();
     case 'lhide': hiddenLvls.has(li) ? hiddenLvls.delete(li) : hiddenLvls.add(li); return re();
     case 'lrename': return levelDialog(li);
+    case 'levels': return openLevels();
+    case 'mkcomp': { const ids = selIds().includes(el?.id) ? selIds() : [el.id]; return openMakeComp(ids); }
+    case 'tpush': select(el.id); return setTool('push');
     case 'ldel': if (state.els.some(x => x.lvl === li)) return toast('Ce niveau contient des éléments : déplacez-les ou supprimez-les d\'abord.');
       pushHist(); state.levels.splice(li, 1); state.els.forEach(x => { if (x.lvl > li) x.lvl--; }); curLvl = Math.min(curLvl, state.levels.length - 1); rebuild(); syncLevels(); return;
     case 'selall': { const l = catEls(key); if (!l.length) return; sel = l[0].id; multi = l.slice(1).map(e => e.id); applySel(); buildLabels(); renderPanel(); return; }
@@ -152,7 +156,7 @@ function levelDialog(li){
     <div class="ed-body"><div class="fields"><label class="f wide"><span>Nom</span><span class="in"><input id="lvN" type="text" value="${esc(L.n)}" maxlength="30" style="font-family:var(--f-body)"></span></label>
     <label class="f wide"><span>Altitude du plancher</span><span class="in"><input id="lvZ" type="number" step="0.01" value="${rnd(L.z)}"><em>m</em></span></label></div></div>
     <footer class="ed-f"><button class="btn" data-close>Annuler</button><button class="btn primary" id="lvOk">Enregistrer</button></footer>`, 'small');
-  d.querySelector('#lvOk').onclick = () => { const z = num(d.querySelector('#lvZ').value); pushHist(); L.n = d.querySelector('#lvN').value.trim().slice(0, 30) || L.n; if (!Number.isNaN(z)) L.z = z; closeEDlg(); rebuild(); syncLevels(); };
+  d.querySelector('#lvOk').onclick = () => { const z = num(d.querySelector('#lvZ').value); pushHist(); L.n = d.querySelector('#lvN').value.trim().slice(0, 30) || L.n; if (!Number.isNaN(z)) L.z = z; sortLevels(); closeEDlg(); rebuild(); syncLevels(); };
 }
 
 /* ---------- ajuster l'isolant : épaisseur, λ, objectif U / R, valeurs forcées ---------- */

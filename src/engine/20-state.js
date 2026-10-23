@@ -4,7 +4,7 @@
               inst {fam,type,params,host?,t?,c?,rot,lvl,off,flip,mirror} (famille posée ; hébergée dans un mur si host)
    Bibliothèques : base (code) < bibliothèque personnelle (compte, cloud) < bibliothèque du projet. Un élément de bibliothèque
    utilisé par le projet est copié dans state.lib : le projet reste lisible chez un invité qui n'a pas la même bibliothèque. */
-const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Volume', col:'Poteau', inst:'Composant'};
+const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Forme', col:'Poteau', inst:'Composant'};
 const LOT_ORDER = ['Gros œuvre', 'Couverture', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Industrie'];
 const DEFAULT_LEVELS = [{n:'RDC', z:0}, {n:'R+1', z:2.8}, {n:'R+2', z:5.6}];
 let USER_LIB = {mats:{}, compos:{}, fams:{}};
@@ -41,7 +41,7 @@ function embedUsedLib(){
 
 function migrate(s){
   s = s && typeof s === 'object' ? s : {};
-  const out = {format:'archiplan', v:3, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
+  const out = {format:'archiplan', v:4, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
     levels:Array.isArray(s.levels) && s.levels.length ? s.levels.map(l => ({n:String(l.n || 'Niveau').slice(0, 30), z:+l.z || 0})) : DEFAULT_LEVELS.map(l => ({...l})),
     lib:{mats:{...(s.lib?.mats || {})}, compos:{...(s.lib?.compos || {})}, fams:{...(s.lib?.fams || {})}}, isSample:!!s.isSample,
     ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {}), ...(+s.shab > 0 ? {shab:+s.shab} : {}), ...(Array.isArray(s.views) ? {views:s.views.filter(v => v && v.a && v.b)} : {}), ...(s.roomNames && typeof s.roomNames === 'object' ? {roomNames:{...s.roomNames}} : {})};
@@ -51,6 +51,7 @@ function migrate(s){
   // format 3 : les dalles sont décrites par leur dessous (posées au-dessus du niveau) ; les anciens projets gardent exactement leur géométrie
   if ((+s.v || 2) < 3) out.els.forEach(el => { if (el.kind === 'slab') el.off = Math.round((el.off - slabT(el)) * 1000) / 1000; });
   out.els = out.els.filter(el => el.kind !== 'inst' || fam(el.fam));
+  if ((+s.v || 2) < 4) try { autoLink(); } catch(e){ console.warn('liens', e); }
   state = prev;
   out.nextId = Math.max(0, ...out.els.map(x => x.id || 0)) + 1;
   return out;

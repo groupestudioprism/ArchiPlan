@@ -50,7 +50,7 @@ function renderProps(){
   const ids = selIds();
   if (ids.length > 1){
     return `<div class="ph"><h2>${ids.length} éléments sélectionnés</h2></div><p class="hint">Déplacer (<kbd>G</kbd>), copier (<kbd>C</kbd>), pivoter (<kbd>O</kbd>) ou supprimer (<kbd>Suppr</kbd>) la sélection. Maj + clic pour ajouter ou retirer un élément.</p>
-      <div class="btns"><button class="btn" data-act="tool-move">Déplacer</button><button class="btn" data-act="tool-copy">Copier</button><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn" data-act="tool-mirror">Symétrie</button><button class="btn" data-act="tolevel">Copier vers un niveau</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+      <div class="btns"><button class="btn" data-act="tool-move">Déplacer</button><button class="btn" data-act="tool-copy">Copier</button><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn" data-act="tool-mirror">Symétrie</button><button class="btn" data-act="tolevel">Copier vers un niveau</button>${canMakeComp(ids) ? '<button class="btn primary" data-act="mkcomp">Créer un composant…</button>' : ''}<button class="btn danger" data-act="del">Supprimer</button></div>`;
   }
   const el = sel ? getEl(sel) : null;
   if (!el){
@@ -61,7 +61,7 @@ function renderProps(){
       ${roomsCard()}
       ${glazingCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
-        <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button></div></div>
+        <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
         <dt><code>4,20</code></dt><dd>Longueur dans la direction du curseur</dd>
         <dt><code>4,2&lt;90</code></dt><dd>Longueur et angle (0° = est)</dd>
@@ -77,8 +77,7 @@ function renderProps(){
   if (el.kind === 'wall'){
     const {L} = wallAxis(el), layers = wallLayers(el), T = wallT(el), ops = wallOpenings(el);
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'wall').map(([k, t]) => [k, t.nom]), el.type);
-    h += field('Longueur', 'len', L, 'm') + field('Hauteur', 'h', el.h, 'm');
-    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage base', 'off', el.off, 'm');
+    h += field('Longueur', 'len', L, 'm') + linkFields(el);
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
     h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
     h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
@@ -92,7 +91,7 @@ function renderProps(){
     h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
     if (!poly) h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false);
     h += field('Débord', 'rov', el.ov ?? 0.4, 'm');
-    h += selectField('Posée sur les murs du niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm');
+    h += selectField('Posée sur les murs du niveau', 'lvl', lvlOpts(), el.lvl, false) + (el.onWalls ? lockF(field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) : field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) + onWallsField(el);
     if (!poly) h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
     h += selectField('Plafond', 'rceil', Object.entries(ROOF_CEIL), el.ceil || '', false);
     h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
@@ -116,7 +115,8 @@ function renderProps(){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers;
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
-    h += field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
+    h += slabLinkField(el);
+    { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(Lx * Ly)} m²</dd><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
@@ -125,15 +125,16 @@ function renderProps(){
   } else if (el.kind === 'vol'){
     const r = rect(el.p, el.q);
     h += matSelect('Matériau', 'mat', el.mat);
-    h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm', '0.001') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm', '0.001') + field('Hauteur', 'h', el.h, 'm', '0.001');
-    h += field('Origine x', 'px', r[0][0], 'm', '0.001') + field('Origine y', 'py', r[0][1], 'm', '0.001') + field('Base z', 'off', el.off, 'm', '0.001');
-    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false);
+    h += (el.shape === 'circ' ? field('Diamètre', 'vdia', r[1][0] - r[0][0], 'm', '0.001') : field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm', '0.001') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm', '0.001')) + field('Hauteur', 'h', el.h, 'm', '0.001');
+    h += field('Origine x', 'px', r[0][0], 'm', '0.001') + field('Origine y', 'py', r[0][1], 'm', '0.001') + (el.onWalls ? lockF(field('Base z', 'off', el.off, 'm', '0.001')) : field('Base z', 'off', el.off, 'm', '0.001'));
+    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + onWallsField(el);
+    if (el.poly) h += `<div class="f wide"><span>Forme</span><div class="site-v">${el.shape === 'circ' ? 'Cercle' : `Polygone de ${el.poly.length} côtés`} · ${nf(area(el.poly))} m² au sol</div></div>`;
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse volumique</dt><dd>${n0(mat(el.mat).rho)} kg/m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
-      <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
+      <div class="btns"><button class="btn primary" data-act="mkcomp">Créer un composant…</button><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'col'){
     h += matSelect('Matériau', 'mat', el.mat);
-    h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Hauteur', 'h', el.h, 'm') + field('Base z', 'off', el.off, 'm');
-    h += field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, true);
+    h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm');
+    h += linkFields(el);
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd class="big">${n0(m)} kg</dd></dl></div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'inst'){
@@ -265,7 +266,7 @@ $('#pbody').addEventListener('change', e => {
   if (t.matches('[data-libcat]')){ libCat = t.value; return renderPanel(); }
   if (t.matches('[data-rset]')) return onRenderInput(t, true);
   if (t.dataset.lvn != null){ pushHist(); state.levels[+t.dataset.lvn].n = t.value.trim().slice(0, 30) || 'Niveau'; rebuild(); syncLevels(); return; }
-  if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; rebuild(); syncLevels(); return; }
+  if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; sortLevels(); rebuild(); syncLevels(); return; }
   const f = t.dataset.f, fp = t.dataset.fp;
   if (f === 'shab'){ const v = num(t.value); pushHist(); state.shab = v > 0 ? Math.round(v * 10) / 10 : 0; state.isSample = false; renderPanel(); return; }
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
@@ -278,24 +279,30 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'rceil' || f === 'rgtype'){ pushHist(); if (f === 'rceil') el.ceil = t.value; else el.gableType = t.value; state.isSample = false; rebuild(); return; }
   if (f === 'lvl' && el.kind === 'roof'){ pushHist(); el.lvl = +t.value; roofFitWalls(el); state.isSample = false; rebuild(); syncLevels?.(); return; }
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
+  if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
   const pos = x => Math.max(0.001, x);
   if (f === 'rshape') el.shape = val; else if (f === 'rpitch') el.pitch = clamp(val, 3, 70); else if (f === 'rdir') el.dir = val; else if (f === 'rov') el.ov = clamp(val, 0, 2); else if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
   else if (f === 'ftype'){ el.type = +val; el.params = {}; }
-  else if (f === 'h') el.h = pos(val); else if (f === 'off') el.off = val;
+  else if (f === 'h'){ el.h = pos(val); delete el.top; } else if (f === 'off'){ el.off = val; delete el.onSlab; delete el.onWalls; }
   else if (f === 't'){ const w = getEl(el.host); if (w){ const c = famCut(el), L = wallAxis(w).L; el.t = rnd(clamp(val, c.w / 2, L - c.w / 2)); } }
   else if (f === 'icx') el.c = [val, el.c[1]]; else if (f === 'icy') el.c = [el.c[0], val]; else if (f === 'irot') el.rot = val % 360;
   else if (el.kind === 'wall'){
+    const before = wallEnds([el.id]);
     if (f === 'bulge'){ const c = V.len(V.sub(el.b, el.a)); el.bulge = Math.abs(val) < 0.005 ? 0 : clamp(val, -c * 2, c * 2); if (el.bulge && wallOpenings(el).length) toast('Les ouvertures de ce mur sont ignorées tant qu\'il est courbe'); }
     else if (f === 'len'){ const {u} = wallAxis(el); el.b = [rnd(el.a[0] + u[0] * pos(val)), rnd(el.a[1] + u[1] * pos(val))]; }
     else if (f === 'ax') el.a = [val, el.a[1]]; else if (f === 'ay') el.a = [el.a[0], val];
     else if (f === 'bx') el.b = [val, el.b[1]]; else if (f === 'by') el.b = [el.b[0], val];
     if (V.len(V.sub(el.a, el.b)) < 0.01){ state = JSON.parse(hist.pop()); updUndo(); renderPanel(); toast('Un mur doit mesurer au moins 1 cm'); return; }
+    followJoins(before);
   } else if (el.kind === 'slab' || el.kind === 'vol' || el.kind === 'roof'){
     const r = rect(el.p, el.q); let [x0, y0] = r[0], lx = r[1][0] - x0, ly = r[2][1] - y0;
     if (f === 'lx') lx = pos(val); else if (f === 'ly') ly = pos(val); else if (f === 'px') x0 = val; else if (f === 'py') y0 = val;
+    if (['lx', 'ly', 'px', 'py'].includes(f)) delete el.bind;
+    if (f === 'vdia'){ lx = ly = pos(val); }
+    if (el.poly){ const [ox, oy] = r[0], kx = lx / ((r[1][0] - ox) || 1), ky = ly / ((r[2][1] - oy) || 1); el.poly = el.poly.map(p => [rnd(x0 + (p[0] - ox) * kx), rnd(y0 + (p[1] - oy) * ky)]); }
     el.p = [x0, y0]; el.q = [rnd(x0 + lx), rnd(y0 + ly)];
   } else if (el.kind === 'col'){
     if (f === 'w') el.w = pos(val); else if (f === 'd') el.d = pos(val); else if (f === 'cx') el.c = [val, el.c[1]]; else if (f === 'cy') el.c = [el.c[0], val];
@@ -334,6 +341,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'fam-new') openFamEditor(null);
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
+  else if (act === 'levels') openLevels();
+  else if (act === 'mkcomp') openMakeComp(selIds());
   else if (act === 'lvl-add'){ pushHist(); const last = state.levels[state.levels.length - 1]; state.levels.push({n:`R+${state.levels.length}`, z:rnd((last?.z || 0) + 2.8)}); rebuild(); syncLevels(); }
   else if (act === 'csv') doExport('csv');
   else onRenderClick(act, b);

@@ -497,3 +497,23 @@ body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .
 .tbl.rooms td{padding:4px 6px}.tbl.rooms .mut{color:var(--mut);font-size:12px}
 #labels.drawing .dim.room{pointer-events:none;opacity:.75}
 @media (min-width:861px) and (max-height:1000px){.tools{gap:1px;padding:6px 6px}.tool{padding:5px 2px 4px;gap:2px}.tool svg{width:19px;height:19px}.tools hr{margin:3px 4px}}
+/* poignées d'édition (extrémités de mur, coins de dalle) */
+#labels .grip{position:absolute;width:13px;height:13px;margin:-7px 0 0 -7px;border-radius:3px;background:#fff;border:2px solid var(--accent,#1478D4);box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:move;pointer-events:auto;transform:none;z-index:3}
+#labels .grip:hover{background:var(--accent,#1478D4)}
+#labels.drawing .grip{pointer-events:none;opacity:.4}
+body.gripping, body.gripping *{cursor:move!important}
+/* lignes de niveau (coupes et élévations) */
+.lvlmarks{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
+.lvlmarks .lvm{position:absolute;left:0;right:0;height:0}
+.lvlmarks .lvm i{position:absolute;left:0;right:0;top:0;border-top:1.5px dashed #2563EB;opacity:.75}
+.lvlmarks .lvm-h{position:absolute;right:14px;top:-11px;display:flex;gap:6px;align-items:baseline;padding:2px 8px;border-radius:6px;background:#2563EB;color:#fff;font:600 12px/18px var(--f-body,system-ui);pointer-events:auto;cursor:ns-resize;user-select:none;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.lvlmarks .lvm-h em{font-style:normal;font-weight:500;opacity:.85;font-family:var(--f-mono,monospace)}
+.lvlmarks .lvm-add{position:absolute;right:14px;top:58px;pointer-events:auto}
+.tbl.lvt{width:100%;border-collapse:collapse;margin:8px 0 14px}
+.tbl.lvt th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#6B7280);text-align:left;padding:4px 6px}
+.tbl.lvt td{padding:4px 6px;border-top:1px solid var(--line,#E5E7EB);vertical-align:middle}
+.tbl.lvt td input[data-ln]{width:100%;min-width:70px;padding:4px 6px;border:1px solid var(--line,#E5E7EB);border-radius:6px;font:inherit}
+.tbl.lvt .in{display:inline-flex;align-items:center;gap:3px}.tbl.lvt .in input{width:72px}
+.tbl.lvt .num{text-align:right}.tbl.lvt .btn.sm{padding:3px 8px;font-size:12px}
+.tbl.lvt .x{margin-left:6px}
+.tbl.lvt td:last-child{white-space:nowrap}

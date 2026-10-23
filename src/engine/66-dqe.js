@@ -150,7 +150,7 @@ function dqeItems(){
       const M = mat(el.mat), v = el.w * el.d * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : '02';
       add(`C|${el.mat}|${n0(el.w * 100)}x${n0(el.d * 100)}`, lot, `Poteau ${lc(M.nom)}`, `section ${n0(el.w * 100)} × ${n0(el.d * 100)} cm`, 'u', 1, el.lvl, lot === '11' ? Math.round(kg * 4.5) : lot === '03' ? Math.round(v * 1400 + 60) : Math.round(v * 600 + 120), kg, kg * (M.gwp || 0));
     } else if (el.kind === 'vol'){
-      const M = mat(el.mat), r = rect(el.p, el.q), v = area(r) * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
+      const M = mat(el.mat), r = volPoly(el), v = area(r) * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
       add(`V|${el.mat}`, lot, `Ouvrage en ${lc(M.nom)}`, 'volume', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
     } else if (el.kind === 'inst'){
       const F = fam(el.fam), lot = famLotDqe(F, el); if (!lot) continue;

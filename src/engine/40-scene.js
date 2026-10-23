@@ -179,6 +179,7 @@ function solidGeo(so){
   if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
   else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
   else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
+  else if (so.s === 'ext'){ g = new THREE.ExtrudeGeometry(new THREE.Shape(so.pts.map(p => new THREE.Vector2(p[0], p[1]))), {depth:so.h, bevelEnabled:false}); g.rotateX(-Math.PI / 2); g.translate(0, -so.h / 2, 0); }
   else g = boxGeo(so.w, so.d, so.h);
   if (so.s === 'cyl' || so.s === 'cone'){ if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2); }
   if (so.rz) g.rotateY(so.rz);
@@ -308,7 +309,7 @@ function positionGrid(){
 /* ---------- reconstruction ---------- */
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
-  rebuildSeq++; disposeGroup(modelGroup); geoGen++; geoBuilding = true;
+  rebuildSeq++; applyLinks(); disposeGroup(modelGroup); geoGen++; geoBuilding = true;
   const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
   for (const el of state.els){
     if (plan && el.lvl !== curLvl) continue; // plan : seulement le niveau courant
@@ -328,6 +329,7 @@ function rebuild(opts = {}){
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
   roomsCache = null; if (typeof buildRooms === 'function') buildRooms();
+  buildLevelMarks();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -398,13 +400,16 @@ function buildLabels(){
     const isSel = set.has(el.id);
     if (el.lvl !== curLvl && !isSel) continue;
     if (!(showDimsOn() && view === '2d') && !isSel) continue;
-    const add = (pos, text) => { const d = document.createElement('div'); d.className = 'dim' + (isSel ? ' sel' : ''); d.textContent = text; box.appendChild(d); labels.push({d, pos}); };
+    const add = (pos, text, cls) => { const d = document.createElement('div'); d.className = cls || ('dim' + (isSel ? ' sel' : '')); d.textContent = text; box.appendChild(d); labels.push({d, pos}); return d; };
+    if (isSel && set.size === 1) addGrips(el, add);
     const y3 = lvlZ(el.lvl) + (el.off || 0) + (view !== '2d' ? (el.h || 0) + 0.15 : 0);
     if (el.kind === 'wall'){
       const {n, L} = wallAxis(el), T = wallT(el), side = el.flip ? 1 : -1;
       const m = V.add(V.mul(V.add(el.a, el.b), .5), V.mul(n, side * (T/2 + 0.28)));
       add(new THREE.Vector3(m[0], y3, -m[1]), nf(L));
       if (isSel && !multi.length){ const d = labels[labels.length - 1].d; d.classList.add('edit'); d.title = 'Cliquer pour changer la longueur'; d.onclick = ev => { ev.stopPropagation(); editWallLength(el, d); }; }
+    } else if (el.kind === 'vol' && el.poly){
+      const c = polyCentroid(el.poly); add(new THREE.Vector3(c[0], y3, -c[1]), el.shape === 'circ' ? `⌀ ${nf(el.q[0] - el.p[0])}` : `${nf(area(el.poly))} m²`);
     } else if (el.kind === 'slab' || el.kind === 'vol'){
       const r = rect(el.p, el.q), y = el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) : y3;
       add(new THREE.Vector3((r[0][0] + r[1][0]) / 2, y, -(r[0][1] - 0.3)), nf(r[1][0] - r[0][0]));
@@ -428,6 +433,7 @@ function toScreen(v){ tmpV.copy(v).project(cam()); return [(tmpV.x + 1) / 2 * vp
 /* position des cotes : dimensions de la vue lues une seule fois (les lire après chaque écriture forçait le navigateur à
    recalculer toute la mise en page pour chaque cote), et seules les valeurs qui changent sont réécrites */
 function updateLabels(){
+  placeLevelMarks();
   if (!labels.length) return;
   const W = vpEl.clientWidth, H = vpEl.clientHeight, c = cam();
   for (const l of labels){

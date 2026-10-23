@@ -20,7 +20,7 @@ function openSection(def){
   Object.assign(orthoS, {left:-10 * aspect, right:10 * aspect, top:10, bottom:-10}); orthoS.zoom = Math.min(20 / hM, 20 * aspect / widthM); orthoS.updateProjectionMatrix(); c4.update();
   if (tool !== 'select') setTool('select');
   setView('sec'); renderer.clippingPlanes = secClip();
-  renderSecBar(); dirty = true;
+  renderSecBar(); buildLevelMarks(); dirty = true;
 }
 function renderSecBar(){
   const bar = $('#secBar'); if (!curSec){ bar.hidden = true; return; }

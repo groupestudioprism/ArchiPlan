@@ -60,12 +60,12 @@ function openFamEditor(id, instId){
   const cell = (i, k, v, size = 6) => `<input data-q="${i}" data-k="${k}" value="${esc(v ?? '')}" class="mono" size="${size}" aria-label="${k}">`;
   const renderParts = () => {
     d.querySelector('#fmParts').innerHTML = F.parts.map((p, i) => `<div class="fp">
-      <div class="fp-h"><select data-q="${i}" data-k="s"><option value="box"${!p.fam && (p.s || 'box') === 'box' ? ' selected' : ''}>Boîte</option><option value="cyl"${!p.fam && p.s === 'cyl' ? ' selected' : ''}>Cylindre</option><option value="sph"${!p.fam && p.s === 'sph' ? ' selected' : ''}>Sphère</option><option value="fam"${p.fam ? ' selected' : ''}>Famille</option></select>
+      <div class="fp-h"><select data-q="${i}" data-k="s"><option value="box"${!p.fam && (p.s || 'box') === 'box' ? ' selected' : ''}>Boîte</option><option value="cyl"${!p.fam && p.s === 'cyl' ? ' selected' : ''}>Cylindre</option><option value="sph"${!p.fam && p.s === 'sph' ? ' selected' : ''}>Sphère</option>${p.s === 'ext' ? '<option value="ext" selected>Profil extrudé</option>' : ''}<option value="fam"${p.fam ? ' selected' : ''}>Famille</option></select>
         ${p.fam ? `<select data-q="${i}" data-k="fam">${famOpts(p.fam)}</select>` : `<select data-q="${i}" data-k="m">${mopts.replace(`value="${esc(p.m)}"`, `value="${esc(p.m)}" selected`)}</select>`}
         <button class="x" data-qx="${i}" aria-label="Supprimer la pièce">×</button></div>
       <div class="fp-g"><label>x ${cell(i, 'x', p.x)}</label><label>y ${cell(i, 'y', p.y)}</label><label>z ${cell(i, 'z', p.z)}</label>
         ${p.fam ? `<label>rot ${cell(i, 'rot', p.rot)}</label><label class="w2">param. ${cell(i, 'pp', Object.entries(p.p || {}).map(([a, b]) => `${a}=${b}`).join('; '), 14)}</label>`
-          : p.s === 'cyl' ? `<label>r ${cell(i, 'r', p.r)}</label><label>h ${cell(i, 'h', p.h)}</label>` : p.s === 'sph' ? `<label>r ${cell(i, 'r', p.r)}</label>` : `<label>w ${cell(i, 'w', p.w)}</label><label>d ${cell(i, 'd', p.d)}</label><label>h ${cell(i, 'h', p.h)}</label>`}
+          : p.s === 'ext' ? `<label>h ${cell(i, 'h', p.h)}</label><span class="hint">profil de ${(p.pts || []).length} points (dessiné à l'outil Forme)</span>` : p.s === 'cyl' ? `<label>r ${cell(i, 'r', p.r)}</label><label>h ${cell(i, 'h', p.h)}</label>` : p.s === 'sph' ? `<label>r ${cell(i, 'r', p.r)}</label>` : `<label>w ${cell(i, 'w', p.w)}</label><label>d ${cell(i, 'd', p.d)}</label><label>h ${cell(i, 'h', p.h)}</label>`}
         <label>n ${cell(i, 'n', p.n, 4)}</label><label>si ${cell(i, 'if', p.if, 8)}</label></div></div>`).join('');
   };
   let tmr = 0;

@@ -65,6 +65,7 @@ function buildIFC(){
   };
   const solidItem = (so, zRef) => {
     const ref = E(`IFCDIRECTION((${R(Math.cos(so.rz || 0))},${R(Math.sin(so.rz || 0))},0.))`);
+    if (so.s === 'ext') return extrudePoly(so.pts.map(p => { const q = V.rot(p, so.rz || 0); return [so.c[0] + q[0], so.c[1] + q[1]]; }), so.c[2] - so.h / 2 - zRef, so.h);
     if (so.s === 'sph') return E(`IFCSPHERE(${E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(so.c[2] - zRef)}))`)},$,$)`)},${R(so.r)})`);
     const h = so.s === 'cyl' ? so.h : so.h, base = so.c[2] - h / 2 - zRef;
     const pos = E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(base)}))`)},${Z},${ref})`);
@@ -100,7 +101,7 @@ function buildIFC(){
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }
     else if (el.kind === 'slab'){ const T = slabT(el); item = extrudePoly(rect(el.p, el.q), (el.off || 0), T); ent = 'IFCSLAB'; desc = compo(el.type).nom; matSel = lset(el.type, compo(el.type).nom, compo(el.type).layers); }
-    else if (el.kind === 'vol'){ item = extrudePoly(rect(el.p, el.q), el.off || 0, el.h); ent = 'IFCBUILDINGELEMENTPROXY'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
+    else if (el.kind === 'vol'){ item = extrudePoly(volPoly(el), el.off || 0, el.h); ent = 'IFCBUILDINGELEMENTPROXY'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     else { item = extrudePoly(colPoly(el), el.off || 0, el.h); ent = 'IFCCOLUMN'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     const epl = E(`IFCLOCALPLACEMENT(${st.pl},${AX})`);
     const pre = {IFCWALL:'.STANDARD.', IFCSLAB:'.FLOOR.', IFCCOLUMN:'.COLUMN.', IFCBUILDINGELEMENTPROXY:'.NOTDEFINED.'}[ent];
@@ -206,7 +207,7 @@ function makeZip(files){
   [[0,0x06054b50,4],[4,0,2],[6,0,2],[8,files.length,2],[10,files.length,2],[12,cs,4],[16,off,4],[20,0,2]].forEach(([o,v,s]) => s === 4 ? end.setUint32(o,v,true) : end.setUint16(o,v,true));
   return new Blob([...parts, ...cen, end], {type:'application/zip'});
 }
-const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:3}, null, 2); };
+const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:4}, null, 2); };
 async function doExport(kind, arg){
   if (!window.SPAccess?.canExport){ window.SPLicense?.prompt('export'); return; }
   window.SPLicense?.usage?.();   // rappel d'usage (non commercial) une fois par session

@@ -113,7 +113,7 @@ function ctxElementItems(el, touch){
   /* ce qui n'existe que dans le plan : agir sur le niveau et la catégorie de l'élément */
   const extra = [];
   if (el.lvl !== curLvl) extra.push({label:`Travailler sur ${lvlName(el.lvl)}`, onClick:() => runTreeAction('work', 'L' + el.lvl)});
-  if (el.kind !== 'inst') extra.push({label:`Sélectionner les ${({wall:'murs', slab:'dalles', roof:'toitures', stair:'escaliers', vol:'volumes', col:'poteaux'})[el.kind] || 'éléments'} de ${lvlName(el.lvl)}`, onClick:() => runTreeAction('selall', `L${el.lvl}|${el.kind}`)});
+  if (el.kind !== 'inst') extra.push({label:`Sélectionner les ${({wall:'murs', slab:'dalles', roof:'toitures', stair:'escaliers', vol:'formes', col:'poteaux'})[el.kind] || 'éléments'} de ${lvlName(el.lvl)}`, onClick:() => runTreeAction('selall', `L${el.lvl}|${el.kind}`)});
   extra.push({label:`Masquer ${lvlName(el.lvl)}`, onClick:() => runTreeAction('lhide', 'L' + el.lvl)});
   const at = items.findIndex(i => i.label === 'Dupliquer'); items.splice(at > 0 ? at - 1 : items.length, 0, {sep:true}, ...extra);
   return {items, title:ctxNameOf(el)};
@@ -122,7 +122,7 @@ function ctxElementItems(el, touch){
 function ctxGroundItems(){
   const items = [], hid = hiddenIds.size + hiddenLvls.size;
   items.push({label:'Niveau de travail', hint:lvlName(curLvl), sub:state.levels.map((L, i) => ({label:`${L.n}  ·  ${nf(L.z)} m`, checked:i === curLvl, onClick:() => runTreeAction('work', 'L' + i)}))});
-  items.push({label:'Ajouter un niveau', onClick:() => runTreeAction('lvl-add', 'P')});
+  items.push({label:'Ajouter un niveau', onClick:() => runTreeAction('lvl-add', 'P')}, {label:'Gérer les niveaux…', onClick:openLevels});
   items.push({sep:true}, {label:'Tout voir', onClick:fit});
   if (hid) items.push({label:`Tout afficher (${hid} masqué${hid > 1 ? 's' : ''})`, onClick:() => runTreeAction('showall', 'P')});
   items.push({sep:true}, {label:'Annuler', hint:'Ctrl+Z', disabled:!hist.length, onClick:undo}, {label:'Refaire', hint:'Ctrl+Maj+Z', disabled:!redoS.length, onClick:redo});

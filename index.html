@@ -505,6 +505,26 @@ body[data-mode="sec"] .vtools,body[data-mode="sec"] .hud,body[data-mode="sec"] .
 .tbl.rooms td{padding:4px 6px}.tbl.rooms .mut{color:var(--mut);font-size:12px}
 #labels.drawing .dim.room{pointer-events:none;opacity:.75}
 @media (min-width:861px) and (max-height:1000px){.tools{gap:1px;padding:6px 6px}.tool{padding:5px 2px 4px;gap:2px}.tool svg{width:19px;height:19px}.tools hr{margin:3px 4px}}
+/* poignées d'édition (extrémités de mur, coins de dalle) */
+#labels .grip{position:absolute;width:13px;height:13px;margin:-7px 0 0 -7px;border-radius:3px;background:#fff;border:2px solid var(--accent,#1478D4);box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:move;pointer-events:auto;transform:none;z-index:3}
+#labels .grip:hover{background:var(--accent,#1478D4)}
+#labels.drawing .grip{pointer-events:none;opacity:.4}
+body.gripping, body.gripping *{cursor:move!important}
+/* lignes de niveau (coupes et élévations) */
+.lvlmarks{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
+.lvlmarks .lvm{position:absolute;left:0;right:0;height:0}
+.lvlmarks .lvm i{position:absolute;left:0;right:0;top:0;border-top:1.5px dashed #2563EB;opacity:.75}
+.lvlmarks .lvm-h{position:absolute;right:14px;top:-11px;display:flex;gap:6px;align-items:baseline;padding:2px 8px;border-radius:6px;background:#2563EB;color:#fff;font:600 12px/18px var(--f-body,system-ui);pointer-events:auto;cursor:ns-resize;user-select:none;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.lvlmarks .lvm-h em{font-style:normal;font-weight:500;opacity:.85;font-family:var(--f-mono,monospace)}
+.lvlmarks .lvm-add{position:absolute;right:14px;top:58px;pointer-events:auto}
+.tbl.lvt{width:100%;border-collapse:collapse;margin:8px 0 14px}
+.tbl.lvt th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#6B7280);text-align:left;padding:4px 6px}
+.tbl.lvt td{padding:4px 6px;border-top:1px solid var(--line,#E5E7EB);vertical-align:middle}
+.tbl.lvt td input[data-ln]{width:100%;min-width:70px;padding:4px 6px;border:1px solid var(--line,#E5E7EB);border-radius:6px;font:inherit}
+.tbl.lvt .in{display:inline-flex;align-items:center;gap:3px}.tbl.lvt .in input{width:72px}
+.tbl.lvt .num{text-align:right}.tbl.lvt .btn.sm{padding:3px 8px;font-size:12px}
+.tbl.lvt .x{margin-left:6px}
+.tbl.lvt td:last-child{white-space:nowrap}
 /* intro ARCHIPLAN : une feuille de dessin technique ; un crayon trace des lignes de construction qui s'encrent et révèlent le logo officiel (masque SVG suivant le tracé du crayon),
    le plan prend brièvement du volume (2D → 3D), puis le nom et la signature. Séquence pilotée par le script du bloc #splash (Web Animations API, déterministe). */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;overflow:hidden}
@@ -1098,11 +1118,12 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     </div>
   </header>
   <nav class="tools" role="toolbar" aria-label="Outils">
-    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Volume (B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Volume</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button>
+    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button>
   </nav>
   <main class="vp" id="vp">
     <canvas id="c"></canvas>
     <div id="labels"></div>
+    <div id="lvlMarks" class="lvlmarks" hidden></div>
     <svg id="snapMk" aria-hidden="true"></svg>
     <div id="live" hidden></div>
     <div id="secBar" class="secbar" hidden></div>
@@ -1110,6 +1131,8 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
       <label class="pill"><span>Niveau</span><select id="lvlSel" aria-label="Niveau de travail"></select></label>
       <label class="pill" id="typePill" hidden><span id="typeLbl">Type</span><select id="typeSel"></select></label>
       <label class="pill" id="hPill" hidden><span id="hLbl">H</span><input id="hIn" type="number" step="0.05" inputmode="decimal" aria-label="Hauteur"><em>m</em></label>
+      <label class="pill" id="shapePill" hidden><span>Forme</span><select id="shapeIn" aria-label="Forme"><option value="rect">Rectangle</option><option value="circ">Cercle</option><option value="poly">Polygone</option></select></label>
+      <label class="pill" id="topPill" hidden><span>Haut</span><select id="topIn" aria-label="Contrainte haute"><option value="next">Niveau supérieur</option><option value="">Hauteur libre</option><option value="above">Sous l'élément au-dessus</option></select></label>
       <label class="pill" id="wallArcPill" hidden><span>Tracé</span><select id="wArcIn" aria-label="Tracé du mur"><option value="">Droit</option><option value="1">Courbe (3 points)</option><option value="r">Pièce (rectangle)</option></select></label>
       <label class="pill" id="slabModePill" hidden><span>Pose</span><select id="sModeIn" aria-label="Pose de la dalle"><option value="rect">Rectangle</option><option value="room">Sur une pièce</option><option value="walls">Sous tous les murs</option></select></label>
       <label class="pill" id="mirrorPill" hidden><span>Original</span><select id="mKeepIn" aria-label="Garder l'original"><option value="1">Garder (copie)</option><option value="">Déplacer</option></select></label>
@@ -3575,7 +3598,7 @@ const famPath = (id, F) => FAM_PATH[id] || F?.path || [F?.cat || 'Divers'];
               inst {fam,type,params,host?,t?,c?,rot,lvl,off,flip,mirror} (famille posée ; hébergée dans un mur si host)
    Bibliothèques : base (code) < bibliothèque personnelle (compte, cloud) < bibliothèque du projet. Un élément de bibliothèque
    utilisé par le projet est copié dans state.lib : le projet reste lisible chez un invité qui n'a pas la même bibliothèque. */
-const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Volume', col:'Poteau', inst:'Composant'};
+const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Forme', col:'Poteau', inst:'Composant'};
 const LOT_ORDER = ['Gros œuvre', 'Couverture', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Industrie'];
 const DEFAULT_LEVELS = [{n:'RDC', z:0}, {n:'R+1', z:2.8}, {n:'R+2', z:5.6}];
 let USER_LIB = {mats:{}, compos:{}, fams:{}};
@@ -3612,7 +3635,7 @@ function embedUsedLib(){
 
 function migrate(s){
   s = s && typeof s === 'object' ? s : {};
-  const out = {format:'archiplan', v:3, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
+  const out = {format:'archiplan', v:4, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
     levels:Array.isArray(s.levels) && s.levels.length ? s.levels.map(l => ({n:String(l.n || 'Niveau').slice(0, 30), z:+l.z || 0})) : DEFAULT_LEVELS.map(l => ({...l})),
     lib:{mats:{...(s.lib?.mats || {})}, compos:{...(s.lib?.compos || {})}, fams:{...(s.lib?.fams || {})}}, isSample:!!s.isSample,
     ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {}), ...(+s.shab > 0 ? {shab:+s.shab} : {}), ...(Array.isArray(s.views) ? {views:s.views.filter(v => v && v.a && v.b)} : {}), ...(s.roomNames && typeof s.roomNames === 'object' ? {roomNames:{...s.roomNames}} : {})};
@@ -3622,6 +3645,7 @@ function migrate(s){
   // format 3 : les dalles sont décrites par leur dessous (posées au-dessus du niveau) ; les anciens projets gardent exactement leur géométrie
   if ((+s.v || 2) < 3) out.els.forEach(el => { if (el.kind === 'slab') el.off = Math.round((el.off - slabT(el)) * 1000) / 1000; });
   out.els = out.els.filter(el => el.kind !== 'inst' || fam(el.fam));
+  if ((+s.v || 2) < 4) try { autoLink(); } catch(e){ console.warn('liens', e); }
   state = prev;
   out.nextId = Math.max(0, ...out.els.map(x => x.id || 0)) + 1;
   return out;
@@ -3750,6 +3774,7 @@ function famSolids(F, scope, depth = 0){
       const m = part.m || 'bois';
       if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz:0, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
       else if (part.s === 'cone'){ const r = Math.max(0.001, fx(part.r, s)), r2 = Math.max(0, fx(part.r2 ?? 0, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cone', m, c:[x, y, z + h/2], r, r2, h, rz:0}); }
+      else if (part.s === 'ext'){ const W = s.w ?? 1, Dd = s.d ?? 1, h = fx(part.h ?? 1, s), P = (part.pts || []).map(([u, v]) => [x + (u - 0.5) * W, y + (v - 0.5) * Dd]); if (P.length >= 3 && h > 1e-4){ const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cy = P.reduce((a, p) => a + p[1], 0) / P.length; out.push({s:'ext', m, c:[cx, cy, z + h / 2], pts:P.map(p => [p[0] - cx, p[1] - cy]), h, rz:0}); } }
       else if (part.s === 'sph'){ const r = Math.max(0.001, fx(part.r, s)); out.push({s:'sph', m, c:[x, y, z + r], r, rz:0}); }
       else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4) out.push({s:'box', m, c:[x + w/2, y + d/2, z + h/2], w, d, h, rz:0}); }
     }
@@ -3771,10 +3796,10 @@ function instSolids(el){
   const mir = fr.sx * fr.sy;
   return famSolids(F, famScope(F, el)).map(so => {
     const lp = [so.c[0] * fr.sx, so.c[1] * fr.sy], wp = V.add(fr.o, V.rot(lp, fr.ang));
-    return {...so, c:[wp[0], wp[1], so.c[2] + fr.z], rz:fr.ang + mir * (so.rz || 0), lot:famLot(F)};
+    return {...so, ...(so.pts ? {pts:so.pts.map(p => [p[0] * fr.sx, p[1] * fr.sy])} : {}), c:[wp[0], wp[1], so.c[2] + fr.z], rz:fr.ang + mir * (so.rz || 0), lot:famLot(F)};
   });
 }
-const solidVol = so => so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : so.s === 'cone' ? Math.PI * so.h * (so.r * so.r + so.r * so.r2 + so.r2 * so.r2) / 3 : 4/3 * Math.PI * so.r ** 3;
+const solidVol = so => so.s === 'ext' ? area(so.pts) * so.h : so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : so.s === 'cone' ? Math.PI * so.h * (so.r * so.r + so.r * so.r2 + so.r2 * so.r2) / 3 : 4/3 * Math.PI * so.r ** 3;
 
 /* Ouvertures portées par un mur : intervalles le long de l'axe et en hauteur */
 function wallOpenings(w, els = state.els){
@@ -3832,7 +3857,7 @@ function pieces(el, els = state.els){
     const poly = rect(el.p, el.q), C = compo(el.type), holes = slabHoles(el), net = area(poly) - holes.reduce((s, h) => s + area(h), 0); let top = z + slabT(el);
     for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot, ...(holes.length ? {holes, vol:net * e} : {})}); top -= e; }
   } else if (el.kind === 'vol'){
-    out.push({mat:el.mat, poly:rect(el.p, el.q), base:z, h:el.h, lot:'Industrie'});
+    out.push({mat:el.mat, poly:volPoly(el), base:z, h:el.h, lot:'Industrie'});
   } else if (el.kind === 'col'){
     out.push({mat:el.mat, poly:colPoly(el), base:z, h:el.h, lot:'Gros œuvre'});
   }
@@ -3849,6 +3874,7 @@ function elStats(el){
 function elKeyPoints(el){
   if (el.kind === 'wall' && wallArc(el)){ const P = arcPts(el, 0); return {ends:[el.a, el.b], segs:P.slice(1).map((p, i) => [P[i], p]), mids:[P[Math.floor(P.length / 2)]], faces:[]}; }
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
+  if (el.kind === 'vol' && el.poly){ const r = el.poly, segs = r.map((p, i) => [p, r[(i + 1) % r.length]]), circ = el.shape === 'circ'; return {ends:circ ? [] : r, segs, mids:circ ? [] : segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[polyCentroid(r)]}; }
   if (el.kind === 'slab' || el.kind === 'vol'){ const r = rect(el.p, el.q); const segs = r.map((p, i) => [p, r[(i + 1) % 4]]); return {ends:r, segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
   if (el.kind === 'stair'){ const F = stairFootprint(el); if (!F) return {ends:[], segs:[], mids:[]}; const r = [[F.x0, F.y0], [F.x1, F.y0], [F.x1, F.y1], [F.x0, F.y1]]; return {ends:[el.c, ...r], segs:r.map((p, i) => [p, r[(i + 1) % 4]]), mids:[[(F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2]]}; }
   if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % r.length]]), ...o.map((p, i) => [p, o[(i + 1) % o.length]])];
@@ -4462,6 +4488,7 @@ function solidGeo(so){
   if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
   else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
   else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
+  else if (so.s === 'ext'){ g = new THREE.ExtrudeGeometry(new THREE.Shape(so.pts.map(p => new THREE.Vector2(p[0], p[1]))), {depth:so.h, bevelEnabled:false}); g.rotateX(-Math.PI / 2); g.translate(0, -so.h / 2, 0); }
   else g = boxGeo(so.w, so.d, so.h);
   if (so.s === 'cyl' || so.s === 'cone'){ if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2); }
   if (so.rz) g.rotateY(so.rz);
@@ -4591,7 +4618,7 @@ function positionGrid(){
 /* ---------- reconstruction ---------- */
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
-  rebuildSeq++; disposeGroup(modelGroup); geoGen++; geoBuilding = true;
+  rebuildSeq++; applyLinks(); disposeGroup(modelGroup); geoGen++; geoBuilding = true;
   const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
   for (const el of state.els){
     if (plan && el.lvl !== curLvl) continue; // plan : seulement le niveau courant
@@ -4611,6 +4638,7 @@ function rebuild(opts = {}){
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
   roomsCache = null; if (typeof buildRooms === 'function') buildRooms();
+  buildLevelMarks();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -4681,13 +4709,16 @@ function buildLabels(){
     const isSel = set.has(el.id);
     if (el.lvl !== curLvl && !isSel) continue;
     if (!(showDimsOn() && view === '2d') && !isSel) continue;
-    const add = (pos, text) => { const d = document.createElement('div'); d.className = 'dim' + (isSel ? ' sel' : ''); d.textContent = text; box.appendChild(d); labels.push({d, pos}); };
+    const add = (pos, text, cls) => { const d = document.createElement('div'); d.className = cls || ('dim' + (isSel ? ' sel' : '')); d.textContent = text; box.appendChild(d); labels.push({d, pos}); return d; };
+    if (isSel && set.size === 1) addGrips(el, add);
     const y3 = lvlZ(el.lvl) + (el.off || 0) + (view !== '2d' ? (el.h || 0) + 0.15 : 0);
     if (el.kind === 'wall'){
       const {n, L} = wallAxis(el), T = wallT(el), side = el.flip ? 1 : -1;
       const m = V.add(V.mul(V.add(el.a, el.b), .5), V.mul(n, side * (T/2 + 0.28)));
       add(new THREE.Vector3(m[0], y3, -m[1]), nf(L));
       if (isSel && !multi.length){ const d = labels[labels.length - 1].d; d.classList.add('edit'); d.title = 'Cliquer pour changer la longueur'; d.onclick = ev => { ev.stopPropagation(); editWallLength(el, d); }; }
+    } else if (el.kind === 'vol' && el.poly){
+      const c = polyCentroid(el.poly); add(new THREE.Vector3(c[0], y3, -c[1]), el.shape === 'circ' ? `⌀ ${nf(el.q[0] - el.p[0])}` : `${nf(area(el.poly))} m²`);
     } else if (el.kind === 'slab' || el.kind === 'vol'){
       const r = rect(el.p, el.q), y = el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) : y3;
       add(new THREE.Vector3((r[0][0] + r[1][0]) / 2, y, -(r[0][1] - 0.3)), nf(r[1][0] - r[0][0]));
@@ -4711,6 +4742,7 @@ function toScreen(v){ tmpV.copy(v).project(cam()); return [(tmpV.x + 1) / 2 * vp
 /* position des cotes : dimensions de la vue lues une seule fois (les lire après chaque écriture forçait le navigateur à
    recalculer toute la mise en page pour chaque cote), et seules les valeurs qui changent sont réécrites */
 function updateLabels(){
+  placeLevelMarks();
   if (!labels.length) return;
   const W = vpEl.clientWidth, H = vpEl.clientHeight, c = cam();
   for (const l of labels){
@@ -5030,7 +5062,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5}, col:{type:'ba', h:2.7, w:0.25}, comp:{fam:'fenetre-2v', type:1, rot:0}};
+const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, comp:{fam:'fenetre-2v', type:1, rot:0}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -5145,12 +5177,12 @@ const curZ = () => draw.workZ ?? lvlZ(curLvl);
 const offFromZ = () => draw.workZ != null ? rnd(draw.workZ - lvlZ(curLvl)) : 0;
 function tempEl(a, b){
   const lvl = curLvl, off = offFromZ();
-  if (tool === 'wall') return {kind:'wall', type:defs.wall.type, a, b, h:defs.wall.h, lvl, off, flip:false};
+  if (tool === 'wall') return linkDefaults({kind:'wall', type:defs.wall.type, a, b, h:defs.wall.h, lvl, off, flip:false});
   if (tool === 'slab') return {kind:'slab', type:defs.slab.type, p:a, q:b, lvl, off};
-  if (tool === 'roof') return {kind:'roof', type:defs.roof.type, p:a, q:b, lvl, off:rnd(off + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov};
+  if (tool === 'roof') return {kind:'roof', type:defs.roof.type, p:a, q:b, lvl, off:rnd(off + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov, onWalls:true};
   if (tool === 'stair'){ const t = {kind:'stair', st:defs.stair.st, side:defs.stair.side, w:defs.stair.w, mat:defs.stair.mat, lvl, off, rail:true, tremie:true, R:0.8, rot:0}; stairPlace(t, a || b, a ? b : null); return t; }
   if (tool === 'vol') return {kind:'vol', mat:defs.vol.type, p:a, q:b, h:defs.vol.h, lvl, off};
-  if (tool === 'col') return {kind:'col', mat:defs.col.type, c:b, w:defs.col.w, d:defs.col.w, h:defs.col.h, lvl, off};
+  if (tool === 'col') return linkDefaults({kind:'col', mat:defs.col.type, c:b, w:defs.col.w, d:defs.col.w, h:defs.col.h, lvl, off});
 }
 function updatePreview(){
   disposeGroup(previewGroup); disposeGroup(markGroup);
@@ -5165,6 +5197,15 @@ function updatePreview(){
   else if (tool === 'wall' && defs.wall.rect && draw.start){ const S0 = draw.start, r = rect(S0, cur); if (Math.abs(cur[0] - S0[0]) > 0.05 && Math.abs(cur[1] - S0[1]) > 0.05){ const ws = r.map((p, i) => tempEl(p, r[(i + 1) % 4])); for (const t of ws) for (const pc of pieces(t, state.els.concat(ws))) previewGroup.add(pieceMesh(pc, true)); } markGroup.add(makeMarker(S0, ac)); text = `Pièce ${nf(Math.abs(cur[0] - S0[0]))} × ${nf(Math.abs(cur[1] - S0[1]))} m · ${nf(Math.abs((cur[0] - S0[0]) * (cur[1] - S0[1])))} m²`; }
   else if (tool === 'slab' && defs.slab.mode !== 'rect'){ const r = defs.slab.mode === 'room' ? roomAt(cur) : null; if (r){ const sh = r.poly; for (let i = 0; i < sh.length; i++) markGroup.add(lineObj(sh[i], sh[(i + 1) % sh.length], ac, null, false)); text = `${r.name} · ${nf(r.net, 2)} m² : cliquez pour poser la dalle`; } else text = defs.slab.mode === 'room' ? 'Survolez une pièce fermée' : 'Cliquez pour poser la dalle sous tous les murs du niveau'; }
   else if (tool === 'stair'){ const t = draw.start ? tempEl(draw.start, cur) : tempEl(cur, null); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); const D = stairDims(t); text = `${STAIR_TYPES[t.st]} · ${D.n} marches de ${nf(D.h * 100, 1)} cm${draw.start ? ` · ${nf(t.rot, 0)}°` : ''}`; if (draw.start) markGroup.add(makeMarker(draw.start, ac)); }
+  else if (tool === 'vol'){
+    if (draw.ext) return previewExtrude();
+    const b = shapePreviewBase(), P = draw.poly || [];
+    if (P.length){ const pts = [...P, cur]; for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); markGroup.add(makeMarker(P[0], ac)); if (pts.length >= 3) markGroup.add(lineObj(cur, P[0], ac, null, true)); }
+    else if (draw.start){ markGroup.add(makeMarker(draw.start, ac)); markGroup.add(lineObj(draw.start, cur, ac)); }
+    if (b){ try { pieces(volFrom(b, view === '2d' ? defs.vol.h : 0.02, offFromZ())).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } catch(e){} }
+    const sh = defs.vol.shape || 'rect';
+    text = sh === 'circ' && draw.start ? `R ${nf(V.len(V.sub(cur, draw.start)))} m` : sh === 'poly' && P.length ? `${nf(V.len(V.sub(cur, P.at(-1))))} m · ${P.length} point${P.length > 1 ? 's' : ''}` : draw.start ? `${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m` : `x ${nf(cur[0])} · y ${nf(cur[1])}`;
+  }
   else if (tool === 'roof' && defs.roof.mode === 'walls'){
     const o = wallsOutline(curLvl); if (o){ const t = roofFromPoly(o); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); text = 'Cliquez pour poser la toiture sur les murs du niveau'; } else text = 'Aucun mur sur ce niveau';
   }
@@ -5247,7 +5288,7 @@ const selIds = () => [...new Set([sel, ...multi].filter(Boolean))];
 function movedEl(el, d){
   const m = JSON.parse(JSON.stringify(el)), mv = p => [rnd(p[0] + d[0]), rnd(p[1] + d[1])];
   if (m.kind === 'wall'){ m.a = mv(m.a); m.b = mv(m.b); }
-  else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ m.p = mv(m.p); m.q = mv(m.q); if (m.poly) m.poly = m.poly.map(mv); }
+  else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ m.p = mv(m.p); m.q = mv(m.q); if (m.poly) m.poly = m.poly.map(mv); if (m.bind?.room) m.bind = {room:mv(m.bind.room)}; }
   else if (m.kind === 'col' || m.kind === 'stair') m.c = mv(m.c);
   else if (m.kind === 'inst'){ if (m.host){ const w = getEl(m.host); if (w){ const {u} = wallAxis(w); m.t = rnd((m.t || 0) + V.dot(d, u)); } } else m.c = mv(m.c); }
   return m;
@@ -5259,25 +5300,29 @@ function rotatedEl(el, base, ang){
   else if (m.kind === 'stair'){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI + 360) % 360; }
   else if (m.kind === 'col'){ m.c = rp(m.c); if (Math.abs(Math.sin(ang)) > 0.7) [m.w, m.d] = [m.d, m.w]; }
   else if (m.kind === 'inst' && !m.host){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI) % 360; }
+  if (m.kind === 'vol' && m.poly){ const xs = m.poly.map(p => p[0]), ys = m.poly.map(p => p[1]); m.p = [Math.min(...xs), Math.min(...ys)]; m.q = [Math.max(...xs), Math.max(...ys)]; }
+  if (m.bind?.room) m.bind = {room:rp(m.bind.room)};
   return m;
 }
-const rectOnly = () => selIds().some(id => ['slab', 'vol', 'col', 'roof'].includes(getEl(id)?.kind));
+const rectOnly = () => selIds().some(id => { const e = getEl(id); return ['slab', 'vol', 'col', 'roof'].includes(e?.kind) && !(e.kind === 'vol' && e.poly); });
 function previewMove(d){ for (const id of selIds()){ const el = getEl(id); if (!el) continue; const m = movedEl(el, d); if (m.kind === 'inst') instMeshes(m, true).forEach(x => previewGroup.add(x)); else pieces(m).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } }
 function previewRotate(a){ if (rectOnly()) a = Math.round(a / (Math.PI / 2)) * (Math.PI / 2); for (const id of selIds()){ const el = getEl(id); if (!el || (el.kind === 'inst' && el.host)) continue; const m = rotatedEl(el, draw.base, a); if (m.kind === 'inst') instMeshes(m, true).forEach(x => previewGroup.add(x)); else pieces(m).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } }
 function applyMove(d, copy){
   pushHist(); const ids = selIds(), map = {}, created = [];
+  const before = copy ? null : wallEnds(ids);
   for (const id of ids){
     const el = getEl(id); if (!el) continue; const m = movedEl(el, d);
     if (copy){ m.id = state.nextId++; map[id] = m.id; state.els.push(m); created.push(m.id); }
     else Object.assign(el, m);
   }
+  followJoins(before);
   if (copy) state.els.forEach(e => { if (e.kind === 'inst' && e.host && map[e.host] && created.includes(e.id) === false && ids.includes(e.id) === false){
     const c = JSON.parse(JSON.stringify(e)); c.id = state.nextId++; c.host = map[e.host]; state.els.push(c); } });
   state.isSample = false; rebuild();
 }
 function applyRotate(a){
   if (rectOnly()) a = Math.round(a / (Math.PI / 2)) * (Math.PI / 2);
-  pushHist(); for (const id of selIds()){ const el = getEl(id); if (!el || (el.kind === 'inst' && el.host)) continue; Object.assign(el, rotatedEl(el, draw.base, a)); }
+  pushHist(); const before = wallEnds(selIds()); for (const id of selIds()){ const el = getEl(id); if (!el || (el.kind === 'inst' && el.host)) continue; Object.assign(el, rotatedEl(el, draw.base, a)); } followJoins(before);
   state.isSample = false; rebuild();
 }
 
@@ -5288,7 +5333,7 @@ function pushStart(e){
   const h = hitModel(e); if (!h?.id) return false;
   const el = getEl(h.id); if (!el || el.kind === 'inst' && el.host) return false;
   const up = h.normal.y > 0.85, down = h.normal.y < -0.85, side = Math.abs(h.normal.y) < 0.2;
-  if (side && !(el.kind === 'vol' || el.kind === 'slab')) return false;
+  if (side && (!(el.kind === 'vol' || el.kind === 'slab') || el.poly)) return false;
   if (!up && !down && !side) return false;
   pushHist();
   const base = h.point.clone(), p1 = toScreen(base), p2 = toScreen(base.clone().add(up || down ? new THREE.Vector3(0, 1, 0) : h.normal.clone().setY(0).normalize()));
@@ -5325,7 +5370,7 @@ const PROMPTS = {
   mirror:() => !selIds().length ? '<b>Symétrie</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Symétrie</b> : second point de l\'axe' : '<b>Symétrie</b> : premier point de l\'axe de symétrie',
   cut:() => draw.start ? '<b>Coupe</b> : second point du trait de coupe (on regarde vers la gauche du trait)' : '<b>Coupe</b> : premier point du trait de coupe',
   stair:() => draw.start ? '<b>Escalier</b> : direction de la montée (clic ou angle)' : '<b>Escalier</b> : point de départ (coin gauche de la première marche ; centre pour un colimaçon)',
-  vol:() => draw.start ? '<b>Volume</b> : coin opposé, ou <code>L;l</code>' : '<b>Volume</b> : premier coin (ou x;y)',
+  vol:() => draw.ext ? '<b>Forme</b> : montez la souris pour tirer la forme en hauteur, cliquez pour valider (ou tapez la hauteur puis <kbd>Entrée</kbd>)' : (defs.vol.shape === 'circ' ? (draw.start ? '<b>Cercle</b> : rayon (clic ou valeur)' : '<b>Cercle</b> : centre (au sol ou sur une face)') : defs.vol.shape === 'poly' ? (draw.poly?.length ? '<b>Polygone</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Polygone</b> : premier point (au sol ou sur une face)') : (draw.start ? '<b>Rectangle</b> : coin opposé, ou <code>L;l</code>' : '<b>Rectangle</b> : premier coin (au sol ou sur une face)')),
   col:() => '<b>Poteau</b> : position du centre (ou x;y)',
   comp:() => fam(defs.comp.fam)?.host === 'wall' ? `<b>${esc(fam(defs.comp.fam)?.nom)}</b> : cliquez dans un mur, du côté où elle s'ouvre` : `<b>${esc(fam(defs.comp.fam)?.nom || 'Composant')}</b> : point d'insertion · <kbd>Espace</kbd> pivote de 90°`,
   push:() => '<b>Pousser/Tirer</b> : glissez la face supérieure (hauteur) ou une face latérale d\'une dalle ou d\'un volume',
@@ -5337,9 +5382,9 @@ const PROMPTS = {
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
-  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4));
+  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || (tool === 'vol' && (draw.poly?.length || 0) >= 3));
 }
-function cancelDraw(){ draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
+function cancelDraw(){ draw.ext = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
 function setTool(t){
   if (!PROMPTS[t]) return;
   tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
@@ -5358,13 +5403,17 @@ function syncHud(){
   else if (tool === 'comp'){ const F = fam(defs.comp.fam); opts = (F?.types || []).map((t, i) => [i, `${F.nom} · ${t.nom}`]); cur = defs.comp.type; lbl = 'Type'; }
   tp.hidden = !opts;
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
-  hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col' || tool === 'roof');
+  $('#shapePill').hidden = tool !== 'vol'; if (tool === 'vol') $('#shapeIn').value = defs.vol.shape || 'rect';
+  const tpp = $('#topPill'), hasTop = tool === 'wall' || tool === 'col'; tpp.hidden = !hasTop;
+  if (hasTop){ $('#topIn').querySelector('[value="above"]').hidden = tool !== 'col'; if (tool !== 'col' && defs.wall.top === 'above') defs.wall.top = 'next'; $('#topIn').value = defs[tool].top || ''; }
+  hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col' || tool === 'roof') || (hasTop && !!defs[tool].top && (defs[tool].top === 'above' || !!state.levels[curLvl + 1]));
   if (!hp.hidden) $('#hIn').value = defs[tool].h;
   $('#hLbl').textContent = tool === 'roof' ? 'Égout' : 'H'; $('#wallArcPill').hidden = tool !== 'wall'; if (tool === 'wall') $('#wArcIn').value = defs.wall.rect ? 'r' : defs.wall.arc ? '1' : ''; $('#slabModePill').hidden = tool !== 'slab'; if (tool === 'slab') $('#sModeIn').value = defs.slab.mode; $('#mirrorPill').hidden = tool !== 'mirror'; if (tool === 'mirror') $('#mKeepIn').value = defs.mirror.keep ? '1' : ''; $('#stairPill').hidden = tool !== 'stair'; if (tool === 'stair'){ $('#sTypeIn').value = defs.stair.st; $('#sSideIn').value = defs.stair.side; $('#sMatIn').value = defs.stair.mat; } $('#roofPill').hidden = tool !== 'roof'; $('#roofModePill').hidden = tool !== 'roof'; if (tool === 'roof') $('#rModeIn').value = defs.roof.mode;
   if (tool === 'roof'){ $('#rShapeIn').value = defs.roof.shape; $('#rPitchIn').value = defs.roof.pitch; }
 }
 function placePoint(pt){
   const S = draw.start;
+  if (tool === 'vol') return shapeClick(pt);
   if (tool === 'wall' && defs.wall.arc && S){
     if (!draw.arcB){ if (V.len(V.sub(pt, S)) > 0.01) draw.arcB = pt; }
     else { const B = draw.arcB, t = tempEl(S.slice(), B.slice()), m = V.mul(V.add(S, B), 0.5), {n} = wallAxis(t); t.bulge = rnd(V.dot(V.sub(pt, m), n)); addEl(t); draw.chainN++; draw.start = B; draw.arcB = null; }
@@ -5515,7 +5564,7 @@ function deleteSel(){ const ids = selIds(); if (!ids.length) return; pushHist();
 /* ---------- toiture sur contour ---------- */
 function roofFromPoly(pts){
   const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
-  const t = {kind:'roof', type:defs.roof.type, p:[Math.min(...xs), Math.min(...ys)], q:[Math.max(...xs), Math.max(...ys)], lvl:curLvl, off:rnd(offFromZ() + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov};
+  const t = {kind:'roof', type:defs.roof.type, p:[Math.min(...xs), Math.min(...ys)], q:[Math.max(...xs), Math.max(...ys)], lvl:curLvl, off:rnd(offFromZ() + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov, onWalls:true};
   const isRect = pts.length === 4 && isOrtho(pts);
   if (!isRect) t.poly = pts.map(q => [rnd(q[0]), rnd(q[1])]);
   roofFitWalls(t); return t;
@@ -5649,22 +5698,403 @@ function previewMirror(A, B){ for (const id of selIds()){ const el = getEl(id); 
 function slabOnRoom(pt){
   const r = roomAt(pt); if (!r){ toast('Cliquez à l\'intérieur d\'une pièce fermée par des murs'); return; }
   const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]);
-  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs)), rnd(Math.min(...ys))], q:[rnd(Math.max(...xs)), rnd(Math.max(...ys))], lvl:curLvl, off:offFromZ()});
+  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs)), rnd(Math.min(...ys))], q:[rnd(Math.max(...xs)), rnd(Math.max(...ys))], lvl:curLvl, off:offFromZ(), bind:{room:[rnd(pt[0]), rnd(pt[1])]}});
   if (r.poly.length > 4 || !isOrtho(r.poly)) toast('Pièce non rectangulaire : la dalle couvre son rectangle englobant');
 }
 function slabOnWalls(){
   const o = wallsOutline(curLvl); if (!o){ toast('Aucun mur sur ce niveau'); return; }
   const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === curLvl), e = ws.length ? Math.max(...ws.map(wallT)) / 2 : 0;
   const xs = o.map(p => p[0]), ys = o.map(p => p[1]);
-  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs) - e), rnd(Math.min(...ys) - e)], q:[rnd(Math.max(...xs) + e), rnd(Math.max(...ys) + e)], lvl:curLvl, off:offFromZ()});
+  addEl({kind:'slab', type:defs.slab.type, p:[rnd(Math.min(...xs) - e), rnd(Math.min(...ys) - e)], q:[rnd(Math.max(...xs) + e), rnd(Math.max(...ys) + e)], lvl:curLvl, off:offFromZ(), bind:'walls'});
 }
 
 /* ---------- cote modifiable : clic sur la longueur d'un mur sélectionné ---------- */
 function editWallLength(el, d){
   const inp = document.createElement('input'); inp.className = 'dim-in'; inp.value = nf(wallAxis(el).L, 2).replace(/\s/g, ''); d.textContent = ''; d.appendChild(inp); inp.focus(); inp.select();
-  const done = ok => { if (ok){ const v = num(inp.value); if (v > 0.01){ pushHist(); const {u} = wallAxis(el); if (wallArc(el)){ const k = v / wallAxis(el).L; el.b = [rnd(el.a[0] + (el.b[0] - el.a[0]) * k), rnd(el.a[1] + (el.b[1] - el.a[1]) * k)]; el.bulge = rnd(el.bulge * k); } else el.b = [rnd(el.a[0] + u[0] * v), rnd(el.a[1] + u[1] * v)]; state.isSample = false; rebuild(); return; } } buildLabels(); };
+  const done = ok => { if (ok){ const v = num(inp.value); if (v > 0.01){ pushHist(); const before = wallEnds([el.id]); const {u} = wallAxis(el); if (wallArc(el)){ const k = v / wallAxis(el).L; el.b = [rnd(el.a[0] + (el.b[0] - el.a[0]) * k), rnd(el.a[1] + (el.b[1] - el.a[1]) * k)]; el.bulge = rnd(el.bulge * k); } else el.b = [rnd(el.a[0] + u[0] * v), rnd(el.a[1] + u[1] * v)]; followJoins(before); state.isSample = false; rebuild(); return; } } buildLabels(); };
   inp.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') done(true); else if (e.key === 'Escape') done(false); };
   inp.onblur = () => done(true);
+}
+
+/* ==== 52-links.js ==== */
+/* ============ Éléments reliés entre eux (façon Revit) ============
+   Contraintes recalculées à chaque reconstruction, avant la géométrie :
+   - mur : base posée sur le plancher (onSlab), haut attaché à un niveau (top:'next' = niveau supérieur, ou n° de niveau) + décalage (topOff) ;
+   - poteau : mêmes contraintes, plus « sous l'élément au-dessus » (top:'above' : dalle, volume ou toiture qui le couvre) ;
+   - dalle : liée aux murs (bind:'walls') ou à une pièce (bind:{room:[x,y]}), elle suit leurs déplacements ;
+   - toiture / volume : posés sur le haut des murs (onWalls).
+   Murs joints : quand un mur bouge, les murs raccordés (angles et T) suivent.
+   Poignées : extrémités d'un mur, coins d'une dalle ou d'un volume, à tirer directement. */
+
+const inRect = (pt, el, m = 1e-6) => { const r = rect(el.p, el.q); return pt[0] >= r[0][0] - m && pt[0] <= r[2][0] + m && pt[1] >= r[0][1] - m && pt[1] <= r[2][1] + m; };
+const topLvl = el => el.top === 'next' ? el.lvl + 1 : Number.isInteger(el.top) ? el.top : null;
+/* dessus du plancher posé sur ce niveau sous le point (cote relative au niveau), ou null */
+function floorTopAt(lvl, pts, excl){
+  let best = null;
+  for (const s of state.els){
+    if (s.kind !== 'slab' || s.lvl !== lvl || s.id === excl || elUse(s) === 'toiture' || (s.off || 0) > 1.2) continue;
+    if (!pts.some(p => inRect(p, s))) continue;
+    const top = (s.off || 0) + slabT(s); if (best == null || top > best) best = top;
+  }
+  return best;
+}
+/* dessous de l'élément qui couvre le point au-dessus de la cote z (absolue), ou null */
+function undersideAbove(pt, z, excl){
+  let best = null;
+  for (const e of state.els){
+    if (e.id === excl || !['slab', 'vol', 'roof'].includes(e.kind)) continue;
+    const zz = lvlZ(e.lvl) + (e.off || 0); if (zz <= z + 0.05) continue;
+    const fp = e.kind === 'vol' ? volPoly(e) : e.kind === 'roof' && e.poly ? e.poly : null;
+    if (fp ? !ptInPoly(pt[0], pt[1], fp) : !inRect(pt, e, e.kind === 'roof' ? (e.ov ?? 0.4) : 1e-6)) continue;
+    if (best == null || zz < best) best = zz;
+  }
+  return best;
+}
+const volPoly = el => el.poly && el.poly.length >= 3 ? el.poly : rect(el.p, el.q);
+function slabBindRect(el){
+  if (el.bind === 'walls'){
+    const bl = el.bindLvl ?? el.lvl, o = wallsOutline(bl); if (!o) return null;
+    const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === bl), e = ws.length ? Math.max(...ws.map(wallT)) / 2 : 0, xs = o.map(p => p[0]), ys = o.map(p => p[1]);
+    return [[Math.min(...xs) - e, Math.min(...ys) - e], [Math.max(...xs) + e, Math.max(...ys) + e]];
+  }
+  if (el.bind?.room){
+    const r = roomAt(el.bind.room, el.lvl); if (!r) return null;
+    const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]);
+    return [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]];
+  }
+  return null;
+}
+function applyLinks(){
+  if (!state?.els) return;
+  const R = v => Math.round(v * 1000) / 1000;
+  for (const el of state.els) if (el.kind === 'slab' && el.bind){ const r = slabBindRect(el); if (r){ el.p = r[0].map(R); el.q = r[1].map(R); } }
+  for (const el of state.els){
+    if (el.kind === 'wall' || el.kind === 'col'){
+      if (el.onSlab){ const pts = el.kind === 'col' ? [el.c] : [V.mul(V.add(el.a, el.b), 0.5), el.a, el.b]; el.off = R(floorTopAt(el.lvl, pts) ?? 0); }
+      const tl = topLvl(el);
+      if (tl != null && state.levels[tl]) el.h = R(Math.max(0.05, lvlZ(tl) + (el.topOff || 0) - lvlZ(el.lvl) - (el.off || 0)));
+    }
+  }
+  for (const el of state.els){
+    if (el.kind === 'roof' && el.onWalls) roofFitWalls(el);
+    else if (el.kind === 'vol' && el.onWalls){
+      const fp = volPoly(el), xs = fp.map(p => p[0]), ys = fp.map(p => p[1]), x0 = Math.min(...xs) - 0.3, x1 = Math.max(...xs) + 0.3, y0 = Math.min(...ys) - 0.3, y1 = Math.max(...ys) + 0.3;
+      const tops = state.els.filter(w => (w.kind === 'wall' || w.kind === 'col') && w.lvl === el.lvl && (w.kind === 'col' ? [w.c] : [0, .25, .5, .75, 1].map(t => V.add(w.a, V.mul(V.sub(w.b, w.a), t)))).some(p => p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1) && !(w.kind === 'col' && w.top === 'above')).map(w => (w.off || 0) + w.h);
+      if (tops.length) el.off = R(Math.max(...tops));
+    }
+  }
+  for (const el of state.els) if (el.kind === 'col' && el.top === 'above'){
+    const z0 = lvlZ(el.lvl) + (el.off || 0), u = undersideAbove(el.c, z0, el.id);
+    if (u != null) el.h = R(Math.max(0.05, u - z0 + (el.topOff || 0)));
+  }
+}
+
+/* ---------- murs joints : les murs raccordés suivent ---------- */
+function wallEnds(ids){ const m = new Map(); for (const id of ids){ const w = getEl(id); if (w?.kind === 'wall') m.set(id, {a:w.a.slice(), b:w.b.slice(), lvl:w.lvl, T:wallT(w), arc:!!wallArc(w)}); } return m; }
+/* before : Map id → anciennes extrémités (wallEnds) ; à appeler après avoir modifié les murs */
+function followJoins(before){
+  if (!before?.size) return;
+  const R = v => Math.round(v * 1000) / 1000, moved = new Set(before.keys());
+  for (const [id, o] of before){
+    const w = getEl(id); if (!w || w.kind !== 'wall') continue;
+    if (V.eq(o.a, w.a) && V.eq(o.b, w.b)) continue;
+    const d0 = V.sub(o.b, o.a), L0 = V.len(d0); if (L0 < 1e-6) continue;
+    const u0 = V.mul(d0, 1 / L0), n0 = [-u0[1], u0[0]], d1 = V.sub(w.b, w.a), L1 = V.len(d1) || 1e-9, u1 = V.mul(d1, 1 / L1), n1 = [-u1[1], u1[0]];
+    for (const x of state.els){
+      if (x.kind !== 'wall' || moved.has(x.id) || x.lvl !== o.lvl) continue;
+      for (const k of ['a', 'b']){
+        const P = x[k], other = x[k === 'a' ? 'b' : 'a'];
+        if (V.len(V.sub(P, o.a)) < 2e-3){ x[k] = w.a.slice(); continue; }
+        if (V.len(V.sub(P, o.b)) < 2e-3){ x[k] = w.b.slice(); continue; }
+        if (o.arc || wallArc(x)) continue;
+        const rel = V.sub(P, o.a), t = V.dot(rel, u0), s = V.dot(rel, n0);
+        if (t < -0.02 || t > L0 + 0.02 || Math.abs(s) > o.T / 2 + 0.02) continue;   // extrémité posée contre ce mur (T)
+        const dir = V.sub(P, other); if (V.len(dir) < 1e-6) continue;
+        const q = lineInter(other, V.mul(dir, 1 / V.len(dir)), V.add(w.a, V.mul(n1, s)), u1);
+        if (q && V.len(V.sub(q, other)) > 0.01) x[k] = [R(q[0]), R(q[1])];
+      }
+    }
+  }
+}
+function withJoins(ids, fn){ const before = wallEnds(ids); const r = fn(); followJoins(before); return r; }
+
+/* ---------- poignées sur l'élément sélectionné ---------- */
+let gripDrag = null;
+function gripPoints(el){
+  if (el.kind === 'wall') return [{k:'a', pt:el.a}, {k:'b', pt:el.b}];
+  if ((el.kind === 'slab' || (el.kind === 'vol' && !el.poly)) && !el.bind){ const r = rect(el.p, el.q); return r.map((pt, i) => ({k:'c' + i, pt})); }
+  return [];
+}
+function addGrips(el, add){
+  if (multi.length || tool !== 'select' || gripDrag) return;
+  const z = el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) + slabT(el) : lvlZ(el.lvl) + (el.off || 0) + (view !== '2d' ? el.h || 0 : 0);
+  for (const g of gripPoints(el)){
+    const d = add(new THREE.Vector3(g.pt[0], z, -g.pt[1]), '', 'grip');
+    d.title = el.kind === 'wall' ? 'Tirer l\'extrémité (les murs raccordés suivent)' : 'Tirer le coin';
+    d.onpointerdown = ev => { if (ev.button !== 0) return; ev.stopPropagation(); ev.preventDefault(); gripStart(el, g.k, ev); };
+  }
+}
+function gripStart(el, k, ev){
+  pushHist(); const before = el.kind === 'wall' ? wallEnds([el.id]) : null;
+  gripDrag = {id:el.id, k, orig:JSON.stringify(state.els), before};
+  c3.enabled = false; document.body.classList.add('gripping');
+  const move = e => {
+    const g = cursorPoint(e); if (!g) return; const s = snap(g); draw.snap = s; const pt = [rnd(s.pt[0]), rnd(s.pt[1])];
+    state.els = JSON.parse(gripDrag.orig); elIdxOf = null; const x = getEl(gripDrag.id); if (!x) return;
+    if (x.kind === 'wall'){ const other = k === 'a' ? x.b : x.a; if (V.len(V.sub(pt, other)) < 0.02) return; x[k] = pt; followJoins(gripDrag.before); }
+    else { const r = rect(x.p, x.q), opp = r[(+k.slice(1) + 2) % 4]; if (Math.abs(pt[0] - opp[0]) < 0.02 || Math.abs(pt[1] - opp[1]) < 0.02) return; x.p = [Math.min(pt[0], opp[0]), Math.min(pt[1], opp[1])]; x.q = [Math.max(pt[0], opp[0]), Math.max(pt[1], opp[1])]; }
+    state.isSample = false; rebuild({noPanel:true}); drawSnapGlyph(toV3(s.pt), s.kind, s.how);
+  };
+  const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); if (JSON.stringify(state.els) === gripDrag.orig){ hist.pop(); updUndo(); } gripDrag = null; c3.enabled = view !== '2d'; document.body.classList.remove('gripping'); drawSnapGlyph(null); snapGeo = null; rebuild(); };
+  document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+}
+const toV3 = p => new THREE.Vector3(p[0], curZ(), -p[1]);
+
+/* ---------- niveaux façon Revit : tableau, hauteurs d'étage, lignes de niveau en coupe et élévation ---------- */
+function sortLevels(){
+  const order = state.levels.map((l, i) => i).sort((a, b) => state.levels[a].z - state.levels[b].z);
+  if (order.every((v, i) => v === i)) return;
+  const map = {}; order.forEach((old, i) => map[old] = i);
+  state.levels = order.map(i => state.levels[i]);
+  state.els.forEach(e => { e.lvl = map[e.lvl]; if (Number.isInteger(e.top)) e.top = map[e.top]; });
+  curLvl = map[curLvl] ?? 0;
+}
+function setLevelZ(i, z, shiftAbove){
+  const d = z - state.levels[i].z; if (Math.abs(d) < 1e-6) return;
+  if (shiftAbove) state.levels.forEach((l, j) => { if (j > i) l.z = rnd(l.z + d); });
+  state.levels[i].z = rnd(z); sortLevels();
+}
+function addLevelAbove(opts = {}){
+  const last = state.levels[state.levels.length - 1], wl = state.els.filter(w => w.kind === 'wall').map(w => w.lvl), below = wl.length ? Math.max(...wl) : state.levels.length - 1;
+  const hEt = opts.h ?? (state.levels.length > 1 ? rnd(last.z - state.levels[state.levels.length - 2].z) : 2.8);
+  state.levels.push({n:`R+${state.levels.length}`, z:rnd((last?.z || 0) + hEt)}); const li = state.levels.length - 1;
+  if (opts.floor){ const ws = state.els.filter(w => w.kind === 'wall' && w.lvl === below); if (ws.length){ const s = {kind:'slab', type:'DAL-BA-20', lvl:li, off:0, bind:'walls', bindLvl:below, id:state.nextId++, p:[0, 0], q:[1, 1]}; state.els.push(s); } }
+  if (opts.walls){ const ext = state.els.filter(w => w.kind === 'wall' && w.lvl === below && compo(w.type).lot !== 'Second œuvre');
+    for (const w of ext){ const c = JSON.parse(JSON.stringify(w)); c.id = state.nextId++; c.lvl = li; c.onSlab = true; c.top = state.levels[li + 1] ? 'next' : undefined; if (c.top == null) c.h = w.h; state.els.push(c); } }
+  return li;
+}
+function openLevels(){
+  const row = (l, i) => { const next = state.levels[i + 1], n = state.els.filter(e => e.lvl === i).length;
+    return `<tr data-li="${i}"><td><input data-ln value="${esc(l.n)}" maxlength="30" aria-label="Nom"></td><td><span class="in"><input data-lz type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span></td>
+      <td>${next ? `<span class="in"><input data-lh type="number" step="0.01" min="0.5" value="${rnd(next.z - l.z)}" aria-label="Hauteur d'étage"><em>m</em></span>` : '<span class="hint">—</span>'}</td>
+      <td class="num">${n}</td><td><button class="btn sm" data-lwork${i === curLvl ? ' disabled' : ''}>${i === curLvl ? 'Courant' : 'Travailler'}</button>${state.levels.length > 1 ? `<button class="x" data-ldel title="Supprimer" aria-label="Supprimer ${esc(l.n)}">×</button>` : ''}</td></tr>`; };
+  const html = () => `<header class="ed-h"><div><span class="eyebrow">Projet</span><h3 class="ed-t2">Niveaux</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body"><p class="hint">Comme dans Revit : chaque niveau a une altitude ; les murs attachés au « niveau supérieur » et les dalles posées sur un niveau suivent quand vous le déplacez. Modifier la hauteur d'un étage décale tous les niveaux au-dessus.</p>
+      <table class="tbl lvt"><thead><tr><th>Nom</th><th>Altitude</th><th>Hauteur d'étage</th><th class="num">Él.</th><th></th></tr></thead><tbody>${state.levels.map(row).reverse().join('')}</tbody></table>
+      <div class="grp"><h3>Nouveau niveau au-dessus</h3><div class="fields"><label class="f"><span>Hauteur d'étage</span><span class="in"><input id="nlH" type="number" step="0.01" min="0.5" value="${state.levels.length > 1 ? rnd(state.levels.at(-1).z - state.levels.at(-2).z) : 2.8}"><em>m</em></span></label></div>
+        <label class="f wide rchk"><input type="checkbox" id="nlF" checked> Créer le plancher (dalle liée aux murs du niveau inférieur)</label>
+        <label class="f wide rchk"><input type="checkbox" id="nlW"> Monter aussi les murs extérieurs</label>
+        <div class="btns tight"><button class="btn primary" id="nlAdd">+ Ajouter le niveau</button></div></div></div>
+    <footer class="ed-f"><button class="btn" data-close>Fermer</button></footer>`;
+  const d = openEDlg(html(), 'small');
+  const redraw = () => { d.querySelector('.edlg-card').innerHTML = html(); d.querySelectorAll('[data-close]').forEach(b => b.onclick = closeEDlg); wire(); };
+  const done = () => { state.isSample = false; rebuild(); syncLevels(); redraw(); };
+  function wire(){
+    d.querySelector('#nlAdd').onclick = () => { const h = num(d.querySelector('#nlH').value); pushHist(); const li = addLevelAbove({h:h > 0.5 ? h : undefined, floor:d.querySelector('#nlF').checked, walls:d.querySelector('#nlW').checked});
+      // les murs du niveau inférieur restés en hauteur libre s'attachent au nouveau niveau
+      state.els.forEach(w => { if (w.kind === 'wall' && w.lvl === li - 1 && w.top == null && w.autoTop !== false && Math.abs(lvlZ(w.lvl) + w.off + w.h - lvlZ(li)) < 0.6){ w.top = 'next'; w.topOff = 0; } });
+      done(); toast(`${lvlName(li)} ajouté`); };
+    d.querySelectorAll('tr[data-li]').forEach(tr => { const i = +tr.dataset.li;
+      tr.querySelector('[data-ln]').onchange = e => { pushHist(); state.levels[i].n = e.target.value.trim().slice(0, 30) || state.levels[i].n; done(); };
+      tr.querySelector('[data-lz]').onchange = e => { const z = num(e.target.value); if (Number.isNaN(z)) return redraw(); pushHist(); setLevelZ(i, z, false); done(); };
+      const lh = tr.querySelector('[data-lh]'); if (lh) lh.onchange = e => { const h = num(e.target.value); if (!(h >= 0.5)) return redraw(); pushHist(); setLevelZ(i + 1, state.levels[i].z + h, true); done(); };
+      const w = tr.querySelector('[data-lwork]'); if (w) w.onclick = () => { curLvl = i; snapGeo = null; syncLevels(); positionGrid(); rebuild(); redraw(); };
+      const x = tr.querySelector('[data-ldel]'); if (x) x.onclick = () => { if (state.els.some(e => e.lvl === i)) return toast('Ce niveau contient des éléments : déplacez-les ou supprimez-les d\'abord.');
+        pushHist(); state.levels.splice(i, 1); state.els.forEach(e => { if (e.lvl > i) e.lvl--; if (Number.isInteger(e.top) && e.top > i) e.top--; }); curLvl = Math.min(curLvl, state.levels.length - 1); done(); };
+    });
+  }
+  wire();
+}
+/* lignes de niveau dans les coupes et élévations (à tirer pour changer l'altitude, double-clic pour renommer) */
+function buildLevelMarks(){
+  const box = $('#lvlMarks'); if (!box) return;
+  if (view !== 'sec' || !curSec){ box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = state.levels.map((l, i) => `<div class="lvm" data-li="${i}"><i></i><span class="lvm-h" title="Tirer pour changer l'altitude · double-clic pour renommer"><b>${esc(l.n)}</b><em>${nf(l.z)} m</em></span></div>`).join('') + '<button class="lvm-add btn sm" title="Ajouter un niveau au-dessus">+ Niveau</button>';
+  placeLevelMarks();
+  box.querySelector('.lvm-add').onclick = () => { pushHist(); addLevelAbove({}); state.isSample = false; rebuild(); syncLevels(); };
+  box.querySelectorAll('.lvm').forEach(m => { const i = +m.dataset.li, h = m.querySelector('.lvm-h');
+    h.ondblclick = () => levelDialog(i);
+    h.onpointerdown = ev => { if (ev.button !== 0) return; ev.preventDefault(); ev.stopPropagation(); const z0 = state.levels[i].z, y0 = ev.clientY, ppm = levelPpm(); let z = z0; pushHist();
+      const mv = e => { z = rnd(Math.round((z0 - (e.clientY - y0) / ppm) / 0.05) * 0.05); state.levels[i].z = z; m.querySelector('em').textContent = nf(z) + ' m'; placeLevelMarks(); };
+      const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); if (Math.abs(z - z0) < 1e-6){ hist.pop(); updUndo(); return; } sortLevels(); state.isSample = false; rebuild(); syncLevels(); toast(`${lvlName(Math.min(i, state.levels.length - 1))} : ${nf(z)} m`); };
+      document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); };
+  });
+}
+function levelPpm(){ const c = c4.target, a = toScreen(new THREE.Vector3(c.x, 0, c.z)), b = toScreen(new THREE.Vector3(c.x, 1, c.z)); return Math.abs(a[1] - b[1]) || 40; }
+function placeLevelMarks(){
+  const box = $('#lvlMarks'); if (!box || box.hidden) return; const c = c4.target;
+  box.querySelectorAll('.lvm').forEach(m => { const z = state.levels[+m.dataset.li].z, y = toScreen(new THREE.Vector3(c.x, z, c.z))[1]; m.style.top = y.toFixed(1) + 'px'; m.hidden = y < -20 || y > vpEl.clientHeight + 20; });
+}
+/* valeurs par défaut d'un mur ou d'un poteau qu'on dessine : posé sur le plancher, haut attaché au niveau supérieur */
+function linkDefaults(e){
+  const d = defs[e.kind === 'col' ? 'col' : 'wall'];
+  if (draw.workZ == null){ e.onSlab = true; const pts = e.kind === 'col' ? [e.c] : [V.mul(V.add(e.a, e.b), 0.5), e.a, e.b]; e.off = rnd(floorTopAt(e.lvl, pts) ?? e.off ?? 0); }
+  if (d.top === 'above' && e.kind === 'col'){ e.top = 'above'; e.topOff = 0; const z0 = lvlZ(e.lvl) + e.off, u = undersideAbove(e.c, z0); if (u != null) e.h = rnd(u - z0); }
+  else if (d.top === 'next' && state.levels[e.lvl + 1]){ e.top = 'next'; e.topOff = 0; e.h = rnd(Math.max(0.05, lvlZ(e.lvl + 1) - lvlZ(e.lvl) - e.off)); }
+  return e;
+}
+
+/* ---------- propriétés : contraintes de base et de haut ---------- */
+const lockF = h => h.replace('<input ', '<input disabled title="Calculé par la contrainte" ');
+function linkFields(el){
+  const lv = state.levels.map((l, i) => [i, l]).filter(([i]) => i > el.lvl);
+  const opts = [['', 'Hauteur libre'], ...(state.levels[el.lvl + 1] ? [['next', `Niveau supérieur (${lvlName(el.lvl + 1)})`]] : []), ...lv.slice(1).map(([i, l]) => ['L' + i, `Jusqu'au niveau ${l.n}`]), ...(el.kind === 'col' ? [['above', 'Sous l\'élément au-dessus']] : [])];
+  const cur = el.top === 'next' || el.top === 'above' ? el.top : Number.isInteger(el.top) ? 'L' + el.top : '';
+  let h = `<label class="f wide rchk"><input type="checkbox" data-f="onSlab"${el.onSlab ? ' checked' : ''}> Posé sur le plancher (suit la dalle)</label>`;
+  h += selectField('Niveau de base', 'lvl', lvlOpts(), el.lvl, false) + (el.onSlab ? lockF(field('Décalage base', 'off', el.off, 'm')) : field('Décalage base', 'off', el.off, 'm'));
+  h += selectField('Contrainte haute', 'top', opts, cur, false) + (cur ? field('Décalage haut', 'topOff', el.topOff || 0, 'm') : '');
+  h += cur ? lockF(field('Hauteur', 'h', el.h, 'm')) : field('Hauteur', 'h', el.h, 'm');
+  return h;
+}
+function slabLinkField(el){
+  const cur = el.bind === 'walls' ? (el.bindLvl != null && el.bindLvl !== el.lvl ? 'W' + el.bindLvl : 'walls') : el.bind?.room ? 'room' : '';
+  const opts = [['', 'Libre (dimensions saisies)'], ['walls', 'Sous les murs du niveau'], ['room', 'Sur la pièce'], ...state.levels.map((l, i) => [i, l]).filter(([i]) => i < el.lvl).map(([i, l]) => ['W' + i, `Sur les murs de ${l.n} (plancher haut)`])];
+  return selectField('Liée à', 'bind', opts, cur);
+}
+const onWallsField = el => `<label class="f wide rchk"><input type="checkbox" data-f="onWalls"${el.onWalls ? ' checked' : ''}> Posé sur le haut des murs (suit leur hauteur)</label>`;
+function setLinkField(el, f, t){
+  if (f === 'onSlab'){ if (t.checked) el.onSlab = true; else delete el.onSlab; }
+  else if (f === 'top'){ const v = t.value; if (!v){ delete el.top; delete el.topOff; } else { el.top = v === 'next' || v === 'above' ? v : +v.slice(1); el.topOff ??= 0; } }
+  else if (f === 'topOff'){ const v = num(t.value); if (!Number.isNaN(v)) el.topOff = v; }
+  else if (f === 'onWalls'){ if (t.checked) el.onWalls = true; else delete el.onWalls; }
+  else if (f === 'bind'){ const v = t.value; delete el.bindLvl;
+    if (!v) delete el.bind;
+    else if (v === 'walls') el.bind = 'walls';
+    else if (v[0] === 'W'){ el.bind = 'walls'; el.bindLvl = +v.slice(1); }
+    else if (v === 'room'){ const c = [rnd((el.p[0] + el.q[0]) / 2), rnd((el.p[1] + el.q[1]) / 2)]; if (roomAt(c, el.lvl)) el.bind = {room:c}; else toast('Aucune pièce fermée sous le centre de la dalle'); } }
+}
+/* projets existants : on relie ce qui se touche déjà (aucune géométrie ne bouge) */
+function autoLink(){
+  const near = (a, b) => Math.abs(a - b) < 0.02;
+  for (const el of state.els){
+    if (el.kind === 'wall' || el.kind === 'col'){
+      const pts = el.kind === 'col' ? [el.c] : [V.mul(V.add(el.a, el.b), 0.5), el.a, el.b], ft = floorTopAt(el.lvl, pts);
+      if (el.onSlab == null && (ft != null ? near(el.off || 0, ft) : !(el.off || 0))) el.onSlab = true;
+      if (el.top == null){ const zt = lvlZ(el.lvl) + (el.off || 0) + el.h, i = state.levels.findIndex((l, j) => j > el.lvl && near(l.z, zt)); if (i > 0){ el.top = i === el.lvl + 1 ? 'next' : i; el.topOff = 0; } }
+    }
+  }
+  for (const el of state.els){
+    if (el.kind === 'vol' && el.onWalls == null){
+      const fp = volPoly(el), xs = fp.map(p => p[0]), ys = fp.map(p => p[1]), x0 = Math.min(...xs) - 0.3, x1 = Math.max(...xs) + 0.3, y0 = Math.min(...ys) - 0.3, y1 = Math.max(...ys) + 0.3;
+      const touch = state.els.some(w => w.kind === 'wall' && w.lvl === el.lvl && near((w.off || 0) + w.h, el.off || 0) && [0, .25, .5, .75, 1].some(t => { const p = V.add(w.a, V.mul(V.sub(w.b, w.a), t)); return p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1; }));
+      if (touch) el.onWalls = true;
+    }
+    if (el.kind === 'roof' && el.onWalls == null){ const c = {...el}; if (roofFitWalls(c) && near(c.off, el.off || 0)) el.onWalls = true; }
+  }
+  for (const el of state.els) if (el.kind === 'col' && el.top == null){ const z0 = lvlZ(el.lvl) + (el.off || 0), u = undersideAbove(el.c, z0, el.id); if (u != null && near(u, z0 + el.h)){ el.top = 'above'; el.topOff = 0; } }
+}
+
+/* ==== 53-shapes.js ==== */
+/* ============ Formes simples et composants maison (façon SketchUp) ============
+   Outil Forme (B) : rectangle, cercle ou polygone tracé au sol ou sur une face, puis hauteur à la souris (on « tire » la forme)
+   ou au clavier. Pousser/Tirer (U) ajuste ensuite la hauteur. « Créer un composant » regroupe les formes sélectionnées
+   en une famille réutilisable (bibliothèque perso), redimensionnable par largeur / profondeur / hauteur. */
+
+const SHAPE_NAMES = {rect:'Rectangle', circ:'Cercle', poly:'Polygone'};
+const circlePts = (c, r, n = 48) => Array.from({length:n}, (_, i) => { const a = i / n * Math.PI * 2; return [Math.round((c[0] + r * Math.cos(a)) * 1000) / 1000, Math.round((c[1] + r * Math.sin(a)) * 1000) / 1000]; });
+function shapeBase(a, b){
+  const sh = defs.vol.shape || 'rect';
+  if (sh === 'circ'){ const r = V.len(V.sub(b, a)); return r < 0.01 ? null : {poly:circlePts(a, r), shape:'circ', r}; }
+  if (Math.abs(b[0] - a[0]) < 0.01 || Math.abs(b[1] - a[1]) < 0.01) return null;
+  return {rect:[a, b]};
+}
+function volFrom(base, h, off){
+  const e = {kind:'vol', mat:defs.vol.type, h:rnd(Math.max(0.01, h)), lvl:curLvl, off:rnd(off)};
+  if (base.rect){ const r = rect(base.rect[0], base.rect[1]); e.p = r[0]; e.q = r[2]; }
+  else { const xs = base.poly.map(p => p[0]), ys = base.poly.map(p => p[1]); e.p = [Math.min(...xs), Math.min(...ys)]; e.q = [Math.max(...xs), Math.max(...ys)]; e.poly = base.poly.map(p => [rnd(p[0]), rnd(p[1])]); if (base.shape) e.shape = base.shape; }
+  return e;
+}
+/* étape « tirer » : la souris règle la hauteur, clic pour valider */
+function startExtrude(base){
+  const off = offFromZ();
+  if (view === '2d'){ addEl(volFrom(base, defs.vol.h, off)); draw.workZ = null; return; }
+  const fp = base.rect ? rect(base.rect[0], base.rect[1]) : base.poly, c = polyCentroid(fp), z0 = lvlZ(curLvl) + off;
+  const p1 = toScreen(new THREE.Vector3(c[0], z0, -c[1])), p2 = toScreen(new THREE.Vector3(c[0], z0 + 1, -c[1])), ppm = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) || 1;
+  draw.ext = {base, off, p1, dir:[(p2[0] - p1[0]) / ppm, (p2[1] - p1[1]) / ppm], ppm, h:defs.vol.h, z0, c};
+  draw.start = null; draw.poly = null; previewExtrude(); setPrompt();
+}
+function previewExtrude(){
+  const x = draw.ext; if (!x) return; disposeGroup(previewGroup); disposeGroup(markGroup);
+  drawSnapGlyph(null); pieces(volFrom(x.base, x.h, x.off)).forEach(pc => previewGroup.add(pieceMesh(pc, true)));
+  const lv = $('#live'), s = toScreen(new THREE.Vector3(x.c[0], x.z0 + x.h, -x.c[1])); lv.textContent = `H ${nf(x.h)} m`; lv.style.left = s[0] + 'px'; lv.style.top = s[1] + 'px'; lv.hidden = false; dirty = true;
+}
+function endExtrude(h){ const x = draw.ext; if (!x) return; draw.ext = null; $('#live').hidden = true; if (h > 0) defs.vol.h = rnd(h); addEl(volFrom(x.base, h > 0 ? h : x.h, x.off)); draw.workZ = null; updatePreview(); setPrompt(); }
+let extDown = null;
+canvas.addEventListener('pointermove', e => {
+  if (!draw.ext || e.buttons) return; e.stopImmediatePropagation();
+  const r = canvas.getBoundingClientRect(), x = draw.ext, mx = e.clientX - r.left - x.p1[0], my = e.clientY - r.top - x.p1[1];
+  const v = (mx * x.dir[0] + my * x.dir[1]) / x.ppm; x.h = Math.max(step, SNAP.grid ? Math.round(v / step) * step : rnd(v)); previewExtrude();
+}, {capture:true});
+canvas.addEventListener('pointerdown', e => { if (draw.ext && e.button === 0){ extDown = [e.clientX, e.clientY]; } }, {capture:true});
+canvas.addEventListener('pointerup', e => {
+  if (!draw.ext || e.button !== 0 || !extDown) return; const moved = Math.hypot(e.clientX - extDown[0], e.clientY - extDown[1]); extDown = null;
+  if (moved > 7) return; e.stopImmediatePropagation(); endExtrude(draw.ext.h);
+}, {capture:true});
+$('#cmd').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !draw.ext && tool === 'vol' && (draw.poly?.length || 0) >= 3 && !e.target.value.trim()){ e.preventDefault(); e.stopImmediatePropagation(); finishShapePoly(); return; }
+  if (!draw.ext || e.key !== 'Enter') return; const v = num(e.target.value.replace(/^[hH]\s*/, ''));
+  e.preventDefault(); e.stopImmediatePropagation(); e.target.value = ''; endExtrude(v > 0 ? v : draw.ext.h);
+}, {capture:true});
+document.addEventListener('keydown', e => { if (draw.ext && e.key === 'Escape'){ e.stopImmediatePropagation(); draw.ext = null; $('#live').hidden = true; disposeGroup(previewGroup); draw.workZ = null; setPrompt(); dirty = true; } }, {capture:true});
+/* clic de l'outil Forme (appelé par placePoint) */
+function shapeClick(pt){
+  const sh = defs.vol.shape || 'rect';
+  if (sh === 'poly'){
+    draw.poly ??= [];
+    if (draw.poly.length >= 3 && V.len(V.sub(pt, draw.poly[0])) < 0.05) return finishShapePoly();
+    if (!draw.poly.length || V.len(V.sub(pt, draw.poly.at(-1))) > 0.01) draw.poly.push(pt.slice());
+    draw.start = pt; updatePreview(); setPrompt(); return;
+  }
+  if (!draw.start){ draw.start = pt; return; }
+  const b = shapeBase(draw.start, pt); if (!b){ toast(sh === 'circ' ? 'Rayon trop petit' : 'La forme doit avoir deux côtés non nuls'); return; }
+  draw.start = null; startExtrude(b);
+}
+function finishShapePoly(){ const p = draw.poly || []; if (p.length < 3){ toast('Il faut au moins 3 points'); return; } draw.start = null; const pts = p.slice(); draw.poly = null; startExtrude({poly:pts, shape:'poly'}); }
+function shapePreviewBase(){
+  const sh = defs.vol.shape || 'rect', cur = draw.cursor; if (!cur) return null;
+  if (sh === 'poly'){ const p = draw.poly || []; return p.length >= 2 ? {poly:[...p, cur]} : null; }
+  return draw.start ? shapeBase(draw.start, cur) : null;
+}
+
+/* ---------- créer un composant à partir des formes sélectionnées ---------- */
+function canMakeComp(ids){ return ids.some(id => getEl(id)?.kind === 'vol'); }
+function openMakeComp(ids){
+  const els = ids.map(getEl).filter(e => e && (e.kind === 'vol' || (e.kind === 'inst' && !e.host)));
+  if (!els.some(e => e.kind === 'vol')) return toast('Sélectionnez au moins une forme (outil Forme)');
+  const cats = ['Mobilier', 'Équipements', 'Aménagement extérieur', 'Structure', 'Industrie', 'Divers'];
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">${els.length} élément${els.length > 1 ? 's' : ''}</span><h3 class="ed-t2">Créer un composant</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body"><div class="fields"><label class="f wide"><span>Nom</span><span class="in"><input id="mcN" type="text" maxlength="40" value="Mon composant" style="font-family:var(--f-body)"></span></label>
+      <label class="f wide"><span>Catégorie</span><span class="in"><select id="mcC">${cats.map(c => `<option>${c}</option>`).join('')}</select></span></label></div>
+      <label class="f wide rchk"><input type="checkbox" id="mcR" checked> Remplacer la sélection par le composant</label>
+      <p class="hint">Le composant rejoint votre bibliothèque (onglet Bibliothèque, Composants) : vous pourrez le poser autant de fois que vous voulez, changer sa largeur, sa profondeur et sa hauteur, ou l'ouvrir dans l'éditeur de familles.</p></div>
+    <footer class="ed-f"><button class="btn" data-close>Annuler</button><button class="btn primary" id="mcOk">Créer</button></footer>`, 'small');
+  d.querySelector('#mcN').select();
+  d.querySelector('#mcOk').onclick = () => { const id = makeComponent(els, d.querySelector('#mcN').value.trim() || 'Mon composant', d.querySelector('#mcC').value, d.querySelector('#mcR').checked); closeEDlg(); if (id) toast('Composant créé : il est dans votre bibliothèque'); };
+}
+function makeComponent(els, nom, cat, replace = true){
+  const R4 = v => Math.round(v * 1e4) / 1e4, lvl = els[0].lvl;
+  const box = {x0:Infinity, y0:Infinity, x1:-Infinity, y1:-Infinity, z0:Infinity, z1:-Infinity};
+  const grow = (x, y, z0, z1) => { box.x0 = Math.min(box.x0, x); box.x1 = Math.max(box.x1, x); box.y0 = Math.min(box.y0, y); box.y1 = Math.max(box.y1, y); box.z0 = Math.min(box.z0, z0); box.z1 = Math.max(box.z1, z1); };
+  for (const e of els){
+    if (e.kind === 'vol'){ const z = lvlZ(e.lvl) + (e.off || 0); volPoly(e).forEach(p => grow(p[0], p[1], z, z + e.h)); }
+    else for (const so of instSolids(e)){ const r = so.pts ? Math.max(...so.pts.map(p => Math.hypot(p[0], p[1]))) : so.r || Math.hypot(so.w || 0, so.d || 0) / 2; grow(so.c[0] - r, so.c[1] - r, so.c[2] - (so.h || 2 * r) / 2, so.c[2] + (so.h || 2 * r) / 2); grow(so.c[0] + r, so.c[1] + r, so.c[2], so.c[2]); }
+  }
+  const W = Math.max(0.01, box.x1 - box.x0), D = Math.max(0.01, box.y1 - box.y0), H = Math.max(0.01, box.z1 - box.z0);
+  const parts = [];
+  for (const e of els){
+    if (e.kind === 'vol'){ const z = lvlZ(e.lvl) + (e.off || 0) - box.z0;
+      parts.push({s:'ext', m:e.mat, pts:volPoly(e).map(p => [R4((p[0] - box.x0) / W), R4((p[1] - box.y0) / D)]), z:`h*${R4(z / H)}`, h:`h*${R4(e.h / H)}`}); }
+    else { const fr = instFrame(e); parts.push({fam:e.fam, type:e.type | 0, x:`w*${R4((fr.o[0] - box.x0) / W - 0.5)}`, y:`d*${R4((fr.o[1] - box.y0) / D - 0.5)}`, z:`h*${R4((fr.z - box.z0) / H)}`, rot:String(e.rot || 0), p:{...(e.params || {})}}); }
+  }
+  const F = {nom:nom.slice(0, 40), cat, host:'free', made:'formes', params:{w:{v:rnd(W), label:'Largeur', unit:'m'}, d:{v:rnd(D), label:'Profondeur', unit:'m'}, h:{v:rnd(H), label:'Hauteur', unit:'m'}}, types:[{nom:'Standard', p:{}}], parts};
+  const fid = 'F-' + uid8(); USER_LIB.fams[fid] = F; saveUserLib();
+  pushHist();
+  const inst = {kind:'inst', fam:fid, type:0, params:{}, c:[rnd((box.x0 + box.x1) / 2), rnd((box.y0 + box.y1) / 2)], rot:0, lvl, off:rnd(box.z0 - lvlZ(lvl))};
+  if (replace) removeEls(els.map(e => e.id));
+  inst.id = state.nextId++; state.els.push(inst); state.isSample = false; embedUsedLib();
+  sel = replace ? inst.id : sel; multi = replace ? [] : multi; rebuild(); fxCache?.clear?.();
+  return fid;
 }
 
 /* ==== 60-panel.js ==== */
@@ -5720,7 +6150,7 @@ function renderProps(){
   const ids = selIds();
   if (ids.length > 1){
     return `<div class="ph"><h2>${ids.length} éléments sélectionnés</h2></div><p class="hint">Déplacer (<kbd>G</kbd>), copier (<kbd>C</kbd>), pivoter (<kbd>O</kbd>) ou supprimer (<kbd>Suppr</kbd>) la sélection. Maj + clic pour ajouter ou retirer un élément.</p>
-      <div class="btns"><button class="btn" data-act="tool-move">Déplacer</button><button class="btn" data-act="tool-copy">Copier</button><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn" data-act="tool-mirror">Symétrie</button><button class="btn" data-act="tolevel">Copier vers un niveau</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+      <div class="btns"><button class="btn" data-act="tool-move">Déplacer</button><button class="btn" data-act="tool-copy">Copier</button><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn" data-act="tool-mirror">Symétrie</button><button class="btn" data-act="tolevel">Copier vers un niveau</button>${canMakeComp(ids) ? '<button class="btn primary" data-act="mkcomp">Créer un composant…</button>' : ''}<button class="btn danger" data-act="del">Supprimer</button></div>`;
   }
   const el = sel ? getEl(sel) : null;
   if (!el){
@@ -5731,7 +6161,7 @@ function renderProps(){
       ${roomsCard()}
       ${glazingCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
-        <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button></div></div>
+        <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
         <dt><code>4,20</code></dt><dd>Longueur dans la direction du curseur</dd>
         <dt><code>4,2&lt;90</code></dt><dd>Longueur et angle (0° = est)</dd>
@@ -5747,8 +6177,7 @@ function renderProps(){
   if (el.kind === 'wall'){
     const {L} = wallAxis(el), layers = wallLayers(el), T = wallT(el), ops = wallOpenings(el);
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'wall').map(([k, t]) => [k, t.nom]), el.type);
-    h += field('Longueur', 'len', L, 'm') + field('Hauteur', 'h', el.h, 'm');
-    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage base', 'off', el.off, 'm');
+    h += field('Longueur', 'len', L, 'm') + linkFields(el);
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
     h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
     h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
@@ -5762,7 +6191,7 @@ function renderProps(){
     h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
     if (!poly) h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false);
     h += field('Débord', 'rov', el.ov ?? 0.4, 'm');
-    h += selectField('Posée sur les murs du niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm');
+    h += selectField('Posée sur les murs du niveau', 'lvl', lvlOpts(), el.lvl, false) + (el.onWalls ? lockF(field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) : field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) + onWallsField(el);
     if (!poly) h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
     h += selectField('Plafond', 'rceil', Object.entries(ROOF_CEIL), el.ceil || '', false);
     h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
@@ -5786,7 +6215,8 @@ function renderProps(){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers;
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
-    h += field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
+    h += slabLinkField(el);
+    { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(Lx * Ly)} m²</dd><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
@@ -5795,15 +6225,16 @@ function renderProps(){
   } else if (el.kind === 'vol'){
     const r = rect(el.p, el.q);
     h += matSelect('Matériau', 'mat', el.mat);
-    h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm', '0.001') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm', '0.001') + field('Hauteur', 'h', el.h, 'm', '0.001');
-    h += field('Origine x', 'px', r[0][0], 'm', '0.001') + field('Origine y', 'py', r[0][1], 'm', '0.001') + field('Base z', 'off', el.off, 'm', '0.001');
-    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false);
+    h += (el.shape === 'circ' ? field('Diamètre', 'vdia', r[1][0] - r[0][0], 'm', '0.001') : field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm', '0.001') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm', '0.001')) + field('Hauteur', 'h', el.h, 'm', '0.001');
+    h += field('Origine x', 'px', r[0][0], 'm', '0.001') + field('Origine y', 'py', r[0][1], 'm', '0.001') + (el.onWalls ? lockF(field('Base z', 'off', el.off, 'm', '0.001')) : field('Base z', 'off', el.off, 'm', '0.001'));
+    h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + onWallsField(el);
+    if (el.poly) h += `<div class="f wide"><span>Forme</span><div class="site-v">${el.shape === 'circ' ? 'Cercle' : `Polygone de ${el.poly.length} côtés`} · ${nf(area(el.poly))} m² au sol</div></div>`;
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse volumique</dt><dd>${n0(mat(el.mat).rho)} kg/m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
-      <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
+      <div class="btns"><button class="btn primary" data-act="mkcomp">Créer un composant…</button><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'col'){
     h += matSelect('Matériau', 'mat', el.mat);
-    h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Hauteur', 'h', el.h, 'm') + field('Base z', 'off', el.off, 'm');
-    h += field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, true);
+    h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm');
+    h += linkFields(el);
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd class="big">${n0(m)} kg</dd></dl></div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'inst'){
@@ -5935,7 +6366,7 @@ $('#pbody').addEventListener('change', e => {
   if (t.matches('[data-libcat]')){ libCat = t.value; return renderPanel(); }
   if (t.matches('[data-rset]')) return onRenderInput(t, true);
   if (t.dataset.lvn != null){ pushHist(); state.levels[+t.dataset.lvn].n = t.value.trim().slice(0, 30) || 'Niveau'; rebuild(); syncLevels(); return; }
-  if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; rebuild(); syncLevels(); return; }
+  if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; sortLevels(); rebuild(); syncLevels(); return; }
   const f = t.dataset.f, fp = t.dataset.fp;
   if (f === 'shab'){ const v = num(t.value); pushHist(); state.shab = v > 0 ? Math.round(v * 10) / 10 : 0; state.isSample = false; renderPanel(); return; }
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
@@ -5948,24 +6379,30 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'rceil' || f === 'rgtype'){ pushHist(); if (f === 'rceil') el.ceil = t.value; else el.gableType = t.value; state.isSample = false; rebuild(); return; }
   if (f === 'lvl' && el.kind === 'roof'){ pushHist(); el.lvl = +t.value; roofFitWalls(el); state.isSample = false; rebuild(); syncLevels?.(); return; }
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
+  if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
   const pos = x => Math.max(0.001, x);
   if (f === 'rshape') el.shape = val; else if (f === 'rpitch') el.pitch = clamp(val, 3, 70); else if (f === 'rdir') el.dir = val; else if (f === 'rov') el.ov = clamp(val, 0, 2); else if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
   else if (f === 'ftype'){ el.type = +val; el.params = {}; }
-  else if (f === 'h') el.h = pos(val); else if (f === 'off') el.off = val;
+  else if (f === 'h'){ el.h = pos(val); delete el.top; } else if (f === 'off'){ el.off = val; delete el.onSlab; delete el.onWalls; }
   else if (f === 't'){ const w = getEl(el.host); if (w){ const c = famCut(el), L = wallAxis(w).L; el.t = rnd(clamp(val, c.w / 2, L - c.w / 2)); } }
   else if (f === 'icx') el.c = [val, el.c[1]]; else if (f === 'icy') el.c = [el.c[0], val]; else if (f === 'irot') el.rot = val % 360;
   else if (el.kind === 'wall'){
+    const before = wallEnds([el.id]);
     if (f === 'bulge'){ const c = V.len(V.sub(el.b, el.a)); el.bulge = Math.abs(val) < 0.005 ? 0 : clamp(val, -c * 2, c * 2); if (el.bulge && wallOpenings(el).length) toast('Les ouvertures de ce mur sont ignorées tant qu\'il est courbe'); }
     else if (f === 'len'){ const {u} = wallAxis(el); el.b = [rnd(el.a[0] + u[0] * pos(val)), rnd(el.a[1] + u[1] * pos(val))]; }
     else if (f === 'ax') el.a = [val, el.a[1]]; else if (f === 'ay') el.a = [el.a[0], val];
     else if (f === 'bx') el.b = [val, el.b[1]]; else if (f === 'by') el.b = [el.b[0], val];
     if (V.len(V.sub(el.a, el.b)) < 0.01){ state = JSON.parse(hist.pop()); updUndo(); renderPanel(); toast('Un mur doit mesurer au moins 1 cm'); return; }
+    followJoins(before);
   } else if (el.kind === 'slab' || el.kind === 'vol' || el.kind === 'roof'){
     const r = rect(el.p, el.q); let [x0, y0] = r[0], lx = r[1][0] - x0, ly = r[2][1] - y0;
     if (f === 'lx') lx = pos(val); else if (f === 'ly') ly = pos(val); else if (f === 'px') x0 = val; else if (f === 'py') y0 = val;
+    if (['lx', 'ly', 'px', 'py'].includes(f)) delete el.bind;
+    if (f === 'vdia'){ lx = ly = pos(val); }
+    if (el.poly){ const [ox, oy] = r[0], kx = lx / ((r[1][0] - ox) || 1), ky = ly / ((r[2][1] - oy) || 1); el.poly = el.poly.map(p => [rnd(x0 + (p[0] - ox) * kx), rnd(y0 + (p[1] - oy) * ky)]); }
     el.p = [x0, y0]; el.q = [rnd(x0 + lx), rnd(y0 + ly)];
   } else if (el.kind === 'col'){
     if (f === 'w') el.w = pos(val); else if (f === 'd') el.d = pos(val); else if (f === 'cx') el.c = [val, el.c[1]]; else if (f === 'cy') el.c = [el.c[0], val];
@@ -6004,6 +6441,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'fam-new') openFamEditor(null);
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
+  else if (act === 'levels') openLevels();
+  else if (act === 'mkcomp') openMakeComp(selIds());
   else if (act === 'lvl-add'){ pushHist(); const last = state.levels[state.levels.length - 1]; state.levels.push({n:`R+${state.levels.length}`, z:rnd((last?.z || 0) + 2.8)}); rebuild(); syncLevels(); }
   else if (act === 'csv') doExport('csv');
   else onRenderClick(act, b);
@@ -6266,12 +6705,12 @@ function openFamEditor(id, instId){
   const cell = (i, k, v, size = 6) => `<input data-q="${i}" data-k="${k}" value="${esc(v ?? '')}" class="mono" size="${size}" aria-label="${k}">`;
   const renderParts = () => {
     d.querySelector('#fmParts').innerHTML = F.parts.map((p, i) => `<div class="fp">
-      <div class="fp-h"><select data-q="${i}" data-k="s"><option value="box"${!p.fam && (p.s || 'box') === 'box' ? ' selected' : ''}>Boîte</option><option value="cyl"${!p.fam && p.s === 'cyl' ? ' selected' : ''}>Cylindre</option><option value="sph"${!p.fam && p.s === 'sph' ? ' selected' : ''}>Sphère</option><option value="fam"${p.fam ? ' selected' : ''}>Famille</option></select>
+      <div class="fp-h"><select data-q="${i}" data-k="s"><option value="box"${!p.fam && (p.s || 'box') === 'box' ? ' selected' : ''}>Boîte</option><option value="cyl"${!p.fam && p.s === 'cyl' ? ' selected' : ''}>Cylindre</option><option value="sph"${!p.fam && p.s === 'sph' ? ' selected' : ''}>Sphère</option>${p.s === 'ext' ? '<option value="ext" selected>Profil extrudé</option>' : ''}<option value="fam"${p.fam ? ' selected' : ''}>Famille</option></select>
         ${p.fam ? `<select data-q="${i}" data-k="fam">${famOpts(p.fam)}</select>` : `<select data-q="${i}" data-k="m">${mopts.replace(`value="${esc(p.m)}"`, `value="${esc(p.m)}" selected`)}</select>`}
         <button class="x" data-qx="${i}" aria-label="Supprimer la pièce">×</button></div>
       <div class="fp-g"><label>x ${cell(i, 'x', p.x)}</label><label>y ${cell(i, 'y', p.y)}</label><label>z ${cell(i, 'z', p.z)}</label>
         ${p.fam ? `<label>rot ${cell(i, 'rot', p.rot)}</label><label class="w2">param. ${cell(i, 'pp', Object.entries(p.p || {}).map(([a, b]) => `${a}=${b}`).join('; '), 14)}</label>`
-          : p.s === 'cyl' ? `<label>r ${cell(i, 'r', p.r)}</label><label>h ${cell(i, 'h', p.h)}</label>` : p.s === 'sph' ? `<label>r ${cell(i, 'r', p.r)}</label>` : `<label>w ${cell(i, 'w', p.w)}</label><label>d ${cell(i, 'd', p.d)}</label><label>h ${cell(i, 'h', p.h)}</label>`}
+          : p.s === 'ext' ? `<label>h ${cell(i, 'h', p.h)}</label><span class="hint">profil de ${(p.pts || []).length} points (dessiné à l'outil Forme)</span>` : p.s === 'cyl' ? `<label>r ${cell(i, 'r', p.r)}</label><label>h ${cell(i, 'h', p.h)}</label>` : p.s === 'sph' ? `<label>r ${cell(i, 'r', p.r)}</label>` : `<label>w ${cell(i, 'w', p.w)}</label><label>d ${cell(i, 'd', p.d)}</label><label>h ${cell(i, 'h', p.h)}</label>`}
         <label>n ${cell(i, 'n', p.n, 4)}</label><label>si ${cell(i, 'if', p.if, 8)}</label></div></div>`).join('');
   };
   let tmr = 0;
@@ -6423,7 +6862,7 @@ function pumpThumbs(){
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
 const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
 let treeQuery = '';
-const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['stair', 'Escaliers'], ['col', 'Poteaux'], ['vol', 'Volumes'], ['inst', 'Composants et mobilier']];
+const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['stair', 'Escaliers'], ['col', 'Poteaux'], ['vol', 'Formes et volumes'], ['inst', 'Composants et mobilier']];
 const TICON = {
   wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', roof:'M2 12l10-7 10 7M5 10v10h14V10', stair:'M3 20h5v-4h4v-4h4V8h5M3 20V9', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
   inst:'M4 11h16v4H4zM6 15v5M18 15v5', open:'M4 4h16v16H4zM12 4v16M4 12h16', door:'M7 21V3h10v18M14 12h.01', lvl:'M3 17h18M3 12h18M3 7h18', proj:'M3 21V9l9-6 9 6v12zM9 21v-7h6v7',
@@ -6500,7 +6939,7 @@ function renderProjectTab(){
 function treeMenuItems(key){
   if (key === 'P') return [{k:'site', t:'Lieu, climat, bruit et terrain…', s:'Adresse, zone climatique, bruit, relief NGF, environnement'}, '-', {k:'showall', t:'Tout afficher', s:'Rétablit les éléments et niveaux masqués'}, {k:'lvl-add', t:'Ajouter un niveau'}, {k:'fit', t:'Tout voir'}];
   if (/^L\d+$/.test(key)){ const li = +key.slice(1), on = hiddenLvls.has(li);
-    return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
+    return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'levels', t:'Gérer les niveaux…', s:'Altitudes, hauteurs d\'étage, nouveau niveau avec plancher'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
   if (key.includes('|')) return [{k:'selall', t:'Sélectionner toute la catégorie'}, {k:'chide', t:'Masquer la catégorie'}, {k:'cshow', t:'Afficher la catégorie'}, {k:'cframe', t:'Centrer la vue'}];
   const el = getEl(+key.slice(1)); if (!el) return [];
   const it = [{k:'frame', t:'Centrer la vue'}, {k:'hide', t:hiddenIds.has(el.id) ? 'Afficher' : 'Masquer'}, {k:'iso', t:'Isoler', s:'Masquer tout le reste'}, '-',
@@ -6510,6 +6949,7 @@ function treeMenuItems(key){
     if (forcedPerf(el)) it.push({k:'unforce', t:'Revenir aux valeurs calculées', s:'Supprime le U / R forcé'});
     if (el.kind === 'wall') it.push({k:'flip', t:'Inverser les faces'}, {k:'opening', t:'+ Porte ou fenêtre'});
   }
+  if (el.kind === 'vol') it.push({k:'mkcomp', t:'Créer un composant…', s:'Regrouper les formes sélectionnées en un composant réutilisable'}, {k:'tpush', t:'Pousser / Tirer'});
   if (el.kind === 'inst') it.push({k:'famedit', t:'Modifier la famille…'}, ...(el.host ? [{k:'iflip', t:'Côté d\'ouverture'}] : [{k:'rot90', t:'Pivoter de 90°'}]));
   it.push('-', {k:'dup', t:'Dupliquer'}, {k:'del', t:'Supprimer', danger:true});
   return it;
@@ -6543,6 +6983,9 @@ function runTreeAction(k, key){
     case 'solo': hiddenLvls.clear(); state.levels.forEach((_, i) => { if (i !== li) hiddenLvls.add(i); }); return re();
     case 'lhide': hiddenLvls.has(li) ? hiddenLvls.delete(li) : hiddenLvls.add(li); return re();
     case 'lrename': return levelDialog(li);
+    case 'levels': return openLevels();
+    case 'mkcomp': { const ids = selIds().includes(el?.id) ? selIds() : [el.id]; return openMakeComp(ids); }
+    case 'tpush': select(el.id); return setTool('push');
     case 'ldel': if (state.els.some(x => x.lvl === li)) return toast('Ce niveau contient des éléments : déplacez-les ou supprimez-les d\'abord.');
       pushHist(); state.levels.splice(li, 1); state.els.forEach(x => { if (x.lvl > li) x.lvl--; }); curLvl = Math.min(curLvl, state.levels.length - 1); rebuild(); syncLevels(); return;
     case 'selall': { const l = catEls(key); if (!l.length) return; sel = l[0].id; multi = l.slice(1).map(e => e.id); applySel(); buildLabels(); renderPanel(); return; }
@@ -6574,7 +7017,7 @@ function levelDialog(li){
     <div class="ed-body"><div class="fields"><label class="f wide"><span>Nom</span><span class="in"><input id="lvN" type="text" value="${esc(L.n)}" maxlength="30" style="font-family:var(--f-body)"></span></label>
     <label class="f wide"><span>Altitude du plancher</span><span class="in"><input id="lvZ" type="number" step="0.01" value="${rnd(L.z)}"><em>m</em></span></label></div></div>
     <footer class="ed-f"><button class="btn" data-close>Annuler</button><button class="btn primary" id="lvOk">Enregistrer</button></footer>`, 'small');
-  d.querySelector('#lvOk').onclick = () => { const z = num(d.querySelector('#lvZ').value); pushHist(); L.n = d.querySelector('#lvN').value.trim().slice(0, 30) || L.n; if (!Number.isNaN(z)) L.z = z; closeEDlg(); rebuild(); syncLevels(); };
+  d.querySelector('#lvOk').onclick = () => { const z = num(d.querySelector('#lvZ').value); pushHist(); L.n = d.querySelector('#lvN').value.trim().slice(0, 30) || L.n; if (!Number.isNaN(z)) L.z = z; sortLevels(); closeEDlg(); rebuild(); syncLevels(); };
 }
 
 /* ---------- ajuster l'isolant : épaisseur, λ, objectif U / R, valeurs forcées ---------- */
@@ -7146,7 +7589,7 @@ function dqeItems(){
       const M = mat(el.mat), v = el.w * el.d * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : '02';
       add(`C|${el.mat}|${n0(el.w * 100)}x${n0(el.d * 100)}`, lot, `Poteau ${lc(M.nom)}`, `section ${n0(el.w * 100)} × ${n0(el.d * 100)} cm`, 'u', 1, el.lvl, lot === '11' ? Math.round(kg * 4.5) : lot === '03' ? Math.round(v * 1400 + 60) : Math.round(v * 600 + 120), kg, kg * (M.gwp || 0));
     } else if (el.kind === 'vol'){
-      const M = mat(el.mat), r = rect(el.p, el.q), v = area(r) * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
+      const M = mat(el.mat), r = volPoly(el), v = area(r) * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
       add(`V|${el.mat}`, lot, `Ouvrage en ${lc(M.nom)}`, 'volume', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
     } else if (el.kind === 'inst'){
       const F = fam(el.fam), lot = famLotDqe(F, el); if (!lot) continue;
@@ -7662,7 +8105,7 @@ function openSection(def){
   Object.assign(orthoS, {left:-10 * aspect, right:10 * aspect, top:10, bottom:-10}); orthoS.zoom = Math.min(20 / hM, 20 * aspect / widthM); orthoS.updateProjectionMatrix(); c4.update();
   if (tool !== 'select') setTool('select');
   setView('sec'); renderer.clippingPlanes = secClip();
-  renderSecBar(); dirty = true;
+  renderSecBar(); buildLevelMarks(); dirty = true;
 }
 function renderSecBar(){
   const bar = $('#secBar'); if (!curSec){ bar.hidden = true; return; }
@@ -7777,6 +8220,7 @@ function buildIFC(){
   };
   const solidItem = (so, zRef) => {
     const ref = E(`IFCDIRECTION((${R(Math.cos(so.rz || 0))},${R(Math.sin(so.rz || 0))},0.))`);
+    if (so.s === 'ext') return extrudePoly(so.pts.map(p => { const q = V.rot(p, so.rz || 0); return [so.c[0] + q[0], so.c[1] + q[1]]; }), so.c[2] - so.h / 2 - zRef, so.h);
     if (so.s === 'sph') return E(`IFCSPHERE(${E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(so.c[2] - zRef)}))`)},$,$)`)},${R(so.r)})`);
     const h = so.s === 'cyl' ? so.h : so.h, base = so.c[2] - h / 2 - zRef;
     const pos = E(`IFCAXIS2PLACEMENT3D(${E(`IFCCARTESIANPOINT((${R(so.c[0])},${R(so.c[1])},${R(base)}))`)},${Z},${ref})`);
@@ -7812,7 +8256,7 @@ function buildIFC(){
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }
     else if (el.kind === 'slab'){ const T = slabT(el); item = extrudePoly(rect(el.p, el.q), (el.off || 0), T); ent = 'IFCSLAB'; desc = compo(el.type).nom; matSel = lset(el.type, compo(el.type).nom, compo(el.type).layers); }
-    else if (el.kind === 'vol'){ item = extrudePoly(rect(el.p, el.q), el.off || 0, el.h); ent = 'IFCBUILDINGELEMENTPROXY'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
+    else if (el.kind === 'vol'){ item = extrudePoly(volPoly(el), el.off || 0, el.h); ent = 'IFCBUILDINGELEMENTPROXY'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     else { item = extrudePoly(colPoly(el), el.off || 0, el.h); ent = 'IFCCOLUMN'; desc = mat(el.mat).nom; matSel = imat(el.mat); }
     const epl = E(`IFCLOCALPLACEMENT(${st.pl},${AX})`);
     const pre = {IFCWALL:'.STANDARD.', IFCSLAB:'.FLOOR.', IFCCOLUMN:'.COLUMN.', IFCBUILDINGELEMENTPROXY:'.NOTDEFINED.'}[ent];
@@ -7918,7 +8362,7 @@ function makeZip(files){
   [[0,0x06054b50,4],[4,0,2],[6,0,2],[8,files.length,2],[10,files.length,2],[12,cs,4],[16,off,4],[20,0,2]].forEach(([o,v,s]) => s === 4 ? end.setUint32(o,v,true) : end.setUint16(o,v,true));
   return new Blob([...parts, ...cen, end], {type:'application/zip'});
 }
-const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:3}, null, 2); };
+const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:4}, null, 2); };
 async function doExport(kind, arg){
   if (!window.SPAccess?.canExport){ window.SPLicense?.prompt('export'); return; }
   window.SPLicense?.usage?.();   // rappel d'usage (non commercial) une fois par session
@@ -8056,7 +8500,7 @@ function ctxElementItems(el, touch){
   /* ce qui n'existe que dans le plan : agir sur le niveau et la catégorie de l'élément */
   const extra = [];
   if (el.lvl !== curLvl) extra.push({label:`Travailler sur ${lvlName(el.lvl)}`, onClick:() => runTreeAction('work', 'L' + el.lvl)});
-  if (el.kind !== 'inst') extra.push({label:`Sélectionner les ${({wall:'murs', slab:'dalles', roof:'toitures', stair:'escaliers', vol:'volumes', col:'poteaux'})[el.kind] || 'éléments'} de ${lvlName(el.lvl)}`, onClick:() => runTreeAction('selall', `L${el.lvl}|${el.kind}`)});
+  if (el.kind !== 'inst') extra.push({label:`Sélectionner les ${({wall:'murs', slab:'dalles', roof:'toitures', stair:'escaliers', vol:'formes', col:'poteaux'})[el.kind] || 'éléments'} de ${lvlName(el.lvl)}`, onClick:() => runTreeAction('selall', `L${el.lvl}|${el.kind}`)});
   extra.push({label:`Masquer ${lvlName(el.lvl)}`, onClick:() => runTreeAction('lhide', 'L' + el.lvl)});
   const at = items.findIndex(i => i.label === 'Dupliquer'); items.splice(at > 0 ? at - 1 : items.length, 0, {sep:true}, ...extra);
   return {items, title:ctxNameOf(el)};
@@ -8065,7 +8509,7 @@ function ctxElementItems(el, touch){
 function ctxGroundItems(){
   const items = [], hid = hiddenIds.size + hiddenLvls.size;
   items.push({label:'Niveau de travail', hint:lvlName(curLvl), sub:state.levels.map((L, i) => ({label:`${L.n}  ·  ${nf(L.z)} m`, checked:i === curLvl, onClick:() => runTreeAction('work', 'L' + i)}))});
-  items.push({label:'Ajouter un niveau', onClick:() => runTreeAction('lvl-add', 'P')});
+  items.push({label:'Ajouter un niveau', onClick:() => runTreeAction('lvl-add', 'P')}, {label:'Gérer les niveaux…', onClick:openLevels});
   items.push({sep:true}, {label:'Tout voir', onClick:fit});
   if (hid) items.push({label:`Tout afficher (${hid} masqué${hid > 1 ? 's' : ''})`, onClick:() => runTreeAction('showall', 'P')});
   items.push({sep:true}, {label:'Annuler', hint:'Ctrl+Z', disabled:!hist.length, onClick:undo}, {label:'Refaire', hint:'Ctrl+Maj+Z', disabled:!redoS.length, onClick:redo});
@@ -8168,6 +8612,7 @@ function setView(v){
   const prev = view; view = v;
   c3.enabled = v === '3d' || v === 'render'; c2.enabled = v === '2d'; c4.enabled = v === 'sec'; renderer.clippingPlanes = v === 'sec' ? secClip() : [];
   if (v !== 'sec') $('#secBar').hidden = true;
+  if (typeof buildLevelMarks === 'function') setTimeout(buildLevelMarks, 0);
   $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === v));
   document.body.dataset.mode = v;
   if (v === '2d'){ c2.target.set(c3.target.x, 0, c3.target.z); ortho.position.set(c3.target.x, 200, c3.target.z); c2.update(); }
@@ -8182,13 +8627,15 @@ $$('[data-style]').forEach(b => { if (!b.closest('#pbody')) b.addEventListener('
 $$('[data-cam]').forEach(b => b.addEventListener('click', () => b.dataset.cam === 'fit' ? fit() : camPreset(b.dataset.cam)));
 $('#undo').addEventListener('click', undo); $('#redo').addEventListener('click', redo);
 $$('.tool').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
-function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${nf(l.z)} m</option>`).join(''); }
-$('#lvlSel').addEventListener('change', e => { curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
+function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${nf(l.z)} m</option>`).join('') + '<option value="manage">Gérer les niveaux…</option>'; }
+$('#lvlSel').addEventListener('change', e => { if (e.target.value === 'manage'){ e.target.value = curLvl; openLevels(); return; } curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
 $('#wArcIn').addEventListener('change', e => { defs.wall.arc = e.target.value === '1'; defs.wall.rect = e.target.value === 'r'; cancelDraw(); setPrompt(); });
 $('#sModeIn').addEventListener('change', e => { defs.slab.mode = e.target.value; cancelDraw(); setPrompt(); updatePreview(); });
 $('#mKeepIn').addEventListener('change', e => { defs.mirror.keep = !!e.target.value; });
+$('#shapeIn').addEventListener('change', e => { defs.vol.shape = e.target.value; cancelDraw(); setPrompt(); updatePreview(); });
+$('#topIn').addEventListener('change', e => { if (defs[tool]) defs[tool].top = e.target.value; syncHud(); updatePreview(); });
 $('#sTypeIn').addEventListener('change', e => { defs.stair.st = e.target.value; updatePreview(); });
 $('#sSideIn').addEventListener('change', e => { defs.stair.side = e.target.value; updatePreview(); });
 $('#sMatIn').addEventListener('change', e => { defs.stair.mat = e.target.value; updatePreview(); });
@@ -8199,7 +8646,7 @@ $('#stepSel').addEventListener('change', e => { step = +e.target.value; position
 $('#cmdOk').addEventListener('click', runCmd);
 $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!e.target.value.trim() && tool === 'wall' && draw.start) cancelDraw(); else runCmd(); } else if (e.key === 'Escape'){ e.target.value = ''; e.target.blur(); cancelDraw(); } });
 $('#endBtn').addEventListener('click', cancelDraw);
-$('#closeBtn').addEventListener('click', () => { if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
+$('#closeBtn').addEventListener('click', () => { if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (tool === 'vol' && draw.poly?.length) return finishShapePoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
 
 /* barre d'état : accroches (façon AutoCAD) */
 function syncStatus(){
@@ -8241,6 +8688,7 @@ document.addEventListener('keydown', e => {
   if (k === ' ' && tool === 'comp'){ e.preventDefault(); defs.comp.rot = (defs.comp.rot + 90) % 360; updatePreview(); return; }
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
+  if (k === 'Enter' && tool === 'vol' && draw.poly?.length >= 3 && !draw.ext){ finishShapePoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
   const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
@@ -8326,7 +8774,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};

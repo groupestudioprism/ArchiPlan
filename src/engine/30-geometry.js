@@ -73,6 +73,7 @@ function famSolids(F, scope, depth = 0){
       const m = part.m || 'bois';
       if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz:0, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
       else if (part.s === 'cone'){ const r = Math.max(0.001, fx(part.r, s)), r2 = Math.max(0, fx(part.r2 ?? 0, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cone', m, c:[x, y, z + h/2], r, r2, h, rz:0}); }
+      else if (part.s === 'ext'){ const W = s.w ?? 1, Dd = s.d ?? 1, h = fx(part.h ?? 1, s), P = (part.pts || []).map(([u, v]) => [x + (u - 0.5) * W, y + (v - 0.5) * Dd]); if (P.length >= 3 && h > 1e-4){ const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cy = P.reduce((a, p) => a + p[1], 0) / P.length; out.push({s:'ext', m, c:[cx, cy, z + h / 2], pts:P.map(p => [p[0] - cx, p[1] - cy]), h, rz:0}); } }
       else if (part.s === 'sph'){ const r = Math.max(0.001, fx(part.r, s)); out.push({s:'sph', m, c:[x, y, z + r], r, rz:0}); }
       else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4) out.push({s:'box', m, c:[x + w/2, y + d/2, z + h/2], w, d, h, rz:0}); }
     }
@@ -94,10 +95,10 @@ function instSolids(el){
   const mir = fr.sx * fr.sy;
   return famSolids(F, famScope(F, el)).map(so => {
     const lp = [so.c[0] * fr.sx, so.c[1] * fr.sy], wp = V.add(fr.o, V.rot(lp, fr.ang));
-    return {...so, c:[wp[0], wp[1], so.c[2] + fr.z], rz:fr.ang + mir * (so.rz || 0), lot:famLot(F)};
+    return {...so, ...(so.pts ? {pts:so.pts.map(p => [p[0] * fr.sx, p[1] * fr.sy])} : {}), c:[wp[0], wp[1], so.c[2] + fr.z], rz:fr.ang + mir * (so.rz || 0), lot:famLot(F)};
   });
 }
-const solidVol = so => so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : so.s === 'cone' ? Math.PI * so.h * (so.r * so.r + so.r * so.r2 + so.r2 * so.r2) / 3 : 4/3 * Math.PI * so.r ** 3;
+const solidVol = so => so.s === 'ext' ? area(so.pts) * so.h : so.s === 'box' ? so.w * so.d * so.h : so.s === 'cyl' ? Math.PI * so.r * so.r * so.h : so.s === 'cone' ? Math.PI * so.h * (so.r * so.r + so.r * so.r2 + so.r2 * so.r2) / 3 : 4/3 * Math.PI * so.r ** 3;
 
 /* Ouvertures portées par un mur : intervalles le long de l'axe et en hauteur */
 function wallOpenings(w, els = state.els){
@@ -155,7 +156,7 @@ function pieces(el, els = state.els){
     const poly = rect(el.p, el.q), C = compo(el.type), holes = slabHoles(el), net = area(poly) - holes.reduce((s, h) => s + area(h), 0); let top = z + slabT(el);
     for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot, ...(holes.length ? {holes, vol:net * e} : {})}); top -= e; }
   } else if (el.kind === 'vol'){
-    out.push({mat:el.mat, poly:rect(el.p, el.q), base:z, h:el.h, lot:'Industrie'});
+    out.push({mat:el.mat, poly:volPoly(el), base:z, h:el.h, lot:'Industrie'});
   } else if (el.kind === 'col'){
     out.push({mat:el.mat, poly:colPoly(el), base:z, h:el.h, lot:'Gros œuvre'});
   }
@@ -172,6 +173,7 @@ function elStats(el){
 function elKeyPoints(el){
   if (el.kind === 'wall' && wallArc(el)){ const P = arcPts(el, 0); return {ends:[el.a, el.b], segs:P.slice(1).map((p, i) => [P[i], p]), mids:[P[Math.floor(P.length / 2)]], faces:[]}; }
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
+  if (el.kind === 'vol' && el.poly){ const r = el.poly, segs = r.map((p, i) => [p, r[(i + 1) % r.length]]), circ = el.shape === 'circ'; return {ends:circ ? [] : r, segs, mids:circ ? [] : segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[polyCentroid(r)]}; }
   if (el.kind === 'slab' || el.kind === 'vol'){ const r = rect(el.p, el.q); const segs = r.map((p, i) => [p, r[(i + 1) % 4]]); return {ends:r, segs, mids:segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[V.mul(V.add(r[0], r[2]), .5)]}; }
   if (el.kind === 'stair'){ const F = stairFootprint(el); if (!F) return {ends:[], segs:[], mids:[]}; const r = [[F.x0, F.y0], [F.x1, F.y0], [F.x1, F.y1], [F.x0, F.y1]]; return {ends:[el.c, ...r], segs:r.map((p, i) => [p, r[(i + 1) % 4]]), mids:[[(F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2]]}; }
   if (el.kind === 'roof'){ const G = roofGeom(el), r = G.wall, o = G.outline, segs = [...r.map((p, i) => [p, r[(i + 1) % r.length]]), ...o.map((p, i) => [p, o[(i + 1) % o.length]])];
