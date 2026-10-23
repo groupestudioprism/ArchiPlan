@@ -140,6 +140,7 @@ function pieces(el, els = state.els){
       }
       s += e;
     }
+    if (el.top === 'roof') out.push(...wallCapPieces(el, lot));
     // tableaux, linteau et appui des baies : habillés avec le parement extérieur du mur (on ne voit plus les couches dans l'ouverture)
     if (ops.length){
       const outer = (wallLayers(el).find(([m]) => mat(m).R == null) || wallLayers(el)[0])[0], ep = 0.012;

@@ -3841,6 +3841,7 @@ function pieces(el, els = state.els){
       }
       s += e;
     }
+    if (el.top === 'roof') out.push(...wallCapPieces(el, lot));
     // tableaux, linteau et appui des baies : habillés avec le parement extérieur du mur (on ne voit plus les couches dans l'ouverture)
     if (ops.length){
       const outer = (wallLayers(el).find(([m]) => mat(m).R == null) || wallLayers(el)[0])[0], ep = 0.012;
@@ -4044,7 +4045,7 @@ function roofQty(el){
 /* Calage : la toiture se pose sur le dessus des murs de son niveau situés sous son contour */
 function roofFitWalls(el){
   const wp = roofWallPoly(el), xs = wp.map(q => q[0]), ys = wp.map(q => q[1]), x0 = Math.min(...xs) - 0.6, x1 = Math.max(...xs) + 0.6, y0 = Math.min(...ys) - 0.6, y1 = Math.max(...ys) + 0.6;
-  const tops = state.els.filter(w => w.kind === 'wall' && w.lvl === el.lvl && [w.a, w.b].every(p => p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1)).map(w => (w.off || 0) + w.h);
+  const tops = state.els.filter(w => w.kind === 'wall' && w.lvl === el.lvl && w.top !== 'roof' && [w.a, w.b].every(p => p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1)).map(w => (w.off || 0) + w.h);
   if (tops.length){ el.off = Math.round(Math.max(...tops) * 1000) / 1000; return true; }
   return false;
 }
@@ -5753,7 +5754,8 @@ function undersideAbove(pt, z, excl){
   for (const e of state.els){
     if (e.id === excl || !['slab', 'vol', 'roof'].includes(e.kind)) continue;
     const zz = lvlZ(e.lvl) + (e.off || 0); if (zz <= z + 0.05) continue;
-    const fp = e.kind === 'vol' ? volPoly(e) : e.kind === 'roof' && e.poly ? e.poly : null;
+    if (e.kind === 'roof'){ const o = roofGeom(e).outline; if (pt[0] < o[0][0] || pt[0] > o[1][0] || pt[1] < o[0][1] || pt[1] > o[2][1]) continue; const zu = roofUnderFn(e)(pt[0], pt[1]) ?? zz; if (zu > z + 0.05 && (best == null || zu < best)) best = zu; continue; }
+    const fp = e.kind === 'vol' ? volPoly(e) : null;
     if (fp ? !ptInPoly(pt[0], pt[1], fp) : !inRect(pt, e, e.kind === 'roof' ? (e.ov ?? 0.4) : 1e-6)) continue;
     if (best == null || zz < best) best = zz;
   }
@@ -5767,6 +5769,7 @@ function applyLinks(){
   for (const el of state.els){
     if (el.kind === 'wall' || el.kind === 'col'){
       if (el.onSlab){ const pts = el.kind === 'col' ? [el.c] : [V.mul(V.add(el.a, el.b), 0.5), el.a, el.b]; el.off = R(floorTopAt(el.lvl, pts) ?? 0); }
+      if (el.kind === 'wall' && el.top === 'roof'){ const P = wallRoofProfile(el); if (P) el.h = R(Math.max(0.05, P.zmin - lvlZ(el.lvl) - (el.off || 0))); continue; }
       const tl = topLvl(el);
       if (tl != null && state.levels[tl]) el.h = R(Math.max(0.05, lvlZ(tl) + (el.topOff || 0) - lvlZ(el.lvl) - (el.off || 0)));
     }
@@ -5935,8 +5938,8 @@ function linkDefaults(e){
 const lockF = h => h.replace('<input ', '<input disabled title="Calculé par la contrainte" ');
 function linkFields(el){
   const lv = state.levels.map((l, i) => [i, l]).filter(([i]) => i > el.lvl);
-  const opts = [['', 'Hauteur libre'], ...(state.levels[el.lvl + 1] ? [['next', `Niveau supérieur (${lvlName(el.lvl + 1)})`]] : []), ...lv.slice(1).map(([i, l]) => ['L' + i, `Jusqu'au niveau ${l.n}`]), ...(el.kind === 'col' ? [['above', 'Sous l\'élément au-dessus']] : [])];
-  const cur = el.top === 'next' || el.top === 'above' ? el.top : Number.isInteger(el.top) ? 'L' + el.top : '';
+  const opts = [['', 'Hauteur libre'], ...(state.levels[el.lvl + 1] ? [['next', `Niveau supérieur (${lvlName(el.lvl + 1)})`]] : []), ...lv.slice(1).map(([i, l]) => ['L' + i, `Jusqu'au niveau ${l.n}`]), ...(el.kind === 'col' ? [['above', 'Sous l\'élément au-dessus']] : [['roof', 'Sous la toiture (suit la pente)']])];
+  const cur = el.top === 'next' || el.top === 'above' || el.top === 'roof' ? el.top : Number.isInteger(el.top) ? 'L' + el.top : '';
   let h = `<label class="f wide rchk"><input type="checkbox" data-f="onSlab"${el.onSlab ? ' checked' : ''}> Posé sur le plancher (suit la dalle)</label>`;
   h += selectField('Niveau de base', 'lvl', lvlOpts(), el.lvl, false) + (el.onSlab ? lockF(field('Décalage base', 'off', el.off, 'm')) : field('Décalage base', 'off', el.off, 'm'));
   h += selectField('Contrainte haute', 'top', opts, cur, false) + (cur ? field('Décalage haut', 'topOff', el.topOff || 0, 'm') : '');
@@ -5951,7 +5954,7 @@ function slabLinkField(el){
 const onWallsField = el => `<label class="f wide rchk"><input type="checkbox" data-f="onWalls"${el.onWalls ? ' checked' : ''}> Posé sur le haut des murs (suit leur hauteur)</label>`;
 function setLinkField(el, f, t){
   if (f === 'onSlab'){ if (t.checked) el.onSlab = true; else delete el.onSlab; }
-  else if (f === 'top'){ const v = t.value; if (!v){ delete el.top; delete el.topOff; } else { el.top = v === 'next' || v === 'above' ? v : +v.slice(1); el.topOff ??= 0; } }
+  else if (f === 'top'){ const v = t.value; if (!v){ delete el.top; delete el.topOff; } else { el.top = v === 'next' || v === 'above' || v === 'roof' ? v : +v.slice(1); el.topOff ??= 0; if (v === 'roof'){ const r = roofOver(el); if (!r) toast('Aucune toiture au-dessus de ce mur'); else r.gable = false; } } }
   else if (f === 'topOff'){ const v = num(t.value); if (!Number.isNaN(v)) el.topOff = v; }
   else if (f === 'onWalls'){ if (t.checked) el.onWalls = true; else delete el.onWalls; }
   else if (f === 'bind'){ const v = t.value; delete el.bindLvl;
@@ -6149,6 +6152,62 @@ function addSlabHole(a, b){
   pushHist(); (s.holes ??= []).push(r.map(p => [rnd(p[0]), rnd(p[1])])); state.isSample = false; rebuild(); toast(`Trou ajouté à la dalle ${s.id} (${nf(area(r))} m²)`);
 }
 
+/* ==== 55-roofwalls.js ==== */
+/* ============ Murs attachés sous la toiture (façon Revit « Attacher le haut ») ============
+   wall.top = 'roof' : le haut du mur suit la sous-face de la toiture qui le couvre (pignons, murs de combles, cloisons sous rampant).
+   La partie droite du mur (jusqu'au point le plus bas de la pente) garde ses ouvertures ; au-dessus, un « chapeau » épouse la pente. */
+function roofUnderFn(el){
+  const G = roofGeom(el), T = roofT(el) / Math.max(0.2, Math.cos(G.a)), pans = G.pans.map(p => ({p, xy:p.map(q => [q[0], q[1]])}));
+  return (x, y) => { let best = null;
+    for (const {p, xy} of pans){ if (!ptInPoly(x, y, xy)) continue;
+      const A = p[0]; let n = null; for (let i = 1; i + 1 < p.length && !n; i++){ const u = [p[i][0] - A[0], p[i][1] - A[1], p[i][2] - A[2]], v = [p[i + 1][0] - A[0], p[i + 1][1] - A[1], p[i + 1][2] - A[2]], c = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; if (Math.abs(c[2]) > 1e-9) n = c; }
+      if (!n) continue; const z = A[2] - (n[0] * (x - A[0]) + n[1] * (y - A[1])) / n[2]; if (best == null || z > best) best = z; }
+    return best == null ? null : best - T; };
+}
+/* toiture au-dessus d'un mur (la plus basse qui le couvre) */
+function roofOver(w){
+  const m = V.mul(V.add(w.a, w.b), 0.5), z0 = lvlZ(w.lvl) + (w.off || 0); let best = null;
+  for (const r of state.els){ if (r.kind !== 'roof') continue; const G = roofGeom(r), o = G.outline;
+    if (m[0] < o[0][0] - 1e-3 || m[0] > o[1][0] + 1e-3 || m[1] < o[0][1] - 1e-3 || m[1] > o[2][1] + 1e-3) continue;
+    const b = roofBase(r); if (b < z0 + 0.3) continue; if (!best || b < roofBase(best)) best = r; }
+  return best;
+}
+/* profil de la sous-face le long de l'axe du mur : [[t, z]…] (z absolu), points alignés retirés */
+function wallRoofProfile(w){
+  if (wallArc(w)) return null; const r = roofOver(w); if (!r) return null;
+  const f = roofUnderFn(r), {u, L} = wallAxis(w), N = Math.max(2, Math.ceil(L / 0.05)), base = roofBase(r), raw = [];
+  for (let i = 0; i <= N; i++){ const t = L * i / N, p = V.add(w.a, V.mul(u, t)), z = f(p[0], p[1]); raw.push([t, z == null ? base : Math.max(base, z)]); }
+  const pts = [raw[0]]; for (let i = 1; i < raw.length - 1; i++){ const a = pts[pts.length - 1], b = raw[i], c = raw[i + 1]; if (Math.abs((b[1] - a[1]) * (c[0] - b[0]) - (c[1] - b[1]) * (b[0] - a[0])) > 1e-5) pts.push(b); } pts.push(raw[raw.length - 1]);
+  return {pts, zmin:Math.min(...pts.map(q => q[1])), roof:r};
+}
+/* chapeau au-dessus de la partie droite : bandes verticales (toujours convexes) par couche */
+function wallCapPieces(w, lot){
+  if (w.top !== 'roof') return [];
+  const P = wallRoofProfile(w); if (!P) return [];
+  const zTop = lvlZ(w.lvl) + (w.off || 0) + w.h, {u, n} = wallAxis(w), T = wallT(w), out = []; let s = -T / 2;
+  for (const [m, e] of wallLayers(w)){
+    const at = (t, off) => V.add(V.add(w.a, V.mul(u, t)), V.mul(n, off));
+    for (let i = 0; i + 1 < P.pts.length; i++){
+      const [t0, z0] = P.pts[i], [t1, z1] = P.pts[i + 1]; if (Math.max(z0, z1) - zTop < 0.002 || t1 - t0 < 1e-4) continue;
+      const a = at(t0, s), b = at(t1, s), top = [[a[0], a[1], zTop], [b[0], b[1], zTop], [b[0], b[1], Math.max(zTop, z1)], [a[0], a[1], Math.max(zTop, z0)]];
+      const hm = (Math.max(0, z0 - zTop) + Math.max(0, z1 - zTop)) / 2;
+      out.push({mat:m, e, poly:[a, b, at(t1, s + e), at(t0, s + e)], top, ext:[n[0] * e, n[1] * e, 0], base:zTop, h:hm, vol:(t1 - t0) * hm * e, lot, cap:true});
+    }
+    s += e;
+  }
+  return out;
+}
+/* toiture : attacher (ou détacher) les murs situés dessous */
+function attachWallsToRoof(roof, on = true){
+  const G = roofGeom(roof), o = G.outline, ws = state.els.filter(w => w.kind === 'wall' && w.lvl === roof.lvl && !wallArc(w) && (() => { const m = V.mul(V.add(w.a, w.b), 0.5); return m[0] >= o[0][0] && m[0] <= o[1][0] && m[1] >= o[0][1] && m[1] <= o[2][1]; })());
+  if (!ws.length){ toast('Aucun mur sous cette toiture'); return 0; }
+  pushHist();
+  for (const w of ws){ if (on){ w.top = 'roof'; delete w.topOff; } else if (w.top === 'roof'){ delete w.top; } }
+  if (on) roof.gable = false;   // les murs montent eux-mêmes en pignon
+  state.isSample = false; rebuild(); toast(on ? `${ws.length} mur${ws.length > 1 ? 's' : ''} attaché${ws.length > 1 ? 's' : ''} sous la toiture` : 'Murs détachés de la toiture');
+  return ws.length;
+}
+
 /* ==== 60-panel.js ==== */
 /* ============ Panneau : propriétés, bibliothèque, métré ============ */
 let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '', libPath = [];
@@ -6249,7 +6308,7 @@ function renderProps(){
     h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
     if (el.gable !== false && (el.shape || '2') !== '4' && (el.shape || '2') !== '0') h += selectField('Mur des pignons', 'rgtype', wallOpts, el.gableType || '', false);
     h += `</div>${poly ? `<p class="hint">Toit dessiné sur un contour de ${el.poly.length} côtés, découpé en ${G.wings.length} aile${G.wings.length > 1 ? 's' : ''} (noues automatiques).</p>` : ''}
-      <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button></div>
+      <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button><button class="btn" data-act="roof-attach">Attacher les murs dessous</button>${state.els.some(w => w.kind === 'wall' && w.top === 'roof' && roofOver(w) === el) ? '<button class="btn" data-act="roof-detach">Détacher les murs</button>' : ''}</div>
       <div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.hip ? `<dt>Arêtiers</dt><dd>${nf(Q.hip)} ml</dd>` : ''}${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}${Q.ceil ? `<dt>Plafond</dt><dd>${nf(Q.ceil)} m²</dd>` : ''}${FQ.length ? `<dt>Charpente</dt><dd>${nf(FQ.reduce((s, x) => s + x.m3, 0), 2)} m³</dd>` : ''}</dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Q.slope, false)}</div>
@@ -6494,6 +6553,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
   else if (act === 'levels') openLevels();
+  else if (act === 'roof-attach') attachWallsToRoof(el, true);
+  else if (act === 'roof-detach') attachWallsToRoof(el, false);
   else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }
   else if (act === 'slab-unhole'){ pushHist(); delete el.holes; rebuild(); }
   else if (act === 'mkcomp') openMakeComp(selIds());

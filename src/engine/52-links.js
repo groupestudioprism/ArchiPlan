@@ -27,7 +27,8 @@ function undersideAbove(pt, z, excl){
   for (const e of state.els){
     if (e.id === excl || !['slab', 'vol', 'roof'].includes(e.kind)) continue;
     const zz = lvlZ(e.lvl) + (e.off || 0); if (zz <= z + 0.05) continue;
-    const fp = e.kind === 'vol' ? volPoly(e) : e.kind === 'roof' && e.poly ? e.poly : null;
+    if (e.kind === 'roof'){ const o = roofGeom(e).outline; if (pt[0] < o[0][0] || pt[0] > o[1][0] || pt[1] < o[0][1] || pt[1] > o[2][1]) continue; const zu = roofUnderFn(e)(pt[0], pt[1]) ?? zz; if (zu > z + 0.05 && (best == null || zu < best)) best = zu; continue; }
+    const fp = e.kind === 'vol' ? volPoly(e) : null;
     if (fp ? !ptInPoly(pt[0], pt[1], fp) : !inRect(pt, e, e.kind === 'roof' ? (e.ov ?? 0.4) : 1e-6)) continue;
     if (best == null || zz < best) best = zz;
   }
@@ -41,6 +42,7 @@ function applyLinks(){
   for (const el of state.els){
     if (el.kind === 'wall' || el.kind === 'col'){
       if (el.onSlab){ const pts = el.kind === 'col' ? [el.c] : [V.mul(V.add(el.a, el.b), 0.5), el.a, el.b]; el.off = R(floorTopAt(el.lvl, pts) ?? 0); }
+      if (el.kind === 'wall' && el.top === 'roof'){ const P = wallRoofProfile(el); if (P) el.h = R(Math.max(0.05, P.zmin - lvlZ(el.lvl) - (el.off || 0))); continue; }
       const tl = topLvl(el);
       if (tl != null && state.levels[tl]) el.h = R(Math.max(0.05, lvlZ(tl) + (el.topOff || 0) - lvlZ(el.lvl) - (el.off || 0)));
     }
@@ -209,8 +211,8 @@ function linkDefaults(e){
 const lockF = h => h.replace('<input ', '<input disabled title="Calculé par la contrainte" ');
 function linkFields(el){
   const lv = state.levels.map((l, i) => [i, l]).filter(([i]) => i > el.lvl);
-  const opts = [['', 'Hauteur libre'], ...(state.levels[el.lvl + 1] ? [['next', `Niveau supérieur (${lvlName(el.lvl + 1)})`]] : []), ...lv.slice(1).map(([i, l]) => ['L' + i, `Jusqu'au niveau ${l.n}`]), ...(el.kind === 'col' ? [['above', 'Sous l\'élément au-dessus']] : [])];
-  const cur = el.top === 'next' || el.top === 'above' ? el.top : Number.isInteger(el.top) ? 'L' + el.top : '';
+  const opts = [['', 'Hauteur libre'], ...(state.levels[el.lvl + 1] ? [['next', `Niveau supérieur (${lvlName(el.lvl + 1)})`]] : []), ...lv.slice(1).map(([i, l]) => ['L' + i, `Jusqu'au niveau ${l.n}`]), ...(el.kind === 'col' ? [['above', 'Sous l\'élément au-dessus']] : [['roof', 'Sous la toiture (suit la pente)']])];
+  const cur = el.top === 'next' || el.top === 'above' || el.top === 'roof' ? el.top : Number.isInteger(el.top) ? 'L' + el.top : '';
   let h = `<label class="f wide rchk"><input type="checkbox" data-f="onSlab"${el.onSlab ? ' checked' : ''}> Posé sur le plancher (suit la dalle)</label>`;
   h += selectField('Niveau de base', 'lvl', lvlOpts(), el.lvl, false) + (el.onSlab ? lockF(field('Décalage base', 'off', el.off, 'm')) : field('Décalage base', 'off', el.off, 'm'));
   h += selectField('Contrainte haute', 'top', opts, cur, false) + (cur ? field('Décalage haut', 'topOff', el.topOff || 0, 'm') : '');
@@ -225,7 +227,7 @@ function slabLinkField(el){
 const onWallsField = el => `<label class="f wide rchk"><input type="checkbox" data-f="onWalls"${el.onWalls ? ' checked' : ''}> Posé sur le haut des murs (suit leur hauteur)</label>`;
 function setLinkField(el, f, t){
   if (f === 'onSlab'){ if (t.checked) el.onSlab = true; else delete el.onSlab; }
-  else if (f === 'top'){ const v = t.value; if (!v){ delete el.top; delete el.topOff; } else { el.top = v === 'next' || v === 'above' ? v : +v.slice(1); el.topOff ??= 0; } }
+  else if (f === 'top'){ const v = t.value; if (!v){ delete el.top; delete el.topOff; } else { el.top = v === 'next' || v === 'above' || v === 'roof' ? v : +v.slice(1); el.topOff ??= 0; if (v === 'roof'){ const r = roofOver(el); if (!r) toast('Aucune toiture au-dessus de ce mur'); else r.gable = false; } } }
   else if (f === 'topOff'){ const v = num(t.value); if (!Number.isNaN(v)) el.topOff = v; }
   else if (f === 'onWalls'){ if (t.checked) el.onWalls = true; else delete el.onWalls; }
   else if (f === 'bind'){ const v = t.value; delete el.bindLvl;

@@ -97,7 +97,7 @@ function renderProps(){
     h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
     if (el.gable !== false && (el.shape || '2') !== '4' && (el.shape || '2') !== '0') h += selectField('Mur des pignons', 'rgtype', wallOpts, el.gableType || '', false);
     h += `</div>${poly ? `<p class="hint">Toit dessiné sur un contour de ${el.poly.length} côtés, découpé en ${G.wings.length} aile${G.wings.length > 1 ? 's' : ''} (noues automatiques).</p>` : ''}
-      <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button></div>
+      <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button><button class="btn" data-act="roof-attach">Attacher les murs dessous</button>${state.els.some(w => w.kind === 'wall' && w.top === 'roof' && roofOver(w) === el) ? '<button class="btn" data-act="roof-detach">Détacher les murs</button>' : ''}</div>
       <div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.hip ? `<dt>Arêtiers</dt><dd>${nf(Q.hip)} ml</dd>` : ''}${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}${Q.ceil ? `<dt>Plafond</dt><dd>${nf(Q.ceil)} m²</dd>` : ''}${FQ.length ? `<dt>Charpente</dt><dd>${nf(FQ.reduce((s, x) => s + x.m3, 0), 2)} m³</dd>` : ''}</dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Q.slope, false)}</div>
@@ -342,6 +342,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
   else if (act === 'levels') openLevels();
+  else if (act === 'roof-attach') attachWallsToRoof(el, true);
+  else if (act === 'roof-detach') attachWallsToRoof(el, false);
   else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }
   else if (act === 'slab-unhole'){ pushHist(); delete el.holes; rebuild(); }
   else if (act === 'mkcomp') openMakeComp(selIds());

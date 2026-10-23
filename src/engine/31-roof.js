@@ -155,7 +155,7 @@ function roofQty(el){
 /* Calage : la toiture se pose sur le dessus des murs de son niveau situés sous son contour */
 function roofFitWalls(el){
   const wp = roofWallPoly(el), xs = wp.map(q => q[0]), ys = wp.map(q => q[1]), x0 = Math.min(...xs) - 0.6, x1 = Math.max(...xs) + 0.6, y0 = Math.min(...ys) - 0.6, y1 = Math.max(...ys) + 0.6;
-  const tops = state.els.filter(w => w.kind === 'wall' && w.lvl === el.lvl && [w.a, w.b].every(p => p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1)).map(w => (w.off || 0) + w.h);
+  const tops = state.els.filter(w => w.kind === 'wall' && w.lvl === el.lvl && w.top !== 'roof' && [w.a, w.b].every(p => p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1)).map(w => (w.off || 0) + w.h);
   if (tops.length){ el.off = Math.round(Math.max(...tops) * 1000) / 1000; return true; }
   return false;
 }
