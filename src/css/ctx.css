@@ -1,0 +1,18 @@
+/* Menu contextuel Studio Prism (clic droit / appui long) — même rendu dans toutes les apps ; couleurs reprises des variables du thème */
+.pctx{position:fixed;z-index:90;min-width:220px;max-width:min(340px,calc(100vw - 12px));max-height:calc(100vh - 12px);overflow:auto;padding:5px;border-radius:12px;
+  background:var(--panel,#fff);color:var(--ink,#111827);border:1px solid var(--line,#DCE7EF);box-shadow:0 14px 38px rgb(7 27 85 / .22),0 2px 6px rgb(7 27 85 / .10);
+  font:500 13px var(--f-body,system-ui,sans-serif);outline:none;animation:pctxIn .11s ease-out;-webkit-user-select:none;user-select:none}
+:root[data-theme="dark"] .pctx{box-shadow:0 14px 38px rgb(0 0 0 / .55),0 2px 6px rgb(0 0 0 / .35)}
+@keyframes pctxIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pctx{animation:none}}
+.pctx-h{padding:6px 10px 5px;font:700 11px var(--f-display,system-ui,sans-serif);letter-spacing:.05em;text-transform:uppercase;color:var(--mut,#4B5563);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pctx-sep{height:1px;margin:4px 6px;background:var(--line,#DCE7EF)}
+.pctx-i{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.pctx-i:hover:not(:disabled),.pctx-i:focus-visible,.pctx-i.open{background:var(--accent-soft,#E6F1F8);outline:none}
+.pctx-i:disabled{opacity:.42;cursor:default}
+.pctx-i.danger{color:var(--danger,#B3261E)}
+.pctx-ic{flex:0 0 16px;text-align:center;font-weight:700;color:var(--accent,#0877B9)}
+.pctx-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pctx-k{margin-left:12px;font:600 11px var(--f-body,system-ui,sans-serif);color:var(--mut,#4B5563);background:var(--chip,#EEF4F8);border-radius:5px;padding:1px 6px}
+.pctx-ar{margin-left:8px;color:var(--mut,#4B5563);font-size:15px;line-height:1}
+@media (pointer:coarse){.pctx{min-width:260px}.pctx-i{padding:12px 12px;font-size:15px}.pctx-h{font-size:12px}}

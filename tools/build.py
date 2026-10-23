@@ -16,7 +16,7 @@ Usage : python3 tools/build.py
 import pathlib, sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 S = ROOT / 'src'
-CSS_ORDER = ['app.css', 'splash.css', 'auth.css', 'home.css']
+CSS_ORDER = ['app.css', 'splash.css', 'auth.css', 'home.css', 'ctx.css']
 FB = '10.12.2'
 CONFIG = '''const FIREBASE_CONFIG = {
   // Projet Firebase de Studio Prism : le même que le site (js/firebase.js du dépôt Studio-Prism). Configuration publique par conception.
