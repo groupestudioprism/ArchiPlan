@@ -525,6 +525,9 @@ body.gripping, body.gripping *{cursor:move!important}
 .tbl.lvt .num{text-align:right}.tbl.lvt .btn.sm{padding:3px 8px;font-size:12px}
 .tbl.lvt .x{margin-left:6px}
 .tbl.lvt td:last-child{white-space:nowrap}
+#labels .dim.cote{background:color-mix(in srgb,var(--vp) 90%,transparent);font-weight:600;pointer-events:auto;cursor:pointer}
+#labels .dim.cote:hover{color:#C0392B;text-decoration:line-through}
+#labels.drawing .dim.cote{pointer-events:none}
 /* intro ARCHIPLAN : une feuille de dessin technique ; un crayon trace des lignes de construction qui s'encrent et révèlent le logo officiel (masque SVG suivant le tracé du crayon),
    le plan prend brièvement du volume (2D → 3D), puis le nom et la signature. Séquence pilotée par le script du bloc #splash (Web Animations API, déterministe). */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;overflow:hidden}
@@ -1118,7 +1121,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     </div>
   </header>
   <nav class="tools" role="toolbar" aria-label="Outils">
-    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button>
+    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button><button class="tool" data-tool="dim" aria-pressed="false" title="Cote (Q) : deux points puis la position de la ligne de cote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v10M20 7v10M4 12h16M6 10l-2 2 2 2M18 10l2 2-2 2"/></svg><span>Cote</span><kbd>Q</kbd></button>
   </nav>
   <main class="vp" id="vp">
     <canvas id="c"></canvas>
@@ -3638,7 +3641,7 @@ function migrate(s){
   const out = {format:'archiplan', v:4, name:s.name || 'Projet', els:Array.isArray(s.els) ? s.els : [], nextId:1,
     levels:Array.isArray(s.levels) && s.levels.length ? s.levels.map(l => ({n:String(l.n || 'Niveau').slice(0, 30), z:+l.z || 0})) : DEFAULT_LEVELS.map(l => ({...l})),
     lib:{mats:{...(s.lib?.mats || {})}, compos:{...(s.lib?.compos || {})}, fams:{...(s.lib?.fams || {})}}, isSample:!!s.isSample,
-    ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {}), ...(+s.shab > 0 ? {shab:+s.shab} : {}), ...(Array.isArray(s.views) ? {views:s.views.filter(v => v && v.a && v.b)} : {}), ...(s.roomNames && typeof s.roomNames === 'object' ? {roomNames:{...s.roomNames}} : {})};
+    ...(s.site && typeof s.site === 'object' ? {site:s.site} : {}), ...(s.dqe && typeof s.dqe === 'object' ? {dqe:s.dqe} : {}), ...(+s.shab > 0 ? {shab:+s.shab} : {}), ...(Array.isArray(s.views) ? {views:s.views.filter(v => v && v.a && v.b)} : {}), ...(s.roomNames && typeof s.roomNames === 'object' ? {roomNames:{...s.roomNames}} : {}), ...(Array.isArray(s.dims) ? {dims:s.dims.filter(d => d && d.a && d.b)} : {})};
   const okEl = el => el && KIND_NAME[el.kind] && (el.kind !== 'wall' || compo(el.type)) && (el.kind !== 'inst' || el.fam);
   const prev = state; state = out;   // pour que compo()/fam() lisent la bibliothèque du projet en cours de migration
   out.els = out.els.filter(okEl).map(el => ({...el, lvl:Math.max(0, Math.min(out.levels.length - 1, el.lvl | 0)), off:+el.off || 0}));
@@ -4639,7 +4642,7 @@ function rebuild(opts = {}){
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
   roomsCache = null; if (typeof buildRooms === 'function') buildRooms();
-  buildLevelMarks();
+  buildLevelMarks(); buildDims();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -4732,6 +4735,7 @@ function buildLabels(){
       add(new THREE.Vector3(fr.o[0], fr.z + (view !== '2d' ? (c ? c.h + 0.1 : 1) : 0), -fr.o[1]), txt);
     }
   }
+  dimLabelsInto(box);
   if (view === '2d' && APP_PREFS.rooms !== false) for (const r of detectRooms(curLvl)){
     const d = document.createElement('div'); d.className = 'dim room'; d.innerHTML = `<b>${esc(r.name)}</b><span>${nf(r.net)} m²</span>`; d.title = 'Cliquer pour renommer la pièce';
     d.onclick = ev => { ev.stopPropagation(); renameRoom(r); }; box.appendChild(d); labels.push({d, pos:new THREE.Vector3(r.c[0], lvlZ(curLvl), -r.c[1])});
@@ -5206,6 +5210,7 @@ function updatePreview(){
   }
   else if (tool === 'slab' && defs.slab.mode !== 'rect'){ const r = defs.slab.mode === 'room' ? roomAt(cur) : null; if (r){ const sh = r.poly; for (let i = 0; i < sh.length; i++) markGroup.add(lineObj(sh[i], sh[(i + 1) % sh.length], ac, null, false)); text = `${r.name} · ${nf(r.net, 2)} m² : cliquez pour poser la dalle`; } else text = defs.slab.mode === 'room' ? 'Survolez une pièce fermée' : 'Cliquez pour poser la dalle sous tous les murs du niveau'; }
   else if (tool === 'stair'){ const t = draw.start ? tempEl(draw.start, cur) : tempEl(cur, null); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); const D = stairDims(t); text = `${STAIR_TYPES[t.st]} · ${D.n} marches de ${nf(D.h * 100, 1)} cm${draw.start ? ` · ${nf(t.rot, 0)}°` : ''}`; if (draw.start) markGroup.add(makeMarker(draw.start, ac)); }
+  else if (tool === 'dim') text = previewDim(cur, ac);
   else if (tool === 'vol'){
     if (draw.ext) return previewExtrude();
     const b = shapePreviewBase(), P = draw.poly || [];
@@ -5392,6 +5397,7 @@ const PROMPTS = {
   move:() => !selIds().length ? '<b>Déplacer</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Déplacer</b> : point de destination, ou <code>@dx;dy</code>' : '<b>Déplacer</b> : point de base',
   copy:() => !selIds().length ? '<b>Copier</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Copier</b> : points de destination (Échap pour finir)' : '<b>Copier</b> : point de base',
   rotate:() => !selIds().length ? '<b>Rotation</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Rotation</b> : angle (clic ou degrés)' : '<b>Rotation</b> : centre de rotation',
+  dim:() => !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote',
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
 };
 function setPrompt(){
@@ -5399,7 +5405,7 @@ function setPrompt(){
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
   $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
-function cancelDraw(){ draw.ext = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
+function cancelDraw(){ draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
 function setTool(t){
   if (!PROMPTS[t]) return;
   tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
@@ -5429,6 +5435,7 @@ function syncHud(){
 function placePoint(pt){
   const S = draw.start;
   if (tool === 'vol') return shapeClick(pt);
+  if (tool === 'dim') return dimClick(pt);
   if (tool === 'wall' && defs.wall.arc && S){
     if (!draw.arcB){ if (V.len(V.sub(pt, S)) > 0.01) draw.arcB = pt; }
     else { const B = draw.arcB, t = tempEl(S.slice(), B.slice()), m = V.mul(V.add(S, B), 0.5), {n} = wallAxis(t); t.bulge = rnd(V.dot(V.sub(pt, m), n)); addEl(t); draw.chainN++; draw.start = B; draw.arcB = null; }
@@ -5478,7 +5485,7 @@ function placePoint(pt){
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
 const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
-  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', di:'measure', r:'measure', selection:'select', v:'select'};
+  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
   const rel = s.startsWith('@'); if (rel) s = s.slice(1).trim();
@@ -6228,6 +6235,46 @@ function attachWallsToRoof(roof, on = true){
   if (on) roof.gable = false;   // les murs montent eux-mêmes en pignon
   state.isSample = false; rebuild(); toast(on ? `${ws.length} mur${ws.length > 1 ? 's' : ''} attaché${ws.length > 1 ? 's' : ''} sous la toiture` : 'Murs détachés de la toiture');
   return ws.length;
+}
+
+/* ==== 56-dims.js ==== */
+/* ============ Cotations libres ============
+   Outil Cote (Q) : premier point, second point, puis position de la ligne de cote (décalage). Les cotes sont enregistrées
+   dans le projet (state.dims), dessinées sur le plan du niveau et reprises sur les planches. Clic sur la valeur : supprimer. */
+const dimGroup = new THREE.Group(); dimGroup.name = 'cotes'; scene.add(dimGroup);
+const dimGeom = (a, b, off) => { const d = V.sub(b, a), L = V.len(d) || 1e-9, u = V.mul(d, 1 / L), n = [-u[1], u[0]]; return {L, u, n, A:V.add(a, V.mul(n, off)), B:V.add(b, V.mul(n, off))}; };
+function dimLines(a, b, off, col, z){
+  const {u, n, A, B} = dimGeom(a, b, off), s = Math.sign(off) || 1, out = [], k = 0.12, t = V.mul(V.add(u, n), 0.11);
+  out.push(lineObj(A, B, col, z, false));
+  if (Math.abs(off) > 0.02){ out.push(lineObj(V.add(a, V.mul(n, s * 0.08)), V.add(A, V.mul(n, s * k)), col, z, false), lineObj(V.add(b, V.mul(n, s * 0.08)), V.add(B, V.mul(n, s * k)), col, z, false)); }
+  for (const P of [A, B]) out.push(lineObj(V.sub(P, t), V.add(P, t), col, z, false));   // traits obliques d'architecte
+  return out;
+}
+function buildDims(){
+  disposeGroup(dimGroup); const col = '#1F2937';
+  for (const d of state?.dims || []) if (d.lvl === curLvl && view !== 'sec') dimLines(d.a, d.b, d.off, col, lvlZ(d.lvl) + 0.03).forEach(l => dimGroup.add(l));
+  dirty = true;
+}
+function dimLabelsInto(box){
+  for (const d of state?.dims || []){ if (d.lvl !== curLvl || view === 'sec') continue;
+    const {L, A, B} = dimGeom(d.a, d.b, d.off), m = V.mul(V.add(A, B), 0.5), el = document.createElement('div');
+    el.className = 'dim cote'; el.textContent = nf(L); el.title = 'Cote · cliquer pour la supprimer';
+    el.onclick = ev => { ev.stopPropagation(); if (tool !== 'select') return; pushHist(); state.dims = state.dims.filter(x => x !== d); state.isSample = false; rebuild({noPanel:true}); toast('Cote supprimée (Ctrl+Z pour annuler)'); };
+    box.appendChild(el); labels.push({d:el, pos:new THREE.Vector3(m[0], lvlZ(d.lvl) + 0.03, -m[1])});
+  }
+}
+function dimClick(pt){
+  if (!draw.start){ draw.start = pt; draw.dimB = null; setPrompt(); return; }
+  if (!draw.dimB){ if (V.len(V.sub(pt, draw.start)) < 0.01) return; draw.dimB = pt; setPrompt(); return; }
+  const {n} = dimGeom(draw.start, draw.dimB, 0), off = rnd(V.dot(V.sub(pt, draw.start), n));
+  pushHist(); (state.dims ??= []).push({id:'d' + Date.now().toString(36) + Math.floor(Math.random() * 1e3), a:draw.start.slice(), b:draw.dimB.slice(), off, lvl:curLvl});
+  state.isSample = false; draw.start = null; draw.dimB = null; rebuild({noPanel:true}); setPrompt();
+}
+function previewDim(cur, ac){
+  if (!draw.start) return `x ${nf(cur[0])} · y ${nf(cur[1])}`;
+  if (!draw.dimB){ markGroup.add(makeMarker(draw.start, ac)); markGroup.add(lineObj(draw.start, cur, ac)); return nf(V.len(V.sub(cur, draw.start))) + ' m'; }
+  const {n, L} = dimGeom(draw.start, draw.dimB, 0), off = V.dot(V.sub(cur, draw.start), n);
+  dimLines(draw.start, draw.dimB, off, ac).forEach(l => markGroup.add(l)); return `${nf(L)} m · cliquez pour placer la cote`;
 }
 
 /* ==== 60-panel.js ==== */
@@ -8749,7 +8796,7 @@ function setView(v){
   const prev = view; view = v;
   c3.enabled = v === '3d' || v === 'render'; c2.enabled = v === '2d'; c4.enabled = v === 'sec'; renderer.clippingPlanes = v === 'sec' ? secClip() : [];
   if (v !== 'sec') $('#secBar').hidden = true;
-  if (typeof buildLevelMarks === 'function') setTimeout(buildLevelMarks, 0);
+  if (typeof buildLevelMarks === 'function') setTimeout(() => { buildLevelMarks(); buildDims(); }, 0);
   $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === v));
   document.body.dataset.mode = v;
   if (v === '2d'){ c2.target.set(c3.target.x, 0, c3.target.z); ortho.position.set(c3.target.x, 200, c3.target.z); c2.update(); }
@@ -8765,7 +8812,7 @@ $$('[data-cam]').forEach(b => b.addEventListener('click', () => b.dataset.cam ==
 $('#undo').addEventListener('click', undo); $('#redo').addEventListener('click', redo);
 $$('.tool').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
 function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${nf(l.z)} m</option>`).join('') + '<option value="manage">Gérer les niveaux…</option>'; }
-$('#lvlSel').addEventListener('change', e => { if (e.target.value === 'manage'){ e.target.value = curLvl; openLevels(); return; } curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
+$('#lvlSel').addEventListener('change', e => { if (e.target.value === 'manage'){ e.target.value = curLvl; openLevels(); return; } curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); buildDims(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
 $('#wArcIn').addEventListener('change', e => { defs.wall.arc = e.target.value === '1'; defs.wall.rect = e.target.value === 'r'; cancelDraw(); setPrompt(); });
@@ -8829,7 +8876,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 
@@ -8912,7 +8959,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};

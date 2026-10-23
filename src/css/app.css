@@ -517,3 +517,6 @@ body.gripping, body.gripping *{cursor:move!important}
 .tbl.lvt .num{text-align:right}.tbl.lvt .btn.sm{padding:3px 8px;font-size:12px}
 .tbl.lvt .x{margin-left:6px}
 .tbl.lvt td:last-child{white-space:nowrap}
+#labels .dim.cote{background:color-mix(in srgb,var(--vp) 90%,transparent);font-weight:600;pointer-events:auto;cursor:pointer}
+#labels .dim.cote:hover{color:#C0392B;text-decoration:line-through}
+#labels.drawing .dim.cote{pointer-events:none}

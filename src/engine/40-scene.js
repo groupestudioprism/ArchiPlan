@@ -329,7 +329,7 @@ function rebuild(opts = {}){
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
   roomsCache = null; if (typeof buildRooms === 'function') buildRooms();
-  buildLevelMarks();
+  buildLevelMarks(); buildDims();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -422,6 +422,7 @@ function buildLabels(){
       add(new THREE.Vector3(fr.o[0], fr.z + (view !== '2d' ? (c ? c.h + 0.1 : 1) : 0), -fr.o[1]), txt);
     }
   }
+  dimLabelsInto(box);
   if (view === '2d' && APP_PREFS.rooms !== false) for (const r of detectRooms(curLvl)){
     const d = document.createElement('div'); d.className = 'dim room'; d.innerHTML = `<b>${esc(r.name)}</b><span>${nf(r.net)} m²</span>`; d.title = 'Cliquer pour renommer la pièce';
     d.onclick = ev => { ev.stopPropagation(); renameRoom(r); }; box.appendChild(d); labels.push({d, pos:new THREE.Vector3(r.c[0], lvlZ(curLvl), -r.c[1])});

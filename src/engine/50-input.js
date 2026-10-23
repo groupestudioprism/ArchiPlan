@@ -147,6 +147,7 @@ function updatePreview(){
   }
   else if (tool === 'slab' && defs.slab.mode !== 'rect'){ const r = defs.slab.mode === 'room' ? roomAt(cur) : null; if (r){ const sh = r.poly; for (let i = 0; i < sh.length; i++) markGroup.add(lineObj(sh[i], sh[(i + 1) % sh.length], ac, null, false)); text = `${r.name} · ${nf(r.net, 2)} m² : cliquez pour poser la dalle`; } else text = defs.slab.mode === 'room' ? 'Survolez une pièce fermée' : 'Cliquez pour poser la dalle sous tous les murs du niveau'; }
   else if (tool === 'stair'){ const t = draw.start ? tempEl(draw.start, cur) : tempEl(cur, null); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); const D = stairDims(t); text = `${STAIR_TYPES[t.st]} · ${D.n} marches de ${nf(D.h * 100, 1)} cm${draw.start ? ` · ${nf(t.rot, 0)}°` : ''}`; if (draw.start) markGroup.add(makeMarker(draw.start, ac)); }
+  else if (tool === 'dim') text = previewDim(cur, ac);
   else if (tool === 'vol'){
     if (draw.ext) return previewExtrude();
     const b = shapePreviewBase(), P = draw.poly || [];
@@ -333,6 +334,7 @@ const PROMPTS = {
   move:() => !selIds().length ? '<b>Déplacer</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Déplacer</b> : point de destination, ou <code>@dx;dy</code>' : '<b>Déplacer</b> : point de base',
   copy:() => !selIds().length ? '<b>Copier</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Copier</b> : points de destination (Échap pour finir)' : '<b>Copier</b> : point de base',
   rotate:() => !selIds().length ? '<b>Rotation</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Rotation</b> : angle (clic ou degrés)' : '<b>Rotation</b> : centre de rotation',
+  dim:() => !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote',
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
 };
 function setPrompt(){
@@ -340,7 +342,7 @@ function setPrompt(){
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
   $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
-function cancelDraw(){ draw.ext = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
+function cancelDraw(){ draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
 function setTool(t){
   if (!PROMPTS[t]) return;
   tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
@@ -370,6 +372,7 @@ function syncHud(){
 function placePoint(pt){
   const S = draw.start;
   if (tool === 'vol') return shapeClick(pt);
+  if (tool === 'dim') return dimClick(pt);
   if (tool === 'wall' && defs.wall.arc && S){
     if (!draw.arcB){ if (V.len(V.sub(pt, S)) > 0.01) draw.arcB = pt; }
     else { const B = draw.arcB, t = tempEl(S.slice(), B.slice()), m = V.mul(V.add(S, B), 0.5), {n} = wallAxis(t); t.bulge = rnd(V.dot(V.sub(pt, m), n)); addEl(t); draw.chainN++; draw.start = B; draw.arcB = null; }
@@ -419,7 +422,7 @@ function placePoint(pt){
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
 const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
-  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', di:'measure', r:'measure', selection:'select', v:'select'};
+  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
   const rel = s.startsWith('@'); if (rel) s = s.slice(1).trim();
