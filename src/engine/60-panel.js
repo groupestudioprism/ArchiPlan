@@ -50,7 +50,7 @@ function renderProps(){
   const ids = selIds();
   if (ids.length > 1){
     return `<div class="ph"><h2>${ids.length} éléments sélectionnés</h2></div><p class="hint">Déplacer (<kbd>G</kbd>), copier (<kbd>C</kbd>), pivoter (<kbd>O</kbd>) ou supprimer (<kbd>Suppr</kbd>) la sélection. Maj + clic pour ajouter ou retirer un élément.</p>
-      <div class="btns"><button class="btn" data-act="tool-move">Déplacer</button><button class="btn" data-act="tool-copy">Copier</button><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+      <div class="btns"><button class="btn" data-act="tool-move">Déplacer</button><button class="btn" data-act="tool-copy">Copier</button><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn" data-act="tool-mirror">Symétrie</button><button class="btn" data-act="tolevel">Copier vers un niveau</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   }
   const el = sel ? getEl(sel) : null;
   if (!el){
@@ -58,6 +58,7 @@ function renderProps(){
     return `<div class="ph"><h2>${esc(state.name)}</h2>${state.isSample ? '<span class="tag">Exemple</span>' : ''}</div>
       <div class="fields"><label class="f wide"><span>Nom du projet</span><span class="in"><input id="f-pname" data-f="pname" type="text" value="${esc(state.name)}" style="font-family:var(--f-body)"></span></label></div>
       <div class="grp"><h3>Lieu du projet</h3>${siteSummary()}<div class="btns tight"><button class="btn${state.site?.zone ? '' : ' primary'}" data-act="site">${state.site?.zone ? 'Modifier le lieu, le climat, le bruit…' : 'Définir le lieu du projet'}</button></div></div>
+      ${roomsCard()}
       ${glazingCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button></div></div>
@@ -304,6 +305,7 @@ $('#pbody').addEventListener('change', e => {
 $('#pbody').addEventListener('click', e => {
   const t = e.target;
   const lt = t.closest('[data-libtab]'); if (lt){ libTab = lt.dataset.libtab; libCat = ''; return renderPanel(); }
+  const rb = t.closest('[data-room]'); if (rb){ const r = state.levels.flatMap((L, li) => detectRooms(li)).find(x => x.key === rb.dataset.room); if (r) renameRoom(r); return; }
   const fo = t.closest('[data-fopen]'); if (fo){ libPath = [...libPath, fo.dataset.fopen]; return renderPanel(); }
   const fp = t.closest('[data-fpath]'); if (fp){ libPath = fp.dataset.fpath ? fp.dataset.fpath.split('/') : []; return renderPanel(); }
   const ft = t.closest('[data-ftype]'); if (ft){ defs.comp.type = +ft.dataset.ftype; syncHud(); updatePreview(); return renderPanel(); }
@@ -324,6 +326,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'site') openSiteDialog();
+  else if (act === 'tolevel') openCopyToLevel();
   else if (act === 'roof-fit' && el){ pushHist(); if (roofFitWalls(el)){ rebuild(); toast(`Toiture calée sur les murs : appui à ${nf(el.off)} m`); } else toast('Aucun mur sous cette toiture sur ce niveau'); }
   else if (act === 'roof-2pts' && el){ setTool('move'); toast('Cliquez un point de la toiture, puis l\'endroit où il doit aller'); }
   else if (act === 'roof-frame' && el) openFrameDialog(el.id);

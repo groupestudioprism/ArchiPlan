@@ -81,7 +81,8 @@ function treeMenuItems(key){
     return [{k:'work', t:'Travailler sur ce niveau', s:'Niveau courant pour le dessin et le plan'}, {k:'solo', t:'Afficher seulement ce niveau'}, {k:'lhide', t:on ? 'Afficher le niveau' : 'Masquer le niveau'}, '-', {k:'lrename', t:'Renommer, altitude…'}, {k:'ldel', t:'Supprimer le niveau', danger:true, off:state.levels.length < 2}]; }
   if (key.includes('|')) return [{k:'selall', t:'Sélectionner toute la catégorie'}, {k:'chide', t:'Masquer la catégorie'}, {k:'cshow', t:'Afficher la catégorie'}, {k:'cframe', t:'Centrer la vue'}];
   const el = getEl(+key.slice(1)); if (!el) return [];
-  const it = [{k:'frame', t:'Centrer la vue'}, {k:'hide', t:hiddenIds.has(el.id) ? 'Afficher' : 'Masquer'}, {k:'iso', t:'Isoler', s:'Masquer tout le reste'}, '-'];
+  const it = [{k:'frame', t:'Centrer la vue'}, {k:'hide', t:hiddenIds.has(el.id) ? 'Afficher' : 'Masquer'}, {k:'iso', t:'Isoler', s:'Masquer tout le reste'}, '-',
+    {k:'tmove', t:'Déplacer', s:'Point de base puis destination'}, {k:'tcopy', t:'Copier'}, {k:'trot', t:'Rotation'}, {k:'tmirror', t:'Symétrie…', s:'Axe en 2 points, copie ou déplacement'}, {k:'tolevel', t:'Copier vers un niveau…', s:'Monter les murs à l\'étage, avec leurs ouvertures'}, '-'];
   if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){
     it.push({k:'insul', t:'Ajuster l\'isolant et les performances…', s:'Épaisseur, λ, objectif U ou R, valeurs forcées'}, {k:'compose', t:'Modifier la composition…', s:'Fiche complète : couches, Glaser, acoustique'});
     if (forcedPerf(el)) it.push({k:'unforce', t:'Revenir aux valeurs calculées', s:'Supprime le U / R forcé'});
@@ -140,7 +141,9 @@ function runTreeAction(k, key){
     case 'famedit': return openFamEditor(el.fam, el.id);
     case 'rot90': pushHist(); el.rot = ((el.rot || 0) + 90) % 360; return re();
     case 'dup': { pushHist(); const c = dupEl(el); if (!c){ hist.pop(); updUndo(); return toast('Pas assez de place dans le mur pour dupliquer'); } state.isSample = false; sel = c.id; multi = []; rebuild(); return toast('Élément dupliqué'); }
-    case 'del': sel = el.id; multi = []; return deleteSel();
+    case 'del': if (!selIds().includes(el.id)){ sel = el.id; multi = []; } return deleteSel();
+    case 'tmove': case 'tcopy': case 'trot': case 'tmirror': if (!selIds().includes(el.id)) select(el.id); return setTool({tmove:'move', tcopy:'copy', trot:'rotate', tmirror:'mirror'}[k]);
+    case 'tolevel': return openCopyToLevel(selIds().includes(el.id) ? selIds() : [el.id]);
   }
 }
 function levelDialog(li){

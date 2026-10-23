@@ -327,6 +327,7 @@ function rebuild(opts = {}){
   batchBuild(); applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
+  roomsCache = null; if (typeof buildRooms === 'function') buildRooms();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -403,6 +404,7 @@ function buildLabels(){
       const {n, L} = wallAxis(el), T = wallT(el), side = el.flip ? 1 : -1;
       const m = V.add(V.mul(V.add(el.a, el.b), .5), V.mul(n, side * (T/2 + 0.28)));
       add(new THREE.Vector3(m[0], y3, -m[1]), nf(L));
+      if (isSel && !multi.length){ const d = labels[labels.length - 1].d; d.classList.add('edit'); d.title = 'Cliquer pour changer la longueur'; d.onclick = ev => { ev.stopPropagation(); editWallLength(el, d); }; }
     } else if (el.kind === 'slab' || el.kind === 'vol'){
       const r = rect(el.p, el.q), y = el.kind === 'slab' ? lvlZ(el.lvl) + (el.off || 0) : y3;
       add(new THREE.Vector3((r[0][0] + r[1][0]) / 2, y, -(r[0][1] - 0.3)), nf(r[1][0] - r[0][0]));
@@ -414,6 +416,10 @@ function buildLabels(){
       const txt = c ? `${n0(c.w * 100)} × ${n0(c.h * 100)}` : fam(el.fam)?.nom || '';
       add(new THREE.Vector3(fr.o[0], fr.z + (view !== '2d' ? (c ? c.h + 0.1 : 1) : 0), -fr.o[1]), txt);
     }
+  }
+  if (view === '2d' && APP_PREFS.rooms !== false) for (const r of detectRooms(curLvl)){
+    const d = document.createElement('div'); d.className = 'dim room'; d.innerHTML = `<b>${esc(r.name)}</b><span>${nf(r.net)} m²</span>`; d.title = 'Cliquer pour renommer la pièce';
+    d.onclick = ev => { ev.stopPropagation(); renameRoom(r); }; box.appendChild(d); labels.push({d, pos:new THREE.Vector3(r.c[0], lvlZ(curLvl), -r.c[1])});
   }
   dirty = true;
 }

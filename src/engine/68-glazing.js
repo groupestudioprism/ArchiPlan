@@ -5,6 +5,7 @@
 const GLAZ_MIN = 1 / 6;
 const glazedDoor = (F, el) => /vitr|fen[eê]tre|baie/i.test(`${el.fam} ${F?.nom || ''} ${F?.types?.[el.type | 0]?.nom || ''}`);
 function shabEstimate(){
+  const rooms = state.levels.flatMap((_, li) => detectRooms(li)); if (rooms.length) return rooms.reduce((s, r) => s + r.net, 0);
   let A = 0;
   state.levels.forEach((_, li) => {
     const slabs = state.els.filter(e => e.kind === 'slab' && e.lvl === li && elUse(e) !== 'toiture');

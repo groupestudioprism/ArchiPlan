@@ -13,7 +13,7 @@ const APP_ID = 'archiplan';
    Sans licence active (statut « active » et non expirée) : offre gratuite (cloud 10 Mo, partage, tous les outils ; exports réservés aux licences).
    Un administrateur a tous les droits. */
 const LICENSE_PRODUCT = 'archiplan';
-const SITE_URL = 'https://groupestudioprism.github.io/Studio-Prism/';
+const SITE_URL = 'https://studio-prism.com/';
 const OFFERS_URL = SITE_URL + '#/produits/' + LICENSE_PRODUCT;
 const ACCOUNT_URL = SITE_URL + '#/compte';
 const DELETE_URL = SITE_URL + 'compte-suppression.html';

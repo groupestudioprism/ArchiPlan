@@ -4,7 +4,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7}, slab:{type:'DAL-BA-20'}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5}, col:{type:'ba', h:2.7, w:0.25}, comp:{fam:'fenetre-2v', type:1, rot:0}};
+const defs = {wall:{type:'MUR-EXT-01', h:2.7}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5}, col:{type:'ba', h:2.7, w:0.25}, comp:{fam:'fenetre-2v', type:1, rot:0}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -136,6 +136,8 @@ function updatePreview(){
   let text = '';
   const S = draw.start || draw.base;
   if (tool === 'comp') text = previewComp(cur);
+  else if (tool === 'wall' && defs.wall.rect && draw.start){ const S0 = draw.start, r = rect(S0, cur); if (Math.abs(cur[0] - S0[0]) > 0.05 && Math.abs(cur[1] - S0[1]) > 0.05){ const ws = r.map((p, i) => tempEl(p, r[(i + 1) % 4])); for (const t of ws) for (const pc of pieces(t, state.els.concat(ws))) previewGroup.add(pieceMesh(pc, true)); } markGroup.add(makeMarker(S0, ac)); text = `Pièce ${nf(Math.abs(cur[0] - S0[0]))} × ${nf(Math.abs(cur[1] - S0[1]))} m · ${nf(Math.abs((cur[0] - S0[0]) * (cur[1] - S0[1])))} m²`; }
+  else if (tool === 'slab' && defs.slab.mode !== 'rect'){ const r = defs.slab.mode === 'room' ? roomAt(cur) : null; if (r){ const sh = r.poly; for (let i = 0; i < sh.length; i++) markGroup.add(lineObj(sh[i], sh[(i + 1) % sh.length], ac, null, false)); text = `${r.name} · ${nf(r.net, 2)} m² : cliquez pour poser la dalle`; } else text = defs.slab.mode === 'room' ? 'Survolez une pièce fermée' : 'Cliquez pour poser la dalle sous tous les murs du niveau'; }
   else if (tool === 'stair'){ const t = draw.start ? tempEl(draw.start, cur) : tempEl(cur, null); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); const D = stairDims(t); text = `${STAIR_TYPES[t.st]} · ${D.n} marches de ${nf(D.h * 100, 1)} cm${draw.start ? ` · ${nf(t.rot, 0)}°` : ''}`; if (draw.start) markGroup.add(makeMarker(draw.start, ac)); }
   else if (tool === 'roof' && defs.roof.mode === 'walls'){
     const o = wallsOutline(curLvl); if (o){ const t = roofFromPoly(o); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); text = 'Cliquez pour poser la toiture sur les murs du niveau'; } else text = 'Aucun mur sur ce niveau';
@@ -154,6 +156,7 @@ function updatePreview(){
     if ((tool === 'slab' || tool === 'vol' || tool === 'roof') && Math.abs(d[0]) > 0.005 && Math.abs(d[1]) > 0.005){ const t = tempEl(S, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
     if ((tool === 'move' || tool === 'copy') && L > 0.005) previewMove(d);
     if (tool === 'rotate') previewRotate(Math.atan2(d[1], d[0]));
+    if (tool === 'mirror' && L > 0.05){ previewMirror(S, cur); markGroup.add(lineObj(V.add(S, V.mul(V.sub(cur, S), -20)), V.add(S, V.mul(V.sub(cur, S), 20)), '#C0392B', null, true)); }
     let ang = Math.atan2(d[1], d[0]) * 180 / Math.PI; if (ang < 0) ang += 360;
     text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${nf(Math.abs(d[0]))} × ${nf(Math.abs(d[1]))} m` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${nf(L)} m · ${nf(ang, 1)}°`;
   } else {
@@ -290,9 +293,10 @@ function pushEnd(){ if (!push) return; push = null; c3.enabled = view !== '2d'; 
 /* ---------- outils ---------- */
 const PROMPTS = {
   select:() => 'Sélection : cliquez un élément (Maj pour en ajouter). Clic droit : déplacer la vue, ou tourner autour de l\'élément sélectionné.',
-  wall:() => defs.wall.arc ? (draw.arcB ? '<b>Mur courbe</b> : un point de la courbe (sa flèche)' : draw.start ? '<b>Mur courbe</b> : point d\'arrivée' : '<b>Mur courbe</b> : point de départ') : draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
+  wall:() => defs.wall.rect ? (draw.start ? '<b>Pièce</b> : coin opposé (ou <code>L;l</code>)' : '<b>Pièce</b> : premier coin de la pièce (4 murs d\'un coup)') : defs.wall.arc ? (draw.arcB ? '<b>Mur courbe</b> : un point de la courbe (sa flèche)' : draw.start ? '<b>Mur courbe</b> : point d\'arrivée' : '<b>Mur courbe</b> : point de départ') : draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
   slab:() => draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
   roof:() => defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
+  mirror:() => !selIds().length ? '<b>Symétrie</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Symétrie</b> : second point de l\'axe' : '<b>Symétrie</b> : premier point de l\'axe de symétrie',
   cut:() => draw.start ? '<b>Coupe</b> : second point du trait de coupe (on regarde vers la gauche du trait)' : '<b>Coupe</b> : premier point du trait de coupe',
   stair:() => draw.start ? '<b>Escalier</b> : direction de la montée (clic ou angle)' : '<b>Escalier</b> : point de départ (coin gauche de la première marche ; centre pour un colimaçon)',
   vol:() => draw.start ? '<b>Volume</b> : coin opposé, ou <code>L;l</code>' : '<b>Volume</b> : premier coin (ou x;y)',
@@ -312,7 +316,7 @@ function setPrompt(){
 function cancelDraw(){ draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
 function setTool(t){
   if (!PROMPTS[t]) return;
-  tool = t; cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
+  tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
   $$('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t));
   canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : 'crosshair';
   if (t === 'comp' && activeTab !== 'lib'){ activeTab = 'lib'; libTab = 'fams'; renderPanel(); }
@@ -330,7 +334,7 @@ function syncHud(){
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
   hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col' || tool === 'roof');
   if (!hp.hidden) $('#hIn').value = defs[tool].h;
-  $('#hLbl').textContent = tool === 'roof' ? 'Égout' : 'H'; $('#wallArcPill').hidden = tool !== 'wall'; if (tool === 'wall') $('#wArcIn').value = defs.wall.arc ? '1' : ''; $('#stairPill').hidden = tool !== 'stair'; if (tool === 'stair'){ $('#sTypeIn').value = defs.stair.st; $('#sSideIn').value = defs.stair.side; $('#sMatIn').value = defs.stair.mat; } $('#roofPill').hidden = tool !== 'roof'; $('#roofModePill').hidden = tool !== 'roof'; if (tool === 'roof') $('#rModeIn').value = defs.roof.mode;
+  $('#hLbl').textContent = tool === 'roof' ? 'Égout' : 'H'; $('#wallArcPill').hidden = tool !== 'wall'; if (tool === 'wall') $('#wArcIn').value = defs.wall.rect ? 'r' : defs.wall.arc ? '1' : ''; $('#slabModePill').hidden = tool !== 'slab'; if (tool === 'slab') $('#sModeIn').value = defs.slab.mode; $('#mirrorPill').hidden = tool !== 'mirror'; if (tool === 'mirror') $('#mKeepIn').value = defs.mirror.keep ? '1' : ''; $('#stairPill').hidden = tool !== 'stair'; if (tool === 'stair'){ $('#sTypeIn').value = defs.stair.st; $('#sSideIn').value = defs.stair.side; $('#sMatIn').value = defs.stair.mat; } $('#roofPill').hidden = tool !== 'roof'; $('#roofModePill').hidden = tool !== 'roof'; if (tool === 'roof') $('#rModeIn').value = defs.roof.mode;
   if (tool === 'roof'){ $('#rShapeIn').value = defs.roof.shape; $('#rPitchIn').value = defs.roof.pitch; }
 }
 function placePoint(pt){
@@ -338,13 +342,19 @@ function placePoint(pt){
   if (tool === 'wall' && defs.wall.arc && S){
     if (!draw.arcB){ if (V.len(V.sub(pt, S)) > 0.01) draw.arcB = pt; }
     else { const B = draw.arcB, t = tempEl(S.slice(), B.slice()), m = V.mul(V.add(S, B), 0.5), {n} = wallAxis(t); t.bulge = rnd(V.dot(V.sub(pt, m), n)); addEl(t); draw.chainN++; draw.start = B; draw.arcB = null; }
-  } else if (tool === 'wall'){
+  } else if (tool === 'wall' && !defs.wall.rect){
     if (!S){ draw.start = pt; draw.chainFirst = pt; draw.chainN = 0; }
     else if (V.len(V.sub(pt, S)) > 0.01){
       addEl(tempEl(S.slice(), pt.slice())); draw.chainN++;
       if (draw.chainFirst && V.eq(pt, draw.chainFirst) && draw.chainN > 1){ cancelDraw(); toast('Contour fermé'); return; }
       draw.start = pt;
     }
+  } else if (tool === 'wall' && defs.wall.rect){
+    if (!S) draw.start = pt; else if (Math.abs(pt[0] - S[0]) > 0.05 && Math.abs(pt[1] - S[1]) > 0.05){ const r = rect(S, pt); pushHist(); r.forEach((p, i) => { const t = tempEl(p.slice(), r[(i + 1) % 4].slice()); t.id = state.nextId++; state.els.push(t); }); state.isSample = false; draw.start = null; draw.workZ = null; rebuild(); toast('Pièce tracée : 4 murs'); } else toast('La pièce doit avoir deux côtés non nuls');
+  } else if (tool === 'slab' && defs.slab.mode !== 'rect'){ if (defs.slab.mode === 'room') slabOnRoom(pt); else slabOnWalls();
+  } else if (tool === 'mirror'){
+    if (!selIds().length){ toast('Sélectionnez d\'abord les éléments'); return; }
+    if (!draw.base) draw.base = pt; else if (V.len(V.sub(pt, draw.base)) > 0.05){ const A = draw.base; draw.base = null; applyMirror(A, pt); }
   } else if (tool === 'cut'){
     if (!S) draw.start = pt; else if (V.len(V.sub(pt, S)) > 0.1){ const a = S; draw.start = null; addCut(a, pt); return; }
   } else if (tool === 'stair'){
@@ -354,7 +364,7 @@ function placePoint(pt){
     else { draw.poly ??= [];
       if (draw.poly.length >= 3 && V.len(V.sub(pt, draw.poly[0])) < 0.05) finishRoofPoly();
       else if (!draw.poly.length || V.len(V.sub(pt, draw.poly[draw.poly.length - 1])) > 0.01) draw.poly.push(pt); }
-  } else if (tool === 'slab' || tool === 'vol' || tool === 'roof'){
+  } else if ((tool === 'slab' && defs.slab.mode === 'rect') || tool === 'vol' || tool === 'roof'){
     if (!S) draw.start = pt;
     else if (Math.abs(pt[0] - S[0]) > 0.01 && Math.abs(pt[1] - S[1]) > 0.01){ const r = rect(S, pt), t = tempEl(r[0], r[2]); if (t.kind === 'roof') roofFitWalls(t); addEl(t); draw.start = null; draw.workZ = null; }
     else toast('Le rectangle doit avoir deux côtés non nuls');
@@ -374,7 +384,7 @@ function placePoint(pt){
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
 const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
-  coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', di:'measure', r:'measure', selection:'select', v:'select'};
+  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', di:'measure', r:'measure', selection:'select', v:'select'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
   const rel = s.startsWith('@'); if (rel) s = s.slice(1).trim();

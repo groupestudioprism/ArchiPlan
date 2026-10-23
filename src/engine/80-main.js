@@ -21,7 +21,9 @@ function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<opt
 $('#lvlSel').addEventListener('change', e => { curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
-$('#wArcIn').addEventListener('change', e => { defs.wall.arc = !!e.target.value; cancelDraw(); setPrompt(); });
+$('#wArcIn').addEventListener('change', e => { defs.wall.arc = e.target.value === '1'; defs.wall.rect = e.target.value === 'r'; cancelDraw(); setPrompt(); });
+$('#sModeIn').addEventListener('change', e => { defs.slab.mode = e.target.value; cancelDraw(); setPrompt(); updatePreview(); });
+$('#mKeepIn').addEventListener('change', e => { defs.mirror.keep = !!e.target.value; });
 $('#sTypeIn').addEventListener('change', e => { defs.stair.st = e.target.value; updatePreview(); });
 $('#sSideIn').addEventListener('change', e => { defs.stair.side = e.target.value; updatePreview(); });
 $('#sMatIn').addEventListener('change', e => { defs.stair.mat = e.target.value; updatePreview(); });
@@ -76,7 +78,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 
@@ -159,7 +161,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};
