@@ -157,7 +157,7 @@ function pieces(el, els = state.els){
     const poly = volPoly(el), C = compo(el.type), holes = slabHoles(el).concat(el.holes || []), net = area(poly) - holes.reduce((s, h) => s + area(h), 0); let top = z + slabT(el);
     for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot, ...(holes.length ? {holes, vol:net * e} : {})}); top -= e; }
   } else if (el.kind === 'vol'){
-    out.push({mat:el.mat, poly:volPoly(el), base:z, h:el.h, lot:'Industrie'});
+    const P = volPoly(el), hs = el.holes || []; out.push({mat:el.mat, poly:P, base:z, h:el.h, lot:'Industrie', ...(hs.length ? {holes:hs, vol:(area(P) - hs.reduce((s, x) => s + area(x), 0)) * el.h} : {})});
   } else if (el.kind === 'col'){
     out.push({mat:el.mat, poly:colPoly(el), base:z, h:el.h, lot:'Gros œuvre'});
   }

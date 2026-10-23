@@ -283,12 +283,12 @@ function pushStart(e){
   const h = hitModel(e); if (!h?.id) return false;
   const el = getEl(h.id); if (!el || el.kind === 'inst' && el.host) return false;
   const up = h.normal.y > 0.85, down = h.normal.y < -0.85, side = Math.abs(h.normal.y) < 0.2;
-  if (side && (!(el.kind === 'vol' || el.kind === 'slab') || el.poly)) return false;
+  if (side && !(el.kind === 'vol' || el.kind === 'slab')) return false;
   if (!up && !down && !side) return false;
-  pushHist();
+  pushHist(); if (side && el.bind) delete el.bind;
   const base = h.point.clone(), p1 = toScreen(base), p2 = toScreen(base.clone().add(up || down ? new THREE.Vector3(0, 1, 0) : h.normal.clone().setY(0).normalize()));
   const ppm = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) || 1, dir = [(p2[0] - p1[0]) / ppm, (p2[1] - p1[1]) / ppm];
-  push = {el, orig:JSON.parse(JSON.stringify(el)), x:e.clientX, y:e.clientY, ppm, dir, mode:up ? 'up' : down ? 'down' : 'side', n:[h.normal.x, -h.normal.z]};
+  push = {el, orig:JSON.parse(JSON.stringify(el)), x:e.clientX, y:e.clientY, ppm, dir, mode:up ? 'up' : down ? 'down' : 'side', n:[h.normal.x, -h.normal.z], hit:[h.point.x, -h.point.z]};
   c3.enabled = false; return true;
 }
 function pushMove(e){
@@ -299,6 +299,12 @@ function pushMove(e){
     if (el.kind === 'slab') el.off = rnd(o.off + v); else if (el.kind === 'inst') el.off = rnd(o.off + v); else el.h = rnd(Math.max(0.01, o.h + v));
   } else if (push.mode === 'down'){
     if (el.kind === 'slab') el.off = rnd(o.off - v); else { const nh = Math.max(0.01, o.h + v); el.off = rnd(o.off - (nh - o.h)); el.h = rnd(nh); }
+  } else if (o.poly){   // face latérale d'un polygone : on pousse l'arête visée (les faces voisines suivent) ; cercle : le rayon
+    const P = o.poly.map(p => p.slice()), c = polyCentroid(P);
+    if (o.shape === 'circ'){ const r0 = V.len(V.sub(P[0], c)), k = Math.max(0.01, r0 + v) / r0; el.poly = P.map(p => [rnd(c[0] + (p[0] - c[0]) * k), rnd(c[1] + (p[1] - c[1]) * k)]); }
+    else { push.edge ??= (() => { const n = V.norm(push.n); let bi = 0, bs = -Infinity; for (let i = 0; i < P.length; i++){ const a = P[i], b = P[(i + 1) % P.length], d = V.norm(V.sub(b, a)), on = [d[1], -d[0]], m = V.mul(V.add(a, b), 0.5), out = V.dot(V.sub(m, c), on) > 0 ? on : V.mul(on, -1), sc = V.dot(out, n) * 10 - V.len(V.sub(m, push.hit)); if (sc > bs){ bs = sc; bi = i; } } return bi; })();
+      const i = push.edge, j = (i + 1) % P.length, n = V.norm(push.n); P[i] = [rnd(P[i][0] + n[0] * v), rnd(P[i][1] + n[1] * v)]; P[j] = [rnd(P[j][0] + n[0] * v), rnd(P[j][1] + n[1] * v)]; el.poly = P; }
+    const xs = el.poly.map(p => p[0]), ys = el.poly.map(p => p[1]); el.p = [Math.min(...xs), Math.min(...ys)]; el.q = [Math.max(...xs), Math.max(...ys)];
   } else {
     const r = rect(o.p, o.q), n = push.n; let [x0, y0] = r[0], [x1, y1] = r[2];
     if (Math.abs(n[0]) > 0.7){ if (n[0] > 0) x1 = Math.max(x0 + 0.01, x1 + v); else x0 = Math.min(x1 - 0.01, x0 - v); }

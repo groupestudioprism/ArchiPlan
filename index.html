@@ -3858,7 +3858,7 @@ function pieces(el, els = state.els){
     const poly = volPoly(el), C = compo(el.type), holes = slabHoles(el).concat(el.holes || []), net = area(poly) - holes.reduce((s, h) => s + area(h), 0); let top = z + slabT(el);
     for (const [m, e] of C.layers){ out.push({mat:m, e, poly, base:top - e, h:e, lot:C.lot, ...(holes.length ? {holes, vol:net * e} : {})}); top -= e; }
   } else if (el.kind === 'vol'){
-    out.push({mat:el.mat, poly:volPoly(el), base:z, h:el.h, lot:'Industrie'});
+    const P = volPoly(el), hs = el.holes || []; out.push({mat:el.mat, poly:P, base:z, h:el.h, lot:'Industrie', ...(hs.length ? {holes:hs, vol:(area(P) - hs.reduce((s, x) => s + area(x), 0)) * el.h} : {})});
   } else if (el.kind === 'col'){
     out.push({mat:el.mat, poly:colPoly(el), base:z, h:el.h, lot:'Gros œuvre'});
   }
@@ -5342,12 +5342,12 @@ function pushStart(e){
   const h = hitModel(e); if (!h?.id) return false;
   const el = getEl(h.id); if (!el || el.kind === 'inst' && el.host) return false;
   const up = h.normal.y > 0.85, down = h.normal.y < -0.85, side = Math.abs(h.normal.y) < 0.2;
-  if (side && (!(el.kind === 'vol' || el.kind === 'slab') || el.poly)) return false;
+  if (side && !(el.kind === 'vol' || el.kind === 'slab')) return false;
   if (!up && !down && !side) return false;
-  pushHist();
+  pushHist(); if (side && el.bind) delete el.bind;
   const base = h.point.clone(), p1 = toScreen(base), p2 = toScreen(base.clone().add(up || down ? new THREE.Vector3(0, 1, 0) : h.normal.clone().setY(0).normalize()));
   const ppm = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) || 1, dir = [(p2[0] - p1[0]) / ppm, (p2[1] - p1[1]) / ppm];
-  push = {el, orig:JSON.parse(JSON.stringify(el)), x:e.clientX, y:e.clientY, ppm, dir, mode:up ? 'up' : down ? 'down' : 'side', n:[h.normal.x, -h.normal.z]};
+  push = {el, orig:JSON.parse(JSON.stringify(el)), x:e.clientX, y:e.clientY, ppm, dir, mode:up ? 'up' : down ? 'down' : 'side', n:[h.normal.x, -h.normal.z], hit:[h.point.x, -h.point.z]};
   c3.enabled = false; return true;
 }
 function pushMove(e){
@@ -5358,6 +5358,12 @@ function pushMove(e){
     if (el.kind === 'slab') el.off = rnd(o.off + v); else if (el.kind === 'inst') el.off = rnd(o.off + v); else el.h = rnd(Math.max(0.01, o.h + v));
   } else if (push.mode === 'down'){
     if (el.kind === 'slab') el.off = rnd(o.off - v); else { const nh = Math.max(0.01, o.h + v); el.off = rnd(o.off - (nh - o.h)); el.h = rnd(nh); }
+  } else if (o.poly){   // face latérale d'un polygone : on pousse l'arête visée (les faces voisines suivent) ; cercle : le rayon
+    const P = o.poly.map(p => p.slice()), c = polyCentroid(P);
+    if (o.shape === 'circ'){ const r0 = V.len(V.sub(P[0], c)), k = Math.max(0.01, r0 + v) / r0; el.poly = P.map(p => [rnd(c[0] + (p[0] - c[0]) * k), rnd(c[1] + (p[1] - c[1]) * k)]); }
+    else { push.edge ??= (() => { const n = V.norm(push.n); let bi = 0, bs = -Infinity; for (let i = 0; i < P.length; i++){ const a = P[i], b = P[(i + 1) % P.length], d = V.norm(V.sub(b, a)), on = [d[1], -d[0]], m = V.mul(V.add(a, b), 0.5), out = V.dot(V.sub(m, c), on) > 0 ? on : V.mul(on, -1), sc = V.dot(out, n) * 10 - V.len(V.sub(m, push.hit)); if (sc > bs){ bs = sc; bi = i; } } return bi; })();
+      const i = push.edge, j = (i + 1) % P.length, n = V.norm(push.n); P[i] = [rnd(P[i][0] + n[0] * v), rnd(P[i][1] + n[1] * v)]; P[j] = [rnd(P[j][0] + n[0] * v), rnd(P[j][1] + n[1] * v)]; el.poly = P; }
+    const xs = el.poly.map(p => p[0]), ys = el.poly.map(p => p[1]); el.p = [Math.min(...xs), Math.min(...ys)]; el.q = [Math.max(...xs), Math.max(...ys)];
   } else {
     const r = rect(o.p, o.q), n = push.n; let [x0, y0] = r[0], [x1, y1] = r[2];
     if (Math.abs(n[0]) > 0.7){ if (n[0] > 0) x1 = Math.max(x0 + 0.01, x1 + v); else x0 = Math.min(x1 - 0.01, x0 - v); }
@@ -6010,30 +6016,46 @@ function startExtrude(base){
   if (view === '2d'){ addEl(volFrom(base, defs.vol.h, off)); draw.workZ = null; return; }
   const fp = base.rect ? rect(base.rect[0], base.rect[1]) : base.poly, c = polyCentroid(fp), z0 = lvlZ(curLvl) + off;
   const p1 = toScreen(new THREE.Vector3(c[0], z0, -c[1])), p2 = toScreen(new THREE.Vector3(c[0], z0 + 1, -c[1])), ppm = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) || 1;
-  draw.ext = {base, off, p1, dir:[(p2[0] - p1[0]) / ppm, (p2[1] - p1[1]) / ppm], ppm, h:defs.vol.h, z0, c};
+  // forme dessinée sur le dessus d'une forme ou d'une dalle : on peut aussi la pousser vers le bas pour percer (trou ou poche)
+  const host = draw.workZ != null ? state.els.find(e => (e.kind === 'vol' || e.kind === 'slab') && Math.abs(lvlZ(e.lvl) + (e.off || 0) + (e.kind === 'slab' ? slabT(e) : e.h) - draw.workZ) < 0.01 && ptInPoly(c[0], c[1], volPoly(e))) : null;
+  draw.ext = {base, off, p1, dir:[(p2[0] - p1[0]) / ppm, (p2[1] - p1[1]) / ppm], ppm, h:defs.vol.h, z0, c, host:host?.id};
   draw.start = null; draw.poly = null; previewExtrude(); setPrompt();
 }
 function previewExtrude(){
   const x = draw.ext; if (!x) return; disposeGroup(previewGroup); disposeGroup(markGroup);
-  drawSnapGlyph(null); pieces(volFrom(x.base, x.h, x.off)).forEach(pc => previewGroup.add(pieceMesh(pc, true)));
-  const lv = $('#live'), s = toScreen(new THREE.Vector3(x.c[0], x.z0 + x.h, -x.c[1])); lv.textContent = `H ${nf(x.h)} m`; lv.style.left = s[0] + 'px'; lv.style.top = s[1] + 'px'; lv.hidden = false; dirty = true;
+  drawSnapGlyph(null);
+  if (x.h > 0) pieces(volFrom(x.base, x.h, x.off)).forEach(pc => previewGroup.add(pieceMesh(pc, true)));
+  else { const fp = x.base.rect ? rect(x.base.rect[0], x.base.rect[1]) : x.base.poly; for (const zz of [x.z0, x.z0 + x.h]) for (let i = 0; i < fp.length; i++) markGroup.add(lineObj(fp[i], fp[(i + 1) % fp.length], '#C0392B', zz, false)); }
+  const lv = $('#live'), s = toScreen(new THREE.Vector3(x.c[0], x.z0 + x.h, -x.c[1])), H = getEl(x.host); lv.textContent = x.h > 0 ? `H ${nf(x.h)} m` : H && (H.kind === 'slab' || -x.h >= H.h - 1e-3) ? `Trou traversant` : `Poche ${nf(-x.h)} m`; lv.style.left = s[0] + 'px'; lv.style.top = s[1] + 'px'; lv.hidden = false; dirty = true;
 }
-function endExtrude(h){ const x = draw.ext; if (!x) return; draw.ext = null; $('#live').hidden = true; if (h > 0) defs.vol.h = rnd(h); addEl(volFrom(x.base, h > 0 ? h : x.h, x.off)); draw.workZ = null; updatePreview(); setPrompt(); }
+function endExtrude(h){ const x = draw.ext; if (!x) return; draw.ext = null; $('#live').hidden = true;
+  if (h < 0 && x.host) carveHost(getEl(x.host), x.base, -h);
+  else { if (h > 0) defs.vol.h = rnd(h); addEl(volFrom(x.base, h > 0 ? h : x.h, x.off)); }
+  draw.workZ = null; updatePreview(); setPrompt(); }
+/* percer : trou traversant (dalle, ou forme percée sur toute sa hauteur) ou poche (fond laissé en place) */
+function carveHost(H, base, depth){
+  if (!H) return; const fp = (base.rect ? rect(base.rect[0], base.rect[1]) : base.poly).map(p => [rnd(p[0]), rnd(p[1])]);
+  pushHist(); (H.holes ??= []).push(fp);
+  if (H.kind === 'vol' && depth < H.h - 1e-3){ const f = {kind:'vol', mat:H.mat, h:rnd(H.h - depth), lvl:H.lvl, off:H.off || 0, id:state.nextId++, p:[0, 0], q:[1, 1]}; const xs = fp.map(p => p[0]), ys = fp.map(p => p[1]); f.p = [Math.min(...xs), Math.min(...ys)]; f.q = [Math.max(...xs), Math.max(...ys)]; if (!isAxisRect(fp)) f.poly = fp; state.els.push(f); toast(`Poche de ${nf(depth)} m creusée`); }
+  else toast(H.kind === 'slab' ? 'Trou percé dans la dalle' : 'Forme percée de part en part');
+  state.isSample = false; rebuild();
+}
 let extDown = null;
 canvas.addEventListener('pointermove', e => {
   if (!draw.ext || e.buttons) return; e.stopImmediatePropagation();
   const r = canvas.getBoundingClientRect(), x = draw.ext, mx = e.clientX - r.left - x.p1[0], my = e.clientY - r.top - x.p1[1];
-  const v = (mx * x.dir[0] + my * x.dir[1]) / x.ppm; x.h = Math.max(step, SNAP.grid ? Math.round(v / step) * step : rnd(v)); previewExtrude();
+  const v = (mx * x.dir[0] + my * x.dir[1]) / x.ppm, H = getEl(x.host), vv = SNAP.grid ? Math.round(v / step) * step : rnd(v);
+  x.h = H ? (vv > -step / 2 && vv < step ? step : Math.max(vv, -(H.kind === 'slab' ? slabT(H) : H.h))) : Math.max(step, vv); previewExtrude();
 }, {capture:true});
 canvas.addEventListener('pointerdown', e => { if (draw.ext && e.button === 0){ extDown = [e.clientX, e.clientY]; } }, {capture:true});
 canvas.addEventListener('pointerup', e => {
   if (!draw.ext || e.button !== 0 || !extDown) return; const moved = Math.hypot(e.clientX - extDown[0], e.clientY - extDown[1]); extDown = null;
-  if (moved > 7) return; e.stopImmediatePropagation(); endExtrude(draw.ext.h);
+  if (moved > 7) return; e.stopImmediatePropagation(); down = null; endExtrude(draw.ext.h);
 }, {capture:true});
 $('#cmd').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !draw.ext && (tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3 && !e.target.value.trim()){ e.preventDefault(); e.stopImmediatePropagation(); tool === 'vol' ? finishShapePoly() : finishSlabPoly(); return; }
   if (!draw.ext || e.key !== 'Enter') return; const v = num(e.target.value.replace(/^[hH]\s*/, ''));
-  e.preventDefault(); e.stopImmediatePropagation(); e.target.value = ''; endExtrude(v > 0 ? v : draw.ext.h);
+  e.preventDefault(); e.stopImmediatePropagation(); e.target.value = ''; endExtrude(v > 0 || (v < 0 && draw.ext.host) ? v : draw.ext.h);
 }, {capture:true});
 document.addEventListener('keydown', e => { if (draw.ext && e.key === 'Escape'){ e.stopImmediatePropagation(); draw.ext = null; $('#live').hidden = true; disposeGroup(previewGroup); draw.workZ = null; setPrompt(); dirty = true; } }, {capture:true});
 /* clic de l'outil Forme (appelé par placePoint) */
@@ -8890,7 +8912,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};
