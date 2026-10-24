@@ -1,3 +1,4 @@
+/* Fichier commun : source unique studio-prism/shared/prism-settings.js, recopiée par tools/sync_shared.py — ne pas modifier dans les apps */
 /* ============ Réglages Studio Prism (module commun ARCHITRAFIC · ARCHIPLAN) ============
    Petit bouton ⚙ dans la barre du haut et sur l'accueil, à côté du compte. Les réglages d'interface (thème, taille,
    molette, animations) sont partagés entre les apps Studio Prism de cet appareil ; chaque app ajoute ses propres sections

@@ -1580,6 +1580,7 @@ const ERR = {
 const errMsg = e => ERR[e?.code] || 'Une erreur est survenue. Réessayez dans un instant.';
 
 /* ---------- Verrouillage de l'appareil : code PIN chiffré + biométrie (passkey) ---------- */
+/* Bloc commun (verrouillage, code PIN, Face ID) : source unique studio-prism/shared/device-lock.js, recopiée par tools/sync_shared.py — ne pas modifier ici */
 const Lock = {
   key: uid => 'sp.lock.' + uid,
   get(uid){ return store.get(this.key(uid)); },
@@ -2939,6 +2940,7 @@ function segInter(a, b, c, d){ // intersection de deux segments (ou null)
 }
 
 /* ==== 05-prism-settings.js ==== */
+/* Fichier commun : source unique studio-prism/shared/prism-settings.js, recopiée par tools/sync_shared.py — ne pas modifier dans les apps */
 /* ============ Réglages Studio Prism (module commun ARCHITRAFIC · ARCHIPLAN) ============
    Petit bouton ⚙ dans la barre du haut et sur l'accueil, à côté du compte. Les réglages d'interface (thème, taille,
    molette, animations) sont partagés entre les apps Studio Prism de cet appareil ; chaque app ajoute ses propres sections
