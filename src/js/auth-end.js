@@ -44,7 +44,7 @@ window.addEventListener('keydown', e => {
   const L = readLinkFromUrl();
   try { if (L) sessionStorage.setItem('ap.pendingLink', JSON.stringify(L)); ctx.pendingLink = L || JSON.parse(sessionStorage.getItem('ap.pendingLink') || 'null'); } catch(e){ ctx.pendingLink = L; }
   show('loading');
-  bioOK = await withTimeout(Bio.available(), 1500).catch(() => false);
+  bioOK = await withTimeout(Bio.available(), 3000).catch(() => !!(window.PublicKeyCredential && window.isSecureContext));
   try {
     const u = await Auth.init();
     if (!u) return show('login');
