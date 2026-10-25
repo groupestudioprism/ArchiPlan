@@ -528,6 +528,9 @@ body.gripping, body.gripping *{cursor:move!important}
 #labels .dim.cote{background:color-mix(in srgb,var(--vp) 90%,transparent);font-weight:600;pointer-events:auto;cursor:pointer}
 #labels .dim.cote:hover{color:#C0392B;text-decoration:line-through}
 #labels.drawing .dim.cote{pointer-events:none}
+.jn-seg{flex-wrap:wrap}.jn-seg button{flex:1 1 31%;min-width:0;white-space:nowrap;padding:0 6px}
+.jn-cv{height:min(380px,42vh)}
+.jn-perf{margin-top:10px}.jn-warns{margin-top:8px}
 /* intro ARCHIPLAN : une feuille de dessin technique ; un crayon trace des lignes de construction qui s'encrent et révèlent le logo officiel (masque SVG suivant le tracé du crayon),
    le plan prend brièvement du volume (2D → 3D), puis le nom et la signature. Séquence pilotée par le script du bloc #splash (Web Animations API, déterministe). */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;overflow:hidden}
@@ -1121,7 +1124,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     </div>
   </header>
   <nav class="tools" role="toolbar" aria-label="Outils">
-    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button><button class="tool" data-tool="dim" aria-pressed="false" title="Cote (Q) : deux points puis la position de la ligne de cote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v10M20 7v10M4 12h16M6 10l-2 2 2 2M18 10l2 2-2 2"/></svg><span>Cote</span><kbd>Q</kbd></button>
+    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><button class="tool" data-tool="join" aria-pressed="false" title="Menuiserie sur mesure (N) : fenêtre, porte, baie — dimensions, vitrage, performances"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM5 12h14M12 3v9M8 16h.01"/></svg><span>Menuiserie</span><kbd>N</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button><button class="tool" data-tool="dim" aria-pressed="false" title="Cote (Q) : deux points puis la position de la ligne de cote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v10M20 7v10M4 12h16M6 10l-2 2 2 2M18 10l2 2-2 2"/></svg><span>Cote</span><kbd>Q</kbd></button>
   </nav>
   <main class="vp" id="vp">
     <canvas id="c"></canvas>
@@ -3619,6 +3622,299 @@ const FAM_PATH = {
 };
 const famPath = (id, F) => FAM_PATH[id] || F?.path || [F?.cat || 'Divers'];
 
+/* ==== 14-joinery.js ==== */
+/* ============ Menuiseries : un seul générateur pour la bibliothèque et l'outil Menuiserie ============
+   Une menuiserie est décrite par une « fiche » (spec) : type, dimensions, nombre de vantaux, cadre, vitrage, ouverture, options.
+   Le générateur en fait une famille paramétrique ordinaire (pièces en formules sur w, h, sill, fw, fd, T) : la bibliothèque de
+   base (fenêtres, portes-fenêtres, baies, portes) est produite ainsi, et l'outil Menuiserie crée des familles sur mesure.
+   Repère local (famille hébergée) : x le long du mur (centré), y à travers le mur (0 = axe, +y = côté intérieur, poignées),
+   z vers le haut depuis l'allège. T = épaisseur du mur hôte (fournie par famScope).
+   Performances calculées (EN ISO 10077-1 simplifiée) : Uw, facteur solaire Sw, transmission lumineuse TLw, affaiblissement Rw,
+   masse, classes AEV et Acotherm. Contrôles : dimensions normalisées, accessibilité (largeurs de passage, poignée à 1,05 m),
+   allège et garde-corps (NF P 01-012), vitrage de sécurité (DTU 39), poids des vantaux. */
+
+/* ---------- matériaux complémentaires (cadres) ---------- */
+Object.assign(MATS, {
+  pvcAnthr:{...MATS.pvc, nom:'PVC plaxé gris anthracite', color:'#3F444B', rough:0.45},
+  boisPeint:{...MATS.bois, nom:'Bois peint blanc (menuiserie)', color:'#F3F1EA', tex:'plain', rough:0.55},
+  vitrage3:{...MATS.vitrage, nom:'Triple vitrage 4/16/4/16/4 (équivalent)', rho:600, lambda:0.03, opacity:0.3, Ug:0.6},
+  vitrageAc:{...MATS.vitrage, nom:'Double vitrage acoustique 44.2/16/10 (équivalent)', rho:900, opacity:0.34, Ug:1.1},
+});
+/* ---------- cadres (profils) : matériau, Uf, largeurs de profils, classe AEV, masse linéique ---------- */
+const JN_FRAMES = {
+  pvc:  {nom:'PVC blanc', m:'pvc', Uf:1.3, fw:0.055, fd:0.07, ow:0.07, od:0.07, psi:0.06, aev:'A*4 E*7B V*A3', kg:3.5, ud:1.5},
+  pvcA: {nom:'PVC plaxé gris anthracite', m:'pvcAnthr', Uf:1.3, fw:0.055, fd:0.07, ow:0.07, od:0.07, psi:0.06, aev:'A*4 E*7B V*A3', kg:3.5, ud:1.5},
+  alu:  {nom:'Aluminium à rupture de pont thermique, gris anthracite', m:'aluAnthr', Uf:2.0, fw:0.05, fd:0.065, ow:0.055, od:0.065, psi:0.07, aev:'A*4 E*7B V*A3', kg:3.2, ud:1.3},
+  aluB: {nom:'Aluminium à rupture de pont thermique, blanc', m:'alu', Uf:2.0, fw:0.05, fd:0.065, ow:0.055, od:0.065, psi:0.07, aev:'A*4 E*7B V*A3', kg:3.2, ud:1.3},
+  bois: {nom:'Bois (chêne, exotique)', m:'chene', Uf:1.6, fw:0.058, fd:0.068, ow:0.068, od:0.068, psi:0.06, aev:'A*4 E*7B V*A3', kg:5.0, ud:2.0},
+  boisP:{nom:'Bois peint blanc', m:'boisPeint', Uf:1.6, fw:0.058, fd:0.068, ow:0.068, od:0.068, psi:0.06, aev:'A*4 E*7B V*A3', kg:5.0, ud:2.0},
+  acier:{nom:'Acier à profils fins (style atelier)', m:'acierLaque', Uf:3.5, fw:0.035, fd:0.045, ow:0.03, od:0.045, psi:0.08, aev:'A*2 E*4B V*A2', kg:6.0, ud:1.5},
+};
+const JN_KINDS = {fen:'Fenêtre', pf:'Porte-fenêtre', coul:'Baie coulissante', fixe:'Châssis fixe', pi:'Porte intérieure', pe:'Porte d\'entrée'};
+const JN_OPENS = {fr:'À la française (battant)', ob:'Oscillo-battant', fixe:'Fixe'};
+/* vantaux de portes : affaiblissement acoustique, masse surfacique, épaisseur */
+const JN_LEAVES = {
+  pi:{pleine:{nom:'Pleine (âme pleine)', Rw:28, kg:28, lt:0.04}, alveolaire:{nom:'Isoplane, âme alvéolaire', Rw:22, kg:12, lt:0.04}, panneaux:{nom:'Postformée à 2 panneaux', Rw:24, kg:14, lt:0.04},
+      vitree:{nom:'Vitrée (vitrage central)', Rw:25, kg:20, lt:0.04}, atelier:{nom:'Verrière style atelier', Rw:22, kg:24, lt:0.035}, acou:{nom:'Acoustique (âme lourde, joints, seuil automatique)', Rw:38, kg:40, lt:0.045}},
+  pe:{pleine:{nom:'Pleine isolante', Rw:30, kg:35, lt:0.068}, rainuree:{nom:'Pleine à rainures horizontales', Rw:30, kg:35, lt:0.068}, panneaux:{nom:'Moulurée à 2 panneaux', Rw:29, kg:34, lt:0.068},
+      vitree:{nom:'Semi-vitrée', Rw:29, kg:32, lt:0.068}, acou:{nom:'Isolante acoustique renforcée', Rw:37, kg:48, lt:0.072}},
+};
+/* dimensions courantes (cm) par type et nombre de vantaux */
+const JN_STD = {
+  fen:{1:[[40,45],[40,60],[50,75],[60,75],[60,95],[80,95],[80,115],[90,115],[100,115],[100,125],[100,135]], 2:[[80,95],[100,115],[100,125],[120,125],[120,135],[140,135],[140,145],[160,145],[180,145]], 3:[[180,135],[200,145],[240,145]]},
+  pf:{1:[[80,215],[90,215],[100,215]], 2:[[120,215],[140,215],[160,215],[180,215],[160,225]], 3:[[240,215]]},
+  coul:{2:[[180,215],[200,215],[240,215],[300,215],[240,225]], 3:[[300,215],[360,215]], 4:[[400,215],[480,215]]},
+  fixe:{1:[[60,60],[80,80],[100,100],[120,120],[200,60],[300,60],[100,215],[120,215]]},
+  pi:{1:[[63,204],[73,204],[83,204],[93,204],[83,214],[93,224]], 2:[[126,204],[146,204],[166,204]]},
+  pe:{1:[[90,215],[100,215],[90,225],[100,225]], 2:[[140,215],[160,215],[150,220]]},
+};
+const JN_DEF = {kind:'fen', w:1.2, h:1.35, sill:0.9, n:2, frame:'pvc', open:'fr', hinge:'g', swing:'in', glz:{t:'double', gas:'argon', le:true, ac:'std', saf:'std', sol:false, we:true}, bars:{h:0, v:0}, appui:true, leaf:'pleine', tierce:0, imposte:0, iso:false, fire:'', ouv:0};
+const jnSpec = s => { const o = JSON.parse(JSON.stringify(JN_DEF)); if (s){ Object.assign(o, s); o.glz = {...JN_DEF.glz, ...(s.glz || {})}; o.bars = {...JN_DEF.bars, ...(s.bars || {})}; } return o; };
+const jnq = v => String(Math.round(v * 1e4) / 1e4);
+
+/* ---------- vitrages ---------- */
+function glazingData(g){
+  g = {...JN_DEF.glz, ...(g || {})};
+  let Ug, gf, tl, Rw, comp, mm, m;
+  const ext = g.ac === 'std' ? '4' : g.ac === 'renf' ? '10' : '44.2', eExt = g.ac === 'std' ? 4 : g.ac === 'renf' ? 10 : 8.8;
+  if (g.t === 'simple'){ Ug = 5.8; gf = 0.85; tl = 0.90; comp = ext; mm = eExt; Rw = g.ac === 'std' ? 29 : g.ac === 'renf' ? 31 : 35; m = 'verre'; }
+  else if (g.t === 'double'){
+    const gap = g.gas === 'krypton' ? 12 : 16; Ug = g.le ? {air:1.4, argon:1.1, krypton:1.0}[g.gas] : {air:2.8, argon:2.7, krypton:2.6}[g.gas];
+    gf = g.le ? 0.63 : 0.78; tl = g.le ? 0.80 : 0.81; comp = `${ext}/${gap}/4`; mm = eExt + gap + 4; Rw = g.ac === 'std' ? 32 : g.ac === 'renf' ? 36 : 41; m = g.ac === 'acou' ? 'vitrageAc' : 'vitrage';
+  } else {
+    const gap = g.gas === 'krypton' ? 12 : 16; Ug = g.le ? {air:0.8, argon:0.6, krypton:0.5}[g.gas] : {air:2.0, argon:1.9, krypton:1.8}[g.gas];
+    gf = g.le ? 0.50 : 0.60; tl = g.le ? 0.70 : 0.72; comp = `${ext}/${gap}/4/${gap}/4`; mm = eExt + 2 * gap + 8; Rw = g.ac === 'std' ? 33 : g.ac === 'renf' ? 37 : 43; m = 'vitrage3';
+  }
+  if (g.le) comp += ' FE';
+  if (g.gas !== 'air' && g.t !== 'simple') comp += ' ' + g.gas;
+  if (g.sol){ gf = g.t === 'simple' ? 0.60 : g.t === 'double' ? 0.35 : 0.30; tl = Math.round(tl * 0.75 * 100) / 100; comp += ', contrôle solaire'; }
+  if (g.saf === 'tremp') comp += ', trempé'; else if (g.saf === 'feuil'){ comp += ', feuilleté'; Rw += 1; mm += 2.6; }
+  const glassMm = g.t === 'simple' ? eExt : g.t === 'double' ? eExt + 4 : eExt + 8;   // épaisseurs de verre seules
+  return {Ug, g:gf, TL:tl, Rw, comp, e:mm / 1000, kg:2.5 * (glassMm + (g.saf === 'feuil' ? 2.6 : 0)), m, label:`${g.t === 'simple' ? 'Simple' : g.t === 'double' ? 'Double' : 'Triple'} vitrage ${comp}`};
+}
+
+/* ---------- géométrie ---------- */
+function joineryParts(sp){
+  const FR = JN_FRAMES[sp.frame] || JN_FRAMES.pvc, fm = FR.m, G = glazingData(sp.glz), gt = jnq(G.e), gm = G.m, n = Math.max(1, sp.n | 0), P = [];
+  const B = (m, x, y, z, w, d, h, extra = {}) => P.push({s:'box', m, x:String(x), y:String(y), z:String(z), w:String(w), d:String(d), h:String(h), ...extra});
+  const C = (m, x, y, z, r, h, extra = {}) => P.push({s:'cyl', m, x:String(x), y:String(y), z:String(z), r:String(r), h:String(h), ...extra});
+  const isDoor = sp.kind === 'pi' || sp.kind === 'pe';
+  /* --- dormant --- */
+  B(fm, '-w/2', '-fd/2', '0', 'fw', 'fd', 'h'); B(fm, 'w/2-fw', '-fd/2', '0', 'fw', 'fd', 'h'); B(fm, '-w/2+fw', '-fd/2', 'h-fw', 'w-2*fw', 'fd', 'fw');
+  if (sp.kind === 'fen' || sp.kind === 'fixe') B(fm, '-w/2+fw', '-fd/2', '0', 'w-2*fw', 'fd', 'fw');
+  else if (sp.kind !== 'pi') B('alu', '-w/2+fw', '-fd/2', '0', 'w-2*fw', 'fd', '0.02');   // seuil aluminium (≤ 2 cm : accessibilité)
+  /* --- appui extérieur et tablette intérieure (fenêtres à allège) --- */
+  if ((sp.kind === 'fen' || sp.kind === 'fixe') && sp.appui){
+    const am = /alu|pvc/.test(sp.frame) ? 'alu' : 'pierreSol';
+    B(am, '-w/2-0.04', '-T/2-0.04', '0', 'w+0.08', 'max(0.02, T/2+0.04-fd/2+0.005)', '0.012', {if:'sill>0.01'});
+    B(am, '-w/2-0.04', '-T/2-0.04', '-0.035', 'w+0.08', '0.03', '0.047', {if:'sill>0.01'});
+    B('stratifie', '-w/2-0.03', 'fd/2-0.005', '0', 'w+0.06', 'max(0.02, T/2-fd/2+0.03)', '0.022', {if:'sill>0.01'});
+  }
+  const ow = jnq(FR.ow), od = jnq(FR.od), oy = jnq(-FR.od / 2 + 0.012);   // ouvrant légèrement côté intérieur
+  const bars = (x0, y0, gw, gz, gh) => { // petits bois
+    const nh = sp.bars?.h | 0, nv = sp.bars?.v | 0;
+    for (let j = 1; j <= nh; j++) B(fm, x0, `${y0}-0.004`, `${gz}+${j}*(${gh})/${nh + 1}-0.011`, gw, `${gt}+0.008`, '0.022');
+    for (let j = 1; j <= nv; j++) B(fm, `${x0}+${j}*(${gw})/${nv + 1}-0.011`, `${y0}-0.004`, gz, '0.022', `${gt}+0.008`, gh);
+  };
+  if (sp.kind === 'fixe'){
+    B(gm, '-w/2+fw', `-${gt}/2`, 'fw', 'w-2*fw', gt, 'h-2*fw'); bars('-w/2+fw', `-${gt}/2`, '(w-2*fw)', 'fw', '(h-2*fw)');
+    B(fm, '-w/2+fw', `${gt}/2`, 'fw', 'w-2*fw', '0.018', '0.018'); B(fm, '-w/2+fw', `${gt}/2`, 'h-fw-0.018', 'w-2*fw', '0.018', '0.018');   // parcloses
+  } else if (sp.kind === 'fen' || sp.kind === 'pf'){
+    const pf = sp.kind === 'pf', LW = `((w-2*fw)/${n})`, zb = pf ? '0.02' : 'fw', OH = pf ? '(h-fw-0.02)' : '(h-2*fw)', low = pf ? '0.1' : ow;
+    for (let i = 0; i < n; i++){
+      const x0 = `(-w/2+fw+${i}*${LW})`;
+      B(fm, x0, oy, zb, ow, od, OH); B(fm, `${x0}+${LW}-${ow}`, oy, zb, ow, od, OH);
+      B(fm, `${x0}+${ow}`, oy, `${zb}+${OH}-${ow}`, `${LW}-2*${ow}`, od, ow); B(fm, `${x0}+${ow}`, oy, zb, `${LW}-2*${ow}`, od, low);
+      const gx = `${x0}+${ow}`, gw = `(${LW}-2*${ow})`, gz = `(${zb}+${low})`, gh = `(${OH}-${ow}-${low})`;
+      B(gm, gx, `-${gt}/2+0.012`, gz, gw, gt, gh); bars(gx, `-${gt}/2+0.012`, gw, gz, gh);
+    }
+    if (sp.open !== 'fixe'){ // poignée : sur le vantail de service, montant opposé aux gonds
+      const i = n === 1 ? 0 : sp.hinge === 'g' ? n - 1 : 0, x0 = `(-w/2+fw+${i}*${LW})`;
+      const xs = (n === 1 ? sp.hinge === 'g' : sp.hinge !== 'g') ? `${x0}+${LW}-${ow}/2` : `${x0}+${ow}/2`;
+      const zc = pf ? '1.05' : `(${zb}+${OH}/2)`, yf = jnq(FR.od / 2 + 0.012);
+      B('inox', `${xs}-0.015`, yf, `${zc}-0.055`, '0.03', '0.013', '0.11'); C('inox', xs, `${yf}+0.034`, `${zc}-0.07`, '0.0085', '0.14'); C('inox', xs, `${yf}+0.012`, zc, '0.0085', '0.03', {ax:'y'});
+    }
+  } else if (sp.kind === 'coul'){
+    const ov = 0.07, LW = `((w-2*fw+${jnq(ov * (n - 1))})/${n})`, ow2 = jnq(Math.max(0.05, FR.ow * 0.8)), od2 = '0.045';
+    for (let i = 0; i < n; i++){
+      const t = n === 4 ? (i < 2 ? i : 3 - i) : i % 2, yc = t ? 0.023 : -0.023, y0 = jnq(yc - 0.0225), x0 = `(-w/2+fw+${i}*(${LW}-${jnq(ov)}))`;
+      B(fm, x0, y0, '0.02', ow2, od2, 'h-fw-0.02'); B(fm, `${x0}+${LW}-${ow2}`, y0, '0.02', ow2, od2, 'h-fw-0.02');
+      B(fm, `${x0}+${ow2}`, y0, 'h-fw-0.07', `${LW}-2*${ow2}`, od2, '0.05'); B(fm, `${x0}+${ow2}`, y0, '0.02', `${LW}-2*${ow2}`, od2, '0.08');
+      B(gm, `${x0}+${ow2}`, jnq(yc - G.e / 2), '0.1', `${LW}-2*${ow2}`, gt, 'h-fw-0.17');
+    }
+    const si = n === 4 ? 1 : 1, x0 = `(-w/2+fw+${si}*(${LW}-${jnq(ov)}))`;   // tirant sur le vantail intérieur, montant de rencontre
+    C('inox', `${x0}+${ow2}/2`, jnq(0.023 + 0.0225 + 0.018), '0.92', '0.011', '0.26'); B('inox', `${x0}+${ow2}/2-0.012`, jnq(0.023 + 0.0225), '1.03', '0.024', '0.02', '0.04');
+    B('inox', `${x0}+${ow2}/2-0.012`, jnq(0.023 + 0.0225), '1.17', '0.024', '0.02', '0.04');
+    B(fm, '-w/2+fw', '-0.05', 'h-fw-0.004', 'w-2*fw', '0.1', '0.004'); B(fm, '-w/2+fw', '-0.05', '0.02', 'w-2*fw', '0.1', '0.004');   // rails
+  } else if (isDoor){
+    const pe = sp.kind === 'pe', L = (JN_LEAVES[sp.kind][sp.leaf] || JN_LEAVES[sp.kind].pleine), lt = jnq(L.lt), leafM = pe ? fm : (sp.leaf === 'atelier' ? 'acierLaque' : sp.frame === 'bois' ? 'chene' : 'boisPeint');
+    const hi = sp.imposte > 0.15 ? sp.imposte : 0, wt = pe && sp.tierce > 0.2 ? sp.tierce : 0;
+    if (!pe) for (const yy of ['T/2-0.004', '-T/2-0.01']){ // chambranles (habillage des deux faces)
+      B(fm, '-w/2-0.06', yy, '0', '0.06', '0.014', 'h+0.06', {if:'T>fd+0.02'}); B(fm, 'w/2', yy, '0', '0.06', '0.014', 'h+0.06', {if:'T>fd+0.02'}); B(fm, '-w/2', yy, 'h', 'w', '0.014', '0.06', {if:'T>fd+0.02'}); }
+    if (hi){ B(fm, '-w/2+fw', '-fd/2', `h-${jnq(hi)}-0.05`, 'w-2*fw', 'fd', '0.05'); B(gm, '-w/2+fw', `-${gt}/2`, `h-${jnq(hi)}`, 'w-2*fw', gt, `${jnq(hi)}-fw`); }
+    if (wt){ const xm = sp.hinge === 'd' ? `w/2-fw-${jnq(wt)}-0.06` : `-w/2+fw+${jnq(wt)}`; B(fm, xm, '-fd/2', '0', '0.06', 'fd', `h-fw${hi ? `-${jnq(hi)}-0.05` : ''}`);
+      const xg = sp.hinge === 'd' ? `w/2-fw-${jnq(wt)}` : '-w/2+fw'; B(gm, xg, `-${gt}/2`, '0.1', jnq(wt), gt, `h-fw-0.1${hi ? `-${jnq(hi)}-0.05` : ''}`); B(fm, xg, '-fd/2', '0', jnq(wt), 'fd', '0.1'); }
+    const topL = `h-fw-0.013${hi ? `-${jnq(hi)}-0.05` : ''}`;   // hauteur du vantail
+    if (sp.open === 'coul'){ // porte coulissante en applique sur la face intérieure : ouv (0-90) fait glisser le vantail
+      B(leafM, `-w/2-0.03+ouv/90*(w+0.06)`, 'T/2+0.012', '0.01', 'w+0.06', lt, 'h+0.02'); B('acierLaque', '-w/2-0.03', 'T/2+0.004', 'h+0.05', '2*w+0.1', '0.03', '0.045');
+      B('inox', `w/2-0.1+ouv/90*(w+0.06)`, `T/2+0.012+${lt}`, '0.95', '0.02', '0.012', '0.2'); return P;
+    }
+    const leaves = n === 2 ? ['d', 'g'] : [sp.hinge], lwE = n === 2 ? `((w-2*fw-${jnq(wt ? wt + 0.06 : 0)}-0.009)/2)` : `(w-2*fw-${jnq(wt ? wt + 0.06 : 0)}-0.006)`;
+    leaves.forEach((hg, k) => {
+      const pivX = hg === 'd' ? (wt && sp.hinge === 'g' ? `-w/2+fw+${jnq(wt + 0.06)}+0.003` : '-w/2+fw+0.003') : (wt && sp.hinge === 'd' ? `w/2-fw-${jnq(wt + 0.06)}-0.003` : 'w/2-fw-0.003');
+      const th = hg === 'd' ? (sp.swing === 'in' ? 'ouv' : '(0-ouv)') : (sp.swing === 'in' ? '(180-ouv)' : '(180+ouv)'), sInt = hg === 'd' ? 1 : -1;
+      const at = (a, b) => [`${pivX}+(${a})*cos(${th})-(${b})*sin(${th})`, `(${b})*cos(${th})+(${a})*sin(${th})`];
+      const box = (m, a, b, z, len, dep, hh, extra = {}) => { const [x, y] = at(a, b); B(m, x, y, z, len, dep, hh, {rz:th, ...extra}); };
+      const lw = lwE, service = n === 1 || hg === sp.hinge;
+      if (sp.leaf === 'vitree' || sp.leaf === 'atelier'){
+        const st = sp.leaf === 'atelier' ? 0.035 : 0.12, rb = sp.leaf === 'atelier' ? 0.035 : 0.26, rt = sp.leaf === 'atelier' ? 0.035 : 0.12, ltn = +lt;
+        box(leafM, '0', `-${lt}/2`, '0.01', jnq(st), lt, topL); box(leafM, `${lw}-${jnq(st)}`, `-${lt}/2`, '0.01', jnq(st), lt, topL);
+        box(leafM, jnq(st), `-${lt}/2`, '0.01', `${lw}-${jnq(2 * st)}`, lt, jnq(rb)); box(leafM, jnq(st), `-${lt}/2`, `${topL}-${jnq(rt)}+0.01`, `${lw}-${jnq(2 * st)}`, lt, jnq(rt));
+        const gm2 = sp.leaf === 'atelier' || sp.kind === 'pi' ? 'verre' : gm, gt2 = sp.leaf === 'atelier' || sp.kind === 'pi' ? '0.008' : gt;
+        box(gm2, jnq(st), `-${gt2}/2`, jnq(0.01 + rb), `${lw}-${jnq(2 * st)}`, gt2, `${topL}-${jnq(rb + rt)}`);
+        if (sp.leaf === 'atelier'){ const nh = 4; for (let j = 1; j <= nh; j++) box(leafM, jnq(st), `-${ltn / 2}`, `0.01+${jnq(rb)}+${j}*(${topL}-${jnq(rb + rt)})/${nh + 1}-0.012`, `${lw}-${jnq(2 * st)}`, lt, '0.024'); box(leafM, `${lw}/2-0.012`, `-${ltn / 2}`, jnq(0.01 + rb), '0.024', lt, `${topL}-${jnq(rb + rt)}`); }
+      } else box(leafM, '0', `-${lt}/2`, '0.01', lw, lt, topL);
+      if (sp.leaf === 'rainuree') for (let j = 0; j < 5; j++) box('aluAnthr', '0.08', `${-sInt}*(${lt}/2+0.003)`, `0.3+${j}*(${topL}-0.75)/4`, `${lw}-0.16`, '0.006', '0.014');
+      if (sp.leaf === 'panneaux') for (const s of [1, -1]) for (const [z0, z1] of [['0.2', '0.78'], ['0.95', `${topL}-0.2`]]){ const b = `${s}*(${lt}/2+0.003)`, bb = `${s}*(${lt}/2)`;
+        box(leafM, '0.1', s > 0 ? bb : b, z0, '0.035', '0.006', `${z1}-${z0}`); box(leafM, `${lw}-0.135`, s > 0 ? bb : b, z0, '0.035', '0.006', `${z1}-${z0}`);
+        box(leafM, '0.1', s > 0 ? bb : b, z0, `${lw}-0.2`, '0.006', '0.035'); box(leafM, '0.1', s > 0 ? bb : b, `${z1}-0.035`, `${lw}-0.2`, '0.006', '0.035'); }
+      // paumelles (côté ouverture), béquille des deux faces ou bâton de maréchal extérieur, verrous du vantail semi-fixe
+      const sw = sp.swing === 'in' ? sInt : -sInt;
+      for (const z of ['0.22', `${topL}/2-0.045`, `${topL}-0.3`]){ const [x, y] = at('0.012', `${sw}*(${lt}/2+0.006)`); C(fm === 'chene' ? 'inox' : 'inox', x, y, z, '0.0075', '0.09'); }
+      const hz = '1.05', aH = `${lw}-0.065`;   // poignée à 1,05 m du sol (accessibilité : entre 0,90 et 1,30 m)
+      if (service) for (const s of pe ? [sInt] : [1, -1]){
+        const [rx, ry] = at(aH, `${s}*(${lt}/2+0.005)`); C('inox', rx, ry, hz, '0.025', '0.01', {ax:'y', rz:th});
+        const [nx, ny] = at(aH, `${s}*(${lt}/2+0.03)`); C('inox', nx, ny, hz, '0.0085', '0.05', {ax:'y', rz:th});
+        const [lx, ly] = at(`${aH}-0.0575`, `${s}*(${lt}/2+0.053)`); C('inox', lx, ly, hz, '0.0085', '0.115', {ax:'x', rz:th});
+      }
+      if (service && pe){ const [bx, by] = at(`${lw}-0.08`, `${-sInt}*(${lt}/2+0.055)`); C('inox', bx, by, '0.55', '0.013', '1.0'); for (const z of ['0.6', '1.5']){ const [fx2, fy2] = at(`${lw}-0.08`, `${-sInt}*(${lt}/2+0.028)`); C('inox', fx2, fy2, z, '0.009', '0.055', {ax:'y', rz:th}); } }
+      if (!service) for (const z of ['0.3', `${topL}-0.35`]){ const [vx, vy] = at(`${lw}-0.02`, `${sInt}*(${lt}/2+0.008)`); C('inox', vx, vy, z, '0.006', '0.08'); }
+      void k;
+    });
+  }
+  return P;
+}
+/* ---------- performances ---------- */
+function joineryGeomStats(sp, w, h){
+  const FR = JN_FRAMES[sp.frame] || JN_FRAMES.pvc, fw = FR.fw, n = Math.max(1, sp.n | 0); let Ag = 0, lg = 0;
+  const add = (gw, gh, k = 1) => { if (gw > 0 && gh > 0){ Ag += k * gw * gh; lg += k * 2 * (gw + gh); } };
+  if (sp.kind === 'fixe') add(w - 2 * fw, h - 2 * fw);
+  else if (sp.kind === 'fen' || sp.kind === 'pf'){ const LW = (w - 2 * fw) / n, OH = sp.kind === 'pf' ? h - fw - 0.02 : h - 2 * fw, low = sp.kind === 'pf' ? 0.1 : FR.ow; add(LW - 2 * FR.ow, OH - FR.ow - low, n); }
+  else if (sp.kind === 'coul'){ const ov = 0.07, LW = (w - 2 * fw + ov * (n - 1)) / n, ow2 = Math.max(0.05, FR.ow * 0.8); add(LW - 2 * ow2, h - fw - 0.17, n); }
+  else { const L = JN_LEAVES[sp.kind][sp.leaf] || JN_LEAVES[sp.kind].pleine, hi = sp.imposte > 0.15 ? sp.imposte : 0, wt = sp.kind === 'pe' && sp.tierce > 0.2 ? sp.tierce : 0;
+    const lw = n === 2 ? (w - 2 * fw - (wt ? wt + 0.06 : 0) - 0.009) / 2 : w - 2 * fw - (wt ? wt + 0.06 : 0) - 0.006, lh = h - fw - 0.013 - (hi ? hi + 0.05 : 0);
+    if (sp.leaf === 'vitree') add(lw - 0.24, lh - 0.38, n); else if (sp.leaf === 'atelier') add(lw - 0.07, lh - 0.07, n);
+    if (hi) add(w - 2 * fw, hi - fw); if (wt) add(wt, lh - 0.1); void L; }
+  const Aw = Math.max(0.05, w * h); return {Aw, Ag:Math.min(Ag, Aw * 0.95), Af:Math.max(0, Aw - Math.min(Ag, Aw * 0.95)), lg, n};
+}
+function joineryPerfSpec(sp, w = sp.w, h = sp.h){
+  const FR = JN_FRAMES[sp.frame] || JN_FRAMES.pvc, G = glazingData(sp.glz), S = joineryGeomStats(sp, w, h), isDoor = sp.kind === 'pi' || sp.kind === 'pe', psi = sp.glz?.we === false ? Math.max(0.07, FR.psi) : Math.min(0.04, FR.psi);   // intercalaire warm edge : Ψ ≈ 0,04 ; alu classique : ≈ 0,07
+  let Uw, Rw, kg, Uf = FR.Uf + (sp.kind === 'coul' ? 0.2 : 0);
+  if (isDoor){
+    const L = JN_LEAVES[sp.kind][sp.leaf] || JN_LEAVES[sp.kind].pleine, Ud = sp.kind === 'pe' ? FR.ud * (sp.iso ? 0.75 : 1) : 2.5;
+    Uw = (S.Ag * G.Ug + S.Af * Ud + S.lg * psi) / S.Aw;
+    const Ro = L.Rw + (sp.fire ? 2 : 0), Rg = G.Rw + 1; Rw = S.Ag > 0.01 ? -10 * Math.log10((S.Af / S.Aw) * 10 ** (-Ro / 10) + (S.Ag / S.Aw) * 10 ** (-Rg / 10)) : Ro;
+    kg = S.Af * L.kg + S.Ag * G.kg + (2 * h + w) * FR.kg;
+  } else {
+    Uw = (S.Ag * G.Ug + S.Af * Uf + S.lg * psi) / S.Aw; Rw = Math.max(25, G.Rw - (sp.kind === 'coul' ? 2 : 0)); kg = S.Ag * G.kg + (2 * h + 2 * w) * FR.kg + S.n * 2 * (h + w / S.n) * FR.kg * 0.8;
+  }
+  const Sw = (S.Ag * G.g * 0.95 + S.Af * 0.02) / S.Aw, TL = S.Ag * G.TL / S.Aw;
+  const th = Uw <= 0.8 ? 'Th13' : Uw <= 1.0 ? 'Th12' : Uw <= 1.2 ? 'Th11' : Uw <= 1.4 ? 'Th10' : Uw <= 1.6 ? 'Th9' : Uw <= 1.8 ? 'Th8' : Uw <= 2.0 ? 'Th7' : Uw <= 2.2 ? 'Th6' : 'Th5';
+  const ctr = Rw - 4, ac = ctr >= 40 ? 'AC4' : ctr >= 36 ? 'AC3' : ctr >= 33 ? 'AC2' : ctr >= 28 ? 'AC1' : '—';
+  const leafKg = kg / Math.max(1, S.n);
+  return {Uw:Math.round(Uw * 100) / 100, Ug:G.Ug, Uf:Math.round(Uf * 100) / 100, Sw:Math.round(Sw * 100) / 100, TL:Math.round(TL * 100) / 100, Rw:Math.round(Rw), RwCtr:Math.round(ctr), Ag:Math.round(S.Ag * 100) / 100, Af:Math.round(S.Af * 100) / 100, Aw:Math.round(S.Aw * 100) / 100,
+    kg:Math.round(kg), leafKg:Math.round(leafKg), glazing:G.label, frame:FR.nom, aev:FR.aev, th, ac, fire:sp.fire || '', interior:sp.kind === 'pi', n:S.n};
+}
+function joineryPerf(F, scope){ if (!F?.join) return null; const s = scope || famScope(F, {type:0, params:{}}); return joineryPerfSpec(F.join, s.w ?? F.join.w, s.h ?? F.join.h); }
+/* ---------- contrôles : dimensions normalisées, accessibilité, sécurité ---------- */
+function joineryCheck(sp, perf){
+  const E = [], W = [], N = [], w = sp.w, h = sp.h, n = Math.max(1, sp.n | 0), cm = v => Math.round(v * 100), isDoor = sp.kind === 'pi' || sp.kind === 'pe';
+  const std = (JN_STD[sp.kind] || {})[n] || [], isStd = std.some(([a, b]) => Math.abs(a - cm(w)) < 0.5 && Math.abs(b - cm(h)) < 0.5);
+  if (!isStd && std.length) N.push(`Dimension hors standard (${cm(w)} × ${cm(h)}) : fabrication sur mesure, délai et coût majorés. Courantes : ${std.slice(0, 5).map(([a, b]) => `${a}×${b}`).join(', ')}…`);
+  if (w < 0.3 || h < 0.3) E.push('Dimension trop petite (minimum 30 cm).');
+  if (sp.kind === 'pi'){
+    if (w < 0.63) E.push('Porte intérieure : largeur minimale 63 cm.');
+    else if (w < 0.83) W.push(`Passage utile ${cm(w - 0.06)} cm : prévoir 83 cm de largeur (passage ≥ 77 cm) pour l'accessibilité des logements (arrêté du 24 déc. 2015).`);
+    if (h < 2.0) W.push('Hauteur inférieure à 2,00 m : hauteur de passage insuffisante (standard 204 cm).'); if (h > 2.4) N.push('Hauteur supérieure à 240 cm : vantail toute hauteur sur mesure.');
+  }
+  if (sp.kind === 'pe'){
+    if (w < 0.8) E.push('Porte d\'entrée : largeur minimale 80 cm.');
+    else if (w < 0.9 && n === 1) W.push(`Passage utile ${cm(w - 0.07)} cm : une porte de 90 cm (passage ≥ 83 cm) est requise pour l'accessibilité (logements neufs, ERP).`);
+    if (h < 2.1) W.push('Hauteur inférieure à 210 cm : standard 215 cm.');
+  }
+  if (isDoor && n === 2 && w < 1.2) W.push('Porte à 2 vantaux : largeur inférieure à 120 cm, vantaux étroits (< 60 cm).');
+  if (isDoor) N.push('Poignée à 1,05 m du sol (accessibilité : entre 0,90 et 1,30 m) ; seuil ≤ 2 cm.');
+  if (!isDoor){
+    const lw = (sp.kind === 'coul' ? (w - 0.12 + 0.07 * (n - 1)) : (w - 0.14)) / n;
+    if ((sp.kind === 'fen' || sp.kind === 'pf') && lw > 1.2) E.push(`Vantail de ${cm(lw)} cm : trop large pour un battant (maximum ≈ 120 cm) — ajoutez un vantail ou passez en coulissant.`);
+    if (sp.kind === 'coul' && lw > 2.5) W.push(`Vantail coulissant de ${cm(lw)} cm : très lourd, prévoir des roulettes renforcées ou un vantail de plus.`);
+    if (sp.kind === 'fen' && sp.sill < 0.9 && sp.sill + h > 1.0) W.push(`Allège de ${cm(sp.sill)} cm (< 90 cm) : garde-corps obligatoire à 1,00 m (NF P 01-012) et vitrage de sécurité (feuilleté) sur la partie basse (DTU 39).`);
+    if (sp.kind === 'fen' && sp.sill >= 1.3) N.push('Allège haute (≥ 130 cm) : vue vers l\'extérieur réduite ; conseillée seulement en salle d\'eau ou pour un bandeau.');
+    if ((sp.kind === 'pf' || sp.kind === 'coul') && sp.glz?.saf === 'std') W.push('Porte-fenêtre / baie : vitrage de sécurité (trempé ou feuilleté) obligatoire sur les vitrages à hauteur de passage (DTU 39 P5).');
+    if (sp.kind === 'fen' && sp.sill < 0.6 && sp.glz?.saf === 'std') W.push('Vitrage de sécurité requis (allège basse).');
+    if (perf.leafKg > (sp.kind === 'coul' ? 150 : /pvc/.test(sp.frame) ? 80 : 100)) W.push(`Vantail de ${perf.leafKg} kg : trop lourd pour les paumelles standard (${sp.kind === 'coul' ? '150' : /pvc/.test(sp.frame) ? '80' : '100'} kg) — réduisez la largeur ou allégez le vitrage.`);
+    if (sp.glz?.t === 'triple' && /pvc/.test(sp.frame)) N.push('Triple vitrage sur PVC : profils à renfort acier conseillés (poids et rigidité).');
+    if (sp.open === 'ob' && lw > 1.0) W.push('Oscillo-battant : vantail au-delà de 100 cm, ferrage renforcé.');
+    if (w / h > 3.5 || h / w > 3.5) N.push('Proportions extrêmes : vérifier la faisabilité (rigidité des profils).');
+  }
+  if ((sp.kind === 'pe' || sp.kind === 'pi') && (sp.leaf === 'vitree' || sp.leaf === 'atelier') && sp.glz?.saf === 'std') W.push('Porte vitrée : vitrage de sécurité (trempé ou feuilleté) obligatoire (DTU 39, zones de passage).');
+  if (sp.fire){ if (sp.frame !== 'acier' && sp.frame !== 'bois' && sp.frame !== 'boisP') W.push(`Porte ${sp.fire} : huisserie métallique ou bois massif et bloc-porte certifié (PV d'essai) requis.`); if (sp.leaf === 'alveolaire' || sp.leaf === 'atelier') E.push(`Porte ${sp.fire} : vantail âme pleine ≥ 40 mm obligatoire.`); N.push(`Classement ${sp.fire} à justifier par le PV du bloc-porte (vantail + huisserie + ferrage + joints intumescents).`); }
+  if (!isDoor || sp.kind === 'pe'){ if (perf.Uw > 1.3) W.push(`Uw = ${nf(perf.Uw, 2)} W/m²·K : au-dessus de 1,3 (seuil des aides à la rénovation, RE 2020 : viser ≤ 1,3 et Sw ≥ 0,3).`); else N.push(`Uw = ${nf(perf.Uw, 2)} W/m²·K : conforme aux exigences courantes (≤ 1,3).`); }
+  return {errors:E, warns:W, notes:N, isStd};
+}
+/* ---------- nom et famille ---------- */
+function joineryName(sp){
+  const cm = v => Math.round(v * 100), n = Math.max(1, sp.n | 0), FR = JN_FRAMES[sp.frame] || JN_FRAMES.pvc, G = glazingData(sp.glz);
+  const base = sp.kind === 'fen' ? `Fenêtre ${n} vanta${n > 1 ? 'ux' : 'il'}${sp.open === 'ob' ? ' oscillo-battant' : sp.open === 'fixe' ? ' fixe' : ''}` : sp.kind === 'pf' ? `Porte-fenêtre ${n} vanta${n > 1 ? 'ux' : 'il'}` : sp.kind === 'coul' ? `Baie coulissante ${n} vantaux` : sp.kind === 'fixe' ? 'Châssis fixe'
+    : sp.kind === 'pi' ? `Porte intérieure ${(JN_LEAVES.pi[sp.leaf] || JN_LEAVES.pi.pleine).nom.toLowerCase()}${n === 2 ? ' 2 vantaux' : ''}${sp.open === 'coul' ? ' coulissante' : ''}` : `Porte d'entrée ${(JN_LEAVES.pe[sp.leaf] || JN_LEAVES.pe.pleine).nom.toLowerCase()}${n === 2 ? ' 2 vantaux' : ''}${sp.tierce > 0.2 ? ' avec tierce' : ''}`;
+  const mat = FR.nom.split(/[ ,(]/)[0];
+  return `${base} ${cm(sp.w)} × ${cm(sp.h)} ${mat}${sp.kind !== 'pi' && sp.kind !== 'pe' || sp.leaf === 'vitree' ? `, ${sp.glz.t === 'simple' ? 'simple' : sp.glz.t === 'double' ? 'double' : 'triple'} vitrage` : ''}${sp.fire ? ' ' + sp.fire : ''}`;
+}
+function joineryFamily(spec, opt = {}){
+  const sp = jnSpec(spec), FR = JN_FRAMES[sp.frame] || JN_FRAMES.pvc, isDoor = sp.kind === 'pi' || sp.kind === 'pe';
+  const params = {w:P(sp.w, 'Largeur'), h:P(sp.h, 'Hauteur'), sill:P(isDoor || sp.kind === 'pf' || sp.kind === 'coul' ? 0 : sp.sill, 'Allège'), fw:P(isDoor ? (sp.kind === 'pi' ? 0.045 : 0.07) : FR.fw, 'Largeur du dormant'), fd:P(isDoor ? (sp.kind === 'pi' ? 0.07 : 0.08) : FR.fd, 'Profondeur du dormant')};
+  if (isDoor) params.ouv = P(sp.ouv || 0, sp.open === 'coul' ? 'Ouverture (0 à 90)' : 'Ouverture (°)', '°');
+  const F = {nom:opt.nom || joineryName(sp), cat:isDoor ? 'Portes' : 'Fenêtres', host:'wall', path:opt.path, params, types:opt.types || [{nom:'Sur mesure', p:{}}], cut:{w:'w', h:'h'}, parts:joineryParts(sp), join:sp, made:'menuiserie'};
+  if (!F.path) delete F.path;
+  return F;
+}
+/* ---------- bibliothèque de base : fenêtres et portes générées (mêmes identifiants et types qu'avant) ---------- */
+(() => {
+  const T = (nom, p) => ({nom, p});
+  const add = (id, spec, types, path) => { FAMS[id] = joineryFamily(spec, {types, path}); };
+  add('fenetre-1v', {kind:'fen', w:0.8, h:1.15, sill:0.95, n:1, frame:'pvc', hinge:'g'}, [T('60 × 75', {w:0.6, h:0.75, sill:1.35}), T('80 × 115', {w:0.8, h:1.15}), T('100 × 135', {w:1.0, h:1.35, sill:0.9})], ['Fenêtres', '1 vantail']);
+  add('fenetre-2v', {kind:'fen', w:1.2, h:1.35, sill:0.9, n:2, frame:'pvc'}, [T('100 × 115', {w:1.0, h:1.15, sill:0.95}), T('120 × 135', {w:1.2}), T('140 × 135', {w:1.4})], ['Fenêtres', '2 vantaux']);
+  add('fenetre-2v-alu', {kind:'fen', w:1.2, h:1.35, sill:0.9, n:2, frame:'alu', glz:{t:'double', gas:'argon', le:true}}, [T('120 × 135', {}), T('140 × 145', {w:1.4, h:1.45}), T('160 × 145', {w:1.6, h:1.45})], ['Fenêtres', '2 vantaux']);
+  add('fenetre-2v-bois', {kind:'fen', w:1.2, h:1.35, sill:0.9, n:2, frame:'bois', bars:{h:1, v:0}}, [T('120 × 135', {}), T('100 × 125', {w:1.0, h:1.25})], ['Fenêtres', '2 vantaux']);
+  add('fenetre-3v', {kind:'fen', w:1.8, h:1.35, sill:0.9, n:3, frame:'pvc'}, [T('180 × 135', {}), T('240 × 145', {w:2.4, h:1.45})], ['Fenêtres', '3 vantaux']);
+  add('fenetre-ob', {kind:'fen', w:0.8, h:1.15, sill:0.95, n:1, frame:'pvc', open:'ob', hinge:'g'}, [T('80 × 115', {}), T('60 × 95', {w:0.6, h:0.95, sill:1.15})], ['Fenêtres', '1 vantail']);
+  add('fenetre-triple', {kind:'fen', w:1.2, h:1.35, sill:0.9, n:2, frame:'pvc', glz:{t:'triple', gas:'argon', le:true}}, [T('120 × 135', {}), T('140 × 145', {w:1.4, h:1.45})], ['Fenêtres', '2 vantaux']);
+  add('porte-fenetre', {kind:'pf', w:1.4, h:2.15, n:2, frame:'alu', glz:{saf:'tremp'}}, [T('120 × 215', {w:1.2}), T('140 × 215', {w:1.4}), T('160 × 225', {w:1.6, h:2.25})], ['Fenêtres', 'Portes-fenêtres']);
+  add('porte-fenetre-1v', {kind:'pf', w:0.9, h:2.15, n:1, frame:'pvc', hinge:'g', glz:{saf:'tremp'}}, [T('80 × 215', {w:0.8}), T('90 × 215', {}), T('100 × 215', {w:1.0})], ['Fenêtres', 'Portes-fenêtres']);
+  add('baie-coulissante', {kind:'coul', w:2.4, h:2.15, n:2, frame:'alu', glz:{saf:'tremp'}}, [T('180 × 215', {w:1.8}), T('240 × 215', {w:2.4}), T('300 × 225', {w:3.0, h:2.25})], ['Fenêtres', 'Baies coulissantes']);
+  add('baie-coulissante-3v', {kind:'coul', w:3.6, h:2.15, n:3, frame:'alu', glz:{saf:'tremp'}}, [T('300 × 215', {w:3.0}), T('360 × 215', {})], ['Fenêtres', 'Baies coulissantes']);
+  add('baie-coulissante-4v', {kind:'coul', w:4.8, h:2.15, n:4, frame:'alu', glz:{saf:'tremp'}}, [T('400 × 215', {w:4.0}), T('480 × 215', {})], ['Fenêtres', 'Baies coulissantes']);
+  add('fenetre-fixe', {kind:'fixe', w:1.0, h:1.0, sill:1.0, n:1, frame:'alu'}, [T('100 × 100', {}), T('Bandeau 300 × 60', {w:3.0, h:0.6, sill:1.6})], ['Fenêtres', 'Fixes']);
+  add('fenetre-fixe-grande', {kind:'fixe', w:2.0, h:2.15, sill:0, n:1, frame:'alu', glz:{saf:'feuil'}}, [T('200 × 215', {}), T('120 × 215', {w:1.2})], ['Fenêtres', 'Fixes']);
+  add('porte-simple', {kind:'pi', w:0.93, h:2.04, n:1, frame:'boisP', leaf:'pleine', hinge:'g'}, [T('73 × 204', {w:0.73}), T('83 × 204', {w:0.83}), T('93 × 204', {w:0.93})], ['Portes', 'Intérieure', '1 vantail']);
+  add('porte-alveolaire', {kind:'pi', w:0.83, h:2.04, n:1, frame:'boisP', leaf:'alveolaire', hinge:'g'}, [T('73 × 204', {w:0.73}), T('83 × 204', {})], ['Portes', 'Intérieure', '1 vantail']);
+  add('porte-postformee', {kind:'pi', w:0.83, h:2.04, n:1, frame:'boisP', leaf:'panneaux', hinge:'g'}, [T('73 × 204', {w:0.73}), T('83 × 204', {}), T('93 × 204', {w:0.93})], ['Portes', 'Intérieure', '1 vantail']);
+  add('porte-acoustique', {kind:'pi', w:0.93, h:2.04, n:1, frame:'bois', leaf:'acou', hinge:'g'}, [T('83 × 204', {w:0.83}), T('93 × 204', {})], ['Portes', 'Intérieure', '1 vantail']);
+  add('porte-double', {kind:'pi', w:1.6, h:2.15, n:2, frame:'bois', leaf:'pleine'}, [T('140 × 215', {w:1.4}), T('160 × 215', {w:1.6})], ['Portes', 'Intérieure', '2 vantaux']);
+  add('porte-int-vitree', {kind:'pi', w:0.83, h:2.04, n:1, frame:'bois', leaf:'vitree', hinge:'g', glz:{t:'simple', saf:'tremp'}}, [T('73 × 204', {w:0.73}), T('83 × 204', {}), T('93 × 204', {w:0.93})], ['Portes', 'Intérieure', 'Vitrée']);
+  add('porte-atelier', {kind:'pi', w:0.83, h:2.04, n:1, frame:'acier', leaf:'atelier', hinge:'g', glz:{t:'simple', saf:'tremp'}}, [T('83 × 204', {}), T('93 × 204', {w:0.93})], ['Portes', 'Intérieure', 'Vitrée']);
+  add('porte-coulissante', {kind:'pi', w:0.83, h:2.04, n:1, frame:'bois', leaf:'pleine', open:'coul'}, [T('83 × 204', {}), T('93 × 204', {w:0.93})], ['Portes', 'Intérieure', 'Coulissante']);
+  add('porte-entree', {kind:'pe', w:1.0, h:2.15, n:1, frame:'alu', leaf:'vitree', hinge:'g', glz:{t:'double', gas:'argon', le:true, saf:'feuil'}}, [T('90 × 215', {w:0.9}), T('100 × 215', {w:1.0})], ['Portes', 'Entrée', '1 vantail']);
+  add('porte-entree-pleine', {kind:'pe', w:0.9, h:2.15, n:1, frame:'alu', leaf:'rainuree', hinge:'g', iso:true}, [T('90 × 215', {}), T('100 × 225', {w:1.0, h:2.25})], ['Portes', 'Entrée', '1 vantail']);
+  add('porte-entree-bois', {kind:'pe', w:0.9, h:2.15, n:1, frame:'bois', leaf:'panneaux', hinge:'g'}, [T('90 × 215', {}), T('100 × 215', {w:1.0})], ['Portes', 'Entrée', '1 vantail']);
+  add('porte-entree-tierce', {kind:'pe', w:1.3, h:2.15, n:1, frame:'alu', leaf:'pleine', hinge:'g', tierce:0.35, iso:true, glz:{saf:'feuil'}}, [T('130 × 215 (tierce 35)', {}), T('140 × 225 (tierce 40)', {w:1.4, h:2.25})], ['Portes', 'Entrée', 'Avec tierce']);
+  add('porte-entree-imposte', {kind:'pe', w:1.0, h:2.55, n:1, frame:'alu', leaf:'pleine', hinge:'g', imposte:0.35, iso:true, glz:{saf:'feuil'}}, [T('100 × 255 (imposte 35)', {})], ['Portes', 'Entrée', 'Avec tierce']);
+  add('porte-entree-2v', {kind:'pe', w:1.5, h:2.2, n:2, frame:'bois', leaf:'vitree', glz:{t:'double', gas:'argon', le:true, saf:'feuil'}}, [T('140 × 215', {w:1.4, h:2.15}), T('150 × 220', {})], ['Portes', 'Entrée', '2 vantaux']);
+  add('porte-coupe-feu', {kind:'pi', w:0.93, h:2.04, n:1, frame:'acier', leaf:'pleine', hinge:'g', fire:'EI30'}, [T('93 × 204', {}), T('83 × 204', {w:0.83})], ['Portes', 'Intérieure', 'Coupe-feu']);
+  FAMS['porte-coupe-feu'].nom = 'Porte coupe-feu EI 30, huisserie métallique';
+  // les familles « FAM_PATH » explicites (13-families-plus) gardent la priorité ; les nouvelles passent par F.path
+})();
+
 /* ==== 20-state.js ==== */
 /* ============ État du projet ============
    state = {format:'archiplan', v:3, name, els:[…], nextId, levels:[{n,z}], lib:{mats, compos, fams}}
@@ -3783,6 +4079,7 @@ function famScope(F, el){
   for (const [k, p] of Object.entries(F.params || {})) s[k] = +p.v;
   const ty = (F.types || [])[el?.type | 0]; if (ty) for (const [k, v] of Object.entries(ty.p || {})) s[k] = typeof v === 'number' ? v : fx(v, s);
   for (const [k, v] of Object.entries(el?.params || {})) if (Number.isFinite(+v)) s[k] = +v;
+  s.T = 0.2; if (el?.host && typeof getEl === 'function'){ const hw = getEl(el.host); if (hw?.kind === 'wall') s.T = wallT(hw); }   // épaisseur du mur hôte (appuis, chambranles)
   return s;
 }
 function famCut(el){
@@ -3810,12 +4107,13 @@ function famSolids(F, scope, depth = 0){
         }
         continue;
       }
-      const m = part.m || 'bois';
-      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz:0, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
+      const m = part.m || 'bois', rz = part.rz != null ? fx(part.rz, s) * Math.PI / 180 : 0;   // rz : rotation (°) de la pièce autour de son point (x, y) — vantail qui pivote sur ses gonds
+      const piv = (ox, oy) => { if (!rz) return [x + ox, y + oy]; const q = V.rot([ox, oy], rz); return [x + q[0], y + q[1]]; };
+      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
       else if (part.s === 'cone'){ const r = Math.max(0.001, fx(part.r, s)), r2 = Math.max(0, fx(part.r2 ?? 0, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cone', m, c:[x, y, z + h/2], r, r2, h, rz:0}); }
       else if (part.s === 'ext'){ const W = s.w ?? 1, Dd = s.d ?? 1, h = fx(part.h ?? 1, s), P = (part.pts || []).map(([u, v]) => [x + (u - 0.5) * W, y + (v - 0.5) * Dd]); if (P.length >= 3 && h > 1e-4){ const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cy = P.reduce((a, p) => a + p[1], 0) / P.length; out.push({s:'ext', m, c:[cx, cy, z + h / 2], pts:P.map(p => [p[0] - cx, p[1] - cy]), h, rz:0}); } }
       else if (part.s === 'sph'){ const r = Math.max(0.001, fx(part.r, s)); out.push({s:'sph', m, c:[x, y, z + r], r, rz:0}); }
-      else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4) out.push({s:'box', m, c:[x + w/2, y + d/2, z + h/2], w, d, h, rz:0}); }
+      else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4){ const c = piv(w / 2, d / 2); out.push({s:'box', m, c:[c[0], c[1], z + h/2], w, d, h, rz}); } }
     }
   }
   return out;
@@ -4681,7 +4979,7 @@ function rebuild(opts = {}){
   if (typeof buildTerrain === 'function') buildTerrain();
   if (typeof buildCutMarks === 'function') buildCutMarks();
   roomsCache = null; if (typeof buildRooms === 'function') buildRooms();
-  buildLevelMarks(); buildDims();
+  buildLevelMarks(); buildDims(); buildDoorMarks();
 }
 const dashMat = new THREE.LineDashedMaterial({color:0x4B5563, dashSize:0.18, gapSize:0.12});
 function overhead(g){
@@ -5446,6 +5744,7 @@ function setPrompt(){
 }
 function cancelDraw(){ draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
 function setTool(t){
+  if (t === 'join'){ openJoineryTool(); return; }
   if (!PROMPTS[t]) return;
   tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
   $$('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t));
@@ -5523,8 +5822,8 @@ function placePoint(pt){
 }
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
-const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'comp', porte:'comp',
-  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select'};
+const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'join', porte:'join',
+  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', menuiserie:'join', n:'join', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
   const rel = s.startsWith('@'); if (rel) s = s.slice(1).trim();
@@ -6562,6 +6861,141 @@ function wallEdgeLines(el){
 }
 const cleanWallEdges = () => !planOn() && (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || view === 'sec');
 
+/* ==== 59-joinery-ui.js ==== */
+/* ============ Outil Menuiserie : fenêtres et portes sur mesure, fiche de performances, symbole de battement en plan ============ */
+const JN_KIND_DEF = {fen:{n:2, w:1.2, h:1.35, sill:0.9, open:'fr', frame:'pvc'}, pf:{n:2, w:1.4, h:2.15, sill:0, open:'fr', frame:'alu'}, coul:{n:2, w:2.4, h:2.15, sill:0, frame:'alu'}, fixe:{n:1, w:1.0, h:1.0, sill:1.0, frame:'alu'},
+  pi:{n:1, w:0.83, h:2.04, sill:0, leaf:'pleine', frame:'boisP', open:'fr'}, pe:{n:1, w:0.9, h:2.15, sill:0, leaf:'pleine', frame:'alu', iso:true, open:'fr'}};
+const JN_N = {fen:[1, 2, 3], pf:[1, 2, 3], coul:[2, 3, 4], fixe:[1], pi:[1, 2], pe:[1, 2]};
+function jnPerfHTML(perf, chk){
+  const pc = (l, v, u) => `<div class="pc"><span>${l}</span><b>${v}</b><em>${u}</em></div>`;
+  let h = `<div class="perf jn-perf">${perf.interior ? pc('Isolation', '—', 'porte intérieure') : pc('Uw', nf(perf.Uw, 2), `W/m²·K · ${perf.th}`)}${pc('Facteur solaire Sw', nf(perf.Sw, 2), `TLw ${nf(perf.TL, 2)}`)}${pc('Acoustique', `${perf.Rw} dB`, `Rw · Rw+Ctr ≈ ${perf.RwCtr} · ${perf.ac}`)}${pc('Masse', `${perf.kg} kg`, perf.n > 1 ? `${perf.leafKg} kg par vantail` : 'par unité')}</div>
+    <p class="hint">${esc(perf.glazing)} (Ug ${nf(perf.Ug, 1)}) · cadre ${esc(perf.frame)} (Uf ${nf(perf.Uf, 1)}) · vitrage ${nf(perf.Ag, 2)} m² sur ${nf(perf.Aw, 2)} m² · perméabilité ${esc(perf.aev)}${perf.fire ? ` · résistance au feu ${esc(perf.fire)}` : ''}</p>`;
+  if (chk){ const li = (cls, t) => `<li class="${cls}">${esc(t)}</li>`, all = [...chk.errors.map(t => li('bad', t)), ...chk.warns.map(t => li('warn', t)), ...chk.notes.map(t => li('ok', t))]; if (all.length) h += `<ul class="warns jn-warns">${all.join('')}</ul>`; }
+  return h;
+}
+function openJoineryTool(opt = {}){
+  const inst = opt.instId ? getEl(opt.instId) : null, srcId = inst ? inst.fam : opt.famId, srcF = srcId ? fam(srcId) : null;
+  const sp = jnSpec(opt.spec || srcF?.join || {});
+  if (inst && srcF?.join){ const s = famScope(srcF, inst); sp.w = s.w; sp.h = s.h; if (s.sill != null && (sp.kind === 'fen' || sp.kind === 'fixe')) sp.sill = s.sill; }
+  let nameAuto = !srcF?.join || srcF.nom === joineryName(srcF.join), name = srcF?.join ? srcF.nom : joineryName(sp), F = null, perf = null, chk = null;
+  const cm = v => Math.round(v * 100), isDoor = () => sp.kind === 'pi' || sp.kind === 'pe';
+  const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
+  const fld = (label, inner, wide) => `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in">${inner}</span></label>`;
+  const numf = (id, v, unit, step = 1) => `<input id="${id}" type="number" step="${step}" inputmode="decimal" value="${v}"><em>${unit}</em>`;
+  const chk1 = (id, label, on) => `<label class="f wide rchk"><input type="checkbox" id="${id}"${on ? ' checked' : ''}> ${label}</label>`;
+  const stdList = () => (JN_STD[sp.kind] || {})[sp.n] || [];
+  const stdCur = () => { const i = stdList().findIndex(([a, b]) => a === cm(sp.w) && b === cm(sp.h)); return i < 0 ? 'custom' : String(i); };
+  const form = () => {
+    const door = isDoor(), win = !door, kindBtns = Object.entries(JN_KINDS).map(([k, n]) => `<button type="button" data-jk="${k}" class="${sp.kind === k ? 'on' : ''}">${n}</button>`).join('');
+    let h = `<h4>Type</h4><div class="seg jn-seg">${kindBtns}</div>
+      <h4>Dimensions</h4><div class="fields">
+      ${fld('Dimension courante', sel('jnStd', [['custom', 'Sur mesure'], ...stdList().map(([a, b], i) => [i, `${a} × ${b} cm`])], stdCur()), true)}
+      ${fld('Largeur', numf('jnW', cm(sp.w), 'cm'))}${fld('Hauteur', numf('jnH', cm(sp.h), 'cm'))}
+      ${sp.kind === 'fen' || sp.kind === 'fixe' ? fld('Allège (sol → bas de la fenêtre)', numf('jnSill', cm(sp.sill), 'cm')) : ''}
+      ${JN_N[sp.kind].length > 1 ? fld('Vantaux', sel('jnN', JN_N[sp.kind].map(n => [n, `${n} vanta${n > 1 ? 'ux' : 'il'}`]), sp.n)) : ''}
+      </div><h4>Cadre et ouverture</h4><div class="fields">
+      ${fld('Cadre', sel('jnFrame', Object.entries(JN_FRAMES).map(([k, f]) => [k, f.nom]), sp.frame), true)}`;
+    if (sp.kind === 'fen') h += fld('Ouverture', sel('jnOpen', Object.entries(JN_OPENS), sp.open), true);
+    if (sp.kind === 'pi') h += fld('Ouverture', sel('jnOpen', [['fr', 'Battante'], ['coul', 'Coulissante en applique']], sp.open), true);
+    if ((win && sp.kind !== 'coul' && sp.kind !== 'fixe' && sp.open !== 'fixe') || (door && sp.open !== 'coul')) h += fld(door ? 'Gonds (vu de l\'intérieur)' : 'Gonds (vu de l\'intérieur)', sel('jnHinge', [['g', 'À gauche'], ['d', 'À droite']], sp.hinge));
+    if (door && sp.open !== 'coul') h += fld('Sens', sel('jnSwing', [['in', 'Ouvre vers l\'intérieur'], ['out', 'Ouvre vers l\'extérieur']], sp.swing));
+    if (door) h += fld('Vantail', sel('jnLeaf', Object.entries(JN_LEAVES[sp.kind]).map(([k, l]) => [k, l.nom]), sp.leaf), true);
+    if (sp.kind === 'pe') h += fld('Tierce vitrée (largeur)', numf('jnTierce', cm(sp.tierce || 0), 'cm')) + fld('Imposte vitrée (hauteur)', numf('jnImp', cm(sp.imposte || 0), 'cm'));
+    if (sp.kind === 'pi') h += fld('Imposte vitrée (hauteur)', numf('jnImp', cm(sp.imposte || 0), 'cm'));
+    if (sp.kind === 'pe') h += chk1('jnIso', 'Vantail à isolation renforcée (mousse, Ud −25 %)', sp.iso);
+    if (door) h += fld('Résistance au feu', sel('jnFire', [['', 'Sans classement'], ['E30', 'E 30 (pare-flammes ½ h)'], ['EI30', 'EI 30 (coupe-feu ½ h)'], ['EI60', 'EI 60 (coupe-feu 1 h)']], sp.fire || ''), true);
+    h += `</div>`;
+    const glz = win || sp.leaf === 'vitree' || sp.leaf === 'atelier' || (sp.tierce || 0) > 0.2 || (sp.imposte || 0) > 0.15;
+    if (glz){ const g = sp.glz; h += `<h4>Vitrage</h4><div class="fields">
+      ${fld('Vitrage', sel('jnGt', [['simple', 'Simple'], ['double', 'Double'], ['triple', 'Triple']], g.t))}${g.t !== 'simple' ? fld('Gaz', sel('jnGas', [['air', 'Air'], ['argon', 'Argon'], ['krypton', 'Krypton']], g.gas)) : ''}
+      ${fld('Acoustique', sel('jnAc', [['std', 'Courant'], ['renf', 'Renforcé (verre épais)'], ['acou', 'Acoustique (feuilleté silence)']], g.ac))}${fld('Sécurité', sel('jnSaf', [['std', 'Recuit (ordinaire)'], ['tremp', 'Trempé'], ['feuil', 'Feuilleté']], g.saf))}
+      ${g.t !== 'simple' ? chk1('jnLe', 'Faible émissivité (FE)', g.le) : ''}${chk1('jnSol', 'Contrôle solaire', g.sol)}${g.t !== 'simple' ? chk1('jnWe', 'Intercalaire isolant (warm edge)', g.we !== false) : ''}
+      ${win ? fld('Petits bois', `<input id="jnBh" type="number" min="0" max="6" step="1" value="${sp.bars?.h | 0}" aria-label="Horizontaux"><em>h</em><input id="jnBv" type="number" min="0" max="6" step="1" value="${sp.bars?.v | 0}" aria-label="Verticaux"><em>v</em>`) : ''}
+      ${sp.kind === 'fen' || sp.kind === 'fixe' ? chk1('jnAppui', 'Appui extérieur et tablette intérieure', sp.appui !== false) : ''}</div>`; }
+    return h;
+  };
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Menuiserie${inst ? ' · modification' : ' sur mesure'}</span><input class="ed-name" id="jnName" value="${esc(name)}" aria-label="Nom de la menuiserie"></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body fm"><section class="fm-l" id="jnForm"></section><section class="fm-r"><canvas id="jnCv" class="fm-cv jn-cv"></canvas><div id="jnPerf"></div></section></div>
+    <footer class="ed-f"><label class="f rchk" style="margin-right:auto"><input type="checkbox" id="jnLib"> Ajouter à ma bibliothèque</label><button class="btn" data-close>Annuler</button>${inst ? '<button class="btn primary" id="jnApply">Appliquer</button>' : '<button class="btn" id="jnSave">Enregistrer seulement</button><button class="btn primary" id="jnPlace">Poser dans un mur</button>'}</footer>`, 'wide');
+  famPrev = makeFamPreview(d.querySelector('#jnCv'));
+  const refresh = () => {
+    F = joineryFamily(sp, {nom:name}); perf = joineryPerfSpec(sp); chk = joineryCheck(sp, perf);
+    if (nameAuto){ name = joineryName(sp); d.querySelector('#jnName').value = name; F.nom = name; }
+    try { fxCache.clear(); famPrev.show(F, famScope(F, {type:0, params:{}})); } catch(e){ console.warn('aperçu menuiserie', e); }
+    d.querySelector('#jnPerf').innerHTML = jnPerfHTML(perf, chk);
+    const go = d.querySelector('#jnPlace') || d.querySelector('#jnApply'); if (go) go.disabled = chk.errors.length > 0;
+  };
+  const all = () => { d.querySelector('#jnForm').innerHTML = form(); refresh(); };
+  const read = () => {
+    const g = id => d.querySelector('#' + id), v = id => g(id) ? num(g(id).value) : NaN;
+    if (!Number.isNaN(v('jnW')) && v('jnW') > 0) sp.w = v('jnW') / 100; if (!Number.isNaN(v('jnH')) && v('jnH') > 0) sp.h = v('jnH') / 100; if (g('jnSill') && !Number.isNaN(v('jnSill'))) sp.sill = Math.max(0, v('jnSill') / 100);
+    if (g('jnN')) sp.n = +g('jnN').value; if (g('jnFrame')) sp.frame = g('jnFrame').value; if (g('jnOpen')) sp.open = g('jnOpen').value; if (g('jnHinge')) sp.hinge = g('jnHinge').value; if (g('jnSwing')) sp.swing = g('jnSwing').value;
+    if (g('jnLeaf')) sp.leaf = g('jnLeaf').value; if (g('jnTierce')) sp.tierce = Math.max(0, v('jnTierce') || 0) / 100; if (g('jnImp')) sp.imposte = Math.max(0, v('jnImp') || 0) / 100; if (g('jnIso')) sp.iso = g('jnIso').checked; if (g('jnFire')) sp.fire = g('jnFire').value;
+    if (g('jnGt')) sp.glz.t = g('jnGt').value; if (g('jnGas')) sp.glz.gas = g('jnGas').value; if (g('jnAc')) sp.glz.ac = g('jnAc').value; if (g('jnSaf')) sp.glz.saf = g('jnSaf').value; if (g('jnLe')) sp.glz.le = g('jnLe').checked; if (g('jnSol')) sp.glz.sol = g('jnSol').checked; if (g('jnWe')) sp.glz.we = g('jnWe').checked;
+    if (g('jnBh')) sp.bars = {h:Math.max(0, Math.min(6, v('jnBh') | 0)), v:Math.max(0, Math.min(6, v('jnBv') | 0))}; if (g('jnAppui')) sp.appui = g('jnAppui').checked;
+  };
+  const fm = d.querySelector('#jnForm');
+  fm.addEventListener('click', e => { const b = e.target.closest('[data-jk]'); if (!b) return; const k = b.dataset.jk; if (k === sp.kind) return; sp.kind = k; Object.assign(sp, JN_KIND_DEF[k]); if (k === 'fixe') sp.open = 'fixe'; else if (sp.open === 'fixe' || sp.open === 'coul' && k !== 'pi') sp.open = 'fr'; if (k === 'pf' || k === 'coul') sp.glz.saf = sp.glz.saf === 'std' ? 'tremp' : sp.glz.saf; all(); });
+  fm.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'jnStd'){ if (t.value !== 'custom'){ const [a, b] = stdList()[+t.value]; sp.w = a / 100; sp.h = b / 100; } all(); return; }
+    read(); if (['jnN', 'jnOpen', 'jnLeaf', 'jnGt', 'jnHinge', 'jnTierce', 'jnImp'].includes(t.id)) all(); else refresh();
+  });
+  fm.addEventListener('input', e => { if (['jnW', 'jnH', 'jnSill', 'jnBh', 'jnBv', 'jnTierce', 'jnImp'].includes(e.target.id)){ read(); refresh(); const s = d.querySelector('#jnStd'); if (s) s.value = stdCur(); } });
+  d.querySelector('#jnName').addEventListener('input', e => { name = e.target.value.trim() || joineryName(sp); nameAuto = !e.target.value.trim(); if (F) F.nom = name; });
+  const persist = (toLib) => { const fid = 'J-' + uid8(), out = JSON.parse(JSON.stringify(F)); out.nom = name; state.lib.fams[fid] = out; if (toLib){ USER_LIB.fams[fid] = JSON.parse(JSON.stringify(out)); saveUserLib(); } return fid; };
+  if (!inst){
+    d.querySelector('#jnSave').onclick = () => { read(); refresh(); if (chk.errors.length) return toast(chk.errors[0]); const fid = persist(true); closeEDlg(); libTab = 'fams'; libPath = [F.cat]; activeTab = 'lib'; defs.comp.fam = fid; defs.comp.type = 0; renderPanel(); toast('Menuiserie enregistrée dans ma bibliothèque'); };
+    d.querySelector('#jnPlace').onclick = () => { read(); refresh(); if (chk.errors.length) return toast(chk.errors[0]); const fid = persist(d.querySelector('#jnLib').checked); closeEDlg(); defs.comp.fam = fid; defs.comp.type = 0; defs.comp.rot = 0; setTool('comp'); renderPanel(); toast('Cliquez dans un mur pour poser la menuiserie (côté où elle s\'ouvre)'); };
+  } else {
+    d.querySelector('#jnApply').onclick = () => {
+      read(); refresh(); if (chk.errors.length) return toast(chk.errors[0]);
+      const owner = libOwner('fams', inst.fam), out = JSON.parse(JSON.stringify(F)); out.nom = name; pushHist();
+      if (owner === 'base'){ const fid = 'J-' + uid8(); state.lib.fams[fid] = out; if (d.querySelector('#jnLib').checked){ USER_LIB.fams[fid] = JSON.parse(JSON.stringify(out)); saveUserLib(); } inst.fam = fid; }
+      else { for (const tgt of [state.lib.fams[inst.fam], USER_LIB.fams[inst.fam]].filter(Boolean)){ for (const k of Object.keys(tgt)) delete tgt[k]; Object.assign(tgt, JSON.parse(JSON.stringify(out))); } if (USER_LIB.fams[inst.fam]) saveUserLib(); }
+      inst.type = 0; inst.params = {}; state.isSample = false; fxCache.clear(); closeEDlg(); rebuild(); toast(owner === 'base' ? 'Menuiserie modifiée (copie dans le projet)' : 'Menuiserie modifiée : toutes les poses de ce modèle suivent');
+    };
+  }
+  all();
+}
+/* carte « Menuiserie » dans les propriétés d'une pose */
+function joineryCard(el){
+  const F = fam(el.fam); if (!F?.join) return '';
+  const perf = joineryPerf(F, famScope(F, el)), chk = joineryCheck({...F.join, w:famScope(F, el).w, h:famScope(F, el).h, sill:famScope(F, el).sill ?? F.join.sill}, perf);
+  return `<div class="grp"><h3>Menuiserie</h3>${jnPerfHTML(perf, chk)}<div class="btns tight"><button class="btn primary" data-act="jnedit">Modifier la menuiserie…</button></div></div>`;
+}
+/* récapitulatif des menuiseries du projet (surface, Uw moyen pondéré) */
+function joineryProjectCard(){
+  const rows = new Map();
+  for (const el of state.els){ if (el.kind !== 'inst' || !el.host) continue; const F = fam(el.fam); if (!F?.join) continue; const s = famScope(F, el), p = joineryPerf(F, s), a = s.w * s.h;
+    const k = el.fam, r = rows.get(k) || {nom:F.nom, n:0, a:0, uwa:0, swa:0, rw:p.Rw, interior:p.interior, fire:p.fire}; r.n++; r.a += a; r.uwa += p.Uw * a; r.swa += p.Sw * a; rows.set(k, r); }
+  if (!rows.size) return '';
+  const ext = [...rows.values()].filter(r => !r.interior), A = ext.reduce((s, r) => s + r.a, 0), Uw = A ? ext.reduce((s, r) => s + r.uwa, 0) / A : 0;
+  return `<div class="grp"><h3>Menuiseries</h3>${A ? `<div class="perf"><div class="pc"><span>Surface de baies</span><b>${nf(A, 1)}</b><em>m² · ${ext.reduce((s, r) => s + r.n, 0)} menuiserie${ext.length > 1 ? 's' : ''}</em></div><div class="pc ${Uw <= 1.3 ? 'g-ok' : 'g-bad'}"><span>Uw moyen</span><b>${nf(Uw, 2)}</b><em>W/m²·K (objectif ≤ 1,3)</em></div></div>` : ''}
+    <table class="tbl rooms"><thead><tr><th>Modèle</th><th class="num">Nb</th><th class="num">Uw</th><th class="num">Rw</th></tr></thead><tbody>${[...rows.values()].map(r => `<tr><td>${esc(r.nom)}${r.fire ? ` <span class="tag">${esc(r.fire)}</span>` : ''}</td><td class="num">${r.n}</td><td class="num">${r.interior ? '—' : nf(r.uwa / r.a, 2)}</td><td class="num">${r.rw}</td></tr>`).join('')}</tbody></table></div>`;
+}
+/* symbole de battement des portes en plan (quart de cercle depuis les gonds) */
+let doorMarks = null;
+function buildDoorMarks(){
+  if (!doorMarks){ doorMarks = new THREE.Group(); doorMarks.name = 'battements'; scene.add(doorMarks); }
+  disposeGroup(doorMarks); if (view !== '2d' || !state?.els) return;
+  const mat = new THREE.LineBasicMaterial({color:0x4B5563, depthTest:false, transparent:true, opacity:0.8});
+  for (const el of state.els){
+    if (el.kind !== 'inst' || !el.host || el.lvl !== curLvl) continue; const F = fam(el.fam); if (!F?.join || (F.join.kind !== 'pi' && F.join.kind !== 'pe' && F.join.kind !== 'pf') || F.join.open === 'coul') continue;
+    const fr = instFrame(el); if (!fr) continue; const s = famScope(F, el), sp = F.join, n = Math.max(1, sp.n | 0), fw = s.fw ?? 0.06;
+    const dir = [Math.cos(fr.ang), Math.sin(fr.ang)], nrm = [-dir[1], dir[0]], z = lvlZ(el.lvl) + (el.off || 0) + 0.04;
+    const leaves = n === 2 ? [['d', (s.w - 2 * fw) / 2], ['g', (s.w - 2 * fw) / 2]] : [[sp.hinge, s.w - 2 * fw]];
+    for (const [hg, lw] of leaves){
+      const hx = (hg === 'd' ? -1 : 1) * (s.w / 2 - fw) * fr.sx, sgn = (hg === 'd' ? 1 : -1) * fr.sx, sw = (sp.swing === 'out' ? -1 : 1) * fr.sy;
+      const H = V.add(fr.o, V.mul(dir, hx)), pts = [];
+      for (let i = 0; i <= 16; i++){ const a = i / 16 * Math.PI / 2; pts.push(V.add(H, V.add(V.mul(dir, sgn * lw * Math.cos(a)), V.mul(nrm, sw * lw * Math.sin(a))))); }
+      const g = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p[0], z, -p[1]))); const l = new THREE.Line(g, mat); l.renderOrder = 9; doorMarks.add(l);
+      const tip = pts[pts.length - 1], g2 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(H[0], z, -H[1]), new THREE.Vector3(tip[0], z, -tip[1])]); const l2 = new THREE.Line(g2, mat); l2.renderOrder = 9; doorMarks.add(l2);
+    }
+  }
+  dirty = true;
+}
+
 /* ==== 60-panel.js ==== */
 /* ============ Panneau : propriétés, bibliothèque, métré ============ */
 let activeTab = 'props', libTab = 'fams', libQuery = '', libCat = '', libPath = [];
@@ -6625,6 +7059,7 @@ function renderProps(){
       <div class="grp"><h3>Lieu du projet</h3>${siteSummary()}<div class="btns tight"><button class="btn${state.site?.zone ? '' : ' primary'}" data-act="site">${state.site?.zone ? 'Modifier le lieu, le climat, le bruit…' : 'Définir le lieu du projet'}</button></div></div>
       ${roomsCard()}
       ${glazingCard()}
+      ${joineryProjectCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -6715,7 +7150,7 @@ function renderProps(){
       h += field('Position x', 'icx', el.c[0], 'm') + field('Position y', 'icy', el.c[1], 'm') + field('Rotation', 'irot', el.rot || 0, '°', '1') + field('Base z', 'off', el.off, 'm');
       h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, true) + `</div><div class="btns"><button class="btn" data-act="irot90">Pivoter 90°</button><button class="btn" data-act="imirror">Symétrie</button>`;
     }
-    h += `<button class="btn" data-act="fam-edit">Modifier la famille</button><button class="btn danger" data-act="del">Supprimer</button></div>
+    h += `<button class="btn" data-act="fam-edit">Modifier la famille</button><button class="btn danger" data-act="del">Supprimer</button></div>${joineryCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd>${famCut(el) ? `<dt>Ouverture</dt><dd>${nf(famCut(el).w)} × ${nf(famCut(el).h)} m</dd>` : ''}</dl></div>`;
   }
   return h;
@@ -6753,7 +7188,7 @@ function renderLib(){
     }
     const sel = tool === 'comp' ? fam(defs.comp.fam) : null;
     const detail = sel ? `<div class="fdet"><img class="fthumb big" data-thumb="${esc(defs.comp.fam)}|${defs.comp.type | 0}" src="${famThumbCached(defs.comp.fam, defs.comp.type | 0) || ''}" alt="Aperçu"><div><b>${esc(sel.nom)}</b><div class="ftypes">${(sel.types || []).map((t, i) => `<button class="chip${(defs.comp.type | 0) === i ? ' on' : ''}" data-ftype="${i}">${esc(t.nom)}</button>`).join('')}</div><small>${sel.host === 'wall' ? 'Cliquez dans un mur pour la poser' : 'Cliquez pour la poser · Espace : pivoter'}</small></div></div>` : '';
-    body = `<div class="libtools">${crumb}<button class="btn primary" data-act="fam-new">+ Famille</button></div>${detail}${inner}`;
+    body = `<div class="libtools">${crumb}<button class="btn primary" data-act="join-new" title="Fenêtre, porte ou baie sur mesure : dimensions, vitrage, performances">+ Menuiserie</button><button class="btn" data-act="fam-new">+ Famille</button></div>${detail}${inner}`;
     setTimeout(fillThumbs, 30);
   }
   return `<div class="ph"><h2>Bibliothèque</h2></div>
@@ -6907,6 +7342,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
   else if (act === 'levels') openLevels();
+  else if (act === 'jnedit') openJoineryTool({instId:sel});
+  else if (act === 'join-new') openJoineryTool();
   else if (act === 'roof-attach') attachWallsToRoof(el, true);
   else if (act === 'roof-detach') attachWallsToRoof(el, false);
   else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }
@@ -7419,6 +7856,7 @@ function treeMenuItems(key){
     if (el.kind === 'wall') it.push({k:'flip', t:'Inverser les faces'}, {k:'opening', t:'+ Porte ou fenêtre'});
   }
   if (el.kind === 'vol') it.push({k:'mkcomp', t:'Créer un composant…', s:'Regrouper les formes sélectionnées en un composant réutilisable'}, {k:'tpush', t:'Pousser / Tirer'});
+  if (el.kind === 'inst' && fam(el.fam)?.join) it.push({k:'jnedit', t:'Modifier la menuiserie…', s:'Dimensions, vitrage, cadre, performances'});
   if (el.kind === 'inst') it.push({k:'famedit', t:'Modifier la famille…'}, ...(el.host ? [{k:'iflip', t:'Côté d\'ouverture'}] : [{k:'rot90', t:'Pivoter de 90°'}]));
   it.push('-', {k:'dup', t:'Dupliquer'}, {k:'del', t:'Supprimer', danger:true});
   return it;
@@ -7453,6 +7891,7 @@ function runTreeAction(k, key){
     case 'lhide': hiddenLvls.has(li) ? hiddenLvls.delete(li) : hiddenLvls.add(li); return re();
     case 'lrename': return levelDialog(li);
     case 'levels': return openLevels();
+    case 'jnedit': return openJoineryTool({instId:el.id});
     case 'mkcomp': { const ids = selIds().includes(el?.id) ? selIds() : [el.id]; return openMakeComp(ids); }
     case 'tpush': select(el.id); return setTool('push');
     case 'ldel': if (state.els.some(x => x.lvl === li)) return toast('Ce niveau contient des éléments : déplacez-les ou supprimez-les d\'abord.');
@@ -9082,7 +9521,7 @@ function setView(v){
   const prev = view; view = v;
   c3.enabled = v === '3d' || v === 'render'; c2.enabled = v === '2d'; c4.enabled = v === 'sec'; renderer.clippingPlanes = v === 'sec' ? secClip() : [];
   if (v !== 'sec') $('#secBar').hidden = true;
-  if (typeof buildLevelMarks === 'function') setTimeout(() => { buildLevelMarks(); buildDims(); }, 0);
+  if (typeof buildLevelMarks === 'function') setTimeout(() => { buildLevelMarks(); buildDims(); buildDoorMarks(); }, 0);
   $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === v));
   document.body.dataset.mode = v;
   if (v === '2d'){ c2.target.set(c3.target.x, 0, c3.target.z); ortho.position.set(c3.target.x, 200, c3.target.z); c2.update(); }
@@ -9098,7 +9537,7 @@ $$('[data-cam]').forEach(b => b.addEventListener('click', () => b.dataset.cam ==
 $('#undo').addEventListener('click', undo); $('#redo').addEventListener('click', redo);
 $$('.tool').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
 function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${nf(l.z)} m</option>`).join('') + '<option value="manage">Gérer les niveaux…</option>'; }
-$('#lvlSel').addEventListener('change', e => { if (e.target.value === 'manage'){ e.target.value = curLvl; openLevels(); return; } curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); buildDims(); dirty = true; });
+$('#lvlSel').addEventListener('change', e => { if (e.target.value === 'manage'){ e.target.value = curLvl; openLevels(); return; } curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); buildDims(); buildDoorMarks(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
 $('#wArcIn').addEventListener('change', e => { defs.wall.arc = e.target.value === '1'; defs.wall.rect = e.target.value === 'r'; cancelDraw(); setPrompt(); });
@@ -9162,7 +9601,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim', n:'join'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 
@@ -9245,7 +9684,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};

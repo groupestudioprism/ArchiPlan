@@ -520,3 +520,6 @@ body.gripping, body.gripping *{cursor:move!important}
 #labels .dim.cote{background:color-mix(in srgb,var(--vp) 90%,transparent);font-weight:600;pointer-events:auto;cursor:pointer}
 #labels .dim.cote:hover{color:#C0392B;text-decoration:line-through}
 #labels.drawing .dim.cote{pointer-events:none}
+.jn-seg{flex-wrap:wrap}.jn-seg button{flex:1 1 31%;min-width:0;white-space:nowrap;padding:0 6px}
+.jn-cv{height:min(380px,42vh)}
+.jn-perf{margin-top:10px}.jn-warns{margin-top:8px}

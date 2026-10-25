@@ -60,6 +60,7 @@ function renderProps(){
       <div class="grp"><h3>Lieu du projet</h3>${siteSummary()}<div class="btns tight"><button class="btn${state.site?.zone ? '' : ' primary'}" data-act="site">${state.site?.zone ? 'Modifier le lieu, le climat, le bruit…' : 'Définir le lieu du projet'}</button></div></div>
       ${roomsCard()}
       ${glazingCard()}
+      ${joineryProjectCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -150,7 +151,7 @@ function renderProps(){
       h += field('Position x', 'icx', el.c[0], 'm') + field('Position y', 'icy', el.c[1], 'm') + field('Rotation', 'irot', el.rot || 0, '°', '1') + field('Base z', 'off', el.off, 'm');
       h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, true) + `</div><div class="btns"><button class="btn" data-act="irot90">Pivoter 90°</button><button class="btn" data-act="imirror">Symétrie</button>`;
     }
-    h += `<button class="btn" data-act="fam-edit">Modifier la famille</button><button class="btn danger" data-act="del">Supprimer</button></div>
+    h += `<button class="btn" data-act="fam-edit">Modifier la famille</button><button class="btn danger" data-act="del">Supprimer</button></div>${joineryCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd>${famCut(el) ? `<dt>Ouverture</dt><dd>${nf(famCut(el).w)} × ${nf(famCut(el).h)} m</dd>` : ''}</dl></div>`;
   }
   return h;
@@ -188,7 +189,7 @@ function renderLib(){
     }
     const sel = tool === 'comp' ? fam(defs.comp.fam) : null;
     const detail = sel ? `<div class="fdet"><img class="fthumb big" data-thumb="${esc(defs.comp.fam)}|${defs.comp.type | 0}" src="${famThumbCached(defs.comp.fam, defs.comp.type | 0) || ''}" alt="Aperçu"><div><b>${esc(sel.nom)}</b><div class="ftypes">${(sel.types || []).map((t, i) => `<button class="chip${(defs.comp.type | 0) === i ? ' on' : ''}" data-ftype="${i}">${esc(t.nom)}</button>`).join('')}</div><small>${sel.host === 'wall' ? 'Cliquez dans un mur pour la poser' : 'Cliquez pour la poser · Espace : pivoter'}</small></div></div>` : '';
-    body = `<div class="libtools">${crumb}<button class="btn primary" data-act="fam-new">+ Famille</button></div>${detail}${inner}`;
+    body = `<div class="libtools">${crumb}<button class="btn primary" data-act="join-new" title="Fenêtre, porte ou baie sur mesure : dimensions, vitrage, performances">+ Menuiserie</button><button class="btn" data-act="fam-new">+ Famille</button></div>${detail}${inner}`;
     setTimeout(fillThumbs, 30);
   }
   return `<div class="ph"><h2>Bibliothèque</h2></div>
@@ -342,6 +343,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'compo-new') openComposer({id:null});
   else if (act === 'mat-new') openMatEditor(null);
   else if (act === 'levels') openLevels();
+  else if (act === 'jnedit') openJoineryTool({instId:sel});
+  else if (act === 'join-new') openJoineryTool();
   else if (act === 'roof-attach') attachWallsToRoof(el, true);
   else if (act === 'roof-detach') attachWallsToRoof(el, false);
   else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }

@@ -89,6 +89,7 @@ function treeMenuItems(key){
     if (el.kind === 'wall') it.push({k:'flip', t:'Inverser les faces'}, {k:'opening', t:'+ Porte ou fenêtre'});
   }
   if (el.kind === 'vol') it.push({k:'mkcomp', t:'Créer un composant…', s:'Regrouper les formes sélectionnées en un composant réutilisable'}, {k:'tpush', t:'Pousser / Tirer'});
+  if (el.kind === 'inst' && fam(el.fam)?.join) it.push({k:'jnedit', t:'Modifier la menuiserie…', s:'Dimensions, vitrage, cadre, performances'});
   if (el.kind === 'inst') it.push({k:'famedit', t:'Modifier la famille…'}, ...(el.host ? [{k:'iflip', t:'Côté d\'ouverture'}] : [{k:'rot90', t:'Pivoter de 90°'}]));
   it.push('-', {k:'dup', t:'Dupliquer'}, {k:'del', t:'Supprimer', danger:true});
   return it;
@@ -123,6 +124,7 @@ function runTreeAction(k, key){
     case 'lhide': hiddenLvls.has(li) ? hiddenLvls.delete(li) : hiddenLvls.add(li); return re();
     case 'lrename': return levelDialog(li);
     case 'levels': return openLevels();
+    case 'jnedit': return openJoineryTool({instId:el.id});
     case 'mkcomp': { const ids = selIds().includes(el?.id) ? selIds() : [el.id]; return openMakeComp(ids); }
     case 'tpush': select(el.id); return setTool('push');
     case 'ldel': if (state.els.some(x => x.lvl === li)) return toast('Ce niveau contient des éléments : déplacez-les ou supprimez-les d\'abord.');

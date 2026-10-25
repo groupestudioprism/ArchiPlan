@@ -54,6 +54,7 @@ function famScope(F, el){
   for (const [k, p] of Object.entries(F.params || {})) s[k] = +p.v;
   const ty = (F.types || [])[el?.type | 0]; if (ty) for (const [k, v] of Object.entries(ty.p || {})) s[k] = typeof v === 'number' ? v : fx(v, s);
   for (const [k, v] of Object.entries(el?.params || {})) if (Number.isFinite(+v)) s[k] = +v;
+  s.T = 0.2; if (el?.host && typeof getEl === 'function'){ const hw = getEl(el.host); if (hw?.kind === 'wall') s.T = wallT(hw); }   // épaisseur du mur hôte (appuis, chambranles)
   return s;
 }
 function famCut(el){
@@ -81,12 +82,13 @@ function famSolids(F, scope, depth = 0){
         }
         continue;
       }
-      const m = part.m || 'bois';
-      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz:0, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
+      const m = part.m || 'bois', rz = part.rz != null ? fx(part.rz, s) * Math.PI / 180 : 0;   // rz : rotation (°) de la pièce autour de son point (x, y) — vantail qui pivote sur ses gonds
+      const piv = (ox, oy) => { if (!rz) return [x + ox, y + oy]; const q = V.rot([ox, oy], rz); return [x + q[0], y + q[1]]; };
+      if (part.s === 'cyl'){ const r = Math.max(0.001, fx(part.r, s)), h = Math.max(0.001, fx(part.h, s)); out.push(part.ax ? {s:'cyl', m, c:[x, y, z], r, h, rz, ax:part.ax} : {s:'cyl', m, c:[x, y, z + h/2], r, h, rz:0}); }
       else if (part.s === 'cone'){ const r = Math.max(0.001, fx(part.r, s)), r2 = Math.max(0, fx(part.r2 ?? 0, s)), h = Math.max(0.001, fx(part.h, s)); out.push({s:'cone', m, c:[x, y, z + h/2], r, r2, h, rz:0}); }
       else if (part.s === 'ext'){ const W = s.w ?? 1, Dd = s.d ?? 1, h = fx(part.h ?? 1, s), P = (part.pts || []).map(([u, v]) => [x + (u - 0.5) * W, y + (v - 0.5) * Dd]); if (P.length >= 3 && h > 1e-4){ const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cy = P.reduce((a, p) => a + p[1], 0) / P.length; out.push({s:'ext', m, c:[cx, cy, z + h / 2], pts:P.map(p => [p[0] - cx, p[1] - cy]), h, rz:0}); } }
       else if (part.s === 'sph'){ const r = Math.max(0.001, fx(part.r, s)); out.push({s:'sph', m, c:[x, y, z + r], r, rz:0}); }
-      else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4) out.push({s:'box', m, c:[x + w/2, y + d/2, z + h/2], w, d, h, rz:0}); }
+      else { const w = fx(part.w, s), d = fx(part.d, s), h = fx(part.h, s); if (w > 1e-4 && d > 1e-4 && h > 1e-4){ const c = piv(w / 2, d / 2); out.push({s:'box', m, c:[c[0], c[1], z + h/2], w, d, h, rz}); } }
     }
   }
   return out;
