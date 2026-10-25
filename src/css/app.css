@@ -523,3 +523,8 @@ body.gripping, body.gripping *{cursor:move!important}
 .jn-seg{flex-wrap:wrap}.jn-seg button{flex:1 1 31%;min-width:0;white-space:nowrap;padding:0 6px}
 .jn-cv{height:min(380px,42vh)}
 .jn-perf{margin-top:10px}.jn-warns{margin-top:8px}
+
+/* sécurité incendie */
+.grp.fire .perf .pc{min-height:64px}.grp.fire .tbl.rooms th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);text-align:left;padding:4px 6px}.grp.fire .tbl.rooms th.n{text-align:right}
+.grp.fire h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.tbl .gr{position:static;display:inline-grid;width:20px;height:20px;font-size:11px;vertical-align:middle}

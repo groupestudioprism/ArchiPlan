@@ -98,6 +98,7 @@ function renderResults(box, W){
       <div class="pc"><span>Carbone (A1-A3)</span><b>${n0(co2)}</b><em>kg CO₂e/m²</em></div></div>
     <div class="cp-charts"><figure class="zoomable" title="Cliquer pour agrandir"><figcaption>Coupe et profil de température <em>· cliquer pour agrandir</em></figcaption>${sectionSvg(W, L, gl)}<div class="cp-tip" hidden></div></figure><figure class="zoomable" title="Cliquer pour agrandir"><figcaption>Diagramme de Glaser (pression de vapeur) <em>· cliquer pour agrandir</em></figcaption>${glaserSvg(L, gl)}<div class="cp-tip" hidden></div></figure></div>
     <ul class="warns">${warn.map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join('')}</ul>
+    ${typeof fireCompoHTML === 'function' ? fireCompoHTML(W) : ''}
     <p class="hint">Calculs simplifiés de pré-dimensionnement (EN ISO 6946, EN ISO 13786, loi de masse EN 12354-1, méthode de Glaser). Ils ne remplacent ni une étude thermique réglementaire, ni une étude acoustique, ni une analyse hygrothermique dynamique (WUFI).</p>`;
   wireCharts(box, L, W);
 }

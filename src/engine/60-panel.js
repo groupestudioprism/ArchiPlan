@@ -61,6 +61,7 @@ function renderProps(){
       ${roomsCard()}
       ${glazingCard()}
       ${joineryProjectCard()}
+      ${fireProjectCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -82,6 +83,7 @@ function renderProps(){
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
     h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
     h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
+      ${fireCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(T * 100, 1)} cm</dd><dt>Surface brute</dt><dd>${nf(L * el.h)} m²</dd><dt>Ouvertures</dt><dd>${ops.length}</dd><dt>Volume net</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, L * el.h, true)}</div>
       <div class="btns"><button class="btn" data-act="flip">Inverser les faces</button><button class="btn" data-act="add-opening">+ Ouverture</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
@@ -100,6 +102,7 @@ function renderProps(){
     h += `</div>${poly ? `<p class="hint">Toit dessiné sur un contour de ${el.poly.length} côtés, découpé en ${G.wings.length} aile${G.wings.length > 1 ? 's' : ''} (noues automatiques).</p>` : ''}
       <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button><button class="btn" data-act="roof-attach">Attacher les murs dessous</button>${state.els.some(w => w.kind === 'wall' && w.top === 'roof' && roofOver(w) === el) ? '<button class="btn" data-act="roof-detach">Détacher les murs</button>' : ''}</div>
       <div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
+      ${fireCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Surface des rampants</dt><dd>${nf(Q.slope)} m²</dd><dt>Surface en plan</dt><dd>${nf(Q.plan)} m²</dd><dt>Égouts (gouttières)</dt><dd>${nf(Q.eave)} ml</dd><dt>Faîtage</dt><dd>${nf(Q.ridge)} ml</dd>${Q.hip ? `<dt>Arêtiers</dt><dd>${nf(Q.hip)} ml</dd>` : ''}${Q.gable ? `<dt>Pignons</dt><dd>${nf(Q.gable)} m²</dd>` : ''}${Q.ceil ? `<dt>Plafond</dt><dd>${nf(Q.ceil)} m²</dd>` : ''}${FQ.length ? `<dt>Charpente</dt><dd>${nf(FQ.reduce((s, x) => s + x.m3, 0), 2)} m³</dd>` : ''}</dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, Q.slope, false)}</div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
@@ -120,6 +123,7 @@ function renderProps(){
     { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
+      ${fireCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(SA)} m²</dd>${el.poly ? `<dt>Contour</dt><dd>${el.poly.length} côtés</dd>` : ''}${nh ? `<dt>Trous</dt><dd>${nh}</dd>` : ''}<dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
       <div class="grp"><h3>Composition ${layerBar(layers)}</h3>${layerTable(layers, SA, false)}</div>
       <div class="btns"><button class="btn" data-act="slab-hole">+ Trou / trémie</button>${nh ? '<button class="btn" data-act="slab-unhole">Retirer les trous</button>' : ''}<button class="btn danger" data-act="del">Supprimer</button></div>`;
@@ -136,7 +140,7 @@ function renderProps(){
     h += matSelect('Matériau', 'mat', el.mat);
     h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm');
     h += linkFields(el);
-    h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd class="big">${n0(m)} kg</dd></dl></div>
+    h += `</div>${fireCard(el)}<div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd class="big">${n0(m)} kg</dd></dl></div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'inst'){
     const F = fam(el.fam), s = F ? famScope(F, el) : {};
@@ -266,6 +270,7 @@ $('#pbody').addEventListener('change', e => {
   const t = e.target;
   if (t.matches('[data-libcat]')){ libCat = t.value; return renderPanel(); }
   if (t.matches('[data-rset]')) return onRenderInput(t, true);
+  if (t.dataset.fire != null){ const k = t.dataset.fire, cfg = fireCfg(); pushHist(); if (k === 'erpSleep') cfg.erpSleep = t.checked; else if (k === 'cover'){ const v = num(t.value); if (v >= 15 && v <= 70) cfg.cover = v; } else cfg[k] = t.value; state.isSample = false; renderPanel(); return; }
   if (t.dataset.lvn != null){ pushHist(); state.levels[+t.dataset.lvn].n = t.value.trim().slice(0, 30) || 'Niveau'; rebuild(); syncLevels(); return; }
   if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; sortLevels(); rebuild(); syncLevels(); return; }
   const f = t.dataset.f, fp = t.dataset.fp;
@@ -280,6 +285,7 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'rceil' || f === 'rgtype'){ pushHist(); if (f === 'rceil') el.ceil = t.value; else el.gableType = t.value; state.isSample = false; rebuild(); return; }
   if (f === 'lvl' && el.kind === 'roof'){ pushHist(); el.lvl = +t.value; roofFitWalls(el); state.isSample = false; rebuild(); syncLevels?.(); return; }
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
+  if (f === 'fireRole'){ pushHist(); if (t.value) el.fireRole = t.value; else delete el.fireRole; state.isSample = false; renderPanel(); return; }
   if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
@@ -313,6 +319,7 @@ $('#pbody').addEventListener('change', e => {
 $('#pbody').addEventListener('click', e => {
   const t = e.target;
   const lt = t.closest('[data-libtab]'); if (lt){ libTab = lt.dataset.libtab; libCat = ''; return renderPanel(); }
+  const fs = t.closest('[data-fsel]'); if (fs){ const id = +fs.dataset.fsel; if (getEl(id)){ select(id); frameEl([id]); } return; }
   const rb = t.closest('[data-room]'); if (rb){ const r = state.levels.flatMap((L, li) => detectRooms(li)).find(x => x.key === rb.dataset.room); if (r) renameRoom(r); return; }
   const fo = t.closest('[data-fopen]'); if (fo){ libPath = [...libPath, fo.dataset.fopen]; return renderPanel(); }
   const fp = t.closest('[data-fpath]'); if (fp){ libPath = fp.dataset.fpath ? fp.dataset.fpath.split('/') : []; return renderPanel(); }
@@ -345,6 +352,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'levels') openLevels();
   else if (act === 'jnedit') openJoineryTool({instId:sel});
   else if (act === 'join-new') openJoineryTool();
+  else if (act === 'fire-pdf') printFire();
   else if (act === 'roof-attach') attachWallsToRoof(el, true);
   else if (act === 'roof-detach') attachWallsToRoof(el, false);
   else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }
