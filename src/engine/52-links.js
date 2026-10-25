@@ -117,7 +117,7 @@ function gripStart(el, k, ev){
     else { const r = rect(x.p, x.q), opp = r[(+k.slice(1) + 2) % 4]; if (Math.abs(pt[0] - opp[0]) < 0.02 || Math.abs(pt[1] - opp[1]) < 0.02) return; x.p = [Math.min(pt[0], opp[0]), Math.min(pt[1], opp[1])]; x.q = [Math.max(pt[0], opp[0]), Math.max(pt[1], opp[1])]; }
     state.isSample = false; rebuild({noPanel:true}); drawSnapGlyph(toV3(s.pt), s.kind, s.how);
   };
-  const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); if (JSON.stringify(state.els) === gripDrag.orig){ hist.pop(); updUndo(); } gripDrag = null; c3.enabled = view !== '2d'; document.body.classList.remove('gripping'); drawSnapGlyph(null); snapGeo = null; rebuild(); };
+  const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); { const gx = getEl(gripDrag.id); if (gx?.kind === 'wall'){ const bf = wallEnds([gx.id]); weldWall(gx); followJoins(bf); } } if (JSON.stringify(state.els) === gripDrag.orig){ hist.pop(); updUndo(); } gripDrag = null; c3.enabled = view !== '2d'; document.body.classList.remove('gripping'); drawSnapGlyph(null); snapGeo = null; rebuild(); };
   document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
 }
 const toV3 = p => new THREE.Vector3(p[0], curZ(), -p[1]);

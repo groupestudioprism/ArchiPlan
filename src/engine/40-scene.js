@@ -226,15 +226,16 @@ function geoCachePrune(){ for (const [k, e] of GEO_CACHE) if (e.gen !== geoGen){
 function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0, key = null){
   const mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light));
   mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.light = light;
-  if (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn() || view === 'sec'){
+  if (edgeAngle >= 0 && (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn() || view === 'sec')){
     const edges = new THREE.LineSegments(key ? cachedGeo(key + '|e' + edgeAngle, () => edgesOf(geo, edgeAngle)) : edgesOf(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
     edges.userData.isEdge = true; mesh.add(edges);
   }
   return mesh;
 }
-function pieceMesh(pc, ghost, light = 0){
-  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, 25, light);
-  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, 25, light, key);
+function pieceMesh(pc, ghost, light = 0, noEdge = false){
+  const ea = noEdge ? -1 : 25;
+  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, ea, light);
+  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, ea, light, key);
 }
 let GEO_ON = true, geoBuilding = false;
 function disposeGroup(g){ g.traverse(o => { if (o.geometry && !o.geometry.userData.apCached) o.geometry.dispose(); }); g.clear(); }
@@ -320,7 +321,9 @@ function rebuild(opts = {}){
     g.name = el.kind === 'inst' ? `${F?.nom || 'Composant'}-${el.id}` : `${KIND_NAME[el.kind]}-${el.id}`;
     g.userData.archiplan = {id:el.id, kind:el.kind, type:el.kind === 'inst' ? el.fam : (el.type || el.mat), niveau:lvlName(el.lvl)};
     if (el.kind === 'inst') instMeshes(el, false, light).forEach(m => { m.name = `${g.name}-${m.userData.mat}`; m.userData.archiplan = {materiau:mat(m.userData.mat).nom, lot:famLot(F)}; g.add(m); });
-    else for (const pc of pieces(el)){ const m = pieceMesh(pc, false, light); m.name = `${g.name}-${pc.mat}`; m.userData.archiplan = {materiau:mat(pc.mat).nom, lot:pc.lot, epaisseur:pc.e ?? null}; g.add(m); }
+    else { const cw = el.kind === 'wall' && cleanWallEdges();
+      for (const pc of pieces(el)){ const m = pieceMesh(pc, false, light, cw); m.name = `${g.name}-${pc.mat}`; m.userData.archiplan = {materiau:mat(pc.mat).nom, lot:pc.lot, epaisseur:pc.e ?? null}; g.add(m); }
+      if (cw) try { g.add(wallEdgeLines(el)); } catch(e){ console.warn('arêtes du mur', e); } }
     if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
     modelGroup.add(g);
   }

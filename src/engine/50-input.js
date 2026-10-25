@@ -384,7 +384,7 @@ function placePoint(pt){
       draw.start = pt;
     }
   } else if (tool === 'wall' && defs.wall.rect){
-    if (!S) draw.start = pt; else if (Math.abs(pt[0] - S[0]) > 0.05 && Math.abs(pt[1] - S[1]) > 0.05){ const r = rect(S, pt); pushHist(); r.forEach((p, i) => { const t = tempEl(p.slice(), r[(i + 1) % 4].slice()); t.id = state.nextId++; state.els.push(t); }); state.isSample = false; draw.start = null; draw.workZ = null; rebuild(); toast('Pièce tracée : 4 murs'); } else toast('La pièce doit avoir deux côtés non nuls');
+    if (!S) draw.start = pt; else if (Math.abs(pt[0] - S[0]) > 0.05 && Math.abs(pt[1] - S[1]) > 0.05){ const r = rect(S, pt); pushHist(); r.forEach((p, i) => { const t = tempEl(p.slice(), r[(i + 1) % 4].slice()); if (!weldWall(t)) return; t.id = state.nextId++; state.els.push(t); }); state.isSample = false; draw.start = null; draw.workZ = null; rebuild(); toast('Pièce tracée : 4 murs'); } else toast('La pièce doit avoir deux côtés non nuls');
   } else if (tool === 'slab' && defs.slab.mode === 'poly'){
     draw.poly ??= []; if (draw.poly.length >= 3 && V.len(V.sub(pt, draw.poly[0])) < 0.05) return finishSlabPoly();
     if (!draw.poly.length || V.len(V.sub(pt, draw.poly.at(-1))) > 0.01) draw.poly.push(pt.slice()); draw.start = pt; updatePreview(); setPrompt();

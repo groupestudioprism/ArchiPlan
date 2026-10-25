@@ -16,6 +16,17 @@ function arcPts(w, off, A = wallArc(w)){ const N = Math.max(8, Math.ceil(Math.ab
 // point de jonction d'une ligne de couche (décalage s) à une extrémité, avec onglet sur le mur adjacent
 function endPt(w, atStart, s, els){
   const P = atStart ? w.a : w.b, {u, n} = wallAxis(w), base = V.add(P, V.mul(n, s));
+  if (w.bulge) return base;
+  // carrefour de 3 murs ou plus : deux murs alignés passent tout droit, le troisième s'arrête à leur nu
+  const at = els.filter(v => v !== w && v.kind === 'wall' && v.lvl === w.lvl && v.id !== w.id && !v.bulge && (V.eq(v.a, P) || V.eq(v.b, P)));
+  if (at.length >= 2){
+    const dirOut = v => { const ax = wallAxis(v); return V.eq(v.a, P) ? ax.u : V.mul(ax.u, -1); }, me = atStart ? u : V.mul(u, -1);
+    if (at.some(v => V.dot(dirOut(v), me) < -0.985)) return base;   // je fais partie d'un alignement : tout droit
+    for (let i = 0; i < at.length; i++) for (let j = i + 1; j < at.length; j++) if (V.dot(dirOut(at[i]), dirOut(at[j])) < -0.985){
+      const v = at[i], ax = wallAxis(v), O = atStart ? w.b : w.a, side = Math.sign(V.dot(V.sub(O, P), ax.n)) || 1;
+      const X = lineInter(base, u, V.add(P, V.mul(ax.n, side * wallT(v) / 2)), ax.u); if (X) return X; }
+  }
+  { const X = teeTrim(w, atStart, s, base, els); if (X) return X; }
   for (const v of els){
     if (v === w || v.kind !== 'wall' || v.lvl !== w.lvl || v.id === w.id || v.bulge || w.bulge) continue;
     let sign = 0;

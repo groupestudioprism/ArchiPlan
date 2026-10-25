@@ -96,7 +96,7 @@ const getEl = id => {
   if (elIdxOf === els){ const i = elIdx.get(id); if (i !== undefined && els[i]?.id === id) return els[i]; if (i === undefined && elIdx.size === els.length) return els.find(e => e.id === id); }
   elIdxBuild(); const i = elIdx.get(id); return i === undefined ? undefined : els[i];
 };
-function addEl(e){ pushHist(); e.id = state.nextId++; state.els.push(e); state.isSample = false; rebuild(); return e.id; }
+function addEl(e){ if (e.kind === 'wall' && typeof weldWall === 'function' && !weldWall(e)) return null; pushHist(); e.id = state.nextId++; state.els.push(e); state.isSample = false; rebuild(); return e.id; }
 function removeEls(ids){
   const set = new Set(ids);
   // supprimer un mur supprime ses menuiseries
