@@ -70,7 +70,7 @@ function renderProps(){
         <dt><code>@5;3</code></dt><dd>Déplacement relatif, ou côtés L ; l</dd>
         <dt><code>2;3</code></dt><dd>Point en coordonnées absolues</dd>
         <dt><code>MUR · DEP · CO</code></dt><dd>Commandes : mur, déplacer, copier, RO rotation, PP pousser/tirer, ZE zoom étendu</dd></dl></div>
-      <div class="grp"><h3>Raccourcis</h3><p class="hint"><kbd>V</kbd> sélection · <kbd>M</kbd> mur · <kbd>D</kbd> dalle · <kbd>P</kbd> poteau · <kbd>B</kbd> volume · <kbd>F</kbd> composant · <kbd>U</kbd> pousser/tirer · <kbd>G</kbd> déplacer · <kbd>C</kbd> copier · <kbd>O</kbd> rotation · <kbd>R</kbd> mesure · <kbd>F3</kbd> accroches · <kbd>F8</kbd> ortho · <kbd>F10</kbd> polaire · <kbd>F9</kbd> grille · <kbd>Z</kbd> zoom étendu.</p></div></details>`;
+      <div class="grp"><h3>Raccourcis</h3><p class="hint"><kbd>V</kbd> sélection · <kbd>M</kbd> mur · <kbd>D</kbd> dalle · <kbd>P</kbd> poteau · <kbd>B</kbd> volume · <kbd>S</kbd> esquisse 3D · <kbd>N</kbd> menuiserie · <kbd>F</kbd> composant · <kbd>Q</kbd> cote · <kbd>U</kbd> pousser/tirer · <kbd>G</kbd> déplacer · <kbd>C</kbd> copier · <kbd>O</kbd> rotation · <kbd>R</kbd> mesure · <kbd>F3</kbd> accroches · <kbd>F8</kbd> ortho · <kbd>F10</kbd> polaire · <kbd>F9</kbd> grille · <kbd>Z</kbd> zoom étendu.</p></div></details>`;
   }
   const {v, m} = elStats(el);
   const lot = el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof' ? compo(el.type).lot : el.kind === 'inst' ? famLot(fam(el.fam)) : el.kind === 'vol' ? 'Industrie' : 'Gros œuvre';
@@ -93,7 +93,8 @@ function renderProps(){
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'roof').map(([k, t]) => [k, t.nom]), el.type);
     h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
     if (!poly) h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false);
-    h += field('Débord', 'rov', el.ov ?? 0.4, 'm');
+    h += field('Débord d\'égout', 'rov', el.ov ?? 0.4, 'm') + field('Débord de pignon', 'rovg', el.ovg ?? el.ov ?? 0.4, 'm');
+    if ((el.shape || '2') === '2' && !poly) h += field('Seconde pente (0 = symétrique)', 'rpitch2', el.pitch2 || 0, '°', '1');
     h += selectField('Posée sur les murs du niveau', 'lvl', lvlOpts(), el.lvl, false) + (el.onWalls ? lockF(field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) : field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) + onWallsField(el);
     if (!poly) h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
     h += selectField('Plafond', 'rceil', Object.entries(ROOF_CEIL), el.ceil || '', false);
@@ -111,10 +112,18 @@ function renderProps(){
     h += selectField('Type', 'sttype', Object.entries(STAIR_TYPES), el.st || 'droit', false) + (el.st && el.st !== 'droit' ? selectField('Tournant', 'stside', [['d', 'à droite'], ['g', 'à gauche']], el.side || 'd', false) : '');
     h += selectField('Matériau', 'stmat', Object.entries(STAIR_MATS), el.mat || 'bois') + (el.st === 'helico' ? field('Rayon', 'stR', el.R || 0.8, 'm') : field('Emmarchement', 'stw', el.w || 0.9, 'm'));
     h += field('Hauteur à monter', 'stH', D.H, 'm') + selectField('Niveau de départ', 'lvl', lvlOpts(), el.lvl, false) + field('Départ x', 'icx', el.c[0], 'm') + field('Départ y', 'icy', el.c[1], 'm') + field('Orientation', 'strot', el.rot || 0, '°', '1');
-    h += `<label class="f wide rchk"><input type="checkbox" data-f="strail"${el.rail !== false ? ' checked' : ''}> Main courante et garde-corps</label><label class="f wide rchk"><input type="checkbox" data-f="sttrem"${el.tremie !== false ? ' checked' : ''}> Trémie automatique dans le plancher d'arrivée</label>`;
-    h += `</div><div class="grp"><h3>Confort (règle de Blondel)</h3><div class="perf"><div class="pc"><span>Marches</span><b>${D.n}</b><em>hauteur ${nf(D.h * 100, 1)} cm</em></div><div class="pc"><span>Giron</span><b>${nf(D.g * 100, 1)}</b><em>cm</em></div><div class="pc ${okB ? 'g-ok' : 'g-bad'}"><span>2h + g</span><b>${nf(D.blondel * 100, 1)}</b><em>cm (60 à 65)</em></div></div>
-      ${F ? `<p class="hint">Emprise ${nf(F.x1 - F.x0)} × ${nf(F.y1 - F.y0)} m. ${el.tremie !== false ? 'La trémie est découpée dans la dalle traversée à l\'arrivée.' : ''}</p>` : ''}</div>
-      <div class="btns"><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+    h += `</div><div class="grp"><h3>Marches</h3><div class="fields">` + selectField('Usage (règles)', 'stuse', [['hab', 'Habitation'], ['erp', 'ERP / lieu de travail']], el.use || 'hab', false)
+      + field('Nombre de marches (0 = auto)', 'stn', el.n || 0, '', '1') + field('Hauteur de marche visée', 'sths', el.hs || (el.use === 'erp' ? 0.16 : 0.175), 'm', '0.005') + field('Giron (0 = auto)', 'stg', el.g || 0, 'm', '0.005')
+      + (el.st && el.st !== 'droit' && el.st !== 'helico' ? `<label class="f wide rchk"><input type="checkbox" data-f="stpal"${el.pal ? ' checked' : ''}> Palier au tournant (au lieu de marches balancées)</label>` : '')
+      + `<label class="f wide rchk"><input type="checkbox" data-f="stcm"${el.cm ? ' checked' : ''}> Contremarches fermées</label>`;
+    h += `</div></div><div class="grp"><h3>Garde-corps et trémie</h3><div class="fields"><label class="f wide rchk"><input type="checkbox" data-f="strail"${el.rail !== false ? ' checked' : ''}> Main courante et garde-corps (côté extérieur)</label><label class="f wide rchk"><input type="checkbox" data-f="strail2"${el.rail2 ? ' checked' : ''}> Seconde main courante (côté intérieur)</label>`
+      + field('Hauteur de main courante', 'strailh', el.railH || 0.9, 'm', '0.05')
+      + `<label class="f wide rchk"><input type="checkbox" data-f="sttrem"${el.tremie !== false ? ' checked' : ''}> Trémie automatique dans le plancher d'arrivée</label><label class="f wide rchk"><input type="checkbox" data-f="stfull"${el.fullTremie ? ' checked' : ''}> Trémie sur toute l'emprise (sinon : minimale pour l'échappée)</label></div></div>`;
+    { const C = stairCheck(el);
+    h += `<div class="grp"><h3>Confort et réglementation</h3><div class="perf"><div class="pc"><span>Marches</span><b>${D.n}</b><em>hauteur ${nf(D.h * 100, 1)} cm</em></div><div class="pc"><span>Giron</span><b>${nf(D.g * 100, 1)}</b><em>cm</em></div><div class="pc ${okB ? 'g-ok' : 'g-bad'}"><span>2h + g</span><b>${nf(D.blondel * 100, 1)}</b><em>cm (60 à 65)</em></div></div>
+      <ul class="warns">${C.checks.map(c => `<li class="${c.lvl}">${esc(c.t)}</li>`).join('')}</ul>
+      ${F ? `<p class="hint">Emprise ${nf(F.x1 - F.x0)} × ${nf(F.y1 - F.y0)} m. ${el.tremie !== false ? (el.fullTremie ? 'Trémie sur toute l\'emprise.' : 'Trémie minimale : seules les marches dont l\'échappée serait insuffisante sont découvertes.') : ''}</p>` : ''}</div>`; }
+    h += `<div class="btns"><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers, nh = (el.holes || []).length, SA = area(volPoly(el)) - (el.holes || []).reduce((s, x) => s + area(x), 0);
     h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
@@ -136,6 +145,12 @@ function renderProps(){
     if (el.poly) h += `<div class="f wide"><span>Forme</span><div class="site-v">${el.shape === 'circ' ? 'Cercle' : `Polygone de ${el.poly.length} côtés`} · ${nf(area(el.poly))} m² au sol</div></div>`;
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse volumique</dt><dd>${n0(mat(el.mat).rho)} kg/m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
       <div class="btns"><button class="btn primary" data-act="mkcomp">Créer un composant…</button><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+  } else if (el.kind === 'sk'){
+    const n = skN(el.fr), A = Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0);
+    h += matSelect('Matériau', 'mat', el.mat) + field('Épaisseur (extrusion)', 'skd', el.d, 'm', '0.005') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage', 'off', el.off, 'm');
+    h += `<div class="f wide"><span>Plan d'esquisse</span><div class="site-v">${Math.abs(n[2]) > 0.9 ? 'horizontal' : Math.abs(n[2]) < 0.1 ? 'vertical' : 'incliné'} · ${el.poly.length} sommets${(el.holes || []).length ? ` · ${el.holes.length} trou${el.holes.length > 1 ? 's' : ''}` : ''} · ${nf(A)} m²</div></div>`;
+    h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
+      <div class="btns"><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn" data-act="tool-sketch">Nouvelle esquisse</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'col'){
     h += matSelect('Matériau', 'mat', el.mat);
     h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm');
@@ -278,9 +293,11 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
   const el = getEl(sel); if (!el || (!f && !fp)) return;
   if (fp){ const v = num(t.value); if (Number.isNaN(v)) return renderPanel(); pushHist(); el.params = {...(el.params || {}), [fp]:v}; state.isSample = false; rebuild(); return; }
-  if (el.kind === 'stair' && ['sttype', 'stside', 'stmat', 'stw', 'stH', 'stR', 'strot', 'strail', 'sttrem'].includes(f)){ pushHist(); state.isSample = false;
+  if (el.kind === 'stair' && ['sttype', 'stside', 'stmat', 'stw', 'stH', 'stR', 'strot', 'strail', 'sttrem', 'stuse', 'stn', 'sths', 'stg', 'stpal', 'stcm', 'strail2', 'strailh', 'stfull'].includes(f)){ pushHist(); state.isSample = false;
     if (f === 'sttype') el.st = t.value; else if (f === 'stside') el.side = t.value; else if (f === 'stmat') el.mat = t.value; else if (f === 'strail') el.rail = t.checked; else if (f === 'sttrem') el.tremie = t.checked;
-    else { const v = num(t.value); if (!Number.isNaN(v)){ if (f === 'stw') el.w = clamp(v, 0.6, 2); else if (f === 'stH') el.H = clamp(v, 0.3, 8); else if (f === 'stR') el.R = clamp(v, 0.6, 1.6); else if (f === 'strot') el.rot = ((v % 360) + 360) % 360; } }
+    else if (f === 'stuse') el.use = t.value; else if (f === 'stpal') el.pal = t.checked; else if (f === 'stcm') el.cm = t.checked; else if (f === 'strail2') el.rail2 = t.checked; else if (f === 'stfull') el.fullTremie = t.checked;
+    else { const v = num(t.value); if (!Number.isNaN(v)){ if (f === 'stw') el.w = clamp(v, 0.6, 2.5); else if (f === 'stH') el.H = clamp(v, 0.3, 8); else if (f === 'stR') el.R = clamp(v, 0.6, 1.6); else if (f === 'strot') el.rot = ((v % 360) + 360) % 360;
+      else if (f === 'stn') el.n = v >= 3 ? Math.round(v) : 0; else if (f === 'sths') el.hs = clamp(v, 0.1, 0.25); else if (f === 'stg') el.g = v >= 0.15 ? clamp(v, 0.15, 0.45) : 0; else if (f === 'strailh') el.railH = clamp(v, 0.8, 1.2); } }
     rebuild(); return; }
   if (f === 'rceil' || f === 'rgtype'){ pushHist(); if (f === 'rceil') el.ceil = t.value; else el.gableType = t.value; state.isSample = false; rebuild(); return; }
   if (f === 'lvl' && el.kind === 'roof'){ pushHist(); el.lvl = +t.value; roofFitWalls(el); state.isSample = false; rebuild(); syncLevels?.(); return; }
@@ -291,8 +308,9 @@ $('#pbody').addEventListener('change', e => {
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
   const pos = x => Math.max(0.001, x);
-  if (f === 'rshape') el.shape = val; else if (f === 'rpitch') el.pitch = clamp(val, 3, 70); else if (f === 'rdir') el.dir = val; else if (f === 'rov') el.ov = clamp(val, 0, 2); else if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
+  if (f === 'rshape') el.shape = val; else if (f === 'rpitch') el.pitch = clamp(val, 3, 70); else if (f === 'rdir') el.dir = val; else if (f === 'rov') el.ov = clamp(val, 0, 2); else if (f === 'rovg') el.ovg = clamp(val, 0, 2); else if (f === 'rpitch2') el.pitch2 = val >= 3 ? clamp(val, 3, 70) : 0; else if (f === 'type') el.type = val; else if (f === 'mat') el.mat = val; else if (f === 'lvl') el.lvl = +val; else if (f === 'use') el.use = val;
   else if (f === 'ftype'){ el.type = +val; el.params = {}; }
+  else if (f === 'skd') el.d = pos(val);
   else if (f === 'h'){ el.h = pos(val); delete el.top; } else if (f === 'off'){ el.off = val; delete el.onSlab; delete el.onWalls; }
   else if (f === 't'){ const w = getEl(el.host); if (w){ const c = famCut(el), L = wallAxis(w).L; el.t = rnd(clamp(val, c.w / 2, L - c.w / 2)); } }
   else if (f === 'icx') el.c = [val, el.c[1]]; else if (f === 'icy') el.c = [el.c[0], val]; else if (f === 'irot') el.rot = val % 360;

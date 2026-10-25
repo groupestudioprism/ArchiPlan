@@ -4,7 +4,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, comp:{fam:'fenetre-2v', type:1, rot:0}};
+const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, sketch:{type:'acier'}, comp:{fam:'fenetre-2v', type:1, rot:0}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -241,6 +241,7 @@ function movedEl(el, d){
   if (m.kind === 'wall'){ m.a = mv(m.a); m.b = mv(m.b); }
   else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ m.p = mv(m.p); m.q = mv(m.q); if (m.poly) m.poly = m.poly.map(mv); if (m.bind?.room) m.bind = {room:mv(m.bind.room)}; }
   else if (m.kind === 'col' || m.kind === 'stair') m.c = mv(m.c);
+  else if (m.kind === 'sk'){ const o = mv(m.fr.o); m.fr.o = [o[0], o[1], m.fr.o[2]]; }
   else if (m.kind === 'inst'){ if (m.host){ const w = getEl(m.host); if (w){ const {u} = wallAxis(w); m.t = rnd((m.t || 0) + V.dot(d, u)); } } else m.c = mv(m.c); }
   return m;
 }
@@ -249,6 +250,7 @@ function rotatedEl(el, base, ang){
   if (m.kind === 'wall'){ m.a = rp(m.a); m.b = rp(m.b); }
   else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ const r = rect(m.p, m.q).map(rp); m.p = [Math.min(...r.map(p => p[0])), Math.min(...r.map(p => p[1]))]; m.q = [Math.max(...r.map(p => p[0])), Math.max(...r.map(p => p[1]))]; if (m.kind === 'roof' && Math.abs(Math.sin(ang)) > 0.7 && !m.poly){ const G = roofGeom(el); m.dir = G.ax ? 'y' : 'x'; } if (m.poly) m.poly = m.poly.map(rp); }
   else if (m.kind === 'stair'){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI + 360) % 360; }
+  else if (m.kind === 'sk'){ const o = rp(m.fr.o), ru = V.rot([m.fr.u[0], m.fr.u[1]], ang), rv = V.rot([m.fr.v[0], m.fr.v[1]], ang); m.fr = {o:[o[0], o[1], m.fr.o[2]], u:[ru[0], ru[1], m.fr.u[2]], v:[rv[0], rv[1], m.fr.v[2]]}; }
   else if (m.kind === 'col'){ m.c = rp(m.c); if (Math.abs(Math.sin(ang)) > 0.7) [m.w, m.d] = [m.d, m.w]; }
   else if (m.kind === 'inst' && !m.host){ m.c = rp(m.c); m.rot = ((m.rot || 0) + ang * 180 / Math.PI) % 360; }
   if ((m.kind === 'vol' || m.kind === 'slab') && m.poly){ const xs = m.poly.map(p => p[0]), ys = m.poly.map(p => p[1]); m.p = [Math.min(...xs), Math.min(...ys)]; m.q = [Math.max(...xs), Math.max(...ys)]; }
@@ -283,6 +285,9 @@ function pushStart(e){
   if (view === '2d'){ toast('Pousser/Tirer s\'utilise en vue 3D'); return false; }
   const h = hitModel(e); if (!h?.id) return false;
   const el = getEl(h.id); if (!el || el.kind === 'inst' && el.host) return false;
+  if (el.kind === 'sk'){ const n = skN(el.fr), N3 = new THREE.Vector3(n[0], n[2], -n[1]).multiplyScalar(el.dir || 1), dp = h.normal.dot(N3); if (Math.abs(dp) < 0.85) return false;
+    pushHist(); const base = h.point.clone(), p1 = toScreen(base), p2 = toScreen(base.clone().add(N3)), ppm = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) || 1;
+    push = {el, orig:JSON.parse(JSON.stringify(el)), x:e.clientX, y:e.clientY, ppm, dir:[(p2[0] - p1[0]) / ppm, (p2[1] - p1[1]) / ppm], mode:'sk', sgn:dp > 0 ? 1 : -1}; c3.enabled = false; return true; }
   const up = h.normal.y > 0.85, down = h.normal.y < -0.85, side = Math.abs(h.normal.y) < 0.2;
   if (side && !(el.kind === 'vol' || el.kind === 'slab')) return false;
   if (!up && !down && !side) return false;
@@ -296,7 +301,8 @@ function pushMove(e){
   if (!push) return;
   const dx = e.clientX - push.x, dy = e.clientY - push.y, along = (dx * push.dir[0] + dy * push.dir[1]) / push.ppm;
   let v = SNAP.grid ? Math.round(along / step) * step : along; const el = push.el, o = push.orig;
-  if (push.mode === 'up'){
+  if (push.mode === 'sk'){ el.d = rnd(Math.max(0.01, o.d + v * push.sgn)); }
+  else if (push.mode === 'up'){
     if (el.kind === 'slab') el.off = rnd(o.off + v); else if (el.kind === 'inst') el.off = rnd(o.off + v); else el.h = rnd(Math.max(0.01, o.h + v));
   } else if (push.mode === 'down'){
     if (el.kind === 'slab') el.off = rnd(o.off - v); else { const nh = Math.max(0.01, o.h + v); el.off = rnd(o.off - (nh - o.h)); el.h = rnd(nh); }
@@ -335,6 +341,7 @@ const PROMPTS = {
   copy:() => !selIds().length ? '<b>Copier</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Copier</b> : points de destination (Échap pour finir)' : '<b>Copier</b> : point de base',
   rotate:() => !selIds().length ? '<b>Rotation</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Rotation</b> : angle (clic ou degrés)' : '<b>Rotation</b> : centre de rotation',
   dim:() => !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote',
+  sketch:() => skPrompt(),
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
 };
 function setPrompt(){
@@ -346,6 +353,7 @@ function cancelDraw(){ draw.ext = null; draw.dimB = null; draw.arcB = null; draw
 function setTool(t){
   if (t === 'join'){ openJoineryTool(); return; }
   if (!PROMPTS[t]) return;
+  if (tool === 'sketch' && t !== 'sketch') skEnd();
   tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
   $$('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t));
   canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : 'crosshair';
@@ -358,10 +366,11 @@ function syncHud(){
   if (tool === 'wall'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'wall').map(([k, v]) => [k, v.nom]); cur = defs.wall.type; lbl = 'Mur'; }
   else if (tool === 'slab'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'slab').map(([k, v]) => [k, v.nom]); cur = defs.slab.type; lbl = 'Plancher'; }
   else if (tool === 'roof'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'roof').map(([k, v]) => [k, v.nom]); cur = defs.roof.type; lbl = 'Toiture'; }
-  else if (tool === 'vol' || tool === 'col'){ opts = Object.entries(libMats()).map(([k, v]) => [k, v.nom]).sort((a, b) => a[1].localeCompare(b[1], 'fr')); cur = defs[tool].type; lbl = 'Matériau'; }
+  else if (tool === 'vol' || tool === 'col' || tool === 'sketch'){ opts = Object.entries(libMats()).map(([k, v]) => [k, v.nom]).sort((a, b) => a[1].localeCompare(b[1], 'fr')); cur = defs[tool].type; lbl = 'Matériau'; }
   else if (tool === 'comp'){ const F = fam(defs.comp.fam); opts = (F?.types || []).map((t, i) => [i, `${F.nom} · ${t.nom}`]); cur = defs.comp.type; lbl = 'Type'; }
   tp.hidden = !opts;
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
+  $('#skPill').hidden = tool !== 'sketch'; if (tool === 'sketch') $('#skModeIn').value = SK.mode;
   $('#shapePill').hidden = tool !== 'vol'; if (tool === 'vol') $('#shapeIn').value = defs.vol.shape || 'rect';
   const tpp = $('#topPill'), hasTop = tool === 'wall' || tool === 'col'; tpp.hidden = !hasTop;
   if (hasTop){ $('#topIn').querySelector('[value="above"]').hidden = tool !== 'col'; if (tool !== 'col' && defs.wall.top === 'above') defs.wall.top = 'next'; $('#topIn').value = defs[tool].top || ''; }
@@ -422,7 +431,7 @@ function placePoint(pt){
 }
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
-const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', composant:'comp', f:'comp', fenetre:'join', porte:'join',
+const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', forme:'vol', esquisse:'sketch', s:'sketch', composant:'comp', f:'comp', fenetre:'join', porte:'join',
   symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', menuiserie:'join', n:'join', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;

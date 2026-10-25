@@ -63,8 +63,11 @@ function roofWing(el, R){
   const ov = Math.max(0, el.ov ?? 0.4), a = roofPitch(el) * Math.PI / 180, tp = Math.tan(a), base = roofBase(el), Tv = roofT(el) / Math.cos(a), zE = base + Tv;
   const ax = R.ax, U0 = ax ? R.x0 : R.y0, U1 = ax ? R.x1 : R.y1, V0 = ax ? R.y0 : R.x0, V1 = ax ? R.y1 : R.x1, W = V1 - V0, vm = (V0 + V1) / 2;
   const P = (u, v, z) => ax ? [u, v, z] : [v, u, z];
-  const u0 = U0 - (R.open.u0 ? 0 : ov), u1 = U1 + (R.open.u1 ? 0 : ov), v0 = V0 - ov, v1 = V1 + ov, zEo = zE - ov * tp;
+  const ovU = el.ovg != null && el.ovg >= 0 ? el.ovg : ov;   // débord de pignon (peut différer du débord d'égout)
+  const u0 = U0 - (R.open.u0 ? 0 : ovU), u1 = U1 + (R.open.u1 ? 0 : ovU), v0 = V0 - ov, v1 = V1 + ov, zEo = zE - ov * tp;
   const pans = [], gables = [], ridges = [], hips = [], shape = el.shape || '2';
+  // toit à 2 pans dissymétrique : seconde pente (côté v1) ; le faîtage se place pour que les deux égouts restent au même niveau
+  const asym = shape === '2' && el.pitch2 > 0 && Math.abs(el.pitch2 - roofPitch(el)) > 0.01, tp2 = asym ? Math.tan(clamp(el.pitch2, 3, 70) * Math.PI / 180) : tp, vr = asym ? (V0 * tp + V1 * tp2) / (tp + tp2) : vm, zEo2 = zE - ov * tp2;
   const gIn = s => ax ? [s, 0] : [0, s];
   const wantG = end => el.gable !== false && !R.open[end];
   if (shape === '0') pans.push([P(u0, v0, zE), P(u1, v0, zE), P(u1, v1, zE), P(u0, v1, zE)]);
@@ -75,15 +78,15 @@ function roofWing(el, R){
     if (wantG('u1')) gables.push({tri:[P(U1, V0, base), P(U1, V1, base), P(U1, V1, zt)], dir:gIn(-1), end:'u1'});
   } else if (shape === '2' || R.open.u0 || R.open.u1){
     // 2 pans ; une croupe n'est posée qu'aux bouts extérieurs d'un toit à 4 pans
-    const zR = zE + (W / 2) * tp, hip = shape === '4', h0 = hip && !R.open.u0 ? Math.min(W / 2, (U1 - U0) / 2) : 0, h1 = hip && !R.open.u1 ? Math.min(W / 2, (U1 - U0) / 2) : 0;
+    const zR = zE + (asym ? (vr - V0) : W / 2) * tp, hip = shape === '4', h0 = hip && !R.open.u0 ? Math.min(W / 2, (U1 - U0) / 2) : 0, h1 = hip && !R.open.u1 ? Math.min(W / 2, (U1 - U0) / 2) : 0;
     const ur0 = (h0 ? U0 + h0 : u0), ur1 = (h1 ? U1 - h1 : u1);
-    pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(ur1, vm, zR), P(ur0, vm, zR)], [P(u1, v1, zEo), P(u0, v1, zEo), P(ur0, vm, zR), P(ur1, vm, zR)]);
+    pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(ur1, vr, zR), P(ur0, vr, zR)], [P(u1, v1, zEo2), P(u0, v1, zEo2), P(ur0, vr, zR), P(ur1, vr, zR)]);
     if (h0){ pans.push([P(u0, v1, zEo), P(u0, v0, zEo), P(ur0, vm, zR)]); hips.push([P(u0, v0, zEo), P(ur0, vm, zR)], [P(u0, v1, zEo), P(ur0, vm, zR)]); }
     if (h1){ pans.push([P(u1, v0, zEo), P(u1, v1, zEo), P(ur1, vm, zR)]); hips.push([P(u1, v0, zEo), P(ur1, vm, zR)], [P(u1, v1, zEo), P(ur1, vm, zR)]); }
-    if (ur1 - ur0 > 1e-3) ridges.push([P(ur0, vm, zR), P(ur1, vm, zR)]);
-    const zg = base + (W / 2) * tp;
-    if (!hip && wantG('u0')) gables.push({tri:[P(U0, V0, base), P(U0, V1, base), P(U0, vm, zg)], dir:gIn(1), end:'u0'});
-    if (!hip && wantG('u1')) gables.push({tri:[P(U1, V0, base), P(U1, V1, base), P(U1, vm, zg)], dir:gIn(-1), end:'u1'});
+    if (ur1 - ur0 > 1e-3) ridges.push([P(ur0, vr, zR), P(ur1, vr, zR)]);
+    const zg = base + (asym ? (vr - V0) : W / 2) * tp;
+    if (!hip && wantG('u0')) gables.push({tri:[P(U0, V0, base), P(U0, V1, base), P(U0, vr, zg)], dir:gIn(1), end:'u0'});
+    if (!hip && wantG('u1')) gables.push({tri:[P(U1, V0, base), P(U1, V1, base), P(U1, vr, zg)], dir:gIn(-1), end:'u1'});
   } else { // 4 pans
     const half = Math.min(W / 2, (U1 - U0) / 2), zR = zE + half * tp, ur0 = U0 + half, ur1 = U1 - half;
     pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(ur1, vm, zR), P(ur0, vm, zR)], [P(u1, v1, zEo), P(u0, v1, zEo), P(ur0, vm, zR), P(ur1, vm, zR)],

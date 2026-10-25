@@ -106,6 +106,7 @@ function mirroredEl(m, A, B){
   else if (m.kind === 'slab' || m.kind === 'vol' || m.kind === 'roof'){ const r = rect(m.p, m.q).map(R); m.p = [Math.min(...r.map(p => p[0])), Math.min(...r.map(p => p[1]))]; m.q = [Math.max(...r.map(p => p[0])), Math.max(...r.map(p => p[1]))];
     if (m.poly) m.poly = m.poly.map(R).reverse(); if (m.kind === 'roof' && m.dir && swapXY) m.dir = m.dir === 'x' ? 'y' : 'x'; }
   else if (m.kind === 'col'){ m.c = R(m.c); if (swapXY) [m.w, m.d] = [m.d, m.w]; }
+  else if (m.kind === 'sk'){ const o = R(m.fr.o), Rv = v => { const q = V.sub(R([v[0], v[1]]), R([0, 0])); return [q[0], q[1], v[2]]; }; m.fr = {o:[o[0], o[1], m.fr.o[2]], u:Rv(m.fr.u), v:Rv(m.fr.v)}; m.dir = -(m.dir || 1); }
   else if (m.kind === 'stair'){ const a = (m.rot || 0) * Math.PI / 180, xd = [Math.cos(a), Math.sin(a)], yd = [-Math.sin(a), Math.cos(a)];
     const c2 = m.st === 'helico' ? R(m.c) : R(V.add(m.c, V.mul(xd, m.w || 0.9))), y2 = V.sub(R(V.add(m.c, yd)), R(m.c)); m.c = c2; m.rot = Math.round(((Math.atan2(-y2[0], y2[1]) * 180 / Math.PI) + 360) % 360 * 10) / 10; m.side = (m.side || 'd') === 'd' ? 'g' : 'd'; }
   return m;

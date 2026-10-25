@@ -113,7 +113,7 @@ function ctxElementItems(el, touch){
   /* ce qui n'existe que dans le plan : agir sur le niveau et la catégorie de l'élément */
   const extra = [];
   if (el.lvl !== curLvl) extra.push({label:`Travailler sur ${lvlName(el.lvl)}`, onClick:() => runTreeAction('work', 'L' + el.lvl)});
-  if (el.kind !== 'inst') extra.push({label:`Sélectionner les ${({wall:'murs', slab:'dalles', roof:'toitures', stair:'escaliers', vol:'formes', col:'poteaux'})[el.kind] || 'éléments'} de ${lvlName(el.lvl)}`, onClick:() => runTreeAction('selall', `L${el.lvl}|${el.kind}`)});
+  if (el.kind !== 'inst') extra.push({label:`Sélectionner les ${({wall:'murs', slab:'dalles', roof:'toitures', stair:'escaliers', vol:'formes', sk:'esquisses', col:'poteaux'})[el.kind] || 'éléments'} de ${lvlName(el.lvl)}`, onClick:() => runTreeAction('selall', `L${el.lvl}|${el.kind}`)});
   extra.push({label:`Masquer ${lvlName(el.lvl)}`, onClick:() => runTreeAction('lhide', 'L' + el.lvl)});
   const at = items.findIndex(i => i.label === 'Dupliquer'); items.splice(at > 0 ? at - 1 : items.length, 0, {sep:true}, ...extra);
   return {items, title:ctxNameOf(el)};

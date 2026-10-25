@@ -152,6 +152,9 @@ function dqeItems(){
     } else if (el.kind === 'vol'){
       const M = mat(el.mat), r = volPoly(el), v = area(r) * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
       add(`V|${el.mat}`, lot, `Ouvrage en ${lc(M.nom)}`, 'volume', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
+    } else if (el.kind === 'sk'){
+      const M = mat(el.mat), v = (Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0)) * el.d, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
+      add(`K|${el.mat}`, lot, `Ouvrage sur mesure en ${lc(M.nom)}`, 'esquisse 3D', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
     } else if (el.kind === 'inst'){
       const F = fam(el.fam), lot = famLotDqe(F, el); if (!lot) continue;
       const c = famCut(el), t = F?.types?.[el.type | 0]?.nom, sols = instSolids(el), kg = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0), 0), co = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0) * (mat(so.m).gwp || 0), 0);

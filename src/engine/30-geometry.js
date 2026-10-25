@@ -128,6 +128,7 @@ function wallOpenings(w, els = state.els){
 
 // Décompose un élément en "pièces" homogènes : un matériau, un contour plan, une base et une hauteur
 function pieces(el, els = state.els){
+  if (el.kind === 'sk') return skPieces(el);
   if (el.kind === 'roof') return roofPieces(el);
   if (el.kind === 'stair') return stairPieces(el);
   const z = lvlZ(el.lvl) + (el.off || 0), out = [];
@@ -185,6 +186,7 @@ function elStats(el){
 }
 /* Points caractéristiques d'un élément (accroches, cotes) */
 function elKeyPoints(el){
+  if (el.kind === 'sk') return skKeyPoints(el);
   if (el.kind === 'wall' && wallArc(el)){ const P = arcPts(el, 0); return {ends:[el.a, el.b], segs:P.slice(1).map((p, i) => [P[i], p]), mids:[P[Math.floor(P.length / 2)]], faces:[]}; }
   if (el.kind === 'wall') return {ends:[el.a, el.b], segs:[[el.a, el.b]], mids:[V.mul(V.add(el.a, el.b), .5)], faces:(() => { const T = wallT(el); return [wallPoly(el, state.els, -T/2, -T/2).slice(0, 2), wallPoly(el, state.els, T/2, T/2).slice(0, 2)]; })()};
   if ((el.kind === 'vol' || el.kind === 'slab') && el.poly){ const r = el.poly, segs = r.map((p, i) => [p, r[(i + 1) % r.length]]), circ = el.shape === 'circ'; return {ends:circ ? [] : r, segs, mids:circ ? [] : segs.map(([a, b]) => V.mul(V.add(a, b), .5)), centers:[polyCentroid(r)]}; }

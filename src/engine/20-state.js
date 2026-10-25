@@ -4,7 +4,7 @@
               inst {fam,type,params,host?,t?,c?,rot,lvl,off,flip,mirror} (famille posée ; hébergée dans un mur si host)
    Bibliothèques : base (code) < bibliothèque personnelle (compte, cloud) < bibliothèque du projet. Un élément de bibliothèque
    utilisé par le projet est copié dans state.lib : le projet reste lisible chez un invité qui n'a pas la même bibliothèque. */
-const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Forme', col:'Poteau', inst:'Composant'};
+const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Forme', col:'Poteau', inst:'Composant', sk:'Esquisse 3D'};
 const LOT_ORDER = ['Gros œuvre', 'Couverture', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Industrie'];
 const DEFAULT_LEVELS = [{n:'RDC', z:0}, {n:'R+1', z:2.8}, {n:'R+2', z:5.6}];
 let USER_LIB = {mats:{}, compos:{}, fams:{}};

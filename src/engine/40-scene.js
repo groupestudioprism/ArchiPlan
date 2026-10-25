@@ -166,6 +166,7 @@ function boxGeo(w, d, h){ // boîte aux UV « monde » (motifs à la bonne éche
   return g;
 }
 function pieceGeo(pc){
+  if (pc.sk) return skGeo(pc.sk);
   if (pc.top) return prismGeo(pc.top, pc.ext);
   const shape = new THREE.Shape(pc.poly.map(p => new THREE.Vector2(p[0], p[1])));
   if (pc.holes) pc.holes.forEach(h => shape.holes.push(new THREE.Path(h.map(p => new THREE.Vector2(p[0], p[1])))));
