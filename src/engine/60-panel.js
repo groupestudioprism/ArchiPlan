@@ -19,7 +19,8 @@ function matOptions(){
   const by = {}; for (const [k, m] of Object.entries(libMats())) (by[m.cat || 'Divers'] ??= []).push([k, m.nom]);
   return Object.entries(by).map(([c, l]) => `<optgroup label="${esc(c)}">${l.sort((a, b) => a[1].localeCompare(b[1], 'fr')).map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join('')}</optgroup>`).join('');
 }
-function matSelect(label, f, cur, wide = true){ return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><select id="f-${f}" data-f="${f}">${matOptions().replace(`value="${esc(cur)}"`, `value="${esc(cur)}" selected`)}</select></span></label>`; }
+function matSelect(label, f, cur, wide = true){ return pickField(label, f, cur, 'mat', {}, wide); }
+function compoSelect(label, f, cur, kind, wide = true){ return pickField(label, f, cur, 'compo', {kind}, wide); }
 const lvlOpts = () => state.levels.map((l, i) => [i, `${l.n} (${nf(l.z)} m)`]);
 function layerBar(layers){
   const T = layers.reduce((s, l) => s + l[1], 0) || 1;
@@ -78,7 +79,7 @@ function renderProps(){
   let h = `<div class="ph"><h2>${title}</h2><span class="tag">${esc(lot)}</span></div><div class="fields">`;
   if (el.kind === 'wall'){
     const {L} = wallAxis(el), layers = wallLayers(el), T = wallT(el), ops = wallOpenings(el);
-    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'wall').map(([k, t]) => [k, t.nom]), el.type);
+    h += compoSelect('Composition', 'type', el.type, 'wall');
     h += field('Longueur', 'len', L, 'm') + linkFields(el);
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
     h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
@@ -91,7 +92,7 @@ function renderProps(){
   } else if (el.kind === 'roof'){
     const layers = compo(el.type).layers, Q = roofQty(el), r = rect(el.p, el.q), poly = el.poly && el.poly.length >= 4, G = roofGeom(el), FQ = frameQty(el);
     const wallOpts = [['', 'Comme les murs (automatique)'], ...Object.entries(libCompos()).filter(([, t]) => t.kind === 'wall' && t.lot !== 'Second œuvre').map(([k, t]) => [k, t.nom])];
-    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'roof').map(([k, t]) => [k, t.nom]), el.type);
+    h += compoSelect('Composition', 'type', el.type, 'roof');
     h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
     if (!poly) h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false);
     h += field('Débord d\'égout', 'rov', el.ov ?? 0.4, 'm') + field('Débord de pignon', 'rovg', el.ovg ?? el.ov ?? 0.4, 'm');
@@ -129,7 +130,7 @@ function renderProps(){
     h += `<div class="btns"><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers, nh = (el.holes || []).length, SA = area(volPoly(el)) - (el.holes || []).reduce((s, x) => s + area(x), 0);
-    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
+    h += compoSelect('Composition', 'type', el.type, 'slab');
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
     h += slabLinkField(el);
     { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
@@ -187,24 +188,28 @@ function renderProps(){
 const FAM_ICON = {Portes:'M7 21V3h10v18M14 12h.01', 'Fenêtres':'M4 4h16v16H4zM12 4v16M4 12h16', Ouvertures:'M5 21V5h14v16', Structure:'M3 6h18M3 18h18M12 6v12', 'Escaliers et garde-corps':'M3 21h4v-4h4v-4h4V9h4V5', Mobilier:'M4 11h16v4H4zM6 15v5M18 15v5', 'Cuisine et sanitaires':'M5 10h14v5a5 5 0 0 1-10 0M12 3v4', Industrie:'M3 21V9l6 4V9l6 4V5h6v16z', 'Extérieur':'M12 2a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5M12 12v10'};
 const libOwner = (kind, id) => state.lib?.[kind]?.[id] ? 'projet' : USER_LIB[kind][id] ? 'perso' : 'base';
 function renderLib(){
-  const q = libQuery.trim().toLowerCase(), match = s => !q || s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q.normalize('NFD').replace(/[̀-ͯ]/g, ''));
+  const q = libQuery.trim(), hasQ = sHasQuery(q), Q = hasQ ? sParseQuery(q) : null, hl = n => hasQ ? sHighlight(n, q) : esc(n);
+  const whyTag = why => why && why.length ? `<em class="spk-why" title="Trouvé par le sens du mot">${esc(why.map(synLabel).join(', '))}</em>` : '';
+  const match = s => !hasQ || !!sScore(Q, sIndex(s));
   let body = '';
   if (libTab === 'mats'){
     const cats = MAT_CATS.concat([...new Set(Object.values(libMats()).map(m => m.cat))].filter(c => !MAT_CATS.includes(c)));
-    const list = Object.entries(libMats()).filter(([, m]) => match(m.nom) && (!libCat || m.cat === libCat));
+    const base = searchMats((k, m) => !libCat || m.cat === libCat), list = hasQ ? smartSearch(q, base, {limit:300}).map(r => ({...r.item, why:r.why})) : base.map(x => ({...x, why:[]}));
     body = `<div class="libtools"><select data-libcat aria-label="Catégorie"><option value="">Toutes les catégories</option>${cats.map(c => `<option${c === libCat ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select><button class="btn primary" data-act="mat-new">+ Matériau</button></div>
-      <div class="lib">${list.map(([k, m]) => `<div class="row" data-mat="${esc(k)}"><span class="swt" style="background:${m.color}"></span><div><b>${esc(m.nom)}</b><div class="comp">${esc(m.cat)}${libOwner('mats', k) !== 'base' ? ' · <em>' + (libOwner('mats', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div>
-        <span class="n">${m.R != null ? 'R ' + nf(m.R, 2) : 'λ ' + nf(m.lambda, 3)}<br>${n0(m.rho)} kg/m³</span></div>`).join('') || '<p class="hint">Aucun matériau trouvé.</p>'}</div>`;
+      ${!hasQ && !libCat ? `<div class="spk-chips lib">${MAT_CHIPS.map(([k, n]) => `<button type="button" class="spk-chip" data-libchip="${esc(n.toLowerCase())}">${esc(n)}</button>`).join('')}</div>` : ''}
+      <div class="lib">${list.map(({id:k, m, why}) => `<div class="row" data-mat="${esc(k)}"><span class="swt" style="background:${m.color}"></span><div><b>${hl(m.nom)}</b>${whyTag(why)}<div class="comp">${esc(m.cat)}${libOwner('mats', k) !== 'base' ? ' · <em>' + (libOwner('mats', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div>
+        <span class="n">${m.R != null ? 'R ' + nf(m.R, 2) : 'λ ' + nf(m.lambda, 3)}<br>${n0(m.rho)} kg/m³</span></div>`).join('') || `<p class="hint">Aucun matériau trouvé pour « ${esc(q)} ».${spkSuggest(q).replace(/data-q=/g, 'data-libchip=')}</p>`}</div>`;
   } else if (libTab === 'compos'){
-    const list = Object.entries(libCompos()).filter(([, c]) => match(c.nom));
-    const blk = kind => list.filter(([, c]) => c.kind === kind).map(([k, c]) => { const L = c.kind === 'wall' ? c.layers.slice().reverse() : c.layers, r = thermal(L, c.kind === 'wall' ? 'mur' : 'plancherBas');
-      return `<div class="row crow" data-compo="${esc(k)}"><div><b>${esc(c.nom)}</b>${layerBar(c.layers)}<div class="comp">${nf(c.layers.reduce((s, l) => s + l[1], 0) * 100, 1)} cm${libOwner('compos', k) !== 'base' ? ' · <em>' + (libOwner('compos', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div><span class="n">U ${nf(r.U, 2)}</span></div>`; }).join('');
-    body = `<div class="libtools"><button class="btn primary" data-act="compo-new">+ Composition</button></div><div class="grp"><h3>Murs et cloisons</h3><div class="lib">${blk('wall')}</div></div><div class="grp"><h3>Planchers et toitures</h3><div class="lib">${blk('slab')}</div></div>`;
+    const base = searchCompos(), list = hasQ ? smartSearch(q, base, {limit:300}).map(r => ({...r.item, why:r.why})) : base.map(x => ({...x, why:[]}));
+    const blk = kind => list.filter(({c}) => c.kind === kind).map(({id:k, c, why}) => { const L = c.kind === 'wall' ? c.layers.slice().reverse() : c.layers, r = thermal(L, c.kind === 'wall' ? 'mur' : 'plancherBas');
+      return `<div class="row crow" data-compo="${esc(k)}"><div><b>${hl(c.nom)}</b>${whyTag(why)}${layerBar(c.layers)}<div class="comp">${nf(c.layers.reduce((s, l) => s + l[1], 0) * 100, 1)} cm${libOwner('compos', k) !== 'base' ? ' · <em>' + (libOwner('compos', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div><span class="n">U ${nf(r.U, 2)}</span></div>`; }).join('');
+    const w = blk('wall'), sl = blk('slab') + blk('roof');
+    body = `<div class="libtools"><button class="btn primary" data-act="compo-new">+ Composition</button></div>${w ? `<div class="grp"><h3>Murs et cloisons</h3><div class="lib">${w}</div></div>` : ''}${sl ? `<div class="grp"><h3>Planchers et toitures</h3><div class="lib">${sl}</div></div>` : ''}${!w && !sl ? `<p class="hint">Aucune composition trouvée pour « ${esc(q)} ».${spkSuggest(q).replace(/data-q=/g, 'data-libchip=')}</p>` : ''}`;
   } else {
     const all = Object.entries(libFams()), fcard = ([k, F]) => `<button class="fcard${tool === 'comp' && defs.comp.fam === k ? ' on' : ''}" data-fam="${esc(k)}" title="${esc(F.nom)}"><img class="fthumb" data-thumb="${esc(k)}|0" src="${famThumbCached(k, 0) || ''}" alt=""><b>${esc(F.nom)}</b><small>${(F.types || []).length} type${(F.types || []).length > 1 ? 's' : ''}${libOwner('fams', k) !== 'base' ? ' · perso' : ''}</small></button>`;
     const crumb = `<nav class="fcrumb" aria-label="Dossiers"><button data-fpath="">Familles</button>${libPath.map((p, i) => `<span>›</span><button data-fpath="${esc(libPath.slice(0, i + 1).join('/'))}">${esc(p)}</button>`).join('')}</nav>`;
     let inner = '';
-    if (q){ const list = all.filter(([, F]) => match(F.nom + ' ' + F.cat)); inner = list.length ? `<div class="fgrid">${list.map(fcard).join('')}</div>` : '<p class="hint">Aucune famille trouvée.</p>'; }
+    if (hasQ){ const list = smartSearch(q, searchFams(), {limit:200}).map(r => [r.item.id, r.item.F]); inner = list.length ? `<div class="fgrid">${list.map(fcard).join('')}</div>` : `<p class="hint">Aucune famille trouvée pour « ${esc(q)} ».${spkSuggest(q).replace(/data-q=/g, 'data-libchip=')}</p>`; }
     else {
       const under = all.filter(([k, F]) => { const p = famPath(k, F); return libPath.every((x, i) => p[i] === x) && p.length >= libPath.length; });
       const here = under.filter(([k, F]) => famPath(k, F).length === libPath.length), subs = {};
@@ -220,7 +225,7 @@ function renderLib(){
   }
   return `<div class="ph"><h2>Bibliothèque</h2></div>
     <div class="subtabs" role="tablist">${[['fams', 'Familles'], ['compos', 'Compositions'], ['mats', 'Matériaux']].map(([k, n]) => `<button role="tab" data-libtab="${k}" aria-selected="${libTab === k}">${n}</button>`).join('')}</div>
-    <input class="libsearch" data-libq type="search" placeholder="Rechercher…" value="${esc(libQuery)}" aria-label="Rechercher dans la bibliothèque">${body}
+    <input class="libsearch" data-libq type="search" placeholder="${libTab === 'mats' ? 'Rechercher : vapeur, isolant, couche intermédiaire…' : libTab === 'compos' ? 'Rechercher : ossature bois, béton, isolé…' : 'Rechercher : porte, fenêtre, escalier, mobilier…'}" value="${esc(libQuery)}" aria-label="Rechercher dans la bibliothèque" enterkeyhint="search">${body}
     <p class="hint" style="margin-top:14px">Valeurs indicatives (λ en W/m·K) à remplacer par les fiches techniques des produits retenus. Vos créations sont enregistrées dans « Ma bibliothèque » et copiées dans les projets qui les utilisent.</p>`;
 }
 
@@ -288,6 +293,7 @@ $('#pbody').addEventListener('input', e => {
   if (e.target.matches('[data-libq]')){ libQuery = e.target.value; const pos = e.target.selectionStart; renderPanel(); const i = $('#pbody [data-libq]'); if (i){ i.focus(); i.setSelectionRange(pos, pos); } }
   if (e.target.matches('[data-rset]')) onRenderInput(e.target);
 });
+$('#pbody').addEventListener('click', e => { const c = e.target.closest('[data-libchip]'); if (!c) return; libQuery = c.dataset.libchip; renderPanel(); const i = $('#pbody [data-libq]'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } });
 $('#pbody').addEventListener('change', e => {
   const t = e.target;
   if (t.matches('[data-libcat]')){ libCat = t.value; return renderPanel(); }
@@ -312,7 +318,7 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'fireRole'){ pushHist(); if (t.value) el.fireRole = t.value; else delete el.fireRole; state.isSample = false; renderPanel(); return; }
   if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }
   if (f && f.startsWith('paint')){ pushHist(); state.isSample = false; setPaintField(el, f, t); rebuild(); return; }
-  const val = t.tagName === 'SELECT' ? t.value : num(t.value);
+  const val = t.tagName === 'SELECT' || t.dataset.pick != null ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
   const pos = x => Math.max(0.001, x);

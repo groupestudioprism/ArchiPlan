@@ -45,7 +45,6 @@ function openFamEditor(id, instId){
     <footer class="ed-f"><span class="hint">${owner === 'base' ? 'Famille de base : l\'enregistrement crée une copie dans « Ma bibliothèque ».' : ''}</span>${owner === 'perso' ? '<button class="btn danger" id="fmDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button>${instId ? '<button class="btn" id="fmApply">Enregistrer et appliquer au composant</button>' : ''}<button class="btn primary" id="fmSave">${owner === 'perso' ? 'Enregistrer' : 'Enregistrer dans ma bibliothèque'}</button></footer>`;
   const d = openEDlg(html, 'wide');
   famPrev = makeFamPreview(d.querySelector('#fmCv'));
-  const mopts = matOptions();
   const renderParams = () => {
     d.querySelector('#fmParams').innerHTML = `<table class="tbl ed-t"><thead><tr><th>Nom</th><th>Libellé</th><th class="n">Valeur</th><th>Unité</th><th></th></tr></thead><tbody>${Object.entries(F.params).map(([k, p]) => `<tr>
       <td><input data-pk="${esc(k)}" value="${esc(k)}" class="mono" size="6"></td><td><input data-pl="${esc(k)}" value="${esc(p.label || '')}"></td><td><input data-pv="${esc(k)}" type="number" step="0.01" value="${p.v}" class="mono n" size="6"></td><td><input data-pu="${esc(k)}" value="${esc(p.unit ?? 'm')}" size="3"></td><td><button class="x" data-px="${esc(k)}" aria-label="Supprimer">×</button></td></tr>`).join('')}</tbody></table>`;
@@ -61,7 +60,7 @@ function openFamEditor(id, instId){
   const renderParts = () => {
     d.querySelector('#fmParts').innerHTML = F.parts.map((p, i) => `<div class="fp">
       <div class="fp-h"><select data-q="${i}" data-k="s"><option value="box"${!p.fam && (p.s || 'box') === 'box' ? ' selected' : ''}>Boîte</option><option value="cyl"${!p.fam && p.s === 'cyl' ? ' selected' : ''}>Cylindre</option><option value="sph"${!p.fam && p.s === 'sph' ? ' selected' : ''}>Sphère</option>${p.s === 'ext' ? '<option value="ext" selected>Profil extrudé</option>' : ''}<option value="fam"${p.fam ? ' selected' : ''}>Famille</option></select>
-        ${p.fam ? `<select data-q="${i}" data-k="fam">${famOpts(p.fam)}</select>` : `<select data-q="${i}" data-k="m">${mopts.replace(`value="${esc(p.m)}"`, `value="${esc(p.m)}" selected`)}</select>`}
+        ${p.fam ? pickHTML({attrs:`data-q="${i}" data-k="fam"`, cur:p.fam, kind:'fam', opt:{not:id}, cls:'fp-pick'}) : pickHTML({attrs:`data-q="${i}" data-k="m"`, cur:p.m, kind:'mat', cls:'fp-pick'})}
         <button class="x" data-qx="${i}" aria-label="Supprimer la pièce">×</button></div>
       <div class="fp-g"><label>x ${cell(i, 'x', p.x)}</label><label>y ${cell(i, 'y', p.y)}</label><label>z ${cell(i, 'z', p.z)}</label>
         ${p.fam ? `<label>rot ${cell(i, 'rot', p.rot)}</label><label class="w2">param. ${cell(i, 'pp', Object.entries(p.p || {}).map(([a, b]) => `${a}=${b}`).join('; '), 14)}</label>`
@@ -95,6 +94,7 @@ function openFamEditor(id, instId){
     else if (ds.tn != null) F.types[+ds.tn].nom = t.value;
     else if (ds.tv != null){ const ty = F.types[+ds.tv]; ty.p = ty.p || {}; if (t.value.trim() === '') delete ty.p[ds.k]; else { const v = num(t.value); ty.p[ds.k] = Number.isNaN(v) ? t.value : v; } }
     else if (ds.q != null && t.tagName === 'INPUT'){ const p = F.parts[+ds.q];
+      if (t.dataset.pick != null){ p[ds.k] = t.value; if (ds.k === 'fam') return all(); return refresh(); }
       if (ds.k === 'pp'){ p.p = {}; t.value.split(/[;\n]/).forEach(s => { const [a, b] = s.split('='); if (a && b != null && a.trim()) p.p[a.trim()] = b.trim(); }); }
       else if (t.value.trim() === '' && ['n', 'if', 'rot'].includes(ds.k)) delete p[ds.k]; else p[ds.k] = t.value; }
     else return;

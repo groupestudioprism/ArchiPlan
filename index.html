@@ -541,6 +541,69 @@ body.gripping, body.gripping *{cursor:move!important}
 .paintpill .ib.pip{height:26px;min-width:26px;padding:0;border-radius:7px}.paintpill .ib.pip svg{width:15px;height:15px}.paintpill .ib.pip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .chip .x{border:0;background:transparent;color:var(--mut);font-size:14px;line-height:1;margin-left:4px;cursor:pointer}.chip .x:hover{color:#C0392B}
 .mtscale{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.mtscale .btn{padding:3px 9px;font-size:12px}.mtscale .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ---- recherche intelligente : champs sélecteurs, fenêtre de recherche, palette globale ---- */
+.spk{display:flex;min-width:0;flex:1}
+.spk-b{display:flex;align-items:center;gap:8px;width:100%;min-width:0;height:35px;padding:0 6px 0 7px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer;transition:border-color .15s}
+.spk-b:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.spk-b:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.spk-b .swt{width:20px;height:20px;border-radius:5px;flex:none}.spk-b .swt.none{background:repeating-linear-gradient(45deg,transparent 0 4px,var(--line) 4px 6px)}
+.spk-b .lbar{width:34px;flex:none}
+.spk-b .spk-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.spk-b small{color:var(--mut);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40%}
+.spk-c{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;color:var(--mut);flex:none}.spk-c svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.spk-b:hover .spk-c{color:var(--accent);background:var(--accent-soft)}
+.f.fpick .spk{width:100%}.cl .spk{min-width:0}.cl .spk-b small{display:none}.fp-h .spk{flex:1;min-width:120px}
+@media (max-width:420px){.spk-b small{display:none}}
+.spk-hud{border:0;background:transparent;width:28px;height:28px;border-radius:7px;display:inline-grid;place-items:center;color:var(--mut);cursor:pointer;flex:none;margin-left:-2px}
+.spk-hud svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}.spk-hud:hover{color:var(--accent);background:var(--accent-soft)}
+#searchBtn{gap:7px;color:var(--mut);font-weight:500}#searchBtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+#searchBtn .sb-k{font:600 10px var(--f-mono);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--mut);background:var(--chip)}
+@media (max-width:1100px){#searchBtn .sb-k{display:none}}@media (max-width:860px){#searchBtn .sb-l{display:none}#searchBtn{padding:0 9px}}
+.spk-pop{position:fixed;z-index:76;display:flex;flex-direction:column;width:440px;max-height:460px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgb(7 27 85 / .28);overflow:hidden}
+.spk-pop[hidden]{display:none}
+.spk-pop.sheet{left:0;right:0;bottom:0;top:auto;width:auto;max-height:min(72vh,calc(100vh - 60px));border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+.spk-top{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 12px;border-bottom:1px solid var(--line)}
+.spk-top>svg{width:18px;height:18px;fill:none;stroke:var(--mut);stroke-width:2;stroke-linecap:round;flex:none}
+.spk-q,.gs-q{flex:1;min-width:0;height:38px;border:0;background:transparent;font:inherit;font-size:14px;color:var(--ink);outline:none}
+.spk-q::-webkit-search-cancel-button,.gs-q::-webkit-search-cancel-button{-webkit-appearance:none}
+.spk-x{height:30px;min-width:30px;padding:0}
+.spk-chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px 2px}.spk-chips[hidden]{display:none}.spk-chips.lib{padding:0 0 10px}
+.spk-chip{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:4px 10px;font:600 11.5px var(--f-body);cursor:pointer}
+.spk-chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.spk-list{overflow:auto;padding:6px;flex:1;min-height:0;overscroll-behavior:contain}
+.spk-g{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);padding:9px 8px 4px;font-weight:700}
+.spk-r,.gs-r{display:flex;align-items:center;gap:10px;width:100%;min-height:42px;padding:6px 8px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.spk-r .swt{flex:none}.spk-r .lbar{width:44px;flex:none}
+.spk-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.spk-t b{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spk-t small{color:var(--mut);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spk-t .own{font-style:normal;font-size:10px;color:var(--accent-2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-left:4px}
+.spk-r.act,.gs-r.act{background:var(--accent-soft)}
+.spk-r.on{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.spk-why{flex:none;font-style:normal;font-size:10.5px;font-weight:600;color:var(--accent-2);background:color-mix(in srgb,var(--accent-2) 12%,transparent);border-radius:6px;padding:2px 7px;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib .row .spk-why{display:inline-block;margin-left:6px;vertical-align:middle;max-width:none}
+mark{background:color-mix(in srgb,var(--sel) 28%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.spk-foot,.gs-foot{display:flex;justify-content:space-between;gap:10px;padding:6px 12px;border-top:1px solid var(--line);font-size:11px;color:var(--mut)}
+.spk-pop.sheet .spk-foot span:first-child{display:none}
+.spk-empty{padding:14px 10px;color:var(--mut);font-size:13px;line-height:1.7}.spk-empty .spk-chip{margin:0 2px}
+#gsPal{position:fixed;inset:0;z-index:78;background:rgb(7 17 42 / .45);display:flex;justify-content:center;align-items:flex-start;padding:min(10vh,90px) 16px 16px}
+#gsPal[hidden]{display:none}
+.gs-box{width:min(680px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 28px 70px rgb(5 15 40 / .45);overflow:hidden}
+.gs-top{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 14px;border-bottom:1px solid var(--line)}
+.gs-top>svg{width:20px;height:20px;fill:none;stroke:var(--mut);stroke-width:2;stroke-linecap:round;flex:none}
+.gs-q{height:44px;font-size:15px}
+.gs-x{display:none;height:32px;min-width:32px;padding:0}@media (max-width:560px),(pointer:coarse){.gs-top>kbd{display:none}.gs-x{display:inline-flex}}
+.gs-top kbd,.gs-r kbd{font:600 10.5px var(--f-mono);border:1px solid var(--line);border-radius:5px;padding:2px 6px;color:var(--mut);background:var(--chip);flex:none}
+.gs-list{overflow:auto;padding:6px 8px 8px;flex:1;min-height:0;overscroll-behavior:contain}
+.gs-g{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);padding:10px 8px 4px;font-weight:700}.gs-g span{font-weight:600;color:var(--mut);opacity:.7;letter-spacing:0}
+.gs-k{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--chip);color:var(--mut);font-style:normal;font-size:13px;flex:none}
+.gs-k-tool{color:var(--accent);background:var(--accent-soft)}.gs-k-el{color:var(--accent-2)}.gs-k-lvl{color:var(--sel)}
+.gs-r .lbar{width:44px;flex:none}
+.gs-alt{flex:none;padding:4px 9px;font-size:11.5px}
+.gs-more{display:block;width:100%;border:0;background:transparent;color:var(--accent);font:600 12px var(--f-body);text-align:left;padding:6px 10px;cursor:pointer;border-radius:8px}.gs-more:hover{background:var(--chip)}
+.gs-hint{padding:12px 10px 4px;color:var(--mut);font-size:12.5px;line-height:1.55}
+@media (max-width:560px){#gsPal{padding:0;align-items:stretch}.gs-box{max-height:none;border-radius:0;width:100%}.gs-foot span:first-child{display:none}}
 /* intro ARCHIPLAN : une feuille de dessin technique ; un crayon trace des lignes de construction qui s'encrent et révèlent le logo officiel (masque SVG suivant le tracé du crayon),
    le plan prend brièvement du volume (2D → 3D), puis le nom et la signature. Séquence pilotée par le script du bloc #splash (Web Animations API, déterministe). */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;overflow:hidden}
@@ -1126,6 +1189,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     <div class="acts">
       <button class="ib" id="undo" title="Annuler (Ctrl+Z)" aria-label="Annuler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L4 9l4 4M4 9h11a5 5 0 0 1 0 10h-4"/></svg></button>
       <button class="ib" id="redo" title="Rétablir (Ctrl+Y)" aria-label="Rétablir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5l4 4-4 4M20 9H9a5 5 0 0 0 0 10h4"/></svg></button>
+      <button class="ib" id="searchBtn" title="Rechercher partout (Ctrl+K ou /)" aria-label="Rechercher" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="sb-l">Rechercher</span><kbd class="sb-k">Ctrl K</kbd></button>
       <button class="ib" id="fileBtn" aria-haspopup="true">Fichier</button>
       <button class="ib primary" id="exportBtn" aria-haspopup="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Exporter</span></button>
       <button id="licBadge" type="button" hidden title="Offre gratuite : exports réservés aux licences ARCHIPLAN">Gratuit</button>
@@ -1145,12 +1209,12 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     <div id="secBar" class="secbar" hidden></div>
     <div class="hud">
       <label class="pill"><span>Niveau</span><select id="lvlSel" aria-label="Niveau de travail"></select></label>
-      <label class="pill" id="typePill" hidden><span id="typeLbl">Type</span><select id="typeSel"></select></label>
+      <label class="pill" id="typePill" hidden><span id="typeLbl">Type</span><select id="typeSel"></select><button type="button" class="spk-hud" id="typeFind" title="Rechercher (vapeur, isolant, ossature bois…)" aria-label="Rechercher"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button></label>
       <label class="pill" id="hPill" hidden><span id="hLbl">H</span><input id="hIn" type="number" step="0.05" inputmode="decimal" aria-label="Hauteur"><em>m</em></label>
       <label class="pill" id="skPill" hidden><span>Tracé</span><select id="skModeIn" aria-label="Mode d'esquisse"><option value="sel">Sélection / tirer</option><option value="rect">Rectangle</option><option value="line">Ligne / polygone</option><option value="circ">Cercle</option><option value="arc">Arc (3 points)</option><option value="free">Main levée (stylet)</option></select><button type="button" class="btn" id="skDone" style="height:28px;padding:0 10px">Terminer</button></label>
       <label class="pill" id="shapePill" hidden><span>Forme</span><select id="shapeIn" aria-label="Forme"><option value="rect">Rectangle</option><option value="circ">Cercle</option><option value="poly">Polygone</option></select></label>
       <label class="pill" id="topPill" hidden><span>Haut</span><select id="topIn" aria-label="Contrainte haute"><option value="next">Niveau supérieur</option><option value="">Hauteur libre</option><option value="above">Sous l'élément au-dessus</option></select></label>
-      <span class="pill paintpill" id="paintPill" hidden><span>Matériau</span><select id="paintMat" aria-label="Matériau à appliquer"></select><span>Motif</span><input id="paintScale" type="number" step="0.05" min="0.05" inputmode="decimal" aria-label="Taille du motif en mètres" title="Taille du motif (m) : vide = taille naturelle"><em>m</em><select id="paintRot" aria-label="Rotation du motif" title="Rotation du motif"><option value="0">0°</option><option value="45">45°</option><option value="90">90°</option><option value="135">135°</option></select><button type="button" class="ib pip" id="paintPip" title="Pipette : reprendre le matériau d'une face (ou Alt + clic)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 9-9 3 3-9 9zM13 6l2-2a2.1 2.1 0 013 3l-2 2"/></svg></button></span>
+      <span class="pill paintpill" id="paintPill" hidden><span>Matériau</span><select id="paintMat" aria-label="Matériau à appliquer"></select><button type="button" class="spk-hud" id="paintFind" title="Rechercher un matériau" aria-label="Rechercher un matériau"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button><span>Motif</span><input id="paintScale" type="number" step="0.05" min="0.05" inputmode="decimal" aria-label="Taille du motif en mètres" title="Taille du motif (m) : vide = taille naturelle"><em>m</em><select id="paintRot" aria-label="Rotation du motif" title="Rotation du motif"><option value="0">0°</option><option value="45">45°</option><option value="90">90°</option><option value="135">135°</option></select><button type="button" class="ib pip" id="paintPip" title="Pipette : reprendre le matériau d'une face (ou Alt + clic)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 9-9 3 3-9 9zM13 6l2-2a2.1 2.1 0 013 3l-2 2"/></svg></button></span>
       <label class="pill" id="wallArcPill" hidden><span>Tracé</span><select id="wArcIn" aria-label="Tracé du mur"><option value="">Droit</option><option value="1">Courbe (3 points)</option><option value="r">Pièce (rectangle)</option></select></label>
       <label class="pill" id="slabModePill" hidden><span>Pose</span><select id="sModeIn" aria-label="Pose de la dalle"><option value="rect">Rectangle</option><option value="room">Sur une pièce</option><option value="walls">Sous tous les murs</option><option value="poly">Contour (point par point)</option><option value="hole">Trou / trémie dans une dalle</option></select></label>
       <label class="pill" id="mirrorPill" hidden><span>Original</span><select id="mKeepIn" aria-label="Garder l'original"><option value="1">Garder (copie)</option><option value="">Déplacer</option></select></label>
@@ -3944,6 +4008,306 @@ function joineryFamily(spec, opt = {}){
   FAMS['porte-coupe-feu'].nom = 'Porte coupe-feu EI 30, huisserie métallique';
   // les familles « FAM_PATH » explicites (13-families-plus) gardent la priorité ; les nouvelles passent par F.path
 })();
+
+/* ==== 16-search.js ==== */
+/* ============ Recherche intelligente ============
+   Moteur commun à toutes les barres de recherche (bibliothèque, fiches de composition, palette globale Ctrl+K).
+   - insensible aux accents, à la casse, aux pluriels et aux tirets (« vapeur » trouve « Pare-vapeur ») ;
+   - préfixes et fautes de frappe tolérés (« isol », « parpain ») ;
+   - thésaurus métier : un mot de la requête est rattaché à des concepts (« isolant » → tous les isolants,
+     « couche intermédiaire » → isolants, membranes, lames d'air, panneaux, chapes…) ; chaque élément porte des
+     étiquettes de concepts (rôle dans la paroi, catégorie, mots de son nom) ;
+   - tous les mots de la requête doivent trouver une correspondance (ET), le classement vient du meilleur score.
+   Le module ne dépend de rien d'autre que des bibliothèques (MATS, COMPOS, FAMS) et est copié tel quel dans les
+   autres apps du studio (ARCHITRAFIC) avec leur propre thésaurus. */
+const sFold = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae').replace(/[’'`´]/g, ' ');
+const S_KEEP = new Set(['bois', 'gris', 'bas', 'pays', 'mois', 'puits', 'os', 'gaz', 'plus', 'sous', 'dessous', 'dessus', 'vis', 'tapis', 'pvc', 'abs', 'eps', 'xps', 'pse', 'ba13', 'ips']);
+function sStem(t){
+  if (t.length <= 3 || /\d/.test(t) || S_KEEP.has(t)) return t;
+  if (/(eaux|aux|eux)$/.test(t) && t.length > 4) return t.slice(0, -1);
+  if (/[^s]s$/.test(t)) return t.slice(0, -1);
+  return t;
+}
+const S_STOP = new Set(['de', 'd', 'du', 'des', 'le', 'la', 'les', 'l', 'un', 'une', 'en', 'et', 'a', 'au', 'aux', 'ou', 'par', 'pour', 'avec', 'dans', 'the', 'of']);
+const sTokens = s => sFold(s).split(/[^a-z0-9]+/).filter(t => t && !S_STOP.has(t)).map(sStem);
+
+/* ---------- thésaurus : concept → libellé | termes (un terme précédé de ~ sert à la requête mais n'étiquette pas
+   automatiquement les éléments dont le nom le contient, parce qu'il est trop générique) ---------- */
+const SYN = {
+  isolant: 'Isolant|isolant,isolation,isoler,isole,thermique,laine,mousse,ouate,calorifuge,calorifugeage,isolation thermique,laine minerale,laine de verre,laine de roche,ite,iti,itr,isolation exterieure,isolation interieure,isolation par l exterieur,polystyrene,styrodur,~fibre,panneau isolant,isolant biosource,r thermique,resistance thermique',
+  vapeur: 'Pare-vapeur|vapeur,pare vapeur,parevapeur,frein vapeur,freinvapeur,sd,hygrovariable,hygro,hygroregulant,membrane vapeur,etancheite a l air,etancheite air,barriere vapeur,pare-vapeur,frein-vapeur,regulateur de vapeur',
+  membrane: 'Membrane / film|membrane,film,ecran,feutre,bache,pare pluie,parepluie,hpv,bitumineuse,elastomere,geotextile,ecran de sous toiture,sous toiture,~le',
+  etancheite: 'Étanchéité|etancheite,etanche,impermeable,impermeabilisation,hors d eau,mise hors d eau,humidite,infiltration,~eau,~pluie,hydrofuge,resistant a l eau,drainage,drainant,etancheite liquide,sel,resine d etancheite',
+  air: 'Lame d\'air|air,lame d air,lame air,~lame,~vide,ventile,ventilee,ventilation,cavite,vide technique,espace technique,non ventilee,faiblement ventilee,couche d air',
+  panneau: 'Panneau|panneau,~plaque,contreventement,voile travaillant,osb,contreplaque,panneau bois,derive du bois,panneau de particules,multiplis,triply,~derive',
+  parement: 'Parement intérieur|parement,~finition,finition interieure,placo,placoplatre,~platre,~plaque,doublage,habillage,lambris,plaque de platre,ba13,ba18,ba25,~cloison,cloison seche,fermacell,gypse,contre cloison,parement interieur',
+  enduit: 'Enduit|enduit,enduits,crepi,ravalement,rpe,~mortier,~chaux,enduit exterieur,enduit interieur,lissage,platrage,corps d enduit,gobetis,monocouche,enduit monocouche,gratte,taloche,projete',
+  bardage: 'Bardage / façade|bardage,facade,vetage,veture,peau exterieure,claire voie,clin,clins,revetement exterieur,finition exterieure,~tole,~lame,parement exterieur,brique de parement,pierre de parement,plaquette,plaquettes',
+  revsol: 'Revêtement de sol|revetement de sol,revetements de sol,~sol,~sols,sol fini,finition sol,carrelage,~carreau,~carreaux,gres,gres cerame,parquet,moquette,lino,linoleum,vinyle,lvt,stratifie,~resine,dallage,sol souple,sol dur,plinthe,chevrons,point de hongrie,lame de parquet',
+  chape: 'Chape / sous-couche|chape,chapes,ravoirage,sous couche,souscouche,sous-couche,resilient,resiliente,couche de forme,forme de pente,anhydrite,chape fluide,chape seche,chape flottante,plancher chauffant,chape liquide',
+  porteur: 'Structure porteuse|porteur,porteurs,porteuse,structure,structurel,structurelle,gros oeuvre,ossature,mur porteur,~voile,refend,corps de mur,element porteur,charpente,lamelle,poutrelle,hourdis,~massif,element de structure,descente de charge,reprise de charge,chainage',
+  maconnerie: 'Maçonnerie|maconnerie,macon,maconne,brique,briques,bloc,blocs,parpaing,parpaings,agglo,agglomere,pierre,pierres,moellon,moellons,monomur,terre cuite,bloc beton,bloc a bancher,beton cellulaire,siporex,ytong,thermopierre,pise,adobe,btc,terre crue,mur en pierre,pierre de taille,calcaire,granit,meuliere',
+  beton: 'Béton|beton,betons,ba,beton arme,~voile,~dalle,ciment,beton banche,banche,coule,coule en place,prefabrique,prefa,predalle,poutrelle,hourdis,beton leger,beton de chanvre,beton cire,beton brut,beton desactive,beton fibre,c25,c30,c25/30,ferraillage,armature,armatures',
+  bois: 'Bois|bois,boise,boisee,wood,resineux,feuillu,feuillus,epicea,sapin,pin,douglas,meleze,chene,hetre,frene,lamelle colle,lamelle croise,clt,glulam,bld,osb,contreplaque,mdf,panneau de particules,agglomere,ossature bois,mob,~bardage,~parquet,lambris,chevron,solive,solives,~poutre,madrier,bastaing,liteau,voliges,volige,bardeau,essence,essence de bois,bois massif,bois brut,bois peint,bois lasure',
+  metal: 'Métal|metal,metaux,metallique,metalliques,acier,aciers,inox,inoxydable,alu,aluminium,zinc,cuivre,fonte,tole,tolerie,bac acier,galva,galvanise,ferraille,profile,profiles,ipe,ipn,hea,heb,upn,acier galvanise,laque,thermolaque,anodise,corten,plomb,laiton,bronze,serrurerie,metallerie',
+  verre: 'Verre et vitrage|verre,verres,vitre,vitres,vitrage,vitrages,vitree,vitre,glass,transparent,translucide,double vitrage,triple vitrage,simple vitrage,verre float,feuillete,trempe,securit,polycarbonate,plexiglas,plexi,pmma,brique de verre,pave de verre,miroir,glace,ug,sw,tl,facteur solaire,transmission lumineuse',
+  plastique: 'Plastique / synthétique|plastique,plastiques,synthetique,synthetiques,pvc,polyethylene,polypropylene,caoutchouc,elastomere,epdm,~resine,polyester,nylon,vinyle,polyurethane,pu,pur,pir,silicone,composite,fibre de verre,resine epoxy,epoxy,stratifie',
+  platre: 'Plâtre et plaques|platre,placo,placoplatre,ba13,ba18,ba25,plaque de platre,gypse,fermacell,carreau de platre,carreaux de platre,staff,stuc,hydrofuge,plafond suspendu,faux plafond,rail,rails,montant,montants,ossature metallique,fourrure,fourrures,enduit platre,plafond',
+  couverture: 'Couverture / toiture|couverture,~toiture,~toit,tuile,tuiles,ardoise,ardoises,bac acier,~zinc,zinguerie,toiture terrasse,~terrasse,faitage,toit plat,toiture vegetalisee,toiture vegetale,chaume,shingle,bardeau,bardeaux,lauze,lauzes,tuile canal,tuile plate,tuile mecanique,gouttiere,cheneau,descente eau pluviale,eau pluviale,eaux pluviales,ep,gravillon,gravillons,lestage',
+  vegetal: 'Végétal|vegetal,vegetale,vegetaux,vegetation,vegetalise,vegetalisee,plante,plantes,plantation,arbre,arbres,arbuste,arbustes,haie,haies,gazon,pelouse,herbe,jardin,fleur,fleurs,massif fleuri,feuillage,conifere,coniferes,toiture vegetalisee,terre vegetale,paysage,paysager,espace vert,espaces verts,arbre fruitier,buisson',
+  terre: 'Terre / sol naturel|terre,terrain,~sol,argile,argileux,argilo,sable,sableux,gravier,gravillon,graviers,remblai,tout venant,pise,adobe,btc,terre crue,terre vegetale,humus,geotechnique,fondation,fondations,sol naturel,terre plein,terrassement,deblai,plateforme,empierrement,grave,grave non traitee,gnt',
+  eau: 'Eau|~eau,piscine,bassin,liquide,aquatique,nappe,nappe phreatique,mare,etang,fontaine',
+  biosource: 'Biosourcé / bas carbone|biosource,biosourcee,biosources,bio source,naturel,naturelle,naturels,ecologique,ecologiques,ecolo,bas carbone,faible carbone,decarbone,renouvelable,renouvelables,materiau naturel,geosource,geosources,re2020,durable,recyclable,recycle,vertueux,sain,sains,materiau sain,ecoconstruction,eco construction,eco materiau,ecomateriau,chanvre,paille,liege,lin,cellulose,mouton,fibre de bois,laine de bois',
+  acoustique: 'Acoustique|acoustique,acoustiques,phonique,phoniques,bruit,bruits,son,sonore,isolation phonique,isolation acoustique,affaiblissement acoustique,affaiblissement,resilient,resiliente,decibel,decibels,db,rw,dnt,dntw,bruit d impact,bruit aerien,bruits aeriens,antibruit,anti bruit,silence,silencieux,insonorisation,insonoriser,correction acoustique,absorbant,absorption acoustique,reverberation,masse ressort masse,desolidarise,desolidarisation',
+  feu: 'Feu / incendie|feu,incendie,coupe feu,coupefeu,pare flamme,pareflamme,ignifuge,ignifugee,ignifugé,incombustible,resistance au feu,reaction au feu,rei,ei,m0,m1,m2,a1,a2,euroclasse,euroclasses,securite incendie,ssi,desenfumage,flamme,flammes,combustible,stabilite au feu,sf,cf,pf,degre coupe feu,porte coupe feu,bloc porte coupe feu,compartimentage,recoupement,sprinkler,sprinkleur,extincteur,alarme incendie,detecteur,daaf,issue de secours,evacuation',
+  lourd: 'Lourd / inertie|lourd,lourde,lourds,masse,massique,~massif,massive,dense,densite,inertie,forte inertie,pesant,inertiel,inertielle,masse volumique,kg/m3,kg/m2',
+  leger: 'Léger|leger,legere,legers,allege,allegee,alleges,faible densite,basse densite,poids leger,structure legere,ossature legere',
+  exterieur: 'Extérieur|exterieur,exterieure,exterieurs,ext,dehors,~facade,facades,cote exterieur,en exterieur,face exterieure,paroi exterieure,mur exterieur,enveloppe,exterieur du batiment,dehors,outdoor',
+  interieur: 'Intérieur|interieur,interieure,interieurs,int,dedans,cote interieur,en interieur,face interieure,paroi interieure,mur interieur,cloison interieure,indoor,amenagement interieur,second oeuvre',
+  intermediaire: 'Couche intermédiaire|intermediaire,intermediaires,couche intermediaire,couches intermediaires,couche du milieu,couches du milieu,entre deux,ame,ame de paroi,noyau,coeur de paroi,corps de paroi,couche interne,couches internes,sous jacent,sous jacente,couche cachee,couche technique,couches techniques,milieu de paroi,dans l epaisseur,epaisseur de la paroi',
+  finition: 'Finition|finition,finitions,couche de finition,fini,finie,revetement,revetements,habillage,decoration,decoratif,decorative,aspect,~parement,peinture,peintures,peint,peinte,couche visible,surface,surfaces,aspect de surface,texture,textures,coloris,couleur,couleurs,teinte,teintes,laque,vernis,lasure,badigeon,chaux',
+  menuiserie: 'Menuiserie|menuiserie,menuiseries,fenetre,fenetres,porte,portes,baie,baies,chassis,dormant,dormants,ouvrant,ouvrants,vantail,vantaux,huisserie,huisseries,bloc porte,bloc-porte,croisee,croisees,porte fenetre,porte-fenetre,coulissant,coulissante,coulissantes,baie vitree,baie coulissante,oscillo,oscillo battant,oscillobattant,velux,lucarne,fenetre de toit,volet,volets,persienne,persiennes,store,stores,brise soleil,claustra,menuiserie exterieure,menuiserie interieure,seuil,seuils,appui,appuis,linteau,linteaux,tableau,tableaux,imposte,impostes,ouverture,ouvertures,~trou,ebrasement,quincaillerie,poignee,poignees,serrure,serrures,paumelle,paumelles,gond,gonds,vitrerie,miroiterie,joint,joints,dormant,battement,battue,parclose,parcloses,petit bois,petits bois,croisillon,croisillons,garde corps,garde-corps,rupture de pont thermique,rpt',
+  fenetre: 'Fenêtre|fenetre,fenetres,chassis,baie,baies,baie vitree,croisee,croisees,ouvrant,ouvrants,oscillo,oscillo battant,oscillobattant,velux,lucarne,lucarnes,fenetre de toit,~vitree,~vitrees,~vitre,porte fenetre,porte-fenetre,coulissante,coulissantes,baie coulissante,galandage,jalousie,oeil de boeuf,hublot,imposte,impostes,fixe,fixes,chassis fixe,soufflet,a soufflet,basculante,basculant,a la francaise,a l anglaise,1 vantail,2 vantaux,3 vantaux,un vantail,deux vantaux,trois vantaux,~double vitrage,~triple vitrage,verriere,verrieres,bow window,bow-window,fenêtre',
+  porte: 'Porte|porte,portes,bloc porte,bloc-porte,blocs portes,huisserie,huisseries,~vantail,~battant,battante,battants,coulissante,porte coulissante,porte a galandage,galandage,porte d entree,entree,entrees,porte interieure,porte paliere,paliere,palieres,porte de garage,garage,porte coupe feu,issue,issue de secours,porte vitree,porte pleine,alveolaire,alveolaires,postformee,postforme,porte atelier,porte de service,service,portail,portails,portillon,tierce,a tierce,porte double,double porte,porte a deux vantaux,porte simple,porte isoplane,isoplane,isoplanes,porte acoustique,porte isolante,porte blindee,blindee,anti effraction,porte sectionnelle,sectionnelle,basculante,rideau metallique,porte battante,porte va et vient,va et vient,huisserie bois,huisserie metallique,bati,batis,chambranle,chambranles,clanche,clanches,bequille,bequilles,cylindre,ferme porte,ferme-porte,groom,seuil,seuil pmr,largeur de passage,passage libre,passage utile,porte 83,porte 93,porte 73',
+  escalier: 'Escalier|escalier,escaliers,marche,marches,volee,volees,palier,paliers,giron,girons,contremarche,contremarches,limon,limons,cremaillere,garde corps,garde-corps,main courante,rampe,rampes,quart tournant,deux quarts tournants,demi tournant,helicoidal,helicoidaux,colimacon,echappee,tremie,tremie d escalier,nez de marche,balancement,balance,balancee,blondel,loi de blondel,escalier droit,escalier tournant,escalier beton,escalier bois,escalier metallique,escalier exterieur,escalier de secours,echelle,echelle de meunier,meunier,ascenseur,monte charge,montee,descente,emmarchement,hauteur de marche,hauteur a monter',
+  toit: 'Toit / toiture|toit,toits,toiture,toitures,~couverture,charpente,charpentes,deux pans,un pan,quatre pans,2 pans,4 pans,toit plat,toit terrasse,toiture terrasse,pente,pentes,pan,pans,comble,combles,combles amenages,combles perdus,faitage,faitiere,egout,egouts,debord,debord de toit,debords,rive,rives,pignon,pignons,croupe,croupes,noue,noues,aretier,aretiers,chevron,chevrons,panne,pannes,ferme,fermes,fermette,fermettes,monopente,mono pente,appentis,mansarde,mansardee,lucarne,lucarnes,chien assis,toiture vegetalisee,acrotere,acroteres,solin,solins,ecran de sous toiture,isolation de toiture,sarking,rampant,rampants,sous pente,sous rampant',
+  mur: 'Mur|mur,murs,cloison,cloisons,paroi,parois,refend,refends,~voile,voiles,doublage,doublages,mur porteur,mur exterieur,mur interieur,mur de refend,mur rideau,ossature,mur ossature bois,mob,cloison seche,cloison legere,cloison distributive,cloison alveolaire,separatif,separative,mur mitoyen,mitoyen,mitoyennete,pignon,allege,alleges,allege de fenetre,muret,murets,soubassement,soubassements,mur de soutenement,soutenement,mur de cloture,mur banche,voile beton,contre cloison,paroi verticale,parois verticales,mur courbe,mur en arc,arc de cercle,trumeau,trumeaux,jambage,jambages,poteau,poteaux',
+  dalle: 'Dalle / plancher|dalle,dalles,plancher,planchers,dallage,dallages,dalle beton,plancher bas,plancher haut,plancher intermediaire,plancher bois,dalle portee,dalle pleine,dalle sur terre plein,terre plein,vide sanitaire,hourdis,poutrelle,poutrelles,predalle,predalles,plancher collaborant,collaborant,solivage,solive,solives,radier,radiers,sol fini,~sol,~chape,~terrasse,trou,trous,tremie,tremies,reservation,reservations,plancher chauffant,plancher technique,faux plancher,sous face,sous-face,plafond,plancher a plancher,hauteur libre,niveau fini,nf',
+  poteau: 'Poteau / poutre|poteau,poteaux,poutre,poutres,colonne,colonnes,pilier,piliers,portique,portiques,linteau,linteaux,chainage,chainages,chainage vertical,chainage horizontal,poteau beton,poteau bois,poteau acier,ipe,ipn,hea,heb,poutre bois,longrine,longrines,sommier,sommiers,ossature poteaux poutres,poteaux poutres,poteau poutre,porte a faux,console,consoles,contreventement,palee,palees,croix de saint andre,tirant,tirants,bracon,bracons,jambe de force',
+  cote: 'Cote / mesure|cote,cotes,cotation,cotations,coter,dimension,dimensions,dimensionner,mesure,mesures,mesurer,metre,metre ruban,distance,distances,longueur,longueurs,largeur,largeurs,hauteur,hauteurs,ligne de cote,lignes de cote,annotation,annotations,surface,surfaces,aire,perimetre,angle,angles,regle,equerre,niveau a bulle,aplomb,nivellement,altimetrie',
+  volume: 'Volume / forme|volume,volumes,forme,formes,boite,boites,bloc,blocs,masse,masses,forme libre,formes libres,extrusion,extruder,extrude,pousser tirer,pousser,tirer,push pull,pushpull,primitive,primitives,cube,cubes,pave,cylindre,cylindres,sphere,spheres,prisme,prismes,cone,cones,forme simple,formes simples,sketchup,volumetrie,volumetrique,gabarit,gabarits,emprise,enveloppe,solide,solides,modelisation,modeliser,3d',
+  esquisse: 'Esquisse 3D|esquisse,esquisses,esquisser,croquis,dessin,dessiner,sketch,dessin libre,main levee,a main levee,stylet,crayon,tracer,trace,traces,contour,contours,forme libre,shapr,shapr3d,shape 3d,profil,profils,profil extrude,courbe,courbes,polyligne,polylignes,spline,arc,arcs,cercle,cercles,rectangle,rectangles,polygone,polygones,ligne,lignes,segment,segments,dessin sur face,dessiner sur une face,sur mesure,fabrique sur place,sur place,fait sur place',
+  composant: 'Composant / famille|composant,composants,famille,familles,bibliotheque,bibliotheques,catalogue,catalogues,objet,objets,element,elements,~bloc,blocs,mobilier,meuble,meubles,equipement,equipements,composant parametrique,parametrique,parametriques,instance,instances,revit,bim,prefabrique,prefabriques,prefa,prefabrication,modele,modeles,symbole,symboles,type,types,gabarit,inserer,insertion,poser,placer,placement',
+  mobilier: 'Mobilier|mobilier,mobiliers,meuble,meubles,meubler,ameublement,table,tables,chaise,chaises,canape,canapes,fauteuil,fauteuils,lit,lits,literie,armoire,armoires,placard,placards,dressing,bureau,bureaux,etagere,etageres,rangement,rangements,bibliotheque meuble,commode,commodes,tabouret,tabourets,banc,bancs,buffet,console,tele,television,ecran,lampe,lampadaire,luminaire,luminaires,tapis,rideau,rideaux,decoration,plante verte',
+  sanitaire: 'Cuisine et sanitaires|sanitaire,sanitaires,wc,toilette,toilettes,cuvette,cuvettes,lavabo,lavabos,vasque,vasques,lave mains,lave-mains,douche,douches,receveur,receveurs,baignoire,baignoires,bain,salle de bain,salle de bains,salle d eau,evier,eviers,cuisine,cuisines,plan de travail,plans de travail,four,fours,plaque de cuisson,cuisson,frigo,refrigerateur,lave vaisselle,lave-vaisselle,lave linge,lave-linge,machine a laver,seche linge,robinet,robinets,robinetterie,chauffe eau,chauffe-eau,ballon,ballon d eau chaude,cumulus,radiateur,radiateurs,chaudiere,chaudieres,pompe a chaleur,pac,vmc,ventilation,bouche,bouches,hotte,hottes,plomberie,sanitaires pmr,urinoir,urinoirs,bidet,meuble vasque,colonne de douche,paroi de douche,miroir',
+  industrie: 'Industrie|industrie,industriel,industrielle,industriels,usine,usines,atelier,ateliers,hangar,hangars,entrepot,entrepots,logistique,pont roulant,ponts roulants,porte sectionnelle,sectionnelle,rideau metallique,quai,quais,quai de chargement,niveleur de quai,rack,racks,rayonnage,rayonnages,palette,palettes,convoyeur,convoyeurs,machine,machines,machine outil,silo,silos,cuve,cuves,bardage industriel,charpente metallique,portique,portiques,mezzanine industrielle,escalier industriel,caillebotis,chariot elevateur,chariot,transpalette,local technique,transformateur,compresseur,extraction,aspiration,process,ligne de production,production',
+  niveau: 'Niveau / étage|niveau,niveaux,etage,etages,rdc,rez de chaussee,rez-de-chaussee,rez,r+1,r + 1,r+2,r+3,sous sol,sous-sol,ss,cave,caves,comble,combles,mezzanine,mezzanines,altitude,altitudes,hauteur sous plafond,hsp,plancher a plancher,attique,duplex,triplex,gerer les niveaux,nouveau niveau,ajouter un niveau,etage courant,niveau courant,coupe de niveau,plan de niveau,storey,story',
+  export: 'Exporter / fichiers|export,exporter,exportation,exports,telecharger,telechargement,enregistrer,sauvegarder,sauvegarde,fichier,fichiers,pdf,ifc,dxf,dwg,csv,excel,xlsx,glb,gltf,obj,json,plan pdf,impression,imprimer,mise en page,planche,planches,carnet,carnet de plans,devis,dqe,metre,metres,quantitatif,quantites,notice,notices,rapport,rapports,partage,partager,envoyer,archicad,revit,autocad,sketchup,bim,maquette numerique,maquette,ouvrir,importer,import,nouveau projet,projet,projets,dupliquer,renommer,supprimer le projet,cloud,synchroniser',
+  rendu: 'Rendu|rendu,rendus,render,photorealiste,realiste,realistes,temps reel,ombre,ombres,soleil,ensoleillement,course du soleil,lumiere,lumieres,eclairage,eclairages,hdri,ciel,texture,textures,materiau realiste,qualite,qualite de rendu,camera,cameras,point de vue,points de vue,perspective,perspectives,vue 3d,visite,visite virtuelle,image,images,capture,capture d ecran,photo,photos,nuit,jour,heure,saison,azimut,nord,orientation,reflet,reflets,brouillard,ambiance,ambiances,exposition,couleur du ciel',
+  plan: 'Plan 2D|plan,plans,vue en plan,2d,plan de masse,plan de niveau,plan d etage,coupe,coupes,coupe verticale,coupe horizontale,~facade,facades,elevation,elevations,vue de dessus,dessus,cotes,dessin technique,mise en page,feuille,feuilles,cartouche,cartouches,echelle,echelles,1/50,1/100,1/200,1:50,1:100,1:200,trait,traits,hachure,hachures,calque,calques,grille,quadrillage,accrochage,magnetisme,snap,ortho,polaire,reperage,nord,orientation,legende,legendes,plan de vente,plan de permis,permis de construire,pc,dp,declaration prealable,dossier',
+  site: 'Site / terrain|site,terrain,terrains,parcelle,parcelles,cadastre,cadastral,cadastrale,adresse,adresses,geolocalisation,gps,coordonnees,latitude,longitude,zone climatique,zones climatiques,climat,meteo,altitude,ngf,relief,pente du terrain,courbes de niveau,courbe de niveau,topographie,topographique,orientation,nord,boussole,voisinage,voisins,environnement,bruit,plan local d urbanisme,plu,limite de propriete,limites de propriete,mitoyennete,implantation,implanter,acces,voirie,rue,route,reseau,reseaux,raccordement,viabilisation,bornage,geometre,lieu,localisation,commune,ville,village,quartier,contexte',
+  energie: 'Thermique / énergie|thermique,thermiques,energie,energetique,energetiques,u,coefficient u,uw,ug,uf,up,ubat,r,resistance thermique,lambda,conductivite,conductivite thermique,pont thermique,ponts thermiques,psi,bbio,cep,dpe,re2020,re 2020,rt2012,rt 2012,etude thermique,chauffage,besoin de chauffage,besoins de chauffage,dephasage,inertie,confort,confort d ete,confort thermique,surchauffe,condensation,glaser,hygrometrie,hygrothermique,point de rosee,rosee,humidite,deperdition,deperditions,bilan thermique,performance,performances,performant,performante,isolation,etancheite a l air,infiltrometrie,q4,n50,effusivite,diffusivite,capacite thermique,chaleur,froid,climatisation,rafraichissement,passif,maison passive,passivhaus,bepos,energie positive,solaire,apports solaires,facteur solaire,sw,tl,transmission lumineuse',
+  carbone: 'Carbone / environnement|carbone,co2,co2e,empreinte carbone,bilan carbone,acv,analyse de cycle de vie,cycle de vie,inies,fdes,pep,impact environnemental,impacts environnementaux,environnement,environnemental,ges,gaz a effet de serre,re2020,ic,ic construction,ic energie,~biosource,stockage carbone,carbone biogenique,kgco2,kg co2,empreinte,emissions,emission,decarbonation,decarboner,reemploi,recyclage,recycle,circulaire,economie circulaire,dechet,dechets,label,labels,e+c-,hqe,breeam,leed,bbca,effinergie',
+  handicap: 'Accessibilité|accessibilite,accessible,accessibles,pmr,handicap,handicape,handicapes,fauteuil roulant,fauteuils roulants,rampe d acces,rampe pmr,largeur de passage,passage,porte 90,porte 93,unite de passage,unites de passage,up,norme pmr,ascenseur,ascenseurs,elevateur,elevateurs,seuil,seuils,ressaut,ressauts,aire de rotation,aire de retournement,cercle de rotation,diametre 150,erp,etablissement recevant du public,sanitaire pmr,douche a l italienne,italienne,main courante,contraste,contrastes,bande d eveil,bande podotactile,podotactile,nez de marche contraste',
+  securite: 'Sécurité|securite,securites,garde corps,garde-corps,garde corps,main courante,mains courantes,hauteur de garde corps,chute,chutes,protection,protections,anti chute,antichute,issue,issues,issue de secours,evacuation,evacuations,desenfumage,alarme,alarmes,extincteur,extincteurs,sprinkler,sprinkleurs,erp,igh,code du travail,norme,normes,reglementation,reglementaire,reglementations,dtu,dtus,nf,en,iso,eurocode,eurocodes,conformite,conforme,non conforme,verification,verifications,controle,controles,alerte,alertes,avertissement,avertissements,bureau de controle,garde fou,barreaudage,remplissage,lisse,lisses,sous lisse,plinthe de garde corps,sabot',
+  mesureqty: 'Métré / quantités|metre,metres,metrer,quantitatif,quantitatifs,quantite,quantites,dqe,devis,devis quantitatif,devis estimatif,estimation,estimatif,chiffrage,chiffrer,cout,couts,prix,budget,budgets,bordereau,bpu,dpgf,lot,lots,poste,postes,m2,m3,ml,metre lineaire,metre carre,metre cube,surface,surfaces,volume,volumes,masse,tonne,tonnes,kg,unite,unites,ratio,ratios,shab,surface habitable,shon,sdp,surface de plancher,emprise au sol,ces,surface utile,su,surface taxable,tableau des surfaces,recapitulatif',
+  outil: 'Outils|outil,outils,commande,commandes,raccourci,raccourcis,clavier,touche,touches,menu,menus,action,actions,fonction,fonctions,fonctionnalite,fonctionnalites,aide,help,comment,comment faire,tutoriel,tuto,guide,mode,modes,selectionner,selection,selectionne,deplacer,deplacement,copier,copie,coller,dupliquer,rotation,tourner,pivoter,symetrie,miroir,inverser,retourner,couper,coupe,scinder,diviser,joindre,fusionner,souder,prolonger,ajuster,aligner,alignement,annuler,retablir,refaire,undo,redo,supprimer,effacer,masquer,afficher,isoler,cacher,montrer,zoom,zoomer,cadrer,recentrer,vue,vues,orbite,panoramique,pivot,grille,accrochage,magnetisme,ortho,orthogonal,polaire,trajectoire,saisie,saisir,entrer,valider,echap,~entree,ctrl,maj,alt,espace,clic droit,menu contextuel,glisser,glisser deposer,tactile,stylet,doigt,tablette,telephone,mobile,ordinateur,souris,molette',
+  tout: 'Tout afficher|tout,tous,toutes,all,*,liste,lister,voir tout,afficher tout,afficher toutes,toute la liste,tout voir',
+};
+/* index : terme (replié) → ensemble de concepts ; termes multi-mots séparés ; libellés */
+const SYN_LABEL = {}, SYN_WORD = new Map(), SYN_PHRASE = [], SYN_TAGWORD = new Map();
+for (const [k, v] of Object.entries(SYN)){
+  const bar = v.indexOf('|'); SYN_LABEL[k] = v.slice(0, bar);
+  for (let raw of v.slice(bar + 1).split(',')){
+    raw = raw.trim(); if (!raw) continue; const weak = raw.startsWith('~'); if (weak) raw = raw.slice(1);
+    const toks = sTokens(raw); if (!toks.length) continue;
+    if (toks.length > 1){ SYN_PHRASE.push({p:toks.join(' '), k, n:toks.length, weak}); continue; }
+    const t = toks[0]; (SYN_WORD.get(t) || SYN_WORD.set(t, new Set()).get(t)).add(k);
+    if (!weak) (SYN_TAGWORD.get(t) || SYN_TAGWORD.set(t, new Set()).get(t)).add(k);
+  }
+}
+SYN_PHRASE.sort((a, b) => b.n - a.n);
+const synLabel = k => SYN_LABEL[k] || k;
+/* concepts larges : quand un mot désigne aussi un concept précis (« châssis » → fenêtre et menuiserie), seul le précis est retenu */
+const SYN_BROAD = new Set(['menuiserie', 'composant', 'outil', 'finition', 'exterieur', 'interieur', 'porteur', 'energie', 'securite', 'export', 'plan', 'rendu', 'tout', 'mesureqty', 'site']);
+
+/* ---------- requête : groupes de jetons + concepts ----------
+   Chaque groupe est soit un mot (avec les concepts qu'il désigne), soit une expression du thésaurus (« couche
+   intermédiaire », « lame d'air ») dont les mots restent disponibles pour une correspondance littérale. */
+function sParseQuery(q){
+  const toks = sTokens(q); if (!toks.length) return {groups:[], raw:''};
+  const used = new Array(toks.length).fill(false), groups = [];
+  for (const ph of SYN_PHRASE){ const pt = ph.p.split(' ');
+    for (let i = 0; i + pt.length <= toks.length; i++){ if (used.slice(i, i + pt.length).some(Boolean)) continue; let ok = true; for (let j = 0; j < pt.length; j++) if (toks[i + j] !== pt[j]){ ok = false; break; }
+      if (ok){ const g = {toks:pt.slice(), k:{[ph.k]:0.9}, phrase:true}; for (let j = 0; j < pt.length; j++) used[i + j] = true; groups.push({at:i, g}); } }
+  }
+  for (let i = 0; i < toks.length; i++){ if (used[i]) continue; const t = toks[i], k = {};
+    for (const c of (SYN_WORD.get(t) || [])) k[c] = 0.82;
+    // préfixe d'un terme du thésaurus (≥ 4 lettres) : « isol » → isolant, « acous » → acoustique (concept plus faible) ;
+    // faute de frappe sur un terme (≥ 6 lettres, une lettre d'écart) : « isolent » → isolant
+    if (t.length >= 4){ const tol = t.length >= 6 ? 1 : 0;
+      for (const [w, set] of SYN_WORD){ if (w.length > t.length && w.startsWith(t)){ for (const c of set) k[c] = Math.max(k[c] || 0, 0.7); }
+        else if (tol && w.length >= 6 && !Object.keys(k).length && sEdit(t, w, tol) <= tol){ for (const c of set) k[c] = Math.max(k[c] || 0, 0.66); } } }
+    // un mot qui a un sens précis (« châssis » → fenêtre) ne déclenche pas en plus le concept large (menuiserie)
+    if (Object.keys(k).some(c => !SYN_BROAD.has(c))) for (const c of Object.keys(k)) if (SYN_BROAD.has(c)) delete k[c];
+    groups.push({at:i, g:{toks:[t], k, phrase:false}}); }
+  groups.sort((a, b) => a.at - b.at);
+  return {groups:groups.map(x => x.g), raw:q};
+}
+
+/* ---------- distance d'édition bornée (fautes de frappe) ---------- */
+function sEdit(a, b, max){
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const m = a.length, n = b.length; let prev = Array.from({length:n + 1}, (_, j) => j), cur = new Array(n + 1), prev2 = null;
+  for (let i = 1; i <= m; i++){
+    cur[0] = i; let rowMin = i;
+    for (let j = 1; j <= n; j++){
+      let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (prev2 && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2] + 1);
+      cur[j] = v; if (v < rowMin) rowMin = v;
+    }
+    if (rowMin > max) return max + 1;
+    prev2 = prev; prev = cur; cur = new Array(n + 1);
+  }
+  return prev[n];
+}
+/* score d'un jeton de requête q face à un mot w de l'élément (0 = rien) */
+function sTokScore(q, w){
+  if (w === q) return 1;
+  if (q.length >= 2 && w.startsWith(q)) return q.length <= 3 ? Math.max(0.55, 0.92 - (w.length - q.length) * 0.05) : 0.92 - Math.min(0.12, (w.length - q.length) * 0.012);
+  if (w.length >= 4 && q.startsWith(w)) return 0.7;
+  if (q.length >= 4 && w.length >= 4){
+    const tol = q.length >= 9 ? 2 : q.length >= 6 ? 1 : 0;   // faute de frappe : « limitaion », « parpain »
+    if (tol && sEdit(q, w, tol) <= tol) return 0.72;
+    let p = 0; while (p < q.length && p < w.length && q[p] === w[p]) p++;
+    if (p >= Math.max(4, Math.ceil(0.6 * Math.min(q.length, w.length)))) return 0.62;
+    if (w.includes(q)) return 0.55;
+  }
+  return 0;
+}
+
+/* ---------- éléments indexés : {id, kind, nom, words:[...], tags:Set, cat, meta, ...} ---------- */
+function sIndex(nom, {cat = '', kw = '', tags = [], canon = [], ord = 0} = {}){
+  const words = sTokens(nom), kwords = sTokens(kw), cwords = sTokens(cat), T = new Set(tags.concat(canon));
+  for (const w of words){ const ks = SYN_TAGWORD.get(w); if (ks) for (const k of ks) T.add(k); }
+  // expressions dans le nom (« terre végétale », « pare pluie »)
+  const joined = ' ' + words.join(' ') + ' ';
+  for (const ph of SYN_PHRASE) if (!ph.weak && ph.n <= words.length && joined.includes(' ' + ph.p + ' ')) T.add(ph.k);
+  return {nom, words, kwords, cwords, tags:T, canon:new Set(canon), cat, ord};
+}
+/* score global d'une requête analysée face à un élément indexé ; renvoie {s, why:[concepts]} ou null */
+function sLit(q, ix){
+  let best = 0;
+  for (const w of ix.words){ const v = sTokScore(q, w); if (v > best) best = v; }
+  if (best < 0.9) for (const w of ix.kwords){ const v = sTokScore(q, w) * 0.95; if (v > best) best = v; }
+  if (!best) for (const w of ix.cwords){ const v = sTokScore(q, w) * 0.6; if (v > best) best = v; }
+  return best;
+}
+function sScore(Q, ix){
+  if (!Q.groups.length) return {s:1, why:[]};
+  let sum = 0; const why = [];
+  for (const g of Q.groups){
+    let lit = 0; for (const t of g.toks){ const v = sLit(t, ix); if (!v){ lit = 0; break; } lit += v; } lit = lit / g.toks.length;
+    let con = 0, by = null; for (const [k, w0] of Object.entries(g.k)) if (ix.tags.has(k)){ const w = w0 + (ix.canon.has(k) ? 0.04 : 0); if (w > con){ con = w; by = k; } }
+    const best = Math.max(lit, con); if (!best) return null;
+    sum += best; if (con > lit && by) why.push(by);
+  }
+  let s = sum / Q.groups.length;
+  // bonus : début du nom identique au premier mot de la requête, noms courts
+  const firstQ = Q.groups[0].toks[0]; if (firstQ && ix.words[0] && ix.words[0].startsWith(firstQ)) s += 0.05;
+  s += Math.max(0, 0.03 - ix.words.length * 0.003);
+  return {s, why:[...new Set(why)]};
+}
+/* recherche : items = [{ix, ...}] → [{item, s, why}] triés */
+function smartSearch(query, items, {limit = 200, min = 0.62} = {}){
+  const Q = sParseQuery(query); const out = [];
+  for (const it of items){ const r = sScore(Q, it.ix); if (r && r.s >= min) out.push({item:it, s:r.s, why:r.why}); }
+  out.sort((a, b) => (Math.abs(b.s - a.s) > 0.001 ? b.s - a.s : 0) || (a.item.ix.ord - b.item.ix.ord) || a.item.ix.nom.localeCompare(b.item.ix.nom, 'fr'));
+  return out.slice(0, limit);
+}
+const sHasQuery = q => sTokens(q).length > 0;
+/* surlignage des parties du nom qui correspondent (préfixes des jetons) */
+function sHighlight(nom, query){
+  const Q = sParseQuery(query); const qs = Q.groups.flatMap(g => g.toks).filter(t => t.length >= 2); if (!qs.length) return esc(nom);
+  const src = String(nom ?? ''), folded = sFold(src); // même longueur que src ? pas garanti (ligatures) → on travaille caractère par caractère
+  // positions des mots dans la chaîne repliée (sans ligatures la longueur est identique)
+  if (folded.length !== src.length) return esc(src);
+  const marks = new Array(src.length).fill(false);
+  const re = /[a-z0-9]+/g; let m;
+  while ((m = re.exec(folded))){ const w = m[0], st = sStem(w);
+    for (const q of qs){ const v = sTokScore(q, st) || (w !== st ? sTokScore(q, w) : 0); if (v >= 0.5){ const n = v >= 0.9 || w.startsWith(q) ? Math.min(w.length, Math.max(q.length, v === 1 ? w.length : q.length)) : w.length; for (let i = 0; i < n; i++) marks[m.index + i] = true; } }
+  }
+  let out = '', open = false;
+  for (let i = 0; i < src.length; i++){ if (marks[i] !== open){ out += marks[i] ? '<mark>' : '</mark>'; open = marks[i]; } out += esc(src[i]); }
+  if (open) out += '</mark>';
+  return out;
+}
+
+/* ---------- ARCHIPLAN : étiquettes métier ---------- */
+/* rôle de chaque matériau de base dans une paroi (en plus de ce que son nom et sa catégorie disent) */
+const MAT_ROLE_SETS = {
+  porteur: 'parpaing parpaingP brique briqueTh briqueP betCell pierreCalc pierreTend granit moellon terreCrue btc ba beton betonLeg clt glulam bois chene douglas meleze acier hourdis',
+  isolant: 'laineVerre laine laineRocheD pse pseG xps pir fibreBoisR fibreBoisS ouate chanvre liege laineMouton verreCell paille aerogel pu betonChanvre sousCoucheAc',
+  membrane: 'bitume epdm paraVapeur freinVap paraPluie',
+  vapeur: 'paraVapeur freinVap',
+  etancheite: 'bitume epdm paraPluie paraVapeur freinVap ba13H epdm',
+  air: 'airNV airFV',
+  panneau: 'osb contreplaque mdf agglo fibroCiment clt ba13 ba13H ba13F fermacell',
+  parement: 'ba13 ba13H ba13F fermacell enduitPlatre carreauPl faience',
+  enduit: 'enduit enduitChaux enduitPlatre mortier enduitGratteBlanc enduitGratteGris enduitTaloche',
+  bardage: 'bardageBois fibroCiment bacAcier zinc acierLaque aluAnthr bardageVertical bardageGris briqueParement pierreParement',
+  chape: 'chape chapeAnhy mortier sousCoucheAc',
+  revsol: 'carrelage parquet stratifie pvcSol moquette resine linoleum pierreSol betonCire carrelage60 carrelageAnth parquetChevrons parquetClair',
+  couverture: 'tuile ardoise bacAcier zinc bitume epdm gravier terreVeg',
+  vitrage: 'verre vitrage vitrage3 vitrageAc polycarb briqueVerre',
+  menuiserie: 'pvc pvcAnthr alu aluAnthr boisPeint vitrage vitrage3 vitrageAc',
+  biosource: 'bois chene douglas meleze clt glulam osb contreplaque fibreBoisR fibreBoisS ouate chanvre liege laineMouton paille betonChanvre terreCrue btc bardageBois parquet linoleum enduitChaux parquetChevrons parquetClair bardageVertical',
+  acoustique: 'laine laineVerre laineRocheD fibreBoisS ouate chanvre liege laineMouton sousCoucheAc moquette ba13 fermacell betonChanvre vitrageAc ba13F',
+  feu: 'ba13F laine laineRocheD verreCell ba beton parpaing parpaingP brique briqueP betCell pierreCalc granit carreauPl fermacell enduitPlatre enduit',
+  exterieur: 'enduit enduitChaux bardageBois fibroCiment bacAcier zinc tuile ardoise paraPluie laineRocheD pse pseG xps gravier terreVeg bitume epdm enduitGratteBlanc enduitGratteGris enduitTaloche bardageVertical bardageGris briqueParement pierreParement',
+  interieur: 'ba13 ba13H ba13F fermacell enduitPlatre carreauPl parquet carrelage faience moquette stratifie pvcSol linoleum resine paraVapeur freinVap peintBlancCasse peintGrisPerle peintBleuNuit peintTerracotta peintVertSauge parquetChevrons parquetClair carrelage60 carrelageAnth',
+  finition: 'peintBlancCasse peintGrisPerle peintBleuNuit peintTerracotta peintVertSauge enduitGratteBlanc enduitGratteGris enduitTaloche bardageVertical bardageGris carrelage60 carrelageAnth parquetChevrons parquetClair briqueParement pierreParement enduit enduitChaux enduitPlatre ba13 faience carrelage parquet',
+  lourd: 'parpaingP briqueP pierreCalc granit moellon ba beton chape chapeAnhy acier inox fonte cuivre pierreSol carrelage hourdis terreCrue btc',
+  leger: 'laineVerre laine pse pseG xps pir ouate chanvre laineMouton paille pu airNV airFV betCell betonLeg fibreBoisS',
+  vegetal: 'terreVeg feuillageC fleurs vegetal',
+  terre: 'terreCrue btc sol terreVeg gravier',
+};
+const MAT_ROLES = {};
+for (const [k, ids] of Object.entries(MAT_ROLE_SETS)) for (const id of ids.split(/\s+/)) (MAT_ROLES[id] ??= new Set()).add(k);
+// couche intermédiaire = isolants, membranes, lames d'air, panneaux de contreventement, chapes et sous-couches, mortier
+for (const [id, R] of Object.entries(MAT_ROLES)) if (R.has('isolant') || R.has('membrane') || R.has('air') || R.has('chape') || ['osb', 'contreplaque', 'agglo', 'fibroCiment', 'mortier', 'hourdis'].includes(id)) R.add('intermediaire');
+const CAT_TAGS = {
+  'Maçonnerie':['maconnerie', 'porteur', 'lourd'], 'Béton et mortiers':['beton'], 'Isolants':['isolant', 'intermediaire'], 'Bois et dérivés':['bois'], 'Plâtre et plaques':['platre', 'parement', 'interieur'],
+  'Métaux':['metal'], 'Verre et plastiques':[], 'Revêtements de sol':['revsol', 'finition', 'interieur'], 'Couverture et étanchéité':['couverture', 'etancheite', 'exterieur'], 'Lames d\'air et divers':[], 'Peintures et finitions':['finition'],
+  Portes:['porte', 'menuiserie'], 'Fenêtres':['fenetre', 'menuiserie'], Ouvertures:['menuiserie'], Structure:['porteur', 'poteau'], 'Escaliers et garde-corps':['escalier', 'securite'], Mobilier:['mobilier', 'composant'],
+  'Cuisine et sanitaires':['sanitaire', 'composant'], Industrie:['industrie', 'composant'], 'Extérieur':['exterieur', 'vegetal', 'composant'],
+};
+const matIxCache = new Map();
+function matIndex(id, m){
+  const key = id + '|' + m.nom + '|' + (m.cat || '');
+  let ix = matIxCache.get(key); if (ix) return ix;
+  const tags = [...(MAT_ROLES[id] || [])], canon = CAT_TAGS[m.cat] || [];
+  if (m.R != null) tags.push('air', 'intermediaire');
+  if (m.lambda <= 0.055 && m.R == null && m.rho < 300) tags.push('isolant', 'intermediaire');
+  if (m.rho >= 1800) tags.push('lourd'); else if (m.rho <= 200 && m.R == null) tags.push('leger');
+  const ord = Math.max(0, MAT_CATS.indexOf(m.cat)) * 1000 + (MATS[id] ? 0 : 500);
+  ix = sIndex(m.nom, {cat:m.cat, kw:id, tags, canon, ord}); matIxCache.set(key, ix); return ix;
+}
+const compoIxCache = new Map();
+function compoIndex(id, c){
+  const key = id + '|' + c.nom + '|' + c.kind + '|' + c.layers.map(l => l[0]).join(',');
+  let ix = compoIxCache.get(key); if (ix) return ix;
+  const tags = c.kind === 'wall' ? ['mur'] : c.kind === 'roof' ? ['toit', 'couverture'] : ['dalle'];
+  const kw = [id, c.lot || '', ...c.layers.map(([m]) => mat(m).nom)].join(' ');
+  for (const [m] of c.layers) for (const k of (MAT_ROLES[m] || [])) if (['isolant', 'biosource', 'bois', 'beton', 'maconnerie', 'metal', 'vapeur', 'membrane', 'acoustique', 'feu'].includes(k)) tags.push(k);
+  ix = sIndex(c.nom, {cat:c.kind === 'wall' ? 'mur cloison' : c.kind === 'roof' ? 'toiture' : 'plancher dalle', kw, tags, ord:c.kind === 'wall' ? 0 : c.kind === 'slab' ? 1000 : 2000}); compoIxCache.set(key, ix); return ix;
+}
+const famIxCache = new Map();
+function famIndex(id, F){
+  const key = id + '|' + F.nom + '|' + (F.cat || '') + '|' + (F.types || []).length;
+  let ix = famIxCache.get(key); if (ix) return ix;
+  const path = typeof famPath === 'function' ? famPath(id, F) : [F.cat || ''];
+  const tags = ['composant'], canon = CAT_TAGS[F.cat] || []; if (F.made === 'menuiserie' || F.join) tags.push('menuiserie');
+  const jk = F.join?.kind || F.join?.type; if (jk) tags.push(/^p[ie]$|porte/.test(jk) && jk !== 'pf' ? 'porte' : 'fenetre');
+  ix = sIndex(F.nom, {cat:path.join(' '), kw:[id, ...(F.types || []).map(t => t.nom), F.desc || ''].join(' '), tags, canon, ord:Math.max(0, FAM_CATS.indexOf(F.cat)) * 1000}); famIxCache.set(key, ix); return ix;
+}
+function elIndex(el){
+  const KN = typeof KIND_NAME !== 'undefined' ? KIND_NAME : {};
+  const kindTag = {wall:'mur', slab:'dalle', roof:'toit', stair:'escalier', col:'poteau', vol:'volume', sk:'esquisse', inst:'composant'}[el.kind];
+  const tags = kindTag ? [kindTag] : [];
+  let nom = typeof elName === 'function' ? elName(el) : (KN[el.kind] || el.kind) + ' ' + el.id, kw = String(el.id);
+  if (el.kind === 'inst'){ const F = fam(el.fam); if (F){ const fx = famIndex(el.fam, F); for (const k of fx.tags) tags.push(k); kw += ' ' + (F.cat || ''); } }
+  else if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){ const cx = compoIndex(el.type, compo(el.type)); for (const k of cx.tags) tags.push(k); }
+  else if (el.mat){ const mx = matIndex(el.mat, mat(el.mat)); for (const k of mx.tags) tags.push(k); }
+  const lv = state.levels[el.lvl]; if (lv) kw += ' ' + lv.n;
+  return sIndex(nom, {cat:KN[el.kind] || '', kw, tags});
+}
+/* listes prêtes à chercher */
+const searchMats = (filter) => Object.entries(libMats()).filter(([k, m]) => !k.startsWith('__') && (!filter || filter(k, m))).map(([id, m]) => ({id, m, ix:matIndex(id, m)}));
+const searchCompos = (kind) => Object.entries(libCompos()).filter(([, c]) => !kind || c.kind === kind).map(([id, c]) => ({id, c, ix:compoIndex(id, c)}));
+const searchFams = () => Object.entries(libFams()).map(([id, F]) => ({id, F, ix:famIndex(id, F)}));
+/* chips de suggestion affichées sous les champs de recherche de matériaux */
+const MAT_CHIPS = [['isolant', 'Isolants'], ['vapeur', 'Pare-vapeur'], ['porteur', 'Structure'], ['parement', 'Parement'], ['air', 'Lame d\'air'], ['membrane', 'Membranes'], ['revsol', 'Sols'], ['bois', 'Bois'], ['biosource', 'Biosourcé'], ['intermediaire', 'Couche intermédiaire']];
 
 /* ==== 20-state.js ==== */
 /* ============ État du projet ============
@@ -7644,7 +8008,7 @@ function paintFields(el){
   let h = '';
   for (const [k, label] of keys){
     const p = paintOf(el[k]), m = p ? libMats()[p.m] : null;
-    h += `<label class="f wide"><span>${label}</span><span class="in"><select data-f="${k}">${paintMatOptions(p?.m || '')}</select></span></label>`;
+    h += pickField(label, k, p?.m || '', 'mat', {paint:true, none:'Aucun revêtement (matériau d\'origine)'});
     if (p) h += `<label class="f"><span>Taille du motif</span><span class="in"><input data-f="${k}.s" type="number" step="0.05" min="0.05" value="${p.s > 0 ? p.s : ''}" placeholder="${m ? nf(texNat(m)[0]) : ''}"><em>m</em></span></label><label class="f"><span>Rotation</span><span class="in"><input data-f="${k}.r" type="number" step="15" value="${p.r || 0}"><em>°</em></span></label>`;
   }
   if (el.kind === 'inst' && el.paintMap && Object.keys(el.paintMap).length){
@@ -7901,7 +8265,8 @@ function matOptions(){
   const by = {}; for (const [k, m] of Object.entries(libMats())) (by[m.cat || 'Divers'] ??= []).push([k, m.nom]);
   return Object.entries(by).map(([c, l]) => `<optgroup label="${esc(c)}">${l.sort((a, b) => a[1].localeCompare(b[1], 'fr')).map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join('')}</optgroup>`).join('');
 }
-function matSelect(label, f, cur, wide = true){ return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><select id="f-${f}" data-f="${f}">${matOptions().replace(`value="${esc(cur)}"`, `value="${esc(cur)}" selected`)}</select></span></label>`; }
+function matSelect(label, f, cur, wide = true){ return pickField(label, f, cur, 'mat', {}, wide); }
+function compoSelect(label, f, cur, kind, wide = true){ return pickField(label, f, cur, 'compo', {kind}, wide); }
 const lvlOpts = () => state.levels.map((l, i) => [i, `${l.n} (${nf(l.z)} m)`]);
 function layerBar(layers){
   const T = layers.reduce((s, l) => s + l[1], 0) || 1;
@@ -7960,7 +8325,7 @@ function renderProps(){
   let h = `<div class="ph"><h2>${title}</h2><span class="tag">${esc(lot)}</span></div><div class="fields">`;
   if (el.kind === 'wall'){
     const {L} = wallAxis(el), layers = wallLayers(el), T = wallT(el), ops = wallOpenings(el);
-    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'wall').map(([k, t]) => [k, t.nom]), el.type);
+    h += compoSelect('Composition', 'type', el.type, 'wall');
     h += field('Longueur', 'len', L, 'm') + linkFields(el);
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
     h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
@@ -7973,7 +8338,7 @@ function renderProps(){
   } else if (el.kind === 'roof'){
     const layers = compo(el.type).layers, Q = roofQty(el), r = rect(el.p, el.q), poly = el.poly && el.poly.length >= 4, G = roofGeom(el), FQ = frameQty(el);
     const wallOpts = [['', 'Comme les murs (automatique)'], ...Object.entries(libCompos()).filter(([, t]) => t.kind === 'wall' && t.lot !== 'Second œuvre').map(([k, t]) => [k, t.nom])];
-    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'roof').map(([k, t]) => [k, t.nom]), el.type);
+    h += compoSelect('Composition', 'type', el.type, 'roof');
     h += selectField('Forme', 'rshape', Object.entries(ROOF_SHAPES), el.shape || '2', false) + field('Pente', 'rpitch', roofPitch(el), '°', '1');
     if (!poly) h += selectField('Faîtage parallèle à', 'rdir', [['x', 'l\'axe x (est-ouest)'], ['y', 'l\'axe y (nord-sud)']], el.dir || (Math.abs(r[1][0] - r[0][0]) >= Math.abs(r[2][1] - r[1][1]) ? 'x' : 'y'), false);
     h += field('Débord d\'égout', 'rov', el.ov ?? 0.4, 'm') + field('Débord de pignon', 'rovg', el.ovg ?? el.ov ?? 0.4, 'm');
@@ -8011,7 +8376,7 @@ function renderProps(){
     h += `<div class="btns"><button class="btn" data-act="tool-rotate">Rotation</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'slab'){
     const r = rect(el.p, el.q), Lx = r[1][0] - r[0][0], Ly = r[2][1] - r[1][1], layers = compo(el.type).layers, nh = (el.holes || []).length, SA = area(volPoly(el)) - (el.holes || []).reduce((s, x) => s + area(x), 0);
-    h += selectField('Composition', 'type', Object.entries(libCompos()).filter(([, t]) => t.kind === 'slab').map(([k, t]) => [k, t.nom]), el.type);
+    h += compoSelect('Composition', 'type', el.type, 'slab');
     h += selectField('Usage (calculs)', 'use', Object.entries(USES).filter(([k]) => k !== 'mur'), elUse(el));
     h += slabLinkField(el);
     { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
@@ -8069,24 +8434,28 @@ function renderProps(){
 const FAM_ICON = {Portes:'M7 21V3h10v18M14 12h.01', 'Fenêtres':'M4 4h16v16H4zM12 4v16M4 12h16', Ouvertures:'M5 21V5h14v16', Structure:'M3 6h18M3 18h18M12 6v12', 'Escaliers et garde-corps':'M3 21h4v-4h4v-4h4V9h4V5', Mobilier:'M4 11h16v4H4zM6 15v5M18 15v5', 'Cuisine et sanitaires':'M5 10h14v5a5 5 0 0 1-10 0M12 3v4', Industrie:'M3 21V9l6 4V9l6 4V5h6v16z', 'Extérieur':'M12 2a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5M12 12v10'};
 const libOwner = (kind, id) => state.lib?.[kind]?.[id] ? 'projet' : USER_LIB[kind][id] ? 'perso' : 'base';
 function renderLib(){
-  const q = libQuery.trim().toLowerCase(), match = s => !q || s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q.normalize('NFD').replace(/[̀-ͯ]/g, ''));
+  const q = libQuery.trim(), hasQ = sHasQuery(q), Q = hasQ ? sParseQuery(q) : null, hl = n => hasQ ? sHighlight(n, q) : esc(n);
+  const whyTag = why => why && why.length ? `<em class="spk-why" title="Trouvé par le sens du mot">${esc(why.map(synLabel).join(', '))}</em>` : '';
+  const match = s => !hasQ || !!sScore(Q, sIndex(s));
   let body = '';
   if (libTab === 'mats'){
     const cats = MAT_CATS.concat([...new Set(Object.values(libMats()).map(m => m.cat))].filter(c => !MAT_CATS.includes(c)));
-    const list = Object.entries(libMats()).filter(([, m]) => match(m.nom) && (!libCat || m.cat === libCat));
+    const base = searchMats((k, m) => !libCat || m.cat === libCat), list = hasQ ? smartSearch(q, base, {limit:300}).map(r => ({...r.item, why:r.why})) : base.map(x => ({...x, why:[]}));
     body = `<div class="libtools"><select data-libcat aria-label="Catégorie"><option value="">Toutes les catégories</option>${cats.map(c => `<option${c === libCat ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select><button class="btn primary" data-act="mat-new">+ Matériau</button></div>
-      <div class="lib">${list.map(([k, m]) => `<div class="row" data-mat="${esc(k)}"><span class="swt" style="background:${m.color}"></span><div><b>${esc(m.nom)}</b><div class="comp">${esc(m.cat)}${libOwner('mats', k) !== 'base' ? ' · <em>' + (libOwner('mats', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div>
-        <span class="n">${m.R != null ? 'R ' + nf(m.R, 2) : 'λ ' + nf(m.lambda, 3)}<br>${n0(m.rho)} kg/m³</span></div>`).join('') || '<p class="hint">Aucun matériau trouvé.</p>'}</div>`;
+      ${!hasQ && !libCat ? `<div class="spk-chips lib">${MAT_CHIPS.map(([k, n]) => `<button type="button" class="spk-chip" data-libchip="${esc(n.toLowerCase())}">${esc(n)}</button>`).join('')}</div>` : ''}
+      <div class="lib">${list.map(({id:k, m, why}) => `<div class="row" data-mat="${esc(k)}"><span class="swt" style="background:${m.color}"></span><div><b>${hl(m.nom)}</b>${whyTag(why)}<div class="comp">${esc(m.cat)}${libOwner('mats', k) !== 'base' ? ' · <em>' + (libOwner('mats', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div>
+        <span class="n">${m.R != null ? 'R ' + nf(m.R, 2) : 'λ ' + nf(m.lambda, 3)}<br>${n0(m.rho)} kg/m³</span></div>`).join('') || `<p class="hint">Aucun matériau trouvé pour « ${esc(q)} ».${spkSuggest(q).replace(/data-q=/g, 'data-libchip=')}</p>`}</div>`;
   } else if (libTab === 'compos'){
-    const list = Object.entries(libCompos()).filter(([, c]) => match(c.nom));
-    const blk = kind => list.filter(([, c]) => c.kind === kind).map(([k, c]) => { const L = c.kind === 'wall' ? c.layers.slice().reverse() : c.layers, r = thermal(L, c.kind === 'wall' ? 'mur' : 'plancherBas');
-      return `<div class="row crow" data-compo="${esc(k)}"><div><b>${esc(c.nom)}</b>${layerBar(c.layers)}<div class="comp">${nf(c.layers.reduce((s, l) => s + l[1], 0) * 100, 1)} cm${libOwner('compos', k) !== 'base' ? ' · <em>' + (libOwner('compos', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div><span class="n">U ${nf(r.U, 2)}</span></div>`; }).join('');
-    body = `<div class="libtools"><button class="btn primary" data-act="compo-new">+ Composition</button></div><div class="grp"><h3>Murs et cloisons</h3><div class="lib">${blk('wall')}</div></div><div class="grp"><h3>Planchers et toitures</h3><div class="lib">${blk('slab')}</div></div>`;
+    const base = searchCompos(), list = hasQ ? smartSearch(q, base, {limit:300}).map(r => ({...r.item, why:r.why})) : base.map(x => ({...x, why:[]}));
+    const blk = kind => list.filter(({c}) => c.kind === kind).map(({id:k, c, why}) => { const L = c.kind === 'wall' ? c.layers.slice().reverse() : c.layers, r = thermal(L, c.kind === 'wall' ? 'mur' : 'plancherBas');
+      return `<div class="row crow" data-compo="${esc(k)}"><div><b>${hl(c.nom)}</b>${whyTag(why)}${layerBar(c.layers)}<div class="comp">${nf(c.layers.reduce((s, l) => s + l[1], 0) * 100, 1)} cm${libOwner('compos', k) !== 'base' ? ' · <em>' + (libOwner('compos', k) === 'perso' ? 'Ma bibliothèque' : 'Projet') + '</em>' : ''}</div></div><span class="n">U ${nf(r.U, 2)}</span></div>`; }).join('');
+    const w = blk('wall'), sl = blk('slab') + blk('roof');
+    body = `<div class="libtools"><button class="btn primary" data-act="compo-new">+ Composition</button></div>${w ? `<div class="grp"><h3>Murs et cloisons</h3><div class="lib">${w}</div></div>` : ''}${sl ? `<div class="grp"><h3>Planchers et toitures</h3><div class="lib">${sl}</div></div>` : ''}${!w && !sl ? `<p class="hint">Aucune composition trouvée pour « ${esc(q)} ».${spkSuggest(q).replace(/data-q=/g, 'data-libchip=')}</p>` : ''}`;
   } else {
     const all = Object.entries(libFams()), fcard = ([k, F]) => `<button class="fcard${tool === 'comp' && defs.comp.fam === k ? ' on' : ''}" data-fam="${esc(k)}" title="${esc(F.nom)}"><img class="fthumb" data-thumb="${esc(k)}|0" src="${famThumbCached(k, 0) || ''}" alt=""><b>${esc(F.nom)}</b><small>${(F.types || []).length} type${(F.types || []).length > 1 ? 's' : ''}${libOwner('fams', k) !== 'base' ? ' · perso' : ''}</small></button>`;
     const crumb = `<nav class="fcrumb" aria-label="Dossiers"><button data-fpath="">Familles</button>${libPath.map((p, i) => `<span>›</span><button data-fpath="${esc(libPath.slice(0, i + 1).join('/'))}">${esc(p)}</button>`).join('')}</nav>`;
     let inner = '';
-    if (q){ const list = all.filter(([, F]) => match(F.nom + ' ' + F.cat)); inner = list.length ? `<div class="fgrid">${list.map(fcard).join('')}</div>` : '<p class="hint">Aucune famille trouvée.</p>'; }
+    if (hasQ){ const list = smartSearch(q, searchFams(), {limit:200}).map(r => [r.item.id, r.item.F]); inner = list.length ? `<div class="fgrid">${list.map(fcard).join('')}</div>` : `<p class="hint">Aucune famille trouvée pour « ${esc(q)} ».${spkSuggest(q).replace(/data-q=/g, 'data-libchip=')}</p>`; }
     else {
       const under = all.filter(([k, F]) => { const p = famPath(k, F); return libPath.every((x, i) => p[i] === x) && p.length >= libPath.length; });
       const here = under.filter(([k, F]) => famPath(k, F).length === libPath.length), subs = {};
@@ -8102,7 +8471,7 @@ function renderLib(){
   }
   return `<div class="ph"><h2>Bibliothèque</h2></div>
     <div class="subtabs" role="tablist">${[['fams', 'Familles'], ['compos', 'Compositions'], ['mats', 'Matériaux']].map(([k, n]) => `<button role="tab" data-libtab="${k}" aria-selected="${libTab === k}">${n}</button>`).join('')}</div>
-    <input class="libsearch" data-libq type="search" placeholder="Rechercher…" value="${esc(libQuery)}" aria-label="Rechercher dans la bibliothèque">${body}
+    <input class="libsearch" data-libq type="search" placeholder="${libTab === 'mats' ? 'Rechercher : vapeur, isolant, couche intermédiaire…' : libTab === 'compos' ? 'Rechercher : ossature bois, béton, isolé…' : 'Rechercher : porte, fenêtre, escalier, mobilier…'}" value="${esc(libQuery)}" aria-label="Rechercher dans la bibliothèque" enterkeyhint="search">${body}
     <p class="hint" style="margin-top:14px">Valeurs indicatives (λ en W/m·K) à remplacer par les fiches techniques des produits retenus. Vos créations sont enregistrées dans « Ma bibliothèque » et copiées dans les projets qui les utilisent.</p>`;
 }
 
@@ -8170,6 +8539,7 @@ $('#pbody').addEventListener('input', e => {
   if (e.target.matches('[data-libq]')){ libQuery = e.target.value; const pos = e.target.selectionStart; renderPanel(); const i = $('#pbody [data-libq]'); if (i){ i.focus(); i.setSelectionRange(pos, pos); } }
   if (e.target.matches('[data-rset]')) onRenderInput(e.target);
 });
+$('#pbody').addEventListener('click', e => { const c = e.target.closest('[data-libchip]'); if (!c) return; libQuery = c.dataset.libchip; renderPanel(); const i = $('#pbody [data-libq]'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } });
 $('#pbody').addEventListener('change', e => {
   const t = e.target;
   if (t.matches('[data-libcat]')){ libCat = t.value; return renderPanel(); }
@@ -8194,7 +8564,7 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'fireRole'){ pushHist(); if (t.value) el.fireRole = t.value; else delete el.fireRole; state.isSample = false; renderPanel(); return; }
   if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }
   if (f && f.startsWith('paint')){ pushHist(); state.isSample = false; setPaintField(el, f, t); rebuild(); return; }
-  const val = t.tagName === 'SELECT' ? t.value : num(t.value);
+  const val = t.tagName === 'SELECT' || t.dataset.pick != null ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
   const pos = x => Math.max(0.001, x);
@@ -8310,10 +8680,9 @@ function openComposer({id, apply}){
   const syncUse = () => { const opts = W.kind === 'wall' ? [['mur', USES.mur]] : W.kind === 'roof' ? [['toiture', USES.toiture]] : Object.entries(USES).filter(([k]) => k !== 'mur'); if (!opts.some(([k]) => k === W.use)) W.use = opts[0][0];
     useSel.innerHTML = opts.map(([k, n]) => `<option value="${k}"${k === W.use ? ' selected' : ''}>${esc(n)}</option>`).join('');
     d.querySelector('#cpOrder').textContent = W.kind === 'wall' ? 'Couches de l\'extérieur (en haut) vers l\'intérieur (en bas).' : 'Couches du dessus (en haut) vers le dessous (en bas).'; };
-  const opts = matOptions();
   const renderLayers = () => {
     d.querySelector('#cpLayers').innerHTML = W.layers.map(([m, e], i) => `<div class="cl" data-i="${i}"><span class="swt" style="background:${mat(m).color}"></span>
-      <select data-lm="${i}" aria-label="Matériau de la couche ${i + 1}">${opts.replace(`value="${esc(m)}"`, `value="${esc(m)}" selected`)}</select>
+      ${pickHTML({attrs:`data-lm="${i}" aria-label="Matériau de la couche ${i + 1}"`, cur:m, kind:'mat', cls:'cl-pick'})}
       <span class="in"><input data-le="${i}" type="number" step="1" min="0.1" value="${rnd(e * 1000)}" aria-label="Épaisseur en mm"><em>mm</em></span>
       <button class="x" data-lu="${i}" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button class="x" data-ld="${i}" aria-label="Descendre"${i < W.layers.length - 1 ? '' : ' disabled'}>↓</button><button class="x" data-lx="${i}" aria-label="Supprimer la couche"${W.layers.length > 1 ? '' : ' disabled'}>×</button></div>`).join('');
   };
@@ -8325,7 +8694,7 @@ function openComposer({id, apply}){
   d.querySelectorAll('[data-cond]').forEach(i => i.oninput = () => { const v = num(i.value); if (!Number.isNaN(v)){ W.cond[i.dataset.cond] = v; calc(); } });
   d.querySelector('#cpLayers').addEventListener('input', e => { const i = e.target.dataset.le; if (i != null){ const v = num(e.target.value); if (v > 0){ W.layers[+i][1] = v / 1000; calc(); } } });
   d.querySelector('#cpLayers').addEventListener('change', e => { const i = e.target.dataset.lm; if (i != null){ W.layers[+i][0] = e.target.value; renderLayers(); calc(); } });
-  d.querySelector('#cpLayers').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const i = +(b.dataset.lu ?? b.dataset.ld ?? b.dataset.lx);
+  d.querySelector('#cpLayers').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.classList.contains('spk-b')) return; const i = +(b.dataset.lu ?? b.dataset.ld ?? b.dataset.lx);
     if (b.dataset.lu != null && i > 0) [W.layers[i - 1], W.layers[i]] = [W.layers[i], W.layers[i - 1]];
     else if (b.dataset.ld != null && i < W.layers.length - 1) [W.layers[i + 1], W.layers[i]] = [W.layers[i], W.layers[i + 1]];
     else if (b.dataset.lx != null && W.layers.length > 1) W.layers.splice(i, 1);
@@ -8533,7 +8902,6 @@ function openFamEditor(id, instId){
     <footer class="ed-f"><span class="hint">${owner === 'base' ? 'Famille de base : l\'enregistrement crée une copie dans « Ma bibliothèque ».' : ''}</span>${owner === 'perso' ? '<button class="btn danger" id="fmDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button>${instId ? '<button class="btn" id="fmApply">Enregistrer et appliquer au composant</button>' : ''}<button class="btn primary" id="fmSave">${owner === 'perso' ? 'Enregistrer' : 'Enregistrer dans ma bibliothèque'}</button></footer>`;
   const d = openEDlg(html, 'wide');
   famPrev = makeFamPreview(d.querySelector('#fmCv'));
-  const mopts = matOptions();
   const renderParams = () => {
     d.querySelector('#fmParams').innerHTML = `<table class="tbl ed-t"><thead><tr><th>Nom</th><th>Libellé</th><th class="n">Valeur</th><th>Unité</th><th></th></tr></thead><tbody>${Object.entries(F.params).map(([k, p]) => `<tr>
       <td><input data-pk="${esc(k)}" value="${esc(k)}" class="mono" size="6"></td><td><input data-pl="${esc(k)}" value="${esc(p.label || '')}"></td><td><input data-pv="${esc(k)}" type="number" step="0.01" value="${p.v}" class="mono n" size="6"></td><td><input data-pu="${esc(k)}" value="${esc(p.unit ?? 'm')}" size="3"></td><td><button class="x" data-px="${esc(k)}" aria-label="Supprimer">×</button></td></tr>`).join('')}</tbody></table>`;
@@ -8549,7 +8917,7 @@ function openFamEditor(id, instId){
   const renderParts = () => {
     d.querySelector('#fmParts').innerHTML = F.parts.map((p, i) => `<div class="fp">
       <div class="fp-h"><select data-q="${i}" data-k="s"><option value="box"${!p.fam && (p.s || 'box') === 'box' ? ' selected' : ''}>Boîte</option><option value="cyl"${!p.fam && p.s === 'cyl' ? ' selected' : ''}>Cylindre</option><option value="sph"${!p.fam && p.s === 'sph' ? ' selected' : ''}>Sphère</option>${p.s === 'ext' ? '<option value="ext" selected>Profil extrudé</option>' : ''}<option value="fam"${p.fam ? ' selected' : ''}>Famille</option></select>
-        ${p.fam ? `<select data-q="${i}" data-k="fam">${famOpts(p.fam)}</select>` : `<select data-q="${i}" data-k="m">${mopts.replace(`value="${esc(p.m)}"`, `value="${esc(p.m)}" selected`)}</select>`}
+        ${p.fam ? pickHTML({attrs:`data-q="${i}" data-k="fam"`, cur:p.fam, kind:'fam', opt:{not:id}, cls:'fp-pick'}) : pickHTML({attrs:`data-q="${i}" data-k="m"`, cur:p.m, kind:'mat', cls:'fp-pick'})}
         <button class="x" data-qx="${i}" aria-label="Supprimer la pièce">×</button></div>
       <div class="fp-g"><label>x ${cell(i, 'x', p.x)}</label><label>y ${cell(i, 'y', p.y)}</label><label>z ${cell(i, 'z', p.z)}</label>
         ${p.fam ? `<label>rot ${cell(i, 'rot', p.rot)}</label><label class="w2">param. ${cell(i, 'pp', Object.entries(p.p || {}).map(([a, b]) => `${a}=${b}`).join('; '), 14)}</label>`
@@ -8583,6 +8951,7 @@ function openFamEditor(id, instId){
     else if (ds.tn != null) F.types[+ds.tn].nom = t.value;
     else if (ds.tv != null){ const ty = F.types[+ds.tv]; ty.p = ty.p || {}; if (t.value.trim() === '') delete ty.p[ds.k]; else { const v = num(t.value); ty.p[ds.k] = Number.isNaN(v) ? t.value : v; } }
     else if (ds.q != null && t.tagName === 'INPUT'){ const p = F.parts[+ds.q];
+      if (t.dataset.pick != null){ p[ds.k] = t.value; if (ds.k === 'fam') return all(); return refresh(); }
       if (ds.k === 'pp'){ p.p = {}; t.value.split(/[;\n]/).forEach(s => { const [a, b] = s.split('='); if (a && b != null && a.trim()) p.p[a.trim()] = b.trim(); }); }
       else if (t.value.trim() === '' && ['n', 'if', 'rot'].includes(ds.k)) delete p[ds.k]; else p[ds.k] = t.value; }
     else return;
@@ -8701,6 +9070,259 @@ function pumpThumbs(){
   setTimeout(pumpThumbs, 24);
 }
 
+/* ==== 63c-search-ui.js ==== */
+/* ============ Recherche : sélecteurs intelligents (matériaux, compositions, familles) et palette globale Ctrl+K ============
+   - pickHTML / pickField : remplace les longues listes déroulantes par un champ qui ouvre une fenêtre de recherche
+     (clavier, souris, tactile) ; la valeur vit dans un <input type="hidden" data-pick> qui émet input + change,
+     les gestionnaires existants (panneau, fiche de composition, éditeur de famille) n'ont rien à savoir ;
+   - openPicker : la fenêtre elle-même, aussi utilisée par les pilules de l'ATH (loupe) ;
+   - palette globale : Ctrl+K, touche « / », bouton loupe de la barre : outils, matériaux, compositions, familles,
+     éléments du projet, niveaux, exports. */
+const SPK = {pop:null, open:false, kind:'', opt:{}, items:[], shown:[], value:'', onPick:null, anchor:null, q:'', act:-1, label:''};
+const SEARCH_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+const PICK_KIND_LABEL = {mat:'Matériau', compo:'Composition', fam:'Famille'};
+
+/* ---------- éléments des listes ---------- */
+function pickItems(kind, opt = {}){
+  if (kind === 'mat'){
+    const L = searchMats(opt.paint ? (k, m) => !m.R && m.cat !== "Lames d'air et divers" : null).map(x => ({id:x.id, nom:x.m.nom, grp:x.m.cat || 'Divers', meta:x.m.R != null ? `R ${nf(x.m.R, 2)}` : `λ ${nf(x.m.lambda, 3)}`, color:x.m.color, ix:x.ix, own:libOwner('mats', x.id)}));
+    if (opt.paint) L.sort((a, b) => (a.grp === 'Peintures et finitions' ? -1 : b.grp === 'Peintures et finitions' ? 1 : 0));
+    return L;
+  }
+  if (kind === 'compo'){
+    const KL = {wall:'Murs et cloisons', slab:'Planchers et toitures-terrasses', roof:'Toitures en pente'};
+    return searchCompos(opt.kind).map(x => { const L = x.c.kind === 'wall' ? x.c.layers.slice().reverse() : x.c.layers, r = thermal(L, x.c.kind === 'wall' ? 'mur' : x.c.kind === 'roof' ? 'toiture' : 'plancherBas');
+      return {id:x.id, nom:x.c.nom, grp:KL[x.c.kind] || x.c.kind, meta:`U ${nf(r.U, 2)} · ${nf(x.c.layers.reduce((s, l) => s + l[1], 0) * 100, 1)} cm`, bar:layerBar(x.c.layers), ix:x.ix, own:libOwner('compos', x.id)}; });
+  }
+  if (kind === 'fam') return searchFams().filter(x => !opt.not || x.id !== opt.not).map(x => ({id:x.id, nom:x.F.nom, grp:(famPath(x.id, x.F) || [x.F.cat])[0] || 'Familles', meta:`${(x.F.types || []).length} type${(x.F.types || []).length > 1 ? 's' : ''}`, ix:x.ix, own:libOwner('fams', x.id)}));
+  return [];
+}
+function pickLabelHTML(kind, id, opt = {}){
+  if (kind === 'mat'){ if (!id){ return `<i class="swt none"></i><span class="spk-n">${esc(opt.none || '—')}</span>`; } const m = mat(id); return `<i class="swt" style="background:${m.color}"></i><span class="spk-n">${esc(m.nom)}</span><small>${esc(m.cat || '')}</small>`; }
+  if (kind === 'compo'){ const c = compo(id); return `${layerBar(c.layers)}<span class="spk-n">${esc(c.nom)}</span>`; }
+  if (kind === 'fam'){ const F = fam(id); return `<span class="spk-n">${esc(F?.nom || id)}</span>`; }
+  return `<span class="spk-n">${esc(id)}</span>`;
+}
+/* champ : attrs = attributs de l'input caché (data-f="mat", data-lm="2"…) */
+function pickHTML({attrs = '', cur = '', kind = 'mat', opt = {}, cls = ''} = {}){
+  return `<span class="spk ${cls}" data-spk="${kind}" data-opt="${esc(JSON.stringify(opt))}"><input type="hidden" ${attrs} data-pick="1" value="${esc(cur)}"><button type="button" class="spk-b" aria-haspopup="dialog" title="Rechercher ${PICK_KIND_LABEL[kind] ? 'un' + (kind === 'compo' ? 'e ' : ' ') + PICK_KIND_LABEL[kind].toLowerCase() : ''}">${pickLabelHTML(kind, cur, opt)}<span class="spk-c">${SEARCH_ICON}</span></button></span>`;
+}
+function pickField(label, f, cur, kind = 'mat', opt = {}, wide = true){ return `<label class="f${wide ? ' wide' : ''} fpick"><span>${label}</span>${pickHTML({attrs:`data-f="${f}"`, cur, kind, opt})}</label>`; }
+
+/* ---------- fenêtre de recherche ---------- */
+function spkEl(){
+  if (SPK.pop) return SPK.pop;
+  const d = document.createElement('div'); d.id = 'spkPop'; d.className = 'spk-pop'; d.hidden = true; d.setAttribute('role', 'dialog');
+  d.innerHTML = `<div class="spk-top">${SEARCH_ICON}<input type="search" class="spk-q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="Rechercher"><button type="button" class="ib ghost spk-x" aria-label="Fermer">✕</button></div><div class="spk-chips"></div><div class="spk-list" role="listbox"></div><div class="spk-foot"><span>↑ ↓ parcourir · Entrée choisir · Échap fermer</span><span class="spk-n2"></span></div>`;
+  document.body.appendChild(d); SPK.pop = d;
+  const q = d.querySelector('.spk-q');
+  q.addEventListener('input', () => { SPK.q = q.value; SPK.act = -1; spkRender(); });
+  d.addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Escape'){ e.preventDefault(); closePicker(true); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); if (!SPK.shown.length) return; SPK.act = SPK.act < 0 ? (e.key === 'ArrowDown' ? 0 : SPK.shown.length - 1) : (SPK.act + (e.key === 'ArrowDown' ? 1 : -1) + SPK.shown.length) % SPK.shown.length; spkMarkActive(true); }
+    else if (e.key === 'Enter'){ e.preventDefault(); const i = SPK.act >= 0 ? SPK.act : 0; if (SPK.shown[i]) spkChoose(SPK.shown[i].id); }
+    else if (e.key === 'Tab'){ closePicker(true); }
+  });
+  d.querySelector('.spk-x').addEventListener('click', () => closePicker(true));
+  d.addEventListener('click', e => { const r = e.target.closest('.spk-r'); if (r){ spkChoose(r.dataset.v); return; } const c = e.target.closest('.spk-chip'); if (c){ q.value = c.dataset.q; SPK.q = q.value; SPK.act = -1; spkRender(); q.focus(); } });
+  d.addEventListener('pointermove', e => { const r = e.target.closest('.spk-r'); if (!r) return; const i = +r.dataset.i; if (i !== SPK.act){ SPK.act = i; spkMarkActive(false); } });
+  document.addEventListener('pointerdown', e => { if (SPK.open && !d.contains(e.target) && !(SPK.anchor && SPK.anchor.contains(e.target))) closePicker(false); }, true);
+  window.addEventListener('resize', () => { if (SPK.open) spkPlace(); });
+  return d;
+}
+function openPicker({anchor, kind = 'mat', opt = {}, value = '', onPick, label = ''}){
+  const d = spkEl();
+  SPK.kind = kind; SPK.opt = opt || {}; SPK.value = value; SPK.onPick = onPick; SPK.anchor = anchor || null; SPK.q = ''; SPK.act = -1; SPK.label = label;
+  SPK.items = pickItems(kind, SPK.opt);
+  const q = d.querySelector('.spk-q'); q.value = '';
+  q.placeholder = kind === 'mat' ? 'Rechercher un matériau : vapeur, isolant, couche intermédiaire…' : kind === 'compo' ? 'Rechercher une composition : ossature bois, béton, isolant…' : 'Rechercher une famille : porte, fenêtre, escalier…';
+  d.querySelector('.spk-chips').innerHTML = kind === 'mat' ? MAT_CHIPS.map(([k, n]) => `<button type="button" class="spk-chip" data-q="${esc(n.toLowerCase())}">${esc(n)}</button>`).join('')
+    : kind === 'compo' ? [['mur', 'Murs'], ['cloison', 'Cloisons'], ['ossature bois', 'Ossature bois'], ['béton', 'Béton'], ['isolant', 'Isolées'], ['biosourcé', 'Biosourcées'], ['plancher', 'Planchers'], ['toiture', 'Toitures']].map(([qq, n]) => `<button type="button" class="spk-chip" data-q="${esc(qq)}">${esc(n)}</button>`).join('')
+    : [['porte', 'Portes'], ['fenêtre', 'Fenêtres'], ['escalier', 'Escaliers'], ['mobilier', 'Mobilier'], ['sanitaire', 'Sanitaires'], ['structure', 'Structure'], ['extérieur', 'Extérieur']].map(([qq, n]) => `<button type="button" class="spk-chip" data-q="${esc(qq)}">${esc(n)}</button>`).join('');
+  d.hidden = false; SPK.open = true; d.classList.toggle('sheet', innerWidth < 640);
+  spkRender(); spkPlace();
+  requestAnimationFrame(() => { q.focus({preventScroll:true}); const on = d.querySelector('.spk-r.on'); if (on) on.scrollIntoView({block:'center'}); });
+}
+function closePicker(refocus){ if (!SPK.open) return; SPK.open = false; SPK.pop.hidden = true; const a = SPK.anchor; SPK.anchor = null; SPK.onPick = null; if (refocus && a && a.focus) a.focus({preventScroll:true}); }
+function spkChoose(id){ const fn = SPK.onPick; closePicker(true); if (fn) fn(id); }
+function spkPlace(){
+  const d = SPK.pop; if (!d || d.hidden) return; const sheet = innerWidth < 640; d.classList.toggle('sheet', sheet);
+  if (sheet){ d.style.cssText = ''; return; }
+  const r = SPK.anchor ? SPK.anchor.getBoundingClientRect() : {left:innerWidth / 2 - 220, right:innerWidth / 2 + 220, top:80, bottom:80, width:440};
+  const W = Math.min(Math.max(r.width, 420), innerWidth - 24); let left = Math.max(12, Math.min(r.left, innerWidth - W - 12));
+  const below = innerHeight - r.bottom - 12, above = r.top - 12, maxH = 460, H = Math.min(maxH, Math.max(below, above));
+  const up = below < 280 && above > below;
+  d.style.left = left + 'px'; d.style.width = W + 'px'; d.style.maxHeight = H + 'px';
+  if (up){ d.style.top = ''; d.style.bottom = (innerHeight - r.top + 4) + 'px'; } else { d.style.bottom = ''; d.style.top = (r.bottom + 4) + 'px'; }
+}
+function spkRow(it, i, why){
+  const sw = SPK.kind === 'mat' ? `<i class="swt" style="background:${it.color}"></i>` : it.bar || '';
+  const ownTag = it.own === 'perso' ? ' <em class="own">perso</em>' : it.own === 'projet' ? ' <em class="own">projet</em>' : '';
+  return `<button type="button" role="option" class="spk-r${it.id === SPK.value ? ' on' : ''}${i === SPK.act ? ' act' : ''}" data-v="${esc(it.id)}" data-i="${i}" aria-selected="${it.id === SPK.value}">${sw}<span class="spk-t"><b>${SPK.q ? sHighlight(it.nom, SPK.q) : esc(it.nom)}${ownTag}</b><small>${esc(SPK.q ? it.grp : '')}${SPK.q && it.meta ? ' · ' : ''}${esc(it.meta || '')}</small></span>${why && why.length ? `<em class="spk-why" title="Trouvé par le sens du mot">${esc(why.map(synLabel).join(', '))}</em>` : ''}</button>`;
+}
+function spkRender(){
+  const d = SPK.pop, list = d.querySelector('.spk-list'), opt = SPK.opt; let h = '', shown = [];
+  const noneRow = opt.none != null ? {id:'', nom:opt.none, grp:'', meta:'', color:'transparent'} : null;
+  if (!sHasQuery(SPK.q)){
+    const by = new Map(); for (const it of SPK.items) (by.get(it.grp) || by.set(it.grp, []).get(it.grp)).push(it);
+    if (noneRow){ shown.push(noneRow); h += spkRow(noneRow, 0); }
+    for (const [g, L] of by){ h += `<div class="spk-g">${esc(g)}</div>`; for (const it of L.sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))){ shown.push(it); h += spkRow(it, shown.length - 1); } }
+    d.querySelector('.spk-n2').textContent = `${SPK.items.length} ${SPK.kind === 'mat' ? 'matériaux' : SPK.kind === 'compo' ? 'compositions' : 'familles'}`;
+    d.querySelector('.spk-chips').hidden = false;
+  } else {
+    const res = smartSearch(SPK.q, SPK.items, {limit:120});
+    if (noneRow && sScore(sParseQuery(SPK.q), sIndex(noneRow.nom))){ shown.push(noneRow); h += spkRow(noneRow, 0); }
+    for (const r of res){ shown.push(r.item); h += spkRow(r.item, shown.length - 1, r.why); }
+    if (!res.length) h += `<p class="spk-empty">Aucun résultat pour « ${esc(SPK.q)} ».${spkSuggest(SPK.q)}</p>`;
+    d.querySelector('.spk-n2').textContent = `${res.length} résultat${res.length > 1 ? 's' : ''}`;
+    d.querySelector('.spk-chips').hidden = true;
+  }
+  SPK.shown = shown; list.innerHTML = h; list.scrollTop = 0;
+}
+/* propositions quand rien ne correspond : concepts proches de ce qui a été tapé */
+function spkSuggest(q){
+  const toks = sTokens(q), near = new Set();
+  for (const t of toks){ if (t.length < 3) continue; for (const [w, set] of SYN_WORD){ if (w.startsWith(t) || t.startsWith(w) || (t.length >= 5 && sEdit(t, w, 2) <= 2)) for (const k of set) near.add(k); if (near.size > 6) break; } }
+  const L = [...near].slice(0, 6); if (!L.length) return ' Essayez un autre mot (matière, rôle dans la paroi, catégorie).';
+  return ` Essayez : ${L.map(k => `<button type="button" class="spk-chip" data-q="${esc(synLabel(k).toLowerCase().split(' / ')[0])}">${esc(synLabel(k))}</button>`).join(' ')}`;
+}
+function spkMarkActive(scroll){ const d = SPK.pop; d.querySelectorAll('.spk-r.act').forEach(r => r.classList.remove('act')); const r = d.querySelector(`.spk-r[data-i="${SPK.act}"]`); if (r){ r.classList.add('act'); if (scroll) r.scrollIntoView({block:'nearest'}); } }
+
+/* ---------- champs : ouverture au clic, mise à jour de la valeur ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('.spk-b'); if (!b) return; const span = b.closest('.spk'), hid = span.querySelector('input[data-pick]');
+  if (b.disabled || hid.disabled) return;
+  let opt = {}; try { opt = JSON.parse(span.dataset.opt || '{}'); } catch(x){}
+  const kind = span.dataset.spk, sig = JSON.stringify(Object.entries(hid.dataset).filter(([k]) => k !== 'pick')), root = hid.closest('#engDlg, #pbody, .hud, body');
+  openPicker({anchor:b, kind, opt, value:hid.value, onPick:id => {
+    let h = hid, bb = b; // le champ a pu être redessiné entre-temps : on le retrouve par ses attributs
+    if (!h.isConnected){ h = [...(root && root.isConnected ? root : document).querySelectorAll('input[data-pick]')].find(x => JSON.stringify(Object.entries(x.dataset).filter(([k]) => k !== 'pick')) === sig); if (!h) return; bb = h.parentElement.querySelector('.spk-b'); }
+    if (id === h.value) return; h.value = id; if (bb) bb.innerHTML = pickLabelHTML(kind, id, opt) + `<span class="spk-c">${SEARCH_ICON}</span>`;
+    h.dispatchEvent(new Event('input', {bubbles:true})); h.dispatchEvent(new Event('change', {bubbles:true}));
+  }});
+});
+/* loupe des pilules de l'ATH (#typePill, #paintPill) : même fenêtre, applique au <select> natif */
+function hudPickerFor(selEl, kind, opt, label){
+  openPicker({anchor:selEl.parentElement.querySelector('.spk-hud') || selEl, kind, opt, value:selEl.value, label, onPick:id => { if ([...selEl.options].some(o => o.value === id)){ selEl.value = id; selEl.dispatchEvent(new Event('change', {bubbles:true})); } }});
+}
+
+/* ---------- palette globale ---------- */
+const GS = {el:null, open:false, q:'', act:-1, rows:[], more:new Set()};
+function gsEl(){
+  if (GS.el) return GS.el;
+  const d = document.createElement('div'); d.id = 'gsPal'; d.hidden = true; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Recherche dans ARCHIPLAN');
+  d.innerHTML = `<div class="gs-box"><div class="gs-top">${SEARCH_ICON}<input type="search" class="gs-q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Rechercher partout : outil, matériau, composition, famille, élément, niveau, export…" aria-label="Rechercher"><kbd>Échap</kbd><button type="button" class="ib ghost gs-x" aria-label="Fermer">✕</button></div><div class="gs-list"></div><div class="gs-foot"><span>↑ ↓ parcourir · Entrée ouvrir · Maj+Entrée appliquer à la sélection</span><span class="gs-n"></span></div></div>`;
+  document.body.appendChild(d); GS.el = d;
+  const q = d.querySelector('.gs-q');
+  q.addEventListener('input', () => { GS.q = q.value; GS.act = -1; GS.more.clear(); gsRender(); });
+  d.addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Escape'){ e.preventDefault(); closePalette(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); const n = GS.rows.length; if (!n) return; GS.act = GS.act < 0 ? (e.key === 'ArrowDown' ? 0 : n - 1) : (GS.act + (e.key === 'ArrowDown' ? 1 : -1) + n) % n; gsMark(true); }
+    else if (e.key === 'Enter'){ e.preventDefault(); const i = GS.act >= 0 ? GS.act : 0; if (GS.rows[i]) gsRun(GS.rows[i], e.shiftKey); }
+  });
+  d.querySelector('.gs-x').addEventListener('click', closePalette);
+  d.addEventListener('click', e => {
+    if (e.target === d){ closePalette(); return; }
+    const m = e.target.closest('[data-more]'); if (m){ GS.more.add(m.dataset.more); gsRender(); return; }
+    const c = e.target.closest('.spk-chip'); if (c){ q.value = c.dataset.q; GS.q = q.value; GS.act = -1; gsRender(); q.focus(); return; }
+    const r = e.target.closest('.gs-r'); if (r) gsRun(GS.rows[+r.dataset.i], e.shiftKey || !!e.target.closest('.gs-alt'));
+  });
+  d.addEventListener('pointermove', e => { const r = e.target.closest('.gs-r'); if (!r) return; const i = +r.dataset.i; if (i !== GS.act){ GS.act = i; gsMark(false); } });
+  return d;
+}
+function openPalette(prefill){
+  const d = gsEl(); closePicker(false); $$('.menu').forEach(m => m.hidden = true);
+  d.hidden = false; GS.open = true; const q = d.querySelector('.gs-q'); q.value = prefill || ''; GS.q = q.value; GS.act = -1; GS.more.clear(); gsRender();
+  requestAnimationFrame(() => { q.focus({preventScroll:true}); q.select(); });
+}
+function closePalette(){ if (!GS.open) return; GS.open = false; GS.el.hidden = true; }
+/* sources : outils et actions (lus dans l'interface), matériaux, compositions, familles, éléments, niveaux */
+function gsTools(){
+  const out = [];
+  for (const b of $$('.tools .tool[data-tool]')){ const lbl = b.querySelector('span')?.textContent.trim() || b.dataset.tool, title = b.title || ''; const key = title.match(/\(([A-Z0-9])\)/)?.[1] || '';
+    const sub0 = title.replace(/\s*\([A-Z0-9]\)\s*:?/, '').trim(); out.push({kind:'tool', id:b.dataset.tool, nom:lbl, sub:(!sub0 || sub0 === lbl ? 'Outil' : sub0) + (key ? ` · touche ${key}` : ''), key, ix:sIndex(lbl, {kw:title + ' ' + b.dataset.tool, tags:['outil']}), run:() => { setTool(b.dataset.tool); }}); }
+  for (const b of $$('.modes button[data-mode]')) out.push({kind:'tool', id:'mode-' + b.dataset.mode, nom:`Vue ${b.textContent.trim()}`, sub:'Mode d\'affichage', ix:sIndex(`vue ${b.textContent} ${b.dataset.mode === '2d' ? 'plan 2d' : b.dataset.mode === '3d' ? '3d maquette' : b.dataset.mode === 'render' ? 'rendu réaliste' : 'coupes'}`, {tags:['outil', b.dataset.mode === 'render' ? 'rendu' : 'plan']}), run:() => b.click()});
+  for (const b of $$('.tabs button[data-tab]')) out.push({kind:'tool', id:'tab-' + b.dataset.tab, nom:`Onglet ${b.textContent.trim()}`, sub:'Panneau', ix:sIndex(`onglet ${b.textContent} ${b.dataset.tab === 'lib' ? 'bibliothèque matériaux compositions familles' : b.dataset.tab === 'qty' ? 'métré quantités DQE devis' : b.dataset.tab === 'props' ? 'projet arborescence propriétés' : 'rendu'}`, {tags:['outil']}), run:() => { b.click(); openSheet(true); }});
+  for (const [menuId, grp] of [['#fileMenu', 'Fichier'], ['#exportMenu', 'Exporter']]) for (const b of $$(`${menuId} button`)){ const t = b.querySelector('b')?.textContent.trim() || b.textContent.trim(); if (!t) continue; const s = b.querySelector('span')?.textContent.trim() || '';
+    out.push({kind:'tool', id:menuId + t, nom:t, sub:`${grp}${s ? ' · ' + s : ''}`, ix:sIndex(t + ' ' + s, {tags:['export', 'outil'], kw:grp}), run:() => { $$('.menu').forEach(m => m.hidden = true); b.click(); }}); }
+  const extra = [
+    ['Gérer les niveaux…', 'Niveaux, altitudes, niveau courant', ['niveau'], () => { activeTab = 'props'; renderPanel(); openSheet(true); runTreeAction('levels', 'P'); }],
+    ['Lieu, climat, bruit et terrain…', 'Adresse, zone climatique, relief', ['site'], () => runTreeAction('site', 'P')],
+    ['Nouvelle composition de paroi…', 'Fiche complète : couches, U, déphasage, Glaser', ['mur', 'dalle'], () => openComposer({})],
+    ['Nouveau matériau…', 'λ, ρ, μ, carbone, texture', ['finition'], () => openMatEditor(null)],
+    ['Menuiserie sur mesure…', 'Fenêtre, porte ou baie : dimensions, vitrage, performances', ['menuiserie', 'fenetre', 'porte'], () => openJoineryTool({})],
+    ['Tout afficher', 'Rétablir les éléments masqués', ['outil'], () => runTreeAction('showall', 'P')],
+    ['Cadrer tout le projet', 'Zoom étendu (Z)', ['outil'], () => fit()],
+    ['Annuler', 'Ctrl+Z', ['outil'], () => undo()], ['Rétablir', 'Ctrl+Y', ['outil'], () => redo()],
+    ['Sécurité incendie du projet', 'Classement, exigences, verdicts par paroi', ['feu', 'securite'], () => { activeTab = 'props'; sel = null; multi = []; applySel(); renderPanel(); openSheet(true); setTimeout(() => $('#pbody .grp.fire')?.scrollIntoView({block:'start', behavior:'smooth'}), 60); }],
+  ];
+  for (const [t, s, tags, run] of extra) if (typeof run === 'function') out.push({kind:'tool', id:'x-' + t, nom:t, sub:s, ix:sIndex(t + ' ' + s, {tags}), run});
+  return out;
+}
+function gsAll(){
+  const KN = typeof KIND_NAME !== 'undefined' ? KIND_NAME : {};
+  const mats = searchMats().map(x => ({kind:'mat', id:x.id, nom:x.m.nom, sub:x.m.cat, color:x.m.color, ix:x.ix, run:() => openMatEditor(x.id)}));
+  const compos = searchCompos().map(x => ({kind:'compo', id:x.id, nom:x.c.nom, sub:x.c.kind === 'wall' ? 'Composition de mur' : x.c.kind === 'roof' ? 'Composition de toiture' : 'Composition de plancher', bar:layerBar(x.c.layers), ix:x.ix, c:x.c, run:() => openComposer({id:x.id}), alt:gsApplyCompo(x.id, x.c)}));
+  const fams = searchFams().map(x => ({kind:'fam', id:x.id, nom:x.F.nom, sub:(famPath(x.id, x.F) || [x.F.cat]).join(' › '), ix:x.ix, run:() => { defs.comp.fam = x.id; defs.comp.type = 0; setTool('comp'); libTab = 'fams'; activeTab = 'lib'; renderPanel(); }}));
+  const els = state.els.map(el => ({kind:'el', id:el.id, nom:elName(el), sub:`${KN[el.kind] || el.kind} · ${state.levels[el.lvl]?.n || ''}${typeof elMeta === 'function' ? ' · ' + elMeta(el) : ''}`, ix:elIndex(el), run:() => { select(el.id); frameEl(el.id); openSheet(true); }}));
+  const lvls = state.levels.map((l, i) => ({kind:'lvl', id:i, nom:l.n, sub:`Niveau · ${nf(l.z)} m${i === curLvl ? ' · courant' : ''}`, ix:sIndex(l.n + ' niveau', {kw:`L${i} ${i === 0 ? 'rdc rez' : 'R+' + i}`, tags:['niveau']}), run:() => runTreeAction('work', 'L' + i)}));
+  return {Outils:gsTools(), Matériaux:mats, Compositions:compos, Familles:fams, 'Éléments du projet':els, Niveaux:lvls};
+}
+function gsApplyCompo(id, c){
+  const ids = selIds().filter(i => { const el = getEl(i); return el && (el.kind === c.kind || (el.kind !== 'wall' && c.kind !== 'wall' && (el.kind === 'slab' || el.kind === 'roof'))); });
+  if (!ids.length) return null;
+  return {label:`Appliquer à ${ids.length > 1 ? ids.length + ' éléments' : 'la sélection'}`, run:() => { pushHist(); for (const i of ids){ const el = getEl(i); el.type = id; } state.isSample = false; embedUsedLib(); rebuild(); toast(`${c.nom} appliquée`); }};
+}
+function gsRender(){
+  const d = GS.el, list = d.querySelector('.gs-list'), q = GS.q; let h = '', rows = [];
+  const all = gsAll();
+  if (!sHasQuery(q)){
+    h += `<div class="gs-hint">Tapez un mot : un outil, un matériau (« vapeur » trouve le pare-vapeur, « isolant » tous les isolants, « couche intermédiaire » les couches techniques), une composition, une famille, un élément du projet, un niveau ou un export.</div>`;
+    h += `<div class="spk-chips">${[['vapeur', 'vapeur'], ['isolant', 'isolant'], ['couche intermédiaire', 'couche intermédiaire'], ['ossature bois', 'ossature bois'], ['porte coupe-feu', 'porte coupe-feu'], ['escalier', 'escalier'], ['niveau', 'niveau'], ['pdf', 'export PDF']].map(([qq, n]) => `<button type="button" class="spk-chip" data-q="${esc(qq)}">${esc(n)}</button>`).join('')}</div>`;
+    const tools = all.Outils.slice(0, 10); h += `<div class="gs-g">Outils</div>`; for (const it of tools){ rows.push(it); h += gsRow(it, rows.length - 1); }
+    d.querySelector('.gs-n').textContent = '';
+  } else {
+    let total = 0;
+    const found = Object.entries(all).map(([grp, items]) => [grp, smartSearch(q, items, {limit:60})]).filter(([, res]) => res.length);
+    const GP = {Outils:0, Compositions:1, Matériaux:2, Familles:3, 'Éléments du projet':4, Niveaux:5};
+    found.sort((a, b) => (Math.abs(b[1][0].s - a[1][0].s) > 0.02 ? b[1][0].s - a[1][0].s : 0) || (GP[a[0]] ?? 9) - (GP[b[0]] ?? 9)); // le groupe qui répond le mieux en premier, les outils avant à égalité
+    for (const [grp, res] of found){ total += res.length;
+      const N = GS.more.has(grp) ? res.length : (grp === 'Outils' ? 6 : 5);
+      h += `<div class="gs-g">${esc(grp)} <span>${res.length}</span></div>`;
+      for (const r of res.slice(0, N)){ rows.push(r.item); h += gsRow(r.item, rows.length - 1, r.why); }
+      if (res.length > N) h += `<button type="button" class="gs-more" data-more="${esc(grp)}">Voir les ${res.length - N} autres…</button>`;
+    }
+    if (!total) h += `<p class="spk-empty">Aucun résultat pour « ${esc(q)} ».${spkSuggest(q)}</p>`;
+    d.querySelector('.gs-n').textContent = total ? `${total} résultat${total > 1 ? 's' : ''}` : '';
+  }
+  GS.rows = rows; list.innerHTML = h; list.scrollTop = 0;
+}
+function gsRow(it, i, why){
+  const ico = it.kind === 'mat' ? `<i class="swt" style="background:${it.color}"></i>` : it.kind === 'compo' ? it.bar : `<i class="gs-k gs-k-${it.kind}">${{tool:'⌘', fam:'▣', el:'◧', lvl:'≡'}[it.kind] || '•'}</i>`;
+  return `<button type="button" class="gs-r${i === GS.act ? ' act' : ''}" data-i="${i}">${ico}<span class="spk-t"><b>${sHighlight(it.nom, GS.q)}</b><small>${esc(it.sub || '')}</small></span>${why && why.length ? `<em class="spk-why">${esc(why.map(synLabel).join(', '))}</em>` : ''}${it.key ? `<kbd>${esc(it.key)}</kbd>` : ''}${it.alt ? `<span class="gs-alt btn" title="Maj+Entrée">${esc(it.alt.label)}</span>` : ''}</button>`;
+}
+function gsMark(scroll){ const d = GS.el; d.querySelectorAll('.gs-r.act').forEach(r => r.classList.remove('act')); const r = d.querySelector(`.gs-r[data-i="${GS.act}"]`); if (r){ r.classList.add('act'); if (scroll) r.scrollIntoView({block:'nearest'}); } }
+function gsRun(it, alt){ if (!it) return; closePalette(); if (!$('#engDlg').hidden && it.kind !== 'tool') closeEDlg(); if (alt && it.alt) it.alt.run(); else it.run(); }
+
+/* raccourcis : Ctrl/Cmd+K partout, « / » hors champ de saisie ; bouton loupe de la barre */
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); e.stopPropagation(); if (GS.open) closePalette(); else openPalette(); return; }
+  if (GS.open) return;
+  const t = e.target, inField = t.closest && t.closest('input,select,textarea,[contenteditable]');
+  if (e.key === '/' && !inField && !e.ctrlKey && !e.metaKey && !e.altKey && $('#engDlg').hidden){ e.preventDefault(); openPalette(); }
+}, true);
+$('#searchBtn')?.addEventListener('click', () => openPalette());
+if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)){ const k = $('#searchBtn .sb-k'); if (k) k.textContent = '⌘ K'; }
+$('#typeFind')?.addEventListener('click', e => {
+  e.preventDefault(); const selEl = $('#typeSel');
+  if (tool === 'wall' || tool === 'slab' || tool === 'roof') return hudPickerFor(selEl, 'compo', {kind:tool});
+  if (tool === 'vol' || tool === 'col' || tool === 'sketch') return hudPickerFor(selEl, 'mat', {});
+  if (tool === 'comp') return openPicker({anchor:e.currentTarget, kind:'fam', value:defs.comp.fam, onPick:id => { defs.comp.fam = id; defs.comp.type = 0; setTool('comp'); renderPanel(); }});
+});
+$('#paintFind')?.addEventListener('click', e => { e.preventDefault(); hudPickerFor($('#paintMat'), 'mat', {paint:true, none:'Retirer le revêtement (matériau d\'origine)'}); });
+
 /* ==== 64-tree.js ==== */
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
 const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
@@ -8740,7 +9362,7 @@ function treeRow({key, depth, icon, label, meta = '', open = null, selected = fa
     ${menu ? `<button class="td" data-tmenu="${esc(menu)}" aria-label="Actions">${DOTS}</button>` : ''}</div>`;
 }
 function renderTree(){
-  const q = treeQuery.trim().toLowerCase(), match = el => !q || elName(el).toLowerCase().includes(q) || String(el.id) === q;
+  const q = treeQuery.trim(), hasQ = sHasQuery(q), Q = hasQ ? sParseQuery(q) : null, match = el => !hasQ || String(el.id) === q || !!sScore(Q, elIndex(el));
   const ids = TREE_NOSEL ? new Set() : new Set(selIds()); let h = '';
   const byId = new Map(state.els.map(e => [e.id, e])), kidsOf = new Map();
   for (const x of state.els) if (x.kind === 'inst' && x.host != null){ let a = kidsOf.get(x.host); if (!a) kidsOf.set(x.host, a = []); a.push(x); }
@@ -8751,13 +9373,13 @@ function renderTree(){
     h += treeRow({key:lk, depth:1, icon:ico('lvl'), label:`${esc(L.n)} <em>${nf(L.z)} m</em>`, meta:String(els.length), open:lOpen, hidden:hiddenLvls.has(li), menu:lk, cls:li === curLvl ? 'cur' : '', selected:false});
     if (!lOpen) return;
     for (const [kind, cname] of TREE_CATS){
-      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && byId.get(e.host)));
+      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && byId.get(e.host) && !q)); // avec un filtre, les menuiseries posées dans un mur sont listées directement
       if (!list.length) continue;
       const ck = lk + '|' + kind, cOpen = treeOpen.has(ck) || !!q;
       h += treeRow({key:ck, depth:2, icon:ico(kind), label:cname, meta:String(list.length), open:cOpen, menu:ck, cls:'cat'});
       if (!cOpen) continue;
       for (const el of list){
-        const ek = 'E' + el.id, kids = kind === 'wall' ? kidsOf.get(el.id) || [] : [];
+        const ek = 'E' + el.id, kids = kind === 'wall' && !q ? kidsOf.get(el.id) || [] : [];
         const hasKids = kind === 'wall' || kind === 'slab' || kind === 'roof' || kids.length, eOpen = treeOpen.has(ek);
         h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' || kind === 'roof' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
         if (!hasKids || !eOpen) continue;
@@ -8774,7 +9396,7 @@ function renderTree(){
 }
 function renderProjectTab(){
   return `<div class="split"><section class="tree-pane" aria-label="Arborescence du projet">
-      <div class="tree-h"><input class="libsearch tq" data-treeq type="search" placeholder="Filtrer les éléments…" value="${esc(treeQuery)}" aria-label="Filtrer"><button class="ib ghost" data-tact="collapse" title="Tout replier">−</button><button class="ib ghost" data-tact="expand" title="Tout déplier">+</button></div>
+      <div class="tree-h"><input class="libsearch tq" data-treeq type="search" placeholder="Filtrer : fenêtre, mur, laine, R+1…" value="${esc(treeQuery)}" aria-label="Filtrer"><button class="ib ghost" data-tact="collapse" title="Tout replier">−</button><button class="ib ghost" data-tact="expand" title="Tout déplier">+</button></div>
       <div class="tree" role="tree">${renderTree()}</div></section>
     <section class="prop-pane" aria-label="Propriétés">${renderProps()}</section></div>`;
 }
@@ -10636,7 +11258,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {look: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, frame: ids => frameEl(ids), hitAt: (x, y) => { const h = paintHit({clientX:x, clientY:y}); return h ? {id:h.id, n:[+h.normal.x.toFixed(2), +h.normal.y.toFixed(2), +h.normal.z.toFixed(2)], p:[+h.point.x.toFixed(2), +h.point.y.toFixed(2), +h.point.z.toFixed(2)], mat:h.obj.userData.mat, coat:!!h.obj.userData.coat} : null; }, coats: () => modelGroup.children.map(g => [g.userData.id, g.children.filter(o => o.userData.coat).map(o => o.userData.mat + (o.userData.tr ? ' ' + JSON.stringify(o.userData.tr) : '')), g.children.filter(o => o.isMesh && !o.userData.coat && o.userData.src && o.userData.src !== o.userData.mat).map(o => o.userData.src + '>' + o.userData.mat)]), roundtrip: () => { const s = migrate(JSON.parse(projectJSON())); return s.els.map(e => ({id:e.id, paint:e.paint, paintOut:e.paintOut, paintIn:e.paintIn, paintUnder:e.paintUnder, paintMap:e.paintMap})).filter(e => e.paint || e.paintOut || e.paintIn || e.paintUnder || e.paintMap); }, matEd: id => openMatEditor(id), paintDefs: () => ({...defs.paint}), uvDbg: id => { const g = modelGroup.children.find(x => x.userData.id === id), out = []; g?.traverse(o => { if (o.isMesh && !o.userData.coat && o.geometry.attributes.uv){ const uv = o.geometry.attributes.uv, P = o.geometry.attributes.position; const N = o.geometry.attributes.normal, side = [...Array(uv.count).keys()].filter(i => Math.abs(N.getY(i)) < 0.5).slice(0, 8); out.push({mat:o.userData.mat, n:uv.count, uv:side.map(i => [+P.getX(i).toFixed(2), +P.getY(i).toFixed(2), +P.getZ(i).toFixed(2), +uv.getX(i).toFixed(3), +uv.getY(i).toFixed(3)])}); } }); return out; }, doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, sk: () => SK, addEl: e => addEl(e), rebuild: () => rebuild(), piecesOf: id => pieces(getEl(id)).length, holesOf: id => slabHoles(getEl(id)), doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {search: {ix: el => elIndex(el), q: q => sParseQuery(q), score: (Q, ix) => sScore(Q, ix), run: (q, items, o) => smartSearch(q, items, o), mats: f => searchMats(f), fams: () => searchFams(), compos: k => searchCompos(k), fam: (id, F) => famIndex(id, F)}, look: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, frame: ids => frameEl(ids), hitAt: (x, y) => { const h = paintHit({clientX:x, clientY:y}); return h ? {id:h.id, n:[+h.normal.x.toFixed(2), +h.normal.y.toFixed(2), +h.normal.z.toFixed(2)], p:[+h.point.x.toFixed(2), +h.point.y.toFixed(2), +h.point.z.toFixed(2)], mat:h.obj.userData.mat, coat:!!h.obj.userData.coat} : null; }, coats: () => modelGroup.children.map(g => [g.userData.id, g.children.filter(o => o.userData.coat).map(o => o.userData.mat + (o.userData.tr ? ' ' + JSON.stringify(o.userData.tr) : '')), g.children.filter(o => o.isMesh && !o.userData.coat && o.userData.src && o.userData.src !== o.userData.mat).map(o => o.userData.src + '>' + o.userData.mat)]), roundtrip: () => { const s = migrate(JSON.parse(projectJSON())); return s.els.map(e => ({id:e.id, paint:e.paint, paintOut:e.paintOut, paintIn:e.paintIn, paintUnder:e.paintUnder, paintMap:e.paintMap})).filter(e => e.paint || e.paintOut || e.paintIn || e.paintUnder || e.paintMap); }, matEd: id => openMatEditor(id), paintDefs: () => ({...defs.paint}), uvDbg: id => { const g = modelGroup.children.find(x => x.userData.id === id), out = []; g?.traverse(o => { if (o.isMesh && !o.userData.coat && o.geometry.attributes.uv){ const uv = o.geometry.attributes.uv, P = o.geometry.attributes.position; const N = o.geometry.attributes.normal, side = [...Array(uv.count).keys()].filter(i => Math.abs(N.getY(i)) < 0.5).slice(0, 8); out.push({mat:o.userData.mat, n:uv.count, uv:side.map(i => [+P.getX(i).toFixed(2), +P.getY(i).toFixed(2), +P.getZ(i).toFixed(2), +uv.getX(i).toFixed(3), +uv.getY(i).toFixed(3)])}); } }); return out; }, doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, sk: () => SK, addEl: e => addEl(e), rebuild: () => rebuild(), piecesOf: id => pieces(getEl(id)).length, holesOf: id => slabHoles(getEl(id)), doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};

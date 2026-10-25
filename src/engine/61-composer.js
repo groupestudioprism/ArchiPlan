@@ -34,10 +34,9 @@ function openComposer({id, apply}){
   const syncUse = () => { const opts = W.kind === 'wall' ? [['mur', USES.mur]] : W.kind === 'roof' ? [['toiture', USES.toiture]] : Object.entries(USES).filter(([k]) => k !== 'mur'); if (!opts.some(([k]) => k === W.use)) W.use = opts[0][0];
     useSel.innerHTML = opts.map(([k, n]) => `<option value="${k}"${k === W.use ? ' selected' : ''}>${esc(n)}</option>`).join('');
     d.querySelector('#cpOrder').textContent = W.kind === 'wall' ? 'Couches de l\'extérieur (en haut) vers l\'intérieur (en bas).' : 'Couches du dessus (en haut) vers le dessous (en bas).'; };
-  const opts = matOptions();
   const renderLayers = () => {
     d.querySelector('#cpLayers').innerHTML = W.layers.map(([m, e], i) => `<div class="cl" data-i="${i}"><span class="swt" style="background:${mat(m).color}"></span>
-      <select data-lm="${i}" aria-label="Matériau de la couche ${i + 1}">${opts.replace(`value="${esc(m)}"`, `value="${esc(m)}" selected`)}</select>
+      ${pickHTML({attrs:`data-lm="${i}" aria-label="Matériau de la couche ${i + 1}"`, cur:m, kind:'mat', cls:'cl-pick'})}
       <span class="in"><input data-le="${i}" type="number" step="1" min="0.1" value="${rnd(e * 1000)}" aria-label="Épaisseur en mm"><em>mm</em></span>
       <button class="x" data-lu="${i}" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button class="x" data-ld="${i}" aria-label="Descendre"${i < W.layers.length - 1 ? '' : ' disabled'}>↓</button><button class="x" data-lx="${i}" aria-label="Supprimer la couche"${W.layers.length > 1 ? '' : ' disabled'}>×</button></div>`).join('');
   };
@@ -49,7 +48,7 @@ function openComposer({id, apply}){
   d.querySelectorAll('[data-cond]').forEach(i => i.oninput = () => { const v = num(i.value); if (!Number.isNaN(v)){ W.cond[i.dataset.cond] = v; calc(); } });
   d.querySelector('#cpLayers').addEventListener('input', e => { const i = e.target.dataset.le; if (i != null){ const v = num(e.target.value); if (v > 0){ W.layers[+i][1] = v / 1000; calc(); } } });
   d.querySelector('#cpLayers').addEventListener('change', e => { const i = e.target.dataset.lm; if (i != null){ W.layers[+i][0] = e.target.value; renderLayers(); calc(); } });
-  d.querySelector('#cpLayers').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const i = +(b.dataset.lu ?? b.dataset.ld ?? b.dataset.lx);
+  d.querySelector('#cpLayers').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.classList.contains('spk-b')) return; const i = +(b.dataset.lu ?? b.dataset.ld ?? b.dataset.lx);
     if (b.dataset.lu != null && i > 0) [W.layers[i - 1], W.layers[i]] = [W.layers[i], W.layers[i - 1]];
     else if (b.dataset.ld != null && i < W.layers.length - 1) [W.layers[i + 1], W.layers[i]] = [W.layers[i], W.layers[i + 1]];
     else if (b.dataset.lx != null && W.layers.length > 1) W.layers.splice(i, 1);

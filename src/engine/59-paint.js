@@ -135,7 +135,7 @@ function paintFields(el){
   let h = '';
   for (const [k, label] of keys){
     const p = paintOf(el[k]), m = p ? libMats()[p.m] : null;
-    h += `<label class="f wide"><span>${label}</span><span class="in"><select data-f="${k}">${paintMatOptions(p?.m || '')}</select></span></label>`;
+    h += pickField(label, k, p?.m || '', 'mat', {paint:true, none:'Aucun revêtement (matériau d\'origine)'});
     if (p) h += `<label class="f"><span>Taille du motif</span><span class="in"><input data-f="${k}.s" type="number" step="0.05" min="0.05" value="${p.s > 0 ? p.s : ''}" placeholder="${m ? nf(texNat(m)[0]) : ''}"><em>m</em></span></label><label class="f"><span>Rotation</span><span class="in"><input data-f="${k}.r" type="number" step="15" value="${p.r || 0}"><em>°</em></span></label>`;
   }
   if (el.kind === 'inst' && el.paintMap && Object.keys(el.paintMap).length){

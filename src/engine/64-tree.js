@@ -36,7 +36,7 @@ function treeRow({key, depth, icon, label, meta = '', open = null, selected = fa
     ${menu ? `<button class="td" data-tmenu="${esc(menu)}" aria-label="Actions">${DOTS}</button>` : ''}</div>`;
 }
 function renderTree(){
-  const q = treeQuery.trim().toLowerCase(), match = el => !q || elName(el).toLowerCase().includes(q) || String(el.id) === q;
+  const q = treeQuery.trim(), hasQ = sHasQuery(q), Q = hasQ ? sParseQuery(q) : null, match = el => !hasQ || String(el.id) === q || !!sScore(Q, elIndex(el));
   const ids = TREE_NOSEL ? new Set() : new Set(selIds()); let h = '';
   const byId = new Map(state.els.map(e => [e.id, e])), kidsOf = new Map();
   for (const x of state.els) if (x.kind === 'inst' && x.host != null){ let a = kidsOf.get(x.host); if (!a) kidsOf.set(x.host, a = []); a.push(x); }
@@ -47,13 +47,13 @@ function renderTree(){
     h += treeRow({key:lk, depth:1, icon:ico('lvl'), label:`${esc(L.n)} <em>${nf(L.z)} m</em>`, meta:String(els.length), open:lOpen, hidden:hiddenLvls.has(li), menu:lk, cls:li === curLvl ? 'cur' : '', selected:false});
     if (!lOpen) return;
     for (const [kind, cname] of TREE_CATS){
-      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && byId.get(e.host)));
+      const list = els.filter(e => e.kind === kind && !(kind === 'inst' && e.host && byId.get(e.host) && !q)); // avec un filtre, les menuiseries posées dans un mur sont listées directement
       if (!list.length) continue;
       const ck = lk + '|' + kind, cOpen = treeOpen.has(ck) || !!q;
       h += treeRow({key:ck, depth:2, icon:ico(kind), label:cname, meta:String(list.length), open:cOpen, menu:ck, cls:'cat'});
       if (!cOpen) continue;
       for (const el of list){
-        const ek = 'E' + el.id, kids = kind === 'wall' ? kidsOf.get(el.id) || [] : [];
+        const ek = 'E' + el.id, kids = kind === 'wall' && !q ? kidsOf.get(el.id) || [] : [];
         const hasKids = kind === 'wall' || kind === 'slab' || kind === 'roof' || kids.length, eOpen = treeOpen.has(ek);
         h += treeRow({key:ek, depth:3, icon:kind === 'wall' || kind === 'slab' || kind === 'roof' ? `<span class="tsw">${layerBar(compo(el.type).layers)}</span>` : ico(kind), label:esc(elName(el)), meta:elMeta(el), open:hasKids ? eOpen : null, selected:ids.has(el.id), hidden:hiddenIds.has(el.id), menu:ek, title:elName(el)});
         if (!hasKids || !eOpen) continue;
@@ -70,7 +70,7 @@ function renderTree(){
 }
 function renderProjectTab(){
   return `<div class="split"><section class="tree-pane" aria-label="Arborescence du projet">
-      <div class="tree-h"><input class="libsearch tq" data-treeq type="search" placeholder="Filtrer les éléments…" value="${esc(treeQuery)}" aria-label="Filtrer"><button class="ib ghost" data-tact="collapse" title="Tout replier">−</button><button class="ib ghost" data-tact="expand" title="Tout déplier">+</button></div>
+      <div class="tree-h"><input class="libsearch tq" data-treeq type="search" placeholder="Filtrer : fenêtre, mur, laine, R+1…" value="${esc(treeQuery)}" aria-label="Filtrer"><button class="ib ghost" data-tact="collapse" title="Tout replier">−</button><button class="ib ghost" data-tact="expand" title="Tout déplier">+</button></div>
       <div class="tree" role="tree">${renderTree()}</div></section>
     <section class="prop-pane" aria-label="Propriétés">${renderProps()}</section></div>`;
 }
