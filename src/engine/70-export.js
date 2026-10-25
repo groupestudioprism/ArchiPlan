@@ -145,14 +145,15 @@ function buildIFC(){
 }
 
 /* ---------- GLB pour Archi Vision (Unity) ---------- */
-function exportMat(id, cache){
-  if (cache[id]) return cache[id];
+function exportMat(id, cache, tr = null){
+  const key = id + (tr && (tr.s || tr.r) ? '|' + (tr.s || '') + '|' + (tr.r || 0) : ''); if (cache[key]) return cache[key];
   const m = mat(id), transp = m.opacity != null && m.opacity < 1;
-  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' ? texFor(id) : null,
+  // la texture porte l'échelle et la rotation du motif (KHR_texture_transform dans le glTF)
+  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' ? texAt(id, tr, false) : null,
     roughness:m.rough ?? 0.9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1});
   if (!M.map) M.color = new THREE.Color(m.color);
   M.userData = {archiplanMaterial:id, lambda:m.lambda, rho:m.rho, categorie:m.cat};
-  return cache[id] = M;
+  return cache[key] = M;
 }
 function buildGLB(){
   return new Promise((res, rej) => {
@@ -162,19 +163,21 @@ function buildGLB(){
     const cache = {};
     for (const el of state.els){
       const g = new THREE.Group(), info = {id:el.id, type:el.kind};
-      const geoBy = {};
+      const geoBy = {}, fins = {};
       if (el.kind === 'inst'){
         const F = fam(el.fam); g.name = `${F?.nom || 'Composant'} ${el.id}`; Object.assign(info, {famille:F?.nom, categorie:F?.cat, typeFamille:F?.types?.[el.type | 0]?.nom, parametres:F ? famScope(F, el) : {}, hote:el.host || null});
-        for (const so of instSolids(el)) (geoBy[so.m] ??= []).push(solidGeo(so));
+        for (const so of instSolids(el)){ const f = instFinish(el, so.m), k = f ? so.m + '|' + f.m : so.m; (geoBy[k] ??= []).push(solidGeo(so)); fins[k] = f; }
       } else {
         g.name = `${KIND_NAME[el.kind]} ${el.id}`;
         if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){ const C = compo(el.type), Lr = layersInToOut(el), th = thermal(Lr, elUse(el)); Object.assign(info, {composition:C.nom, couches:C.layers.map(([m, e]) => ({materiau:mat(m).nom, epaisseur:e})), U:Math.round(th.U * 1000) / 1000, lot:C.lot}); }
         else Object.assign(info, {materiau:mat(el.mat).nom});
-        for (const pc of pieces(el)) (geoBy[pc.mat] ??= []).push(pieceGeo(pc));
+        for (const pc of pieces(el)){ const f = pieceFinish(el, pc), k = f ? pc.mat + '|' + f.m : pc.mat; (geoBy[k] ??= []).push(pieceGeo(pc)); fins[k] = f; }
+        for (const pc of paintCoats(el)){ const k = '~' + pc.mat; (geoBy[k] ??= []).push(pieceGeo(pc)); fins[k] = {m:pc.mat, tr:pc.tr, coat:true}; }   // revêtements d'affichage (Archi Vision les montre)
       }
-      for (const [m, geos] of Object.entries(geoBy)){
+      for (const [k, geos] of Object.entries(geoBy)){
+        const f = fins[k], m = f ? f.m : k, src = f?.coat ? null : k.split('|')[0];
         const geo = geos.length === 1 ? geos[0] : mergeGeos(geos.map(x => x.index ? x.toNonIndexed() : x));
-        const mesh = new THREE.Mesh(geo, exportMat(m, cache)); mesh.name = `${g.name} - ${mat(m).nom}`; mesh.userData = {materiau:mat(m).nom}; g.add(mesh);
+        const mesh = new THREE.Mesh(geo, exportMat(m, cache, f ? f.tr : null)); mesh.name = `${g.name} - ${mat(m).nom}`; mesh.userData = src && src !== m ? {materiau:mat(src).nom, revetement:mat(m).nom} : {materiau:mat(m).nom}; g.add(mesh);
       }
       g.userData = {archiplan:info};
       (lv[el.lvl] || root).add(g);

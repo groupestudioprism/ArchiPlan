@@ -146,25 +146,43 @@ function openMatEditor(id){
       ${f('gwp', 'Carbone (A1-A3)', 'kg CO₂e/kg')}${f('R', 'Résistance fixe (lame d\'air)', 'm²·K/W', '0.01')}
       <label class="f"><span>Couleur</span><span class="in"><input id="mtColor" type="color" value="${esc(base.color)}"${ro ? ' disabled' : ''}></span></label>
       <label class="f"><span>Motif de rendu</span><span class="in"><select id="mtTex"${ro ? ' disabled' : ''}>${Object.entries(PATTERNS).map(([k, n]) => `<option value="${k}"${k === base.tex ? ' selected' : ''}>${n}</option>`).join('')}</select></span></label>
+      <label class="f"><span>Taille du motif</span><span class="in"><input id="mtScale" type="number" step="0.05" min="0.05" inputmode="decimal" value="${base.texScale > 0 ? base.texScale : ''}" placeholder="${nf(texNat(base)[0])}"><em>m</em></span></label>
+      <label class="f"><span>Rotation du motif</span><span class="in"><input id="mtRot" type="number" step="15" inputmode="decimal" value="${+base.texRot || 0}"><em>°</em></span></label>
+      <div class="f wide"><span>Échelle rapide</span><div class="mtscale">${[0.25, 0.5, 1, 2, 4].map(v => `<button type="button" class="btn" data-mts="${v}">${nf(v)} m</button>`).join('')}<button type="button" class="btn" data-mts="">Naturelle (${nf(texNat(base)[0])} m)</button><button type="button" class="btn" data-mtr="90">⟳ 90°</button></div></div>
       <div class="f wide"><span>Bibliothèque de textures</span><div class="patlib" id="mtPats">${[...new Set(Object.values(TEX_LIB).map(v => v.grp))].map(gp => `<div class="patg"><em>${esc(gp)}</em><div class="patgrid">${Object.entries(TEX_LIB).filter(([, v]) => v.grp === gp).map(([k, v]) => `<button type="button" class="pat${k === base.tex ? ' on' : ''}" data-pat="${k}" title="${esc(v.nom)}"${ro ? ' disabled' : ''}><img alt="" data-patimg="${k}"><span>${esc(v.nom)}</span></button>`).join('')}</div></div>`).join('')}</div></div>
-    </div><canvas id="mtPrev" width="256" height="96" class="mtprev"></canvas>
-    <p class="hint">Laissez « Résistance fixe » vide pour un matériau courant : la résistance est alors e / λ. Pour une lame d'air, indiquez sa résistance (0,18 m²·K/W pour une lame non ventilée).</p></div>
-    <footer class="ed-f">${ro ? '<button class="btn primary" id="mtDup">Dupliquer pour le modifier</button>' : `${owner === 'perso' ? '<button class="btn danger" id="mtDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button><button class="btn primary" id="mtSave">Enregistrer dans ma bibliothèque</button>`}</footer>`;
+    </div><canvas id="mtPrev" width="512" height="160" class="mtprev"></canvas>
+    <p class="hint">Aperçu à l'échelle : la règle indique 1 m. La taille du motif est celle d'une tuile de texture dans la maquette (une brique de parement : 0,50 m de tuile pour 4 rangs) ; les UV de la maquette sont en mètres, le motif garde donc sa taille sur toutes les faces. Laissez « Résistance fixe » vide pour un matériau courant : la résistance est alors e / λ. Pour une lame d'air, indiquez sa résistance (0,18 m²·K/W pour une lame non ventilée).</p></div>
+    <footer class="ed-f">${ro ? '<button class="btn" id="mtScaleApply">Appliquer l\'échelle au projet</button><button class="btn primary" id="mtDup">Dupliquer pour le modifier</button>' : `${owner === 'perso' ? '<button class="btn danger" id="mtDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button><button class="btn primary" id="mtSave">${owner === 'projet' ? 'Enregistrer dans le projet' : 'Enregistrer dans ma bibliothèque'}</button>`}</footer>`;
   const d = openEDlg(html);
-  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const img = paintV2(tmpId) || paint(tmpId).image; delete MATS[tmpId];
-    g.clearRect(0, 0, cv.width, cv.height); const k = cv.height / img.height * 1.4; for (let x = 0; x < cv.width; x += img.width * k) g.drawImage(img, x, 0, img.width * k, img.height * k); };
+  const scaleOf = () => { const v = num(d.querySelector('#mtScale').value); return v > 0 ? v : 0; }, rotOf = () => +d.querySelector('#mtRot').value || 0;
+  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const img = paintV2(tmpId) || paint(tmpId).image; const [nx, ny] = texNat(MATS[tmpId]); delete MATS[tmpId];
+    // fenêtre de 4 m × 1,25 m à l'échelle : une tuile = taille du motif
+    const ppm = cv.width / 4, s = scaleOf() || nx, f = s / nx, pat = g.createPattern(img, 'repeat');
+    g.clearRect(0, 0, cv.width, cv.height); g.save(); g.translate(0, cv.height);   // origine en bas à gauche, comme les UV « monde »
+    pat.setTransform(new DOMMatrix().rotate(-rotOf()).scale(nx * f * ppm / img.width, ny * f * ppm / img.height)); g.fillStyle = pat; g.fillRect(0, -cv.height, cv.width, cv.height); g.restore();
+    g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(12, cv.height - 18, ppm, 3); g.fillRect(12, cv.height - 24, 2, 9); g.fillRect(12 + ppm - 2, cv.height - 24, 2, 9); g.font = '600 12px Inter, sans-serif'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 3; g.strokeText('1 m', 16 + ppm, cv.height - 14); g.fillText('1 m', 16 + ppm, cv.height - 14);
+    d.querySelectorAll('[data-mts]').forEach(b => b.classList.toggle('on', (b.dataset.mts === '' ? 0 : +b.dataset.mts) === scaleOf())); };
   const pats = () => { const c = d.querySelector('#mtColor').value; d.querySelectorAll('[data-patimg]').forEach((im, i) => setTimeout(() => { im.src = patternPreview(im.dataset.patimg, c); }, i * 8)); };
-  prev(); pats(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtColor').onchange = pats; d.querySelector('#mtTex').onchange = () => { d.querySelectorAll('[data-pat]').forEach(b => b.classList.toggle('on', b.dataset.pat === d.querySelector('#mtTex').value)); prev(); };
+  prev(); pats(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtColor').onchange = pats; d.querySelector('#mtTex').onchange = () => { d.querySelectorAll('[data-pat]').forEach(b => b.classList.toggle('on', b.dataset.pat === d.querySelector('#mtTex').value)); d.querySelector('#mtScale').placeholder = nf(texNat({...base, tex:d.querySelector('#mtTex').value})[0]); prev(); };
+  d.querySelector('#mtScale').oninput = prev; d.querySelector('#mtRot').oninput = prev;
+  d.querySelectorAll('[data-mts]').forEach(b => b.onclick = () => { d.querySelector('#mtScale').value = b.dataset.mts; prev(); });
+  d.querySelector('[data-mtr]').onclick = () => { d.querySelector('#mtRot').value = (rotOf() + 90) % 360; prev(); };
   d.querySelectorAll('[data-pat]').forEach(b => b.onclick = () => { const sel = d.querySelector('#mtTex'); if (![...sel.options].some(o => o.value === b.dataset.pat)) sel.add(new Option(TEX_LIB[b.dataset.pat].nom, b.dataset.pat)); sel.value = b.dataset.pat; sel.onchange(); });
-  const dup = d.querySelector('#mtDup'); if (dup) dup.onclick = () => { const nid = 'M-' + uid8(); USER_LIB.mats[nid] = {...base, nom:base.nom + ' (perso)'}; saveUserLib(); closeEDlg(); openMatEditor(nid); renderPanel(); };
-  const del = d.querySelector('#mtDel'); if (del) del.onclick = () => { delete USER_LIB.mats[id]; saveUserLib(); closeEDlg(); resetMats(); delete texCache[id]; rebuild(); toast('Matériau retiré de ma bibliothèque (les projets qui l\'utilisent en gardent une copie)'); };
+  const dup = d.querySelector('#mtDup'); if (dup) dup.onclick = () => { const nid = 'M-' + uid8(); USER_LIB.mats[nid] = {...base, nom:base.nom + ' (perso)', ...(scaleOf() ? {texScale:scaleOf()} : {}), ...(rotOf() ? {texRot:rotOf()} : {})}; saveUserLib(); closeEDlg(); openMatEditor(nid); renderPanel(); };
+  const del = d.querySelector('#mtDel'); if (del) del.onclick = () => { delete USER_LIB.mats[id]; saveUserLib(); closeEDlg(); resetMats(); texForget(id); rebuild(); toast('Matériau retiré de ma bibliothèque (les projets qui l\'utilisent en gardent une copie)'); };
+  // matériau de base : l'échelle et la rotation du motif se règlent sans le dupliquer, dans ce projet
+  const sa = d.querySelector('#mtScaleApply'); if (sa) sa.onclick = () => { pushHist(); const s = scaleOf(), r = rotOf(); if (!s && !r) delete state.lib.mats[id]; else state.lib.mats[id] = {...MATS[id], ...(s ? {texScale:s} : {}), ...(r ? {texRot:r} : {})}; texForget(id); resetMats(); closeEDlg(); rebuild(); renderPanel(); toast(s || r ? 'Échelle du motif enregistrée pour ce projet' : 'Échelle naturelle rétablie'); };
   const sv = d.querySelector('#mtSave'); if (sv) sv.onclick = () => {
     const m = {nom:d.querySelector('#mtName').value.trim() || 'Matériau', cat:d.querySelector('#mtCat').value, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value, rough:base.rough ?? 0.9};
+    if (base.metal != null) m.metal = base.metal; if (base.opacity != null) m.opacity = base.opacity; if (base.tx) m.tx = base.tx; if (base.ty) m.ty = base.ty;
     for (const k of ['rho', 'lambda', 'c', 'mu', 'gwp', 'R']){ const v = num(d.querySelector(`[data-m="${k}"]`).value); if (!Number.isNaN(v)) m[k] = v; }
+    if (scaleOf()) m.texScale = scaleOf(); if (rotOf()) m.texRot = rotOf();
     if (!(m.lambda > 0) && m.R == null) return toast('Indiquez une conductivité λ positive (ou une résistance fixe).');
     if (!(m.rho >= 0)) m.rho = 0;
-    const mid = owner === 'perso' ? id : 'M-' + uid8(); USER_LIB.mats[mid] = m; if (state.lib.mats[mid]) state.lib.mats[mid] = {...m};
-    saveUserLib(); delete texCache[mid]; resetMats(); closeEDlg(); rebuild(); libTab = 'mats'; renderPanel(); toast('Matériau enregistré');
+    let mid = id;
+    if (owner === 'projet'){ pushHist(); state.lib.mats[id] = m; }   // matériau du projet (ou réglage d'un matériau de base) : modifié en place
+    else { mid = owner === 'perso' ? id : 'M-' + uid8(); USER_LIB.mats[mid] = m; if (state.lib.mats[mid]) state.lib.mats[mid] = {...m}; saveUserLib(); }
+    texForget(mid); resetMats(); closeEDlg(); rebuild(); libTab = 'mats'; renderPanel(); toast('Matériau enregistré');
   };
 }
 

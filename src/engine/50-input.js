@@ -4,7 +4,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, sketch:{type:'acier'}, comp:{fam:'fenetre-2v', type:1, rot:0}};
+const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, sketch:{type:'acier'}, comp:{fam:'fenetre-2v', type:1, rot:0}, paint:{m:'peintBlancCasse', s:0, r:0, pip:false}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -343,6 +343,7 @@ const PROMPTS = {
   dim:() => !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote',
   sketch:() => skPrompt(),
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
+  paint:() => view === '2d' ? '<b>Peindre</b> : passez en vue 3D pour cliquer les faces' : defs.paint.pip ? '<b>Pipette</b> : cliquez une face pour reprendre son matériau et l\'échelle de son motif' : `<b>Peindre</b> : cliquez une face (mur : la face visée, dalle : dessus ou dessous, composant : la pièce visée) · <kbd>Alt</kbd> + clic = pipette`,
 };
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
@@ -356,8 +357,9 @@ function setTool(t){
   if (tool === 'sketch' && t !== 'sketch') skEnd();
   tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
   $$('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t));
-  canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : 'crosshair';
+  canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : t === 'paint' ? 'cell' : 'crosshair';
   if (t === 'comp' && activeTab !== 'lib'){ activeTab = 'lib'; libTab = 'fams'; renderPanel(); }
+  if (t === 'paint' && view === '2d') setView('3d');   // on peint des faces : vue 3D
   syncHud(); setPrompt();
 }
 function syncHud(){
@@ -372,6 +374,7 @@ function syncHud(){
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
   $('#skPill').hidden = tool !== 'sketch'; if (tool === 'sketch') $('#skModeIn').value = SK.mode;
   $('#shapePill').hidden = tool !== 'vol'; if (tool === 'vol') $('#shapeIn').value = defs.vol.shape || 'rect';
+  paintHud();
   const tpp = $('#topPill'), hasTop = tool === 'wall' || tool === 'col'; tpp.hidden = !hasTop;
   if (hasTop){ $('#topIn').querySelector('[value="above"]').hidden = tool !== 'col'; if (tool !== 'col' && defs.wall.top === 'above') defs.wall.top = 'next'; $('#topIn').value = defs[tool].top || ''; }
   hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col' || tool === 'roof') || (hasTop && !!defs[tool].top && (defs[tool].top === 'above' || !!state.levels[curLvl + 1]));
@@ -432,7 +435,7 @@ function placePoint(pt){
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
 const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', forme:'vol', esquisse:'sketch', s:'sketch', composant:'comp', f:'comp', fenetre:'join', porte:'join',
-  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', menuiserie:'join', n:'join', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select'};
+  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', menuiserie:'join', n:'join', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select', peindre:'paint', peinture:'paint', texture:'paint', x:'paint'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
   const rel = s.startsWith('@'); if (rel) s = s.slice(1).trim();
@@ -502,6 +505,7 @@ canvas.addEventListener('pointerdown', e => {
 });
 canvas.addEventListener('pointermove', e => {
   if (push){ pushMove(e); return; }
+  if (tool === 'paint'){ if (e.pointerType === 'mouse' || e.pointerType === 'pen') paintHover(e); return; }
   const g = cursorPoint(e);
   if (g) $('#coords').textContent = `x ${nf(g[0])} · y ${nf(g[1])}${draw.workZ != null ? ` · z ${nf(draw.workZ)}` : ''}`;
   if (tool === 'select' || tool === 'push' || !g) { if (tool === 'push' && view !== '2d'){ const h = hitModel(e); canvas.style.cursor = h?.id ? 'ns-resize' : 'default'; } return; }
@@ -517,11 +521,12 @@ canvas.addEventListener('pointerup', e => {
   if (d.b !== 0 || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 7 || (performance.now() - d.t > 700 && !longTouch)) return;
   if (longTouch){ pick(e, true); try { navigator.vibrate?.(12); } catch(_){} return; }   // appui long au doigt : ajouter / retirer de la sélection
   if (tool === 'select' || tool === 'push'){ pick(e); return; }
+  if (tool === 'paint'){ paintPick(e); return; }
   const g = cursorPoint(e); if (!g) return;
   const s = tool === 'comp' ? {pt:g} : snap(g); draw.snap = s; placePoint(s.pt);
 });
 canvas.addEventListener('dblclick', () => { if (tool === 'wall' && draw.start) cancelDraw(); else if (tool === 'select' && sel){ const el = getEl(sel); if (el?.kind === 'inst' && !el.host){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); } } });
-canvas.addEventListener('pointerleave', () => { if (tool !== 'select'){ $('#live').hidden = true; drawSnapGlyph(null); } });
+canvas.addEventListener('pointerleave', () => { if (tool !== 'select'){ $('#live').hidden = true; drawSnapGlyph(null); } if (tool === 'paint') paintHoverClear(); });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 function pick(e, add = false){
   const h = hitModel(e); const id = h?.id ?? null;

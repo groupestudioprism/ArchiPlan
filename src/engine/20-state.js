@@ -32,6 +32,8 @@ function embedUsedLib(){
   for (const el of state.els){
     if (el.type && (el.kind === 'wall' || el.kind === 'slab')){ used.c.add(el.type); compo(el.type).layers.forEach(([m]) => used.m.add(m)); }
     if (el.mat) used.m.add(el.mat);
+    for (const k of ['paint', 'paintUnder', 'paintOut', 'paintIn']) if (el[k]?.m) used.m.add(el[k].m);   // revêtements d'affichage
+    if (el.paintMap) for (const q of Object.values(el.paintMap)) if (q?.m) used.m.add(q.m);
     if (el.kind === 'inst') walkFam(el.fam);
   }
   for (const id of used.c) if (USER_LIB.compos[id]) state.lib.compos[id] = JSON.parse(JSON.stringify(USER_LIB.compos[id]));

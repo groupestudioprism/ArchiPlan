@@ -119,10 +119,10 @@ const planArea3 = pts => Math.abs(sArea(pts.map(q => [q[0], q[1]])));
 function roofPieces(el){
   const G = roofGeom(el), C = compo(el.type), c = Math.cos(G.a), out = [], fv = el.frameView;
   if (!fv) for (const pan of G.pans){
-    let dzs = 0; const poly = pan.map(q => [q[0], q[1]]);
+    let dzs = 0, li = 0; const poly = pan.map(q => [q[0], q[1]]);
     for (const [m, e] of C.layers){
       const dz = e / c, top = pan.map(q => [q[0], q[1], q[2] - dzs]);
-      out.push({poly, top, ext:[0, 0, -dz], base:Math.min(...top.map(q => q[2])) - dz, h:dz, mat:m, lot:C.lot || 'Couverture', e, roof:true});
+      out.push({poly, top, ext:[0, 0, -dz], base:Math.min(...top.map(q => q[2])) - dz, h:dz, mat:m, lot:C.lot || 'Couverture', e, roof:true, li:li++});
       dzs += dz;
     }
   }
@@ -183,7 +183,13 @@ function prismGeo(top, ext){
   const n = top.length, toS = q => [q[0], q[2], -q[1]], E = toS(ext), T = top.map(toS), B = T.map(q => [q[0] + E[0], q[1] + E[1], q[2] + E[2]]);
   let nx = 0, ny = 0, nz = 0; for (let i = 0; i < n; i++){ const a = T[i], b = T[(i + 1) % n]; nx += (a[1] - b[1]) * (a[2] + b[2]); ny += (a[2] - b[2]) * (a[0] + b[0]); nz += (a[0] - b[0]) * (a[1] + b[1]); }
   let top2 = T, bot = B; if (nx * E[0] + ny * E[1] + nz * E[2] > 0){ top2 = T.slice().reverse(); bot = B.slice().reverse(); }
-  const pos = [], uv = [], push = (...pts) => pts.forEach(p => { pos.push(p[0], p[1], p[2]); uv.push(p[0], -p[2] + p[1] * 0.3); });
+  // UV « monde » par face : u le long de l'horizontale de la face, v le long de sa ligne de plus grande pente (vraie grandeur :
+  // les tuiles d'un rampant gardent leur taille réelle, un pignon se texture comme un mur)
+  const basis = pts => { const a = pts[0], b = pts[1], c = pts[2]; let n = [(b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]), (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]), (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])];
+    const L = Math.hypot(...n) || 1; n = n.map(v => v / L); if (Math.abs(n[1]) > 0.999) return [[1, 0, 0], [0, 0, -1]];
+    let e1 = [n[2], 0, -n[0]]; const l1 = Math.hypot(e1[0], e1[2]) || 1; e1 = [e1[0] / l1, 0, e1[2] / l1]; if (e1[0] < -1e-9 || (Math.abs(e1[0]) < 1e-9 && e1[2] > 0)) e1 = [-e1[0], 0, -e1[2]];
+    const e2 = [n[1] * e1[2] - n[2] * e1[1], n[2] * e1[0] - n[0] * e1[2], n[0] * e1[1] - n[1] * e1[0]]; return [e1, e2[1] < 0 ? e2.map(v => -v) : e2]; };
+  const pos = [], uv = [], push = (...pts) => { const [e1, e2] = basis(pts); pts.forEach(p => { pos.push(p[0], p[1], p[2]); uv.push(p[0] * e1[0] + p[1] * e1[1] + p[2] * e1[2], p[0] * e2[0] + p[1] * e2[1] + p[2] * e2[2]); }); };
   for (let i = 1; i < n - 1; i++) push(top2[0], top2[i], top2[i + 1]);
   for (let i = 1; i < n - 1; i++) push(bot[0], bot[i + 1], bot[i]);
   for (let i = 0; i < n; i++){ const j = (i + 1) % n; push(top2[i], bot[i], bot[j]); push(top2[i], bot[j], top2[j]); }

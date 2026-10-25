@@ -4,7 +4,7 @@
    gwp kg CO2e/kg (production A1-A3, carbone biogénique non compté) · R résistance fixe (m²·K/W) pour les lames d'air.
    tex : motif de texture procédurale du rendu réaliste ; tx/ty taille du motif (m). */
 const MAT_CATS = ['Maçonnerie', 'Béton et mortiers', 'Isolants', 'Bois et dérivés', 'Plâtre et plaques', 'Métaux', 'Verre et plastiques',
-  'Revêtements de sol', 'Couverture et étanchéité', 'Lames d\'air et divers'];
+  'Revêtements de sol', 'Couverture et étanchéité', 'Lames d\'air et divers', 'Peintures et finitions'];
 const MATS = {};
 function M(id, nom, cat, rho, lambda, c, mu, color, tex, gwp, extra = {}){ MATS[id] = {nom, cat, rho, lambda, c, mu, color, tex, gwp, rough:0.9, ...extra}; }
 // ---- Maçonnerie
@@ -117,6 +117,23 @@ M('aluAnthr',   'Aluminium laqué anthracite',         'Métaux', 2700, 160, 880
 M('feuillageC', 'Végétal (conifère)',                 "Lames d'air et divers", 300, 0.10, 1500, 5, '#3F6B45', 'grass', 0);
 M('fleurs',     'Végétal (massif fleuri)',            "Lames d'air et divers", 300, 0.10, 1500, 5, '#B8749A', 'grass', 0);
 M('vegetal',    'Végétal (feuillage)',                "Lames d'air et divers", 300, 0.10, 1500, 5, '#5E8C4A', 'grass', 0);
+// ---- Peintures et finitions (revêtements d'affichage posés avec l'outil Peindre ; texScale = taille du motif en m, texRot = rotation)
+M('peintBlancCasse','Peinture blanc cassé',              'Peintures et finitions', 1400, 0.50, 1000, 100, '#F1EEE6', 'plain', 2.0, {rough:0.85, texScale:2});
+M('peintGrisPerle','Peinture gris perle',                'Peintures et finitions', 1400, 0.50, 1000, 100, '#C9CBCC', 'plain', 2.0, {rough:0.85, texScale:2});
+M('peintBleuNuit','Peinture bleu nuit',                  'Peintures et finitions', 1400, 0.50, 1000, 100, '#2E3B55', 'plain', 2.0, {rough:0.8, texScale:2});
+M('peintTerracotta','Peinture terracotta',               'Peintures et finitions', 1400, 0.50, 1000, 100, '#C4714F', 'plain', 2.0, {rough:0.85, texScale:2});
+M('peintVertSauge','Peinture vert sauge',                'Peintures et finitions', 1400, 0.50, 1000, 100, '#93A48B', 'plain', 2.0, {rough:0.85, texScale:2});
+M('enduitGratteBlanc','Enduit gratté blanc',             'Peintures et finitions', 1600, 0.80, 1000, 15,  '#ECE7DC', 'render', 0.15, {rough:0.95, texScale:1});
+M('enduitGratteGris','Enduit gratté gris',               'Peintures et finitions', 1600, 0.80, 1000, 15,  '#B3B1AC', 'render', 0.15, {rough:0.95, texScale:1});
+M('enduitTaloche','Enduit taloché ocre',                 'Peintures et finitions', 1600, 0.80, 1000, 15,  '#D8B98C', 'plaster', 0.15, {rough:0.9, texScale:2});
+M('bardageVertical','Bardage bois vertical (claire-voie)','Peintures et finitions', 500, 0.13, 1600, 50, '#A07A52', 'cladV', 0.26, {rough:0.75, texScale:0.6});
+M('bardageGris','Bardage bois horizontal grisé',         'Peintures et finitions', 500, 0.13, 1600, 50,  '#9A9388', 'cladding', 0.26, {rough:0.8, texScale:0.6});
+M('carrelage60','Grès cérame 60 × 60 gris clair',       'Peintures et finitions', 2300, 1.30, 840, 200, '#D7D4CC', 'tile60', 0.78, {rough:0.4, texScale:1.2});
+M('carrelageAnth','Grès cérame 60 × 60 anthracite',     'Peintures et finitions', 2300, 1.30, 840, 200, '#5A5D62', 'tile60', 0.78, {rough:0.45, texScale:1.2});
+M('parquetChevrons','Parquet chêne point de Hongrie',    'Peintures et finitions', 700, 0.18, 1600, 50,  '#B5895A', 'herringbone', 0.30, {rough:0.55, texScale:0.8});
+M('parquetClair','Parquet chêne clair à lames larges',   'Peintures et finitions', 700, 0.18, 1600, 50,  '#D2B088', 'parquet', 0.30, {rough:0.55, tx:1.5, ty:0.19});
+M('briqueParement','Brique de parement rouge',           'Peintures et finitions', 1800, 0.80, 1000, 16,  '#A95A41', 'brick', 0.24, {rough:0.9, texScale:0.5});
+M('pierreParement','Pierre de parement claire',          'Peintures et finitions', 2200, 1.70, 1000, 40,  '#D6CBB5', 'stone', 0.08, {rough:0.9, texScale:1.2});
 
 /* ============ Compositions de base (murs : extérieur → intérieur ; planchers et toitures : haut → bas) ============ */
 const COMPOS = {

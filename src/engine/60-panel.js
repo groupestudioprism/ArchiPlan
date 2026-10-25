@@ -82,6 +82,7 @@ function renderProps(){
     h += field('Longueur', 'len', L, 'm') + linkFields(el);
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
     h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       ${fireCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(T * 100, 1)} cm</dd><dt>Surface brute</dt><dd>${nf(L * el.h)} m²</dd><dt>Ouvertures</dt><dd>${ops.length}</dd><dt>Volume net</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
@@ -100,6 +101,7 @@ function renderProps(){
     h += selectField('Plafond', 'rceil', Object.entries(ROOF_CEIL), el.ceil || '', false);
     h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
     if (el.gable !== false && (el.shape || '2') !== '4' && (el.shape || '2') !== '0') h += selectField('Mur des pignons', 'rgtype', wallOpts, el.gableType || '', false);
+    h += paintFields(el);
     h += `</div>${poly ? `<p class="hint">Toit dessiné sur un contour de ${el.poly.length} côtés, découpé en ${G.wings.length} aile${G.wings.length > 1 ? 's' : ''} (noues automatiques).</p>` : ''}
       <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button><button class="btn" data-act="roof-attach">Attacher les murs dessous</button>${state.els.some(w => w.kind === 'wall' && w.top === 'roof' && roofOver(w) === el) ? '<button class="btn" data-act="roof-detach">Détacher les murs</button>' : ''}</div>
       <div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
@@ -119,6 +121,7 @@ function renderProps(){
     h += `</div></div><div class="grp"><h3>Garde-corps et trémie</h3><div class="fields"><label class="f wide rchk"><input type="checkbox" data-f="strail"${el.rail !== false ? ' checked' : ''}> Main courante et garde-corps (côté extérieur)</label><label class="f wide rchk"><input type="checkbox" data-f="strail2"${el.rail2 ? ' checked' : ''}> Seconde main courante (côté intérieur)</label>`
       + field('Hauteur de main courante', 'strailh', el.railH || 0.9, 'm', '0.05')
       + `<label class="f wide rchk"><input type="checkbox" data-f="sttrem"${el.tremie !== false ? ' checked' : ''}> Trémie automatique dans le plancher d'arrivée</label><label class="f wide rchk"><input type="checkbox" data-f="stfull"${el.fullTremie ? ' checked' : ''}> Trémie sur toute l'emprise (sinon : minimale pour l'échappée)</label></div></div>`;
+    h += `<div class="grp"><h3>Revêtement</h3><div class="fields">` + paintFields(el) + `</div></div>`;
     { const C = stairCheck(el);
     h += `<div class="grp"><h3>Confort et réglementation</h3><div class="perf"><div class="pc"><span>Marches</span><b>${D.n}</b><em>hauteur ${nf(D.h * 100, 1)} cm</em></div><div class="pc"><span>Giron</span><b>${nf(D.g * 100, 1)}</b><em>cm</em></div><div class="pc ${okB ? 'g-ok' : 'g-bad'}"><span>2h + g</span><b>${nf(D.blondel * 100, 1)}</b><em>cm (60 à 65)</em></div></div>
       <ul class="warns">${C.checks.map(c => `<li class="${c.lvl}">${esc(c.t)}</li>`).join('')}</ul>
@@ -131,6 +134,7 @@ function renderProps(){
     h += slabLinkField(el);
     { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       ${fireCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(SA)} m²</dd>${el.poly ? `<dt>Contour</dt><dd>${el.poly.length} côtés</dd>` : ''}${nh ? `<dt>Trous</dt><dd>${nh}</dd>` : ''}<dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
@@ -143,24 +147,27 @@ function renderProps(){
     h += field('Origine x', 'px', r[0][0], 'm', '0.001') + field('Origine y', 'py', r[0][1], 'm', '0.001') + (el.onWalls ? lockF(field('Base z', 'off', el.off, 'm', '0.001')) : field('Base z', 'off', el.off, 'm', '0.001'));
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + onWallsField(el);
     if (el.poly) h += `<div class="f wide"><span>Forme</span><div class="site-v">${el.shape === 'circ' ? 'Cercle' : `Polygone de ${el.poly.length} côtés`} · ${nf(area(el.poly))} m² au sol</div></div>`;
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse volumique</dt><dd>${n0(mat(el.mat).rho)} kg/m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
       <div class="btns"><button class="btn primary" data-act="mkcomp">Créer un composant…</button><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'sk'){
     const n = skN(el.fr), A = Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0);
     h += matSelect('Matériau', 'mat', el.mat) + field('Épaisseur (extrusion)', 'skd', el.d, 'm', '0.005') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage', 'off', el.off, 'm');
     h += `<div class="f wide"><span>Plan d'esquisse</span><div class="site-v">${Math.abs(n[2]) > 0.9 ? 'horizontal' : Math.abs(n[2]) < 0.1 ? 'vertical' : 'incliné'} · ${el.poly.length} sommets${(el.holes || []).length ? ` · ${el.holes.length} trou${el.holes.length > 1 ? 's' : ''}` : ''} · ${nf(A)} m²</div></div>`;
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
       <div class="btns"><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn" data-act="tool-sketch">Nouvelle esquisse</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'col'){
     h += matSelect('Matériau', 'mat', el.mat);
     h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm');
-    h += linkFields(el);
+    h += linkFields(el) + paintFields(el);
     h += `</div>${fireCard(el)}<div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd class="big">${n0(m)} kg</dd></dl></div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'inst'){
     const F = fam(el.fam), s = F ? famScope(F, el) : {};
     h += selectField('Type', 'ftype', (F?.types || []).map((t, i) => [i, t.nom]), el.type | 0);
     for (const [k, p] of Object.entries(F?.params || {})) h += `<label class="f"><span>${esc(p.label || k)}</span><span class="in"><input data-fp="${esc(k)}" type="number" step="0.01" inputmode="decimal" value="${rnd(s[k])}"><em>${esc(p.unit ?? 'm')}</em></span></label>`;
+    h += paintFields(el);
     if (el.host){
       const w = getEl(el.host);
       h += field('Distance au départ du mur', 't', el.t ?? 0, 'm', '0.01', true);
@@ -304,6 +311,7 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
   if (f === 'fireRole'){ pushHist(); if (t.value) el.fireRole = t.value; else delete el.fireRole; state.isSample = false; renderPanel(); return; }
   if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }
+  if (f && f.startsWith('paint')){ pushHist(); state.isSample = false; setPaintField(el, f, t); rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
@@ -371,6 +379,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'jnedit') openJoineryTool({instId:sel});
   else if (act === 'join-new') openJoineryTool();
   else if (act === 'fire-pdf') printFire();
+  else if (act === 'paint-unmap'){ pushHist(); setPaintField(el, 'paintMap.' + b.dataset.src, null); state.isSample = false; rebuild(); }
   else if (act === 'roof-attach') attachWallsToRoof(el, true);
   else if (act === 'roof-detach') attachWallsToRoof(el, false);
   else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }

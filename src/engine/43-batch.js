@@ -58,7 +58,7 @@ function batchBuild(){
         if (o === g || !o.visible || !o.geometry?.attributes?.position) return;
         if (o.isMesh){
           if (o.isInstancedMesh || o.isSkinnedMesh || Array.isArray(o.material) || o.geometry.morphAttributes?.position) return;
-          const M = o.userData.mat != null ? matFor(o.userData.mat, false, o.userData.light || 0) : o.material;
+          const M = o.userData.mat != null ? matFor(o.userData.mat, false, o.userData.light || 0, o.userData.tr || null) : o.material;
           if (!M || M.transparent || o.material.transparent || o.renderOrder) return;   // transparents : tri inchangé
           put('m' + M.uuid + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0), M, o, false, o.castShadow, o.receiveShadow);
           merged.add(o); ch.hide.push(o);

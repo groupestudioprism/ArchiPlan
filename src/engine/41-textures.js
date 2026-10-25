@@ -89,7 +89,7 @@ function paintV2(id){
     }
   } else if (t === 'cork'){ for (let i = 0; i < 5000; i++){ g.fillStyle = shade(base, (R() - 0.5) * 0.35); g.beginPath(); g.arc(R() * S, R() * S, 1 + R() * 3, 0, 7); g.fill(); } }
   else if (t === 'tile60' || t === 'tile20'){
-    const n = t === 'tile60' ? 2 : 2, j = t === 'tile60' ? 3 : 4, s = S / n; g.fillStyle = shade(base, t === 'tile20' ? -0.06 : -0.14); g.fillRect(0, 0, S, S);
+    const n = t === 'tile60' ? 2 : 2, j = t === 'tile60' ? 4 : 4, s = S / n; g.fillStyle = shade(base, t === 'tile20' ? -0.08 : -0.22); g.fillRect(0, 0, S, S);
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++){ g.fillStyle = shade(base, (R() - 0.5) * (t === 'tile60' ? 0.05 : 0.03)); g.fillRect(c * s + j / 2, r * s + j / 2, s - j, s - j);
       if (t === 'tile60'){ const f = fbmField(128, R, 4, 2); g.globalAlpha = 0.18; for (let k = 0; k < 140; k++){ const x = R() * (s - j), y = R() * (s - j); g.fillStyle = shade(base, (f[Math.floor(k * 117) % f.length] - 0.5) * 0.3); g.fillRect(c * s + x, r * s + y, 18, 18); } g.globalAlpha = 1; }
       else { const gr = g.createLinearGradient(c * s, r * s, c * s + s, r * s + s); gr.addColorStop(0, 'rgba(255,255,255,0.18)'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(c * s + j / 2, r * s + j / 2, s - j, s - j); } }
@@ -115,13 +115,31 @@ function paintV2(id){
   return cv;
 }
 const bumpCache = {};
+/* taille naturelle d'une tuile de motif (m) : tx/ty du matériau, sinon la taille du motif de la bibliothèque */
+function texNat(m){ const info = TEX_LIB[m.tex] || {}, sz = info.sz || 1; return [m.tx || sz, m.ty || sz]; }
 function texFromCanvas(cv, id, color){
-  const m = mat(id), info = TEX_LIB[m.tex] || {}, sz = info.sz || 1, tex = new THREE.CanvasTexture(cv);
+  const m = mat(id), [nx, ny] = texNat(m), tex = new THREE.CanvasTexture(cv);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace; tex.anisotropy = 8;
-  tex.repeat.set(1 / (m.tx || sz), 1 / (m.ty || sz)); tex.name = 'archiplan-' + id + (color ? '' : '-relief'); return tex;
+  tex.repeat.set(1 / nx, 1 / ny); tex.name = 'archiplan-' + id + (color ? '' : '-relief'); return tex;
 }
 function texForV2(id){ const cv = paintV2(id); if (!cv) return null; bumpCache[id] = texFromCanvas(cv, id, false); return texFromCanvas(cv, id, true); }
 const bumpFor = id => { texFor(id); return bumpCache[id] || null; };
+/* ---------- échelle et orientation du motif (façon SketchUp) ----------
+   Un matériau porte texScale (taille du motif en m, défaut : taille naturelle) et texRot (°) ; un revêtement posé sur un élément
+   peut les surcharger ({s, r}). Les UV de toute la maquette sont « monde » (1 unité = 1 m) : la répétition vaut 1 / taille. */
+const texVar = {};
+const texTr = (m, tr) => ({s:tr?.s > 0 ? +tr.s : m.texScale > 0 ? +m.texScale : 0, r:tr?.r != null ? +tr.r || 0 : +m.texRot || 0});
+function texAt(id, tr, bump){
+  const m = mat(id), base = bump ? bumpFor(id) : texFor(id); if (!base) return null;
+  const {s, r} = texTr(m, tr), [nx, ny] = texNat(m); if ((!s || Math.abs(s - nx) < 1e-6) && !r) return base;
+  const key = id + (bump ? '|b|' : '|c|') + s + '|' + r;
+  let t = texVar[key]; if (t && t.image === base.image) return t;
+  t = base.clone(); const f = s ? s / nx : 1;
+  t.repeat.set(1 / (nx * f), 1 / (ny * f)); t.rotation = r * Math.PI / 180; t.center.set(0, 0); t.needsUpdate = true;
+  return texVar[key] = t;
+}
+/* après modification d'un matériau : ses textures (et leurs variantes) seront regénérées */
+function texForget(id){ delete texCache[id]; delete bumpCache[id]; for (const k of Object.keys(texVar)) if (k.startsWith(id + '|')){ texVar[k].dispose(); delete texVar[k]; } }
 /* aperçu d'un motif pour la bibliothèque de textures (couleur au choix) */
 function patternPreview(tex, color){
   const tmp = '__pat_' + tex; MATS[tmp] = {nom:'', cat:'', color, tex, rho:0, lambda:1}; const cv = paintV2(tmp) || paint(tmp).image; delete MATS[tmp];

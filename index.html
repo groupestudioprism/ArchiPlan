@@ -536,6 +536,11 @@ body.gripping, body.gripping *{cursor:move!important}
 .grp.fire .perf .pc{min-height:64px}.grp.fire .tbl.rooms th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);text-align:left;padding:4px 6px}.grp.fire .tbl.rooms th.n{text-align:right}
 .grp.fire h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em}
 .tbl .gr{position:static;display:inline-grid;width:20px;height:20px;font-size:11px;vertical-align:middle}
+/* outil Peindre : pilule matériau / motif / pipette, puces des revêtements d'un composant */
+.paintpill{gap:5px}.paintpill select{max-width:190px}.paintpill #paintScale{width:46px}.paintpill #paintRot{width:auto;max-width:60px}
+.paintpill .ib.pip{height:26px;min-width:26px;padding:0;border-radius:7px}.paintpill .ib.pip svg{width:15px;height:15px}.paintpill .ib.pip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .x{border:0;background:transparent;color:var(--mut);font-size:14px;line-height:1;margin-left:4px;cursor:pointer}.chip .x:hover{color:#C0392B}
+.mtscale{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.mtscale .btn{padding:3px 9px;font-size:12px}.mtscale .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
 /* intro ARCHIPLAN : une feuille de dessin technique ; un crayon trace des lignes de construction qui s'encrent et révèlent le logo officiel (masque SVG suivant le tracé du crayon),
    le plan prend brièvement du volume (2D → 3D), puis le nom et la signature. Séquence pilotée par le script du bloc #splash (Web Animations API, déterministe). */
 #splash{position:fixed;inset:0;z-index:60;background:#F9FAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:24px;overflow:hidden}
@@ -1129,7 +1134,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     </div>
   </header>
   <nav class="tools" role="toolbar" aria-label="Outils">
-    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="sketch" aria-pressed="false" title="Esquisse 3D (S) : dessinez sur n'importe quelle face, puis tirez les contours fermés"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l5-5M9 15l9-9 2 2-9 9zM12 6l6 6M4 4h6M4 8h3"/></svg><span>Esquisse</span><kbd>S</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><button class="tool" data-tool="join" aria-pressed="false" title="Menuiserie sur mesure (N) : fenêtre, porte, baie — dimensions, vitrage, performances"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM5 12h14M12 3v9M8 16h.01"/></svg><span>Menuiserie</span><kbd>N</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button><button class="tool" data-tool="dim" aria-pressed="false" title="Cote (Q) : deux points puis la position de la ligne de cote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v10M20 7v10M4 12h16M6 10l-2 2 2 2M18 10l2 2-2 2"/></svg><span>Cote</span><kbd>Q</kbd></button>
+    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="sketch" aria-pressed="false" title="Esquisse 3D (S) : dessinez sur n'importe quelle face, puis tirez les contours fermés"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l5-5M9 15l9-9 2 2-9 9zM12 6l6 6M4 4h6M4 8h3"/></svg><span>Esquisse</span><kbd>S</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><button class="tool" data-tool="join" aria-pressed="false" title="Menuiserie sur mesure (N) : fenêtre, porte, baie — dimensions, vitrage, performances"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM5 12h14M12 3v9M8 16h.01"/></svg><span>Menuiserie</span><kbd>N</kbd></button><button class="tool" data-tool="paint" aria-pressed="false" title="Peindre (X) : appliquer un matériau et l'échelle de son motif sur une face"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l7-5 7 5-7 5zM11 14v6M11 20c-2 0-3-1-3-3M18 9v3c0 2-1 3-3 3"/><path d="M6 17c0 2 1.5 3 3 3"/></svg><span>Peindre</span><kbd>X</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button><button class="tool" data-tool="dim" aria-pressed="false" title="Cote (Q) : deux points puis la position de la ligne de cote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v10M20 7v10M4 12h16M6 10l-2 2 2 2M18 10l2 2-2 2"/></svg><span>Cote</span><kbd>Q</kbd></button>
   </nav>
   <main class="vp" id="vp">
     <canvas id="c"></canvas>
@@ -1145,6 +1150,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
       <label class="pill" id="skPill" hidden><span>Tracé</span><select id="skModeIn" aria-label="Mode d'esquisse"><option value="sel">Sélection / tirer</option><option value="rect">Rectangle</option><option value="line">Ligne / polygone</option><option value="circ">Cercle</option><option value="arc">Arc (3 points)</option><option value="free">Main levée (stylet)</option></select><button type="button" class="btn" id="skDone" style="height:28px;padding:0 10px">Terminer</button></label>
       <label class="pill" id="shapePill" hidden><span>Forme</span><select id="shapeIn" aria-label="Forme"><option value="rect">Rectangle</option><option value="circ">Cercle</option><option value="poly">Polygone</option></select></label>
       <label class="pill" id="topPill" hidden><span>Haut</span><select id="topIn" aria-label="Contrainte haute"><option value="next">Niveau supérieur</option><option value="">Hauteur libre</option><option value="above">Sous l'élément au-dessus</option></select></label>
+      <span class="pill paintpill" id="paintPill" hidden><span>Matériau</span><select id="paintMat" aria-label="Matériau à appliquer"></select><span>Motif</span><input id="paintScale" type="number" step="0.05" min="0.05" inputmode="decimal" aria-label="Taille du motif en mètres" title="Taille du motif (m) : vide = taille naturelle"><em>m</em><select id="paintRot" aria-label="Rotation du motif" title="Rotation du motif"><option value="0">0°</option><option value="45">45°</option><option value="90">90°</option><option value="135">135°</option></select><button type="button" class="ib pip" id="paintPip" title="Pipette : reprendre le matériau d'une face (ou Alt + clic)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 9-9 3 3-9 9zM13 6l2-2a2.1 2.1 0 013 3l-2 2"/></svg></button></span>
       <label class="pill" id="wallArcPill" hidden><span>Tracé</span><select id="wArcIn" aria-label="Tracé du mur"><option value="">Droit</option><option value="1">Courbe (3 points)</option><option value="r">Pièce (rectangle)</option></select></label>
       <label class="pill" id="slabModePill" hidden><span>Pose</span><select id="sModeIn" aria-label="Pose de la dalle"><option value="rect">Rectangle</option><option value="room">Sur une pièce</option><option value="walls">Sous tous les murs</option><option value="poly">Contour (point par point)</option><option value="hole">Trou / trémie dans une dalle</option></select></label>
       <label class="pill" id="mirrorPill" hidden><span>Original</span><select id="mKeepIn" aria-label="Garder l'original"><option value="1">Garder (copie)</option><option value="">Déplacer</option></select></label>
@@ -3074,7 +3080,7 @@ window.PrismSettings = PrismSettings;
    gwp kg CO2e/kg (production A1-A3, carbone biogénique non compté) · R résistance fixe (m²·K/W) pour les lames d'air.
    tex : motif de texture procédurale du rendu réaliste ; tx/ty taille du motif (m). */
 const MAT_CATS = ['Maçonnerie', 'Béton et mortiers', 'Isolants', 'Bois et dérivés', 'Plâtre et plaques', 'Métaux', 'Verre et plastiques',
-  'Revêtements de sol', 'Couverture et étanchéité', 'Lames d\'air et divers'];
+  'Revêtements de sol', 'Couverture et étanchéité', 'Lames d\'air et divers', 'Peintures et finitions'];
 const MATS = {};
 function M(id, nom, cat, rho, lambda, c, mu, color, tex, gwp, extra = {}){ MATS[id] = {nom, cat, rho, lambda, c, mu, color, tex, gwp, rough:0.9, ...extra}; }
 // ---- Maçonnerie
@@ -3187,6 +3193,23 @@ M('aluAnthr',   'Aluminium laqué anthracite',         'Métaux', 2700, 160, 880
 M('feuillageC', 'Végétal (conifère)',                 "Lames d'air et divers", 300, 0.10, 1500, 5, '#3F6B45', 'grass', 0);
 M('fleurs',     'Végétal (massif fleuri)',            "Lames d'air et divers", 300, 0.10, 1500, 5, '#B8749A', 'grass', 0);
 M('vegetal',    'Végétal (feuillage)',                "Lames d'air et divers", 300, 0.10, 1500, 5, '#5E8C4A', 'grass', 0);
+// ---- Peintures et finitions (revêtements d'affichage posés avec l'outil Peindre ; texScale = taille du motif en m, texRot = rotation)
+M('peintBlancCasse','Peinture blanc cassé',              'Peintures et finitions', 1400, 0.50, 1000, 100, '#F1EEE6', 'plain', 2.0, {rough:0.85, texScale:2});
+M('peintGrisPerle','Peinture gris perle',                'Peintures et finitions', 1400, 0.50, 1000, 100, '#C9CBCC', 'plain', 2.0, {rough:0.85, texScale:2});
+M('peintBleuNuit','Peinture bleu nuit',                  'Peintures et finitions', 1400, 0.50, 1000, 100, '#2E3B55', 'plain', 2.0, {rough:0.8, texScale:2});
+M('peintTerracotta','Peinture terracotta',               'Peintures et finitions', 1400, 0.50, 1000, 100, '#C4714F', 'plain', 2.0, {rough:0.85, texScale:2});
+M('peintVertSauge','Peinture vert sauge',                'Peintures et finitions', 1400, 0.50, 1000, 100, '#93A48B', 'plain', 2.0, {rough:0.85, texScale:2});
+M('enduitGratteBlanc','Enduit gratté blanc',             'Peintures et finitions', 1600, 0.80, 1000, 15,  '#ECE7DC', 'render', 0.15, {rough:0.95, texScale:1});
+M('enduitGratteGris','Enduit gratté gris',               'Peintures et finitions', 1600, 0.80, 1000, 15,  '#B3B1AC', 'render', 0.15, {rough:0.95, texScale:1});
+M('enduitTaloche','Enduit taloché ocre',                 'Peintures et finitions', 1600, 0.80, 1000, 15,  '#D8B98C', 'plaster', 0.15, {rough:0.9, texScale:2});
+M('bardageVertical','Bardage bois vertical (claire-voie)','Peintures et finitions', 500, 0.13, 1600, 50, '#A07A52', 'cladV', 0.26, {rough:0.75, texScale:0.6});
+M('bardageGris','Bardage bois horizontal grisé',         'Peintures et finitions', 500, 0.13, 1600, 50,  '#9A9388', 'cladding', 0.26, {rough:0.8, texScale:0.6});
+M('carrelage60','Grès cérame 60 × 60 gris clair',       'Peintures et finitions', 2300, 1.30, 840, 200, '#D7D4CC', 'tile60', 0.78, {rough:0.4, texScale:1.2});
+M('carrelageAnth','Grès cérame 60 × 60 anthracite',     'Peintures et finitions', 2300, 1.30, 840, 200, '#5A5D62', 'tile60', 0.78, {rough:0.45, texScale:1.2});
+M('parquetChevrons','Parquet chêne point de Hongrie',    'Peintures et finitions', 700, 0.18, 1600, 50,  '#B5895A', 'herringbone', 0.30, {rough:0.55, texScale:0.8});
+M('parquetClair','Parquet chêne clair à lames larges',   'Peintures et finitions', 700, 0.18, 1600, 50,  '#D2B088', 'parquet', 0.30, {rough:0.55, tx:1.5, ty:0.19});
+M('briqueParement','Brique de parement rouge',           'Peintures et finitions', 1800, 0.80, 1000, 16,  '#A95A41', 'brick', 0.24, {rough:0.9, texScale:0.5});
+M('pierreParement','Pierre de parement claire',          'Peintures et finitions', 2200, 1.70, 1000, 40,  '#D6CBB5', 'stone', 0.08, {rough:0.9, texScale:1.2});
 
 /* ============ Compositions de base (murs : extérieur → intérieur ; planchers et toitures : haut → bas) ============ */
 const COMPOS = {
@@ -3957,6 +3980,8 @@ function embedUsedLib(){
   for (const el of state.els){
     if (el.type && (el.kind === 'wall' || el.kind === 'slab')){ used.c.add(el.type); compo(el.type).layers.forEach(([m]) => used.m.add(m)); }
     if (el.mat) used.m.add(el.mat);
+    for (const k of ['paint', 'paintUnder', 'paintOut', 'paintIn']) if (el[k]?.m) used.m.add(el[k].m);   // revêtements d'affichage
+    if (el.paintMap) for (const q of Object.values(el.paintMap)) if (q?.m) used.m.add(q.m);
     if (el.kind === 'inst') walkFam(el.fam);
   }
   for (const id of used.c) if (USER_LIB.compos[id]) state.lib.compos[id] = JSON.parse(JSON.stringify(USER_LIB.compos[id]));
@@ -4355,10 +4380,10 @@ const planArea3 = pts => Math.abs(sArea(pts.map(q => [q[0], q[1]])));
 function roofPieces(el){
   const G = roofGeom(el), C = compo(el.type), c = Math.cos(G.a), out = [], fv = el.frameView;
   if (!fv) for (const pan of G.pans){
-    let dzs = 0; const poly = pan.map(q => [q[0], q[1]]);
+    let dzs = 0, li = 0; const poly = pan.map(q => [q[0], q[1]]);
     for (const [m, e] of C.layers){
       const dz = e / c, top = pan.map(q => [q[0], q[1], q[2] - dzs]);
-      out.push({poly, top, ext:[0, 0, -dz], base:Math.min(...top.map(q => q[2])) - dz, h:dz, mat:m, lot:C.lot || 'Couverture', e, roof:true});
+      out.push({poly, top, ext:[0, 0, -dz], base:Math.min(...top.map(q => q[2])) - dz, h:dz, mat:m, lot:C.lot || 'Couverture', e, roof:true, li:li++});
       dzs += dz;
     }
   }
@@ -4419,7 +4444,13 @@ function prismGeo(top, ext){
   const n = top.length, toS = q => [q[0], q[2], -q[1]], E = toS(ext), T = top.map(toS), B = T.map(q => [q[0] + E[0], q[1] + E[1], q[2] + E[2]]);
   let nx = 0, ny = 0, nz = 0; for (let i = 0; i < n; i++){ const a = T[i], b = T[(i + 1) % n]; nx += (a[1] - b[1]) * (a[2] + b[2]); ny += (a[2] - b[2]) * (a[0] + b[0]); nz += (a[0] - b[0]) * (a[1] + b[1]); }
   let top2 = T, bot = B; if (nx * E[0] + ny * E[1] + nz * E[2] > 0){ top2 = T.slice().reverse(); bot = B.slice().reverse(); }
-  const pos = [], uv = [], push = (...pts) => pts.forEach(p => { pos.push(p[0], p[1], p[2]); uv.push(p[0], -p[2] + p[1] * 0.3); });
+  // UV « monde » par face : u le long de l'horizontale de la face, v le long de sa ligne de plus grande pente (vraie grandeur :
+  // les tuiles d'un rampant gardent leur taille réelle, un pignon se texture comme un mur)
+  const basis = pts => { const a = pts[0], b = pts[1], c = pts[2]; let n = [(b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]), (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]), (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])];
+    const L = Math.hypot(...n) || 1; n = n.map(v => v / L); if (Math.abs(n[1]) > 0.999) return [[1, 0, 0], [0, 0, -1]];
+    let e1 = [n[2], 0, -n[0]]; const l1 = Math.hypot(e1[0], e1[2]) || 1; e1 = [e1[0] / l1, 0, e1[2] / l1]; if (e1[0] < -1e-9 || (Math.abs(e1[0]) < 1e-9 && e1[2] > 0)) e1 = [-e1[0], 0, -e1[2]];
+    const e2 = [n[1] * e1[2] - n[2] * e1[1], n[2] * e1[0] - n[0] * e1[2], n[0] * e1[1] - n[1] * e1[0]]; return [e1, e2[1] < 0 ? e2.map(v => -v) : e2]; };
+  const pos = [], uv = [], push = (...pts) => { const [e1, e2] = basis(pts); pts.forEach(p => { pos.push(p[0], p[1], p[2]); uv.push(p[0] * e1[0] + p[1] * e1[1] + p[2] * e1[2], p[0] * e2[0] + p[1] * e2[1] + p[2] * e2[2]); }); };
   for (let i = 1; i < n - 1; i++) push(top2[0], top2[i], top2[i + 1]);
   for (let i = 1; i < n - 1; i++) push(bot[0], bot[i + 1], bot[i]);
   for (let i = 0; i < n; i++){ const j = (i + 1) % n; push(top2[i], bot[i], bot[j]); push(top2[i], bot[j], top2[j]); }
@@ -4817,7 +4848,7 @@ function paint(id){
     const rows = 4, rh = S / rows; for (let r = 0; r < rows; r++) for (let c = -1; c < 4; c++){ const x = c * S/3 + (r % 2 ? S/6 : 0); g.fillStyle = shade(base, (R() - .5) * .12); g.fillRect(x + 1, r * rh, S/3 - 2, rh - 2); g.fillStyle = shade(base, -.18); g.fillRect(x, r * rh + rh - 4, S/3, 4); }
   }
   const tex = new THREE.CanvasTexture(cv); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
-  tex.repeat.set(1 / (m.tx || (t === 'plain' || t === 'concrete' || t === 'plaster' ? 2 : 1)), 1 / (m.ty || (t === 'plain' || t === 'concrete' || t === 'plaster' ? 2 : 1)));
+  const [nx, ny] = texNat(m); tex.repeat.set(1 / nx, 1 / ny);
   tex.name = 'archiplan-' + id;
   return tex;
 }
@@ -4832,8 +4863,8 @@ const ghostEdge = new THREE.LineBasicMaterial({color:0x0877B9});
 const hoverMat = new THREE.MeshBasicMaterial({color:0x1F89C5, transparent:true, opacity:0.18, depthWrite:false, side:THREE.DoubleSide});
 const PLAN_LIGHT = {wall:0.08, col:0.08, slab:0.84, vol:0.55, inst:0.72, host:0.35};
 const planOn = () => view === '2d';
-function matFor(id, selected, light = 0){
-  const plan = planOn(), sec = view === 'sec', st = plan ? 'plan' : sec ? 'shaded' : DISPLAY.style, key = (sec ? 'sec|' : '') + st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '');
+function matFor(id, selected, light = 0, tr = null){
+  const plan = planOn(), sec = view === 'sec', st = plan ? 'plan' : sec ? 'shaded' : DISPLAY.style, key = (sec ? 'sec|' : '') + st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '') + (tr && (tr.s || tr.r) ? '|t' + (tr.s || '') + '|' + (tr.r || 0) : '');
   if (matCache[key]) return matCache[key];
   const m = mat(id); let M;
   const transp = m.opacity != null && m.opacity < 1;
@@ -4854,7 +4885,7 @@ function matFor(id, selected, light = 0){
   }
   else {
     const textured = st === 'textured' || st === 'realistic';
-    const tx = textured && m.tex && m.tex !== 'glass' ? texFor(id) : null, bm = tx ? bumpFor(id) : null;
+    const tx = textured && m.tex && m.tex !== 'glass' ? texAt(id, tr, false) : null, bm = tx ? texAt(id, tr, true) : null;
     M = new THREE.MeshStandardMaterial({color:tx ? 0xffffff : m.color, map:tx, bumpMap:bm, bumpScale:bm ? (st === 'realistic' ? 1.4 : 0.8) : 1,
       roughness:m.rough ?? .9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1, depthWrite:!transp,
       envMapIntensity:st === 'realistic' ? 0.6 : 0.35});
@@ -4875,22 +4906,45 @@ function boxGeo(w, d, h){ // boîte aux UV « monde » (motifs à la bonne éche
   for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++){ const i = f * 4 + k; uv.setXY(i, uv.getX(i) * dims[f][0], uv.getY(i) * dims[f][1]); }
   return g;
 }
+/* UV « monde » d'une extrusion : dessus et dessous en (x, y) du plan ; faces latérales : u = abscisse le long de la face
+   (et non x ou y seul, qui étirait le motif d'un mur en diagonale), v = altitude réelle (motif aligné d'un mur à l'autre) */
+function metricUV(base = 0){
+  const V2 = THREE.Vector2;
+  return {
+    generateTopUV:(g, v, a, b, c) => [new V2(v[a * 3], v[a * 3 + 1]), new V2(v[b * 3], v[b * 3 + 1]), new V2(v[c * 3], v[c * 3 + 1])],
+    generateSideWallUV:(g, v, a, b, c, d) => {
+      let dx = v[b * 3] - v[a * 3], dy = v[b * 3 + 1] - v[a * 3 + 1]; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+      if (dx < -1e-9 || (Math.abs(dx) < 1e-9 && dy < 0)){ dx = -dx; dy = -dy; }   // u croît avec x (ou y) : même sens que les faces alignées sur les axes
+      const uv = i => new V2(v[i * 3] * dx + v[i * 3 + 1] * dy, v[i * 3 + 2] + base);
+      return [uv(a), uv(b), uv(c), uv(d)];
+    },
+  };
+}
 function pieceGeo(pc){
   if (pc.sk) return skGeo(pc.sk);
   if (pc.top) return prismGeo(pc.top, pc.ext);
   const shape = new THREE.Shape(pc.poly.map(p => new THREE.Vector2(p[0], p[1])));
   if (pc.holes) pc.holes.forEach(h => shape.holes.push(new THREE.Path(h.map(p => new THREE.Vector2(p[0], p[1])))));
-  const geo = new THREE.ExtrudeGeometry(shape, {depth:Math.max(pc.h, 0.001), bevelEnabled:false});
+  const geo = new THREE.ExtrudeGeometry(shape, {depth:Math.max(pc.h, 0.001), bevelEnabled:false, UVGenerator:metricUV(pc.base)});
   geo.rotateX(-Math.PI / 2); geo.translate(0, pc.base, 0);
   return geo;
+}
+/* UV métriques des solides de révolution : le tour vaut 2πr, la hauteur sa longueur réelle, les faces planes en (x, z) */
+function metricRound(g, r, h, sphere){
+  const P = g.attributes.position, N = g.attributes.normal, uv = g.attributes.uv; if (!uv) return g;
+  for (let i = 0; i < uv.count; i++){
+    if (sphere){ uv.setXY(i, uv.getX(i) * 2 * Math.PI * r, uv.getY(i) * Math.PI * r); continue; }
+    if (Math.abs(N.getY(i)) > 0.9) uv.setXY(i, P.getX(i), P.getZ(i)); else uv.setXY(i, uv.getX(i) * 2 * Math.PI * r, uv.getY(i) * h);
+  }
+  uv.needsUpdate = true; return g;
 }
 function solidGeo(so){
   let g;
   // (correctif : les cylindres et cônes verticaux étaient remplacés par une boîte — poteau rond, tronc d'arbre)
-  if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
-  else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
-  else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
-  else if (so.s === 'ext'){ g = new THREE.ExtrudeGeometry(new THREE.Shape(so.pts.map(p => new THREE.Vector2(p[0], p[1]))), {depth:so.h, bevelEnabled:false}); g.rotateX(-Math.PI / 2); g.translate(0, -so.h / 2, 0); }
+  if (so.s === 'cyl') g = metricRound(new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20), so.r, so.h);
+  else if (so.s === 'cone') g = metricRound(new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14), (so.r + (so.r2 || 0)) / 2, so.h);
+  else if (so.s === 'sph') g = metricRound(new THREE.SphereGeometry(so.r, 20, 14), so.r, 0, true);
+  else if (so.s === 'ext'){ g = new THREE.ExtrudeGeometry(new THREE.Shape(so.pts.map(p => new THREE.Vector2(p[0], p[1]))), {depth:so.h, bevelEnabled:false, UVGenerator:metricUV(0)}); g.rotateX(-Math.PI / 2); g.translate(0, -so.h / 2, 0); }
   else g = boxGeo(so.w, so.d, so.h);
   if (so.s === 'cyl' || so.s === 'cone'){ if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2); }
   if (so.rz) g.rotateY(so.rz);
@@ -4934,19 +4988,21 @@ function cachedGeo(key, make){
   e.gen = geoGen; return e.g;
 }
 function geoCachePrune(){ for (const [k, e] of GEO_CACHE) if (e.gen !== geoGen){ e.g.dispose(); GEO_CACHE.delete(k); } }
-function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0, key = null){
-  const mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light));
-  mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.light = light;
+function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0, key = null, fin = null){
+  // fin : revêtement d'affichage {m, tr} ; le matériau réel reste dans userData.src (métré, pipette, export)
+  const src = matId; if (fin) matId = fin.m;
+  const tr = fin ? fin.tr : null, mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light, tr));
+  mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.src = src; mesh.userData.light = light; if (tr) mesh.userData.tr = tr;
   if (edgeAngle >= 0 && (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn() || view === 'sec')){
     const edges = new THREE.LineSegments(key ? cachedGeo(key + '|e' + edgeAngle, () => edgesOf(geo, edgeAngle)) : edgesOf(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
     edges.userData.isEdge = true; mesh.add(edges);
   }
   return mesh;
 }
-function pieceMesh(pc, ghost, light = 0, noEdge = false){
+function pieceMesh(pc, ghost, light = 0, noEdge = false, fin = null){
   const ea = noEdge ? -1 : 25;
-  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, ea, light);
-  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, ea, light, key);
+  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, ea, light, null, fin);
+  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, ea, light, key, fin);
 }
 let GEO_ON = true, geoBuilding = false;
 function disposeGroup(g){ g.traverse(o => { if (o.geometry && !o.geometry.userData.apCached) o.geometry.dispose(); }); g.clear(); }
@@ -4957,9 +5013,9 @@ function instMeshes(el, ghost, light = 0){
   for (const so of instSolids(el)) (by[so.m] ??= []).push(so);
   const out = [];
   for (const [m, sos] of Object.entries(by)){
-    const make = () => { const geos = sos.map(solidGeo); return geos.length === 1 ? geos[0] : mergeGeos(geos); };
-    if (ghost || !GEO_ON || !geoBuilding){ out.push(meshOf(make(), m, ghost, 30, light)); continue; }
-    const key = 'i' + JSON.stringify(sos); out.push(meshOf(cachedGeo(key, make), m, false, 30, light, key));
+    const make = () => { const geos = sos.map(solidGeo); return geos.length === 1 ? geos[0] : mergeGeos(geos); }, fin = ghost ? null : instFinish(el, m);
+    if (ghost || !GEO_ON || !geoBuilding){ out.push(meshOf(make(), m, ghost, 30, light, null, fin)); continue; }
+    const key = 'i' + JSON.stringify(sos); out.push(meshOf(cachedGeo(key, make), m, false, 30, light, key, fin));
   }
   return out;
 }
@@ -5033,7 +5089,8 @@ function rebuild(opts = {}){
     g.userData.archiplan = {id:el.id, kind:el.kind, type:el.kind === 'inst' ? el.fam : (el.type || el.mat), niveau:lvlName(el.lvl)};
     if (el.kind === 'inst') instMeshes(el, false, light).forEach(m => { m.name = `${g.name}-${m.userData.mat}`; m.userData.archiplan = {materiau:mat(m.userData.mat).nom, lot:famLot(F)}; g.add(m); });
     else { const cw = el.kind === 'wall' && cleanWallEdges();
-      for (const pc of pieces(el)){ const m = pieceMesh(pc, false, light, cw); m.name = `${g.name}-${pc.mat}`; m.userData.archiplan = {materiau:mat(pc.mat).nom, lot:pc.lot, epaisseur:pc.e ?? null}; g.add(m); }
+      for (const pc of pieces(el)){ const m = pieceMesh(pc, false, light, cw, pieceFinish(el, pc)); m.name = `${g.name}-${pc.mat}`; m.userData.archiplan = {materiau:mat(pc.mat).nom, lot:pc.lot, epaisseur:pc.e ?? null}; g.add(m); }
+      if (!plan) for (const pc of paintCoats(el)){ const m = pieceMesh(pc, false, light, true, {m:pc.mat, tr:pc.tr}); m.name = `${g.name}-revetement`; m.userData.coat = true; g.add(m); }
       if (cw) try { g.add(wallEdgeLines(el)); } catch(e){ console.warn('arêtes du mur', e); } }
     if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
     modelGroup.add(g);
@@ -5055,7 +5112,7 @@ function applySel(){
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const g of modelGroup.children){
     const on = set.has(g.userData.id);
-    g.traverse(o => { if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
+    g.traverse(o => { if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0, o.userData.tr || null); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
   }
   batchLive(set); dirty = true;
 }
@@ -5265,7 +5322,7 @@ function paintV2(id){
     }
   } else if (t === 'cork'){ for (let i = 0; i < 5000; i++){ g.fillStyle = shade(base, (R() - 0.5) * 0.35); g.beginPath(); g.arc(R() * S, R() * S, 1 + R() * 3, 0, 7); g.fill(); } }
   else if (t === 'tile60' || t === 'tile20'){
-    const n = t === 'tile60' ? 2 : 2, j = t === 'tile60' ? 3 : 4, s = S / n; g.fillStyle = shade(base, t === 'tile20' ? -0.06 : -0.14); g.fillRect(0, 0, S, S);
+    const n = t === 'tile60' ? 2 : 2, j = t === 'tile60' ? 4 : 4, s = S / n; g.fillStyle = shade(base, t === 'tile20' ? -0.08 : -0.22); g.fillRect(0, 0, S, S);
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++){ g.fillStyle = shade(base, (R() - 0.5) * (t === 'tile60' ? 0.05 : 0.03)); g.fillRect(c * s + j / 2, r * s + j / 2, s - j, s - j);
       if (t === 'tile60'){ const f = fbmField(128, R, 4, 2); g.globalAlpha = 0.18; for (let k = 0; k < 140; k++){ const x = R() * (s - j), y = R() * (s - j); g.fillStyle = shade(base, (f[Math.floor(k * 117) % f.length] - 0.5) * 0.3); g.fillRect(c * s + x, r * s + y, 18, 18); } g.globalAlpha = 1; }
       else { const gr = g.createLinearGradient(c * s, r * s, c * s + s, r * s + s); gr.addColorStop(0, 'rgba(255,255,255,0.18)'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(c * s + j / 2, r * s + j / 2, s - j, s - j); } }
@@ -5291,13 +5348,31 @@ function paintV2(id){
   return cv;
 }
 const bumpCache = {};
+/* taille naturelle d'une tuile de motif (m) : tx/ty du matériau, sinon la taille du motif de la bibliothèque */
+function texNat(m){ const info = TEX_LIB[m.tex] || {}, sz = info.sz || 1; return [m.tx || sz, m.ty || sz]; }
 function texFromCanvas(cv, id, color){
-  const m = mat(id), info = TEX_LIB[m.tex] || {}, sz = info.sz || 1, tex = new THREE.CanvasTexture(cv);
+  const m = mat(id), [nx, ny] = texNat(m), tex = new THREE.CanvasTexture(cv);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace; tex.anisotropy = 8;
-  tex.repeat.set(1 / (m.tx || sz), 1 / (m.ty || sz)); tex.name = 'archiplan-' + id + (color ? '' : '-relief'); return tex;
+  tex.repeat.set(1 / nx, 1 / ny); tex.name = 'archiplan-' + id + (color ? '' : '-relief'); return tex;
 }
 function texForV2(id){ const cv = paintV2(id); if (!cv) return null; bumpCache[id] = texFromCanvas(cv, id, false); return texFromCanvas(cv, id, true); }
 const bumpFor = id => { texFor(id); return bumpCache[id] || null; };
+/* ---------- échelle et orientation du motif (façon SketchUp) ----------
+   Un matériau porte texScale (taille du motif en m, défaut : taille naturelle) et texRot (°) ; un revêtement posé sur un élément
+   peut les surcharger ({s, r}). Les UV de toute la maquette sont « monde » (1 unité = 1 m) : la répétition vaut 1 / taille. */
+const texVar = {};
+const texTr = (m, tr) => ({s:tr?.s > 0 ? +tr.s : m.texScale > 0 ? +m.texScale : 0, r:tr?.r != null ? +tr.r || 0 : +m.texRot || 0});
+function texAt(id, tr, bump){
+  const m = mat(id), base = bump ? bumpFor(id) : texFor(id); if (!base) return null;
+  const {s, r} = texTr(m, tr), [nx, ny] = texNat(m); if ((!s || Math.abs(s - nx) < 1e-6) && !r) return base;
+  const key = id + (bump ? '|b|' : '|c|') + s + '|' + r;
+  let t = texVar[key]; if (t && t.image === base.image) return t;
+  t = base.clone(); const f = s ? s / nx : 1;
+  t.repeat.set(1 / (nx * f), 1 / (ny * f)); t.rotation = r * Math.PI / 180; t.center.set(0, 0); t.needsUpdate = true;
+  return texVar[key] = t;
+}
+/* après modification d'un matériau : ses textures (et leurs variantes) seront regénérées */
+function texForget(id){ delete texCache[id]; delete bumpCache[id]; for (const k of Object.keys(texVar)) if (k.startsWith(id + '|')){ texVar[k].dispose(); delete texVar[k]; } }
 /* aperçu d'un motif pour la bibliothèque de textures (couleur au choix) */
 function patternPreview(tex, color){
   const tmp = '__pat_' + tex; MATS[tmp] = {nom:'', cat:'', color, tex, rho:0, lambda:1}; const cv = paintV2(tmp) || paint(tmp).image; delete MATS[tmp];
@@ -5425,7 +5500,7 @@ function batchBuild(){
         if (o === g || !o.visible || !o.geometry?.attributes?.position) return;
         if (o.isMesh){
           if (o.isInstancedMesh || o.isSkinnedMesh || Array.isArray(o.material) || o.geometry.morphAttributes?.position) return;
-          const M = o.userData.mat != null ? matFor(o.userData.mat, false, o.userData.light || 0) : o.material;
+          const M = o.userData.mat != null ? matFor(o.userData.mat, false, o.userData.light || 0, o.userData.tr || null) : o.material;
           if (!M || M.transparent || o.material.transparent || o.renderOrder) return;   // transparents : tri inchangé
           put('m' + M.uuid + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0), M, o, false, o.castShadow, o.receiveShadow);
           merged.add(o); ch.hide.push(o);
@@ -5468,7 +5543,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, sketch:{type:'acier'}, comp:{fam:'fenetre-2v', type:1, rot:0}};
+const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois'}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, sketch:{type:'acier'}, comp:{fam:'fenetre-2v', type:1, rot:0}, paint:{m:'peintBlancCasse', s:0, r:0, pip:false}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -5807,6 +5882,7 @@ const PROMPTS = {
   dim:() => !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote',
   sketch:() => skPrompt(),
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
+  paint:() => view === '2d' ? '<b>Peindre</b> : passez en vue 3D pour cliquer les faces' : defs.paint.pip ? '<b>Pipette</b> : cliquez une face pour reprendre son matériau et l\'échelle de son motif' : `<b>Peindre</b> : cliquez une face (mur : la face visée, dalle : dessus ou dessous, composant : la pièce visée) · <kbd>Alt</kbd> + clic = pipette`,
 };
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
@@ -5820,8 +5896,9 @@ function setTool(t){
   if (tool === 'sketch' && t !== 'sketch') skEnd();
   tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
   $$('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t));
-  canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : 'crosshair';
+  canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : t === 'paint' ? 'cell' : 'crosshair';
   if (t === 'comp' && activeTab !== 'lib'){ activeTab = 'lib'; libTab = 'fams'; renderPanel(); }
+  if (t === 'paint' && view === '2d') setView('3d');   // on peint des faces : vue 3D
   syncHud(); setPrompt();
 }
 function syncHud(){
@@ -5836,6 +5913,7 @@ function syncHud(){
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
   $('#skPill').hidden = tool !== 'sketch'; if (tool === 'sketch') $('#skModeIn').value = SK.mode;
   $('#shapePill').hidden = tool !== 'vol'; if (tool === 'vol') $('#shapeIn').value = defs.vol.shape || 'rect';
+  paintHud();
   const tpp = $('#topPill'), hasTop = tool === 'wall' || tool === 'col'; tpp.hidden = !hasTop;
   if (hasTop){ $('#topIn').querySelector('[value="above"]').hidden = tool !== 'col'; if (tool !== 'col' && defs.wall.top === 'above') defs.wall.top = 'next'; $('#topIn').value = defs[tool].top || ''; }
   hp.hidden = !(tool === 'wall' || tool === 'vol' || tool === 'col' || tool === 'roof') || (hasTop && !!defs[tool].top && (defs[tool].top === 'above' || !!state.levels[curLvl + 1]));
@@ -5896,7 +5974,7 @@ function placePoint(pt){
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
 const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', forme:'vol', esquisse:'sketch', s:'sketch', composant:'comp', f:'comp', fenetre:'join', porte:'join',
-  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', menuiserie:'join', n:'join', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select'};
+  symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', menuiserie:'join', n:'join', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select', peindre:'paint', peinture:'paint', texture:'paint', x:'paint'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
   const rel = s.startsWith('@'); if (rel) s = s.slice(1).trim();
@@ -5966,6 +6044,7 @@ canvas.addEventListener('pointerdown', e => {
 });
 canvas.addEventListener('pointermove', e => {
   if (push){ pushMove(e); return; }
+  if (tool === 'paint'){ if (e.pointerType === 'mouse' || e.pointerType === 'pen') paintHover(e); return; }
   const g = cursorPoint(e);
   if (g) $('#coords').textContent = `x ${nf(g[0])} · y ${nf(g[1])}${draw.workZ != null ? ` · z ${nf(draw.workZ)}` : ''}`;
   if (tool === 'select' || tool === 'push' || !g) { if (tool === 'push' && view !== '2d'){ const h = hitModel(e); canvas.style.cursor = h?.id ? 'ns-resize' : 'default'; } return; }
@@ -5981,11 +6060,12 @@ canvas.addEventListener('pointerup', e => {
   if (d.b !== 0 || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 7 || (performance.now() - d.t > 700 && !longTouch)) return;
   if (longTouch){ pick(e, true); try { navigator.vibrate?.(12); } catch(_){} return; }   // appui long au doigt : ajouter / retirer de la sélection
   if (tool === 'select' || tool === 'push'){ pick(e); return; }
+  if (tool === 'paint'){ paintPick(e); return; }
   const g = cursorPoint(e); if (!g) return;
   const s = tool === 'comp' ? {pt:g} : snap(g); draw.snap = s; placePoint(s.pt);
 });
 canvas.addEventListener('dblclick', () => { if (tool === 'wall' && draw.start) cancelDraw(); else if (tool === 'select' && sel){ const el = getEl(sel); if (el?.kind === 'inst' && !el.host){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); } } });
-canvas.addEventListener('pointerleave', () => { if (tool !== 'select'){ $('#live').hidden = true; drawSnapGlyph(null); } });
+canvas.addEventListener('pointerleave', () => { if (tool !== 'select'){ $('#live').hidden = true; drawSnapGlyph(null); } if (tool === 'paint') paintHoverClear(); });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 function pick(e, add = false){
   const h = hitModel(e); const id = h?.id ?? null;
@@ -7426,6 +7506,163 @@ function buildDoorMarks(){
   dirty = true;
 }
 
+/* ==== 59-paint.js ==== */
+/* ============ Revêtements et textures à l'échelle (façon SketchUp) ============
+   - Chaque matériau a une taille de motif (texScale, m) et une rotation (texRot, °), réglables dans sa fiche ; les UV de toute
+     la maquette sont « monde », donc un motif de 0,50 m mesure 0,50 m sur un mur droit, en diagonale, sur une dalle ou un toit.
+   - Un élément peut recevoir un revêtement d'affichage : el.paint {m, s, r} (forme, poteau, escalier, toiture, dessus d'une dalle),
+     el.paintUnder (sous-face d'une dalle), el.paintOut / el.paintIn (faces extérieure / intérieure d'un mur), el.paintMap
+     (composant : par matériau d'origine). Affichage seulement : composition, thermique, DQE et IFC restent la vérité.
+     Un mur ou une dalle peints reçoivent une fine pellicule (1,5 mm) qui suit les ouvertures et le chapeau sous toiture ; les
+     tableaux des baies suivent la face extérieure.
+   - Outil Peindre (X) : pot de peinture sur une face ; Alt + clic (ou le mode Pipette, au doigt) reprend le matériau et son échelle. */
+const PAINT_KEYS = ['paint', 'paintUnder', 'paintOut', 'paintIn'];
+const paintOf = p => p && typeof p === 'object' && p.m && libMats()[p.m] ? p : null;
+const paintTr = p => p ? {s:p.s > 0 ? +p.s : 0, r:+p.r || 0} : null;
+const finOf = p => { p = paintOf(p); return p ? {m:p.m, tr:paintTr(p)} : null; };
+/* matériau affiché d'une pièce d'élément (null = matériau réel) */
+function pieceFinish(el, pc){
+  if (pc.coat) return null;
+  if (el.kind === 'wall') return pc.reveal ? finOf(el.paintOut) : null;
+  if (el.kind === 'roof') return pc.roof && pc.li === 0 ? finOf(el.paint) : null;
+  if (el.kind === 'slab') return null;
+  return finOf(el.paint);
+}
+const instFinish = (el, m) => finOf(el.paintMap?.[m]);
+/* pellicules de revêtement : faces d'un mur, dessus et dessous d'une dalle */
+const COAT = 0.0015;
+function wallCoat(el, side, p){
+  const T = wallT(el), els = state.els, z = lvlZ(el.lvl) + (el.off || 0), tr = paintTr(p), out = [], m = p.m;
+  const minus = (side === 'ext') === !el.flip;   // face extérieure = côté −n tant que les faces ne sont pas inversées
+  const s1 = minus ? -T / 2 - COAT : T / 2, s2 = s1 + COAT;
+  if (wallArc(el)){ out.push({mat:m, poly:[...arcPts(el, s1), ...arcPts(el, s2).reverse()], base:z, h:el.h, coat:true, tr}); return out; }
+  const {u, n, L} = wallAxis(el), ops = wallOpenings(el, els);
+  const P0 = endPt(el, true, s1, els), P1 = endPt(el, false, s1, els), P2 = endPt(el, false, s2, els), P3 = endPt(el, true, s2, els);
+  const at = (t, off) => V.add(V.add(el.a, V.mul(u, t)), V.mul(n, off)), sideAt = t => t <= 0 ? [P0, P3] : t >= L ? [P1, P2] : [at(t, s1), at(t, s2)];
+  const bounds = [0]; ops.forEach(o => bounds.push(o.t0, o.t1)); bounds.push(L);
+  for (let k = 0; k < bounds.length - 1; k++){
+    const ta = bounds[k], tb = bounds[k + 1]; if (tb - ta < 1e-5) continue;
+    const [la1, la2] = sideAt(ta), [lb1, lb2] = sideAt(tb), poly = [la1, lb1, lb2, la2], op = k % 2 === 1 ? ops[(k - 1) / 2] : null;
+    if (!op) out.push({mat:m, poly, base:z, h:el.h, coat:true, tr});
+    else { if (op.z0 > 0.001) out.push({mat:m, poly, base:z, h:op.z0, coat:true, tr}); if (el.h - op.z1 > 0.001) out.push({mat:m, poly, base:z + op.z1, h:el.h - op.z1, coat:true, tr}); }
+  }
+  if (el.top === 'roof'){   // chapeau sous la toiture : mêmes bandes que wallCapPieces
+    const P = wallRoofProfile(el); if (P){ const zTop = z + el.h;
+      for (let i = 0; i + 1 < P.pts.length; i++){
+        const [t0, z0] = P.pts[i], [t1, z1] = P.pts[i + 1]; if (Math.max(z0, z1) - zTop < 0.002 || t1 - t0 < 1e-4) continue;
+        const a = at(t0, s1), b = at(t1, s1), top = [[a[0], a[1], zTop], [b[0], b[1], zTop], [b[0], b[1], Math.max(zTop, z1)], [a[0], a[1], Math.max(zTop, z0)]];
+        out.push({mat:m, poly:[a, b, at(t1, s2), at(t0, s2)], top, ext:[n[0] * COAT, n[1] * COAT, 0], base:zTop, h:0, coat:true, tr});
+      } }
+  }
+  return out;
+}
+function paintCoats(el){
+  const out = [];
+  if (el.kind === 'wall'){ for (const [k, side] of [['paintOut', 'ext'], ['paintIn', 'int']]){ const p = paintOf(el[k]); if (p) try { out.push(...wallCoat(el, side, p)); } catch(e){ console.warn('revêtement', e); } } }
+  else if (el.kind === 'slab'){
+    const z = lvlZ(el.lvl) + (el.off || 0), P = volPoly(el), holes = slabHoles(el).concat(el.holes || []), pt = paintOf(el.paint), pu = paintOf(el.paintUnder);
+    if (pt) out.push({mat:pt.m, poly:P, holes, base:z + slabT(el), h:COAT, coat:true, tr:paintTr(pt)});
+    if (pu) out.push({mat:pu.m, poly:P, holes, base:z - COAT, h:COAT, coat:true, tr:paintTr(pu)});
+  }
+  return out;
+}
+
+/* ---------- outil Peindre ---------- */
+const paintHoverGroup = new THREE.Group(); paintHoverGroup.name = 'survol-peinture'; scene.add(paintHoverGroup);
+let paintHoverKey = '';
+function paintHoverClear(){ paintHoverGroup.clear(); paintHoverKey = ''; dirty = true; }
+/* face visée : élément, maillage, normale et point (dans le monde) */
+function paintHit(e){
+  setNdc(e);
+  const hits = ray.intersectObjects(modelGroup.children, true).filter(h => h.object.isMesh && h.object.material.visible !== false && !h.object.userData.isEdge);
+  if (!hits.length) return null;
+  const h = hits[0]; let o = h.object; while (o && o.userData.id === undefined) o = o.parent;
+  const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : new THREE.Vector3(0, 1, 0);
+  return {id:o ? o.userData.id : null, obj:h.object, normal:n, point:h.point};
+}
+/* face d'un mur visée : 'ext' | 'int' | null (dessus, bout) */
+function wallSideOf(el, normal){
+  const n = wallAxis(el).n, d = normal.dot(new THREE.Vector3(n[0], 0, -n[1])); if (Math.abs(d) < 0.5) return null;
+  return (d < 0) === !el.flip ? 'ext' : 'int';
+}
+function paintTargetKey(el, h){
+  if (el.kind === 'wall'){ const s = wallSideOf(el, h.normal); return s ? (s === 'ext' ? 'paintOut' : 'paintIn') : null; }
+  if (el.kind === 'slab') return h.normal.y < -0.5 ? 'paintUnder' : 'paint';
+  if (el.kind === 'inst') return 'paintMap';
+  return 'paint';
+}
+const paintLabel = (el, key) => key === 'paintOut' ? 'face extérieure' : key === 'paintIn' ? 'face intérieure' : key === 'paintUnder' ? 'sous-face' : el.kind === 'slab' ? 'dessus' : el.kind === 'inst' ? 'ce matériau' : 'tout l\'élément';
+function paintHover(e){
+  const h = paintHit(e), el = h?.id != null ? getEl(h.id) : null, key = el ? paintTargetKey(el, h) : null;
+  const k = el && key ? `${el.id}|${key}|${h.obj.uuid}` : '';
+  canvas.style.cursor = el && key ? (defs.paint.pip || e.altKey ? 'copy' : 'cell') : 'not-allowed';
+  if (k === paintHoverKey) return; paintHoverGroup.clear(); paintHoverKey = k;
+  if (el && key){
+    const set = el.kind === 'inst' ? [h.obj] : [];   // mur / dalle : toutes les pièces de la face visée ; composant : le matériau visé
+    if (el.kind !== 'inst'){ let g = h.obj; while (g && g.userData.id === undefined) g = g.parent;
+      g?.traverse(o => { if (!o.isMesh || o.userData.isEdge) return;
+        if (el.kind === 'wall' || el.kind === 'slab'){ if (o.userData.coat) return; } set.push(o); }); }
+    for (const o of set){ const m = new THREE.Mesh(o.geometry, hoverMat); m.matrixAutoUpdate = false; m.matrix.copy(o.matrixWorld); m.renderOrder = 5; paintHoverGroup.add(m); }
+    const lv = $('#live'); lv.textContent = `${el.kind === 'inst' ? (fam(el.fam)?.nom || 'Composant') : KIND_NAME[el.kind]} ${el.id} · ${paintLabel(el, key)}${defs.paint.pip || e.altKey ? ' · pipette' : ''}`;
+    const r = canvas.getBoundingClientRect(); lv.style.left = (e.clientX - r.left + 14) + 'px'; lv.style.top = (e.clientY - r.top + 18) + 'px'; lv.hidden = false;
+  } else $('#live').hidden = true;
+  dirty = true;
+}
+function paintValue(){ const P = defs.paint; if (!P.m || !libMats()[P.m]) return null; const v = {m:P.m}; if (P.s > 0) v.s = +P.s; if (P.r) v.r = +P.r; return v; }
+function paintPick(e){
+  const h = paintHit(e); if (!h || h.id == null){ toast('Cliquez une face de la maquette'); return; }
+  const el = getEl(h.id); if (!el) return;
+  const key = paintTargetKey(el, h); if (!key){ toast('Cliquez une face du mur (pas le dessus ni le bout)'); return; }
+  if (e.altKey || defs.paint.pip){   // pipette : matériau affiché, avec son échelle
+    const ud = h.obj.userData, m = ud.mat; if (!m || !libMats()[m]) return;
+    const tr = ud.tr || {}; defs.paint.m = m; defs.paint.s = tr.s > 0 ? +tr.s : (libMats()[m].texScale > 0 ? +libMats()[m].texScale : 0); defs.paint.r = tr.r || libMats()[m].texRot || 0;
+    if (defs.paint.pip){ defs.paint.pip = false; }
+    syncHud(); toast(`Pipette : ${libMats()[m].nom}`); return;
+  }
+  const v = paintValue();
+  pushHist();
+  if (key === 'paintMap'){ const src = h.obj.userData.src || h.obj.userData.mat; const map = {...(el.paintMap || {})}; if (v) map[src] = v; else delete map[src]; if (Object.keys(map).length) el.paintMap = map; else delete el.paintMap; }
+  else if (v) el[key] = v; else delete el[key];
+  state.isSample = false; paintHoverClear(); rebuild({noPanel:sel !== el.id});
+  toast(v ? `${libMats()[v.m].nom} appliqué (${paintLabel(el, key)})` : `Revêtement retiré (${paintLabel(el, key)})`);
+}
+/* pilule de l'outil : matériau, taille du motif, rotation, pipette */
+function paintMatOptions(cur){
+  const by = {}; for (const [k, m] of Object.entries(libMats())) if (!m.R && m.cat !== "Lames d'air et divers") (by[m.cat || 'Divers'] ??= []).push([k, m.nom]);
+  const cats = Object.keys(by).sort((a, b) => (a === 'Peintures et finitions' ? -1 : b === 'Peintures et finitions' ? 1 : a.localeCompare(b, 'fr')));
+  return `<option value="">Retirer le revêtement (matériau d'origine)</option>` + cats.map(c => `<optgroup label="${esc(c)}">${by[c].sort((a, b) => a[1].localeCompare(b[1], 'fr')).map(([k, n]) => `<option value="${esc(k)}"${k === cur ? ' selected' : ''}>${esc(n)}</option>`).join('')}</optgroup>`).join('');
+}
+function paintHud(){
+  const pill = $('#paintPill'); if (!pill) return; pill.hidden = tool !== 'paint'; if (tool !== 'paint'){ paintHoverClear(); return; }
+  const P = defs.paint, sel = $('#paintMat'); if (sel.dataset.n !== String(Object.keys(libMats()).length) || sel.value !== (P.m || '')){ sel.innerHTML = paintMatOptions(P.m); sel.dataset.n = String(Object.keys(libMats()).length); sel.value = P.m || ''; }
+  const m = P.m ? libMats()[P.m] : null; $('#paintScale').value = P.s > 0 ? P.s : ''; $('#paintScale').placeholder = m ? nf(texNat(m)[0]) : '—'; $('#paintScale').disabled = !m || !m.tex || m.tex === 'glass';
+  $('#paintRot').value = String(P.r || 0); $('#paintPip').classList.toggle('on', !!P.pip); $('#paintPip').setAttribute('aria-pressed', String(!!P.pip));
+}
+/* ---------- propriétés : revêtements d'un élément ---------- */
+function paintFields(el){
+  const keys = el.kind === 'wall' ? [['paintOut', 'Revêtement extérieur'], ['paintIn', 'Revêtement intérieur']] : el.kind === 'slab' ? [['paint', 'Revêtement du dessus'], ['paintUnder', 'Revêtement de la sous-face']] : el.kind === 'inst' ? [] : [['paint', 'Revêtement']];
+  let h = '';
+  for (const [k, label] of keys){
+    const p = paintOf(el[k]), m = p ? libMats()[p.m] : null;
+    h += `<label class="f wide"><span>${label}</span><span class="in"><select data-f="${k}">${paintMatOptions(p?.m || '')}</select></span></label>`;
+    if (p) h += `<label class="f"><span>Taille du motif</span><span class="in"><input data-f="${k}.s" type="number" step="0.05" min="0.05" value="${p.s > 0 ? p.s : ''}" placeholder="${m ? nf(texNat(m)[0]) : ''}"><em>m</em></span></label><label class="f"><span>Rotation</span><span class="in"><input data-f="${k}.r" type="number" step="15" value="${p.r || 0}"><em>°</em></span></label>`;
+  }
+  if (el.kind === 'inst' && el.paintMap && Object.keys(el.paintMap).length){
+    h += `<div class="f wide"><span>Revêtements du composant</span><div class="chips">${Object.entries(el.paintMap).map(([src, p]) => `<span class="chip">${esc(libMats()[src]?.nom || src)} → <b>${esc(libMats()[p.m]?.nom || p.m)}</b> <button type="button" class="x" data-act="paint-unmap" data-src="${esc(src)}" title="Retirer">×</button></span>`).join('')}</div></div>`;
+  }
+  return h;
+}
+/* changement d'un champ data-f="paint…" (appelé par le panneau) */
+function setPaintField(el, f, t){
+  const [key, sub] = f.split('.');
+  if (key === 'paintMap'){ const map = {...(el.paintMap || {})}; delete map[sub]; if (Object.keys(map).length) el.paintMap = map; else delete el.paintMap; return; }
+  if (!sub){ const m = t.value; if (!m || !libMats()[m]) delete el[key]; else el[key] = {...(paintOf(el[key]) || {}), m}; return; }
+  const p = paintOf(el[key]); if (!p) return; const v = num(t.value);
+  if (sub === 's'){ if (v > 0) p.s = v; else delete p.s; } else if (sub === 'r'){ if (v) p.r = v; else delete p.r; }
+}
+/* toutes les occurrences d'un revêtement (pour la bibliothèque : « utilisé dans n éléments ») */
+function paintUses(mid){ let n = 0; for (const el of state?.els || []){ for (const k of PAINT_KEYS) if (el[k]?.m === mid) n++; if (el.paintMap) for (const p of Object.values(el.paintMap)) if (p?.m === mid) n++; } return n; }
+
 /* ==== 59b-sketch.js ==== */
 /* ============ Esquisse 3D (façon Shapr3D) ============
    On choisit un plan de travail en touchant une face (sol, dalle, mur, forme, toit), on y dessine des contours (lignes, rectangles,
@@ -7727,6 +7964,7 @@ function renderProps(){
     h += field('Longueur', 'len', L, 'm') + linkFields(el);
     h += field('Départ x', 'ax', el.a[0], 'm') + field('Départ y', 'ay', el.a[1], 'm') + field('Arrivée x', 'bx', el.b[0], 'm') + field('Arrivée y', 'by', el.b[1], 'm');
     h += field('Courbure (flèche)', 'bulge', el.bulge || 0, 'm') + (wallArc(el) ? `<div class="f"><span>Rayon</span><div class="site-v">${nf(wallArc(el).R)} m</div></div>` : '');
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Performances de la paroi</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       ${fireCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(T * 100, 1)} cm</dd><dt>Surface brute</dt><dd>${nf(L * el.h)} m²</dd><dt>Ouvertures</dt><dd>${ops.length}</dd><dt>Volume net</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
@@ -7745,6 +7983,7 @@ function renderProps(){
     h += selectField('Plafond', 'rceil', Object.entries(ROOF_CEIL), el.ceil || '', false);
     h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
     if (el.gable !== false && (el.shape || '2') !== '4' && (el.shape || '2') !== '0') h += selectField('Mur des pignons', 'rgtype', wallOpts, el.gableType || '', false);
+    h += paintFields(el);
     h += `</div>${poly ? `<p class="hint">Toit dessiné sur un contour de ${el.poly.length} côtés, découpé en ${G.wings.length} aile${G.wings.length > 1 ? 's' : ''} (noues automatiques).</p>` : ''}
       <div class="btns tight"><button class="btn" data-act="roof-fit">Caler sur les murs</button><button class="btn" data-act="roof-2pts">Placer par 2 points</button><button class="btn" data-act="roof-frame">Charpente…</button><button class="btn" data-act="roof-attach">Attacher les murs dessous</button>${state.els.some(w => w.kind === 'wall' && w.top === 'roof' && roofOver(w) === el) ? '<button class="btn" data-act="roof-detach">Détacher les murs</button>' : ''}</div>
       <div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
@@ -7764,6 +8003,7 @@ function renderProps(){
     h += `</div></div><div class="grp"><h3>Garde-corps et trémie</h3><div class="fields"><label class="f wide rchk"><input type="checkbox" data-f="strail"${el.rail !== false ? ' checked' : ''}> Main courante et garde-corps (côté extérieur)</label><label class="f wide rchk"><input type="checkbox" data-f="strail2"${el.rail2 ? ' checked' : ''}> Seconde main courante (côté intérieur)</label>`
       + field('Hauteur de main courante', 'strailh', el.railH || 0.9, 'm', '0.05')
       + `<label class="f wide rchk"><input type="checkbox" data-f="sttrem"${el.tremie !== false ? ' checked' : ''}> Trémie automatique dans le plancher d'arrivée</label><label class="f wide rchk"><input type="checkbox" data-f="stfull"${el.fullTremie ? ' checked' : ''}> Trémie sur toute l'emprise (sinon : minimale pour l'échappée)</label></div></div>`;
+    h += `<div class="grp"><h3>Revêtement</h3><div class="fields">` + paintFields(el) + `</div></div>`;
     { const C = stairCheck(el);
     h += `<div class="grp"><h3>Confort et réglementation</h3><div class="perf"><div class="pc"><span>Marches</span><b>${D.n}</b><em>hauteur ${nf(D.h * 100, 1)} cm</em></div><div class="pc"><span>Giron</span><b>${nf(D.g * 100, 1)}</b><em>cm</em></div><div class="pc ${okB ? 'g-ok' : 'g-bad'}"><span>2h + g</span><b>${nf(D.blondel * 100, 1)}</b><em>cm (60 à 65)</em></div></div>
       <ul class="warns">${C.checks.map(c => `<li class="${c.lvl}">${esc(c.t)}</li>`).join('')}</ul>
@@ -7776,6 +8016,7 @@ function renderProps(){
     h += slabLinkField(el);
     { const dims = field('Longueur (x)', 'lx', Lx, 'm') + field('Largeur (y)', 'ly', Ly, 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm'); h += el.bind ? dims.replace(/<input /g, '<input disabled title="Suit les murs : changez « Liée à » pour saisir les dimensions" ') : dims; }
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Dessous de la dalle', 'off', el.off, 'm');
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Performances</h3>${perfCards(el)}<div class="btns tight"><button class="btn primary" data-act="insul">Ajuster l'isolant / U / R</button><button class="btn" data-act="compose">Fiche complète</button></div></div>
       ${fireCard(el)}
       <div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Épaisseur</dt><dd>${nf(slabT(el) * 100, 1)} cm</dd><dt>Surface</dt><dd>${nf(SA)} m²</dd>${el.poly ? `<dt>Contour</dt><dd>${el.poly.length} côtés</dd>` : ''}${nh ? `<dt>Trous</dt><dd>${nh}</dd>` : ''}<dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd>${n0(m)} kg</dd></dl></div>
@@ -7788,24 +8029,27 @@ function renderProps(){
     h += field('Origine x', 'px', r[0][0], 'm', '0.001') + field('Origine y', 'py', r[0][1], 'm', '0.001') + (el.onWalls ? lockF(field('Base z', 'off', el.off, 'm', '0.001')) : field('Base z', 'off', el.off, 'm', '0.001'));
     h += selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + onWallsField(el);
     if (el.poly) h += `<div class="f wide"><span>Forme</span><div class="site-v">${el.shape === 'circ' ? 'Cercle' : `Polygone de ${el.poly.length} côtés`} · ${nf(area(el.poly))} m² au sol</div></div>`;
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse volumique</dt><dd>${n0(mat(el.mat).rho)} kg/m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
       <div class="btns"><button class="btn primary" data-act="mkcomp">Créer un composant…</button><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'sk'){
     const n = skN(el.fr), A = Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0);
     h += matSelect('Matériau', 'mat', el.mat) + field('Épaisseur (extrusion)', 'skd', el.d, 'm', '0.005') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage', 'off', el.off, 'm');
     h += `<div class="f wide"><span>Plan d'esquisse</span><div class="site-v">${Math.abs(n[2]) > 0.9 ? 'horizontal' : Math.abs(n[2]) < 0.1 ? 'vertical' : 'incliné'} · ${el.poly.length} sommets${(el.holes || []).length ? ` · ${el.holes.length} trou${el.holes.length > 1 ? 's' : ''}` : ''} · ${nf(A)} m²</div></div>`;
+    h += paintFields(el);
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
       <div class="btns"><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn" data-act="tool-sketch">Nouvelle esquisse</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'col'){
     h += matSelect('Matériau', 'mat', el.mat);
     h += field('Section x', 'w', el.w, 'm') + field('Section y', 'd', el.d, 'm') + field('Centre x', 'cx', el.c[0], 'm') + field('Centre y', 'cy', el.c[1], 'm');
-    h += linkFields(el);
+    h += linkFields(el) + paintFields(el);
     h += `</div>${fireCard(el)}<div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 3)} m³</dd><dt>Masse</dt><dd class="big">${n0(m)} kg</dd></dl></div>
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'inst'){
     const F = fam(el.fam), s = F ? famScope(F, el) : {};
     h += selectField('Type', 'ftype', (F?.types || []).map((t, i) => [i, t.nom]), el.type | 0);
     for (const [k, p] of Object.entries(F?.params || {})) h += `<label class="f"><span>${esc(p.label || k)}</span><span class="in"><input data-fp="${esc(k)}" type="number" step="0.01" inputmode="decimal" value="${rnd(s[k])}"><em>${esc(p.unit ?? 'm')}</em></span></label>`;
+    h += paintFields(el);
     if (el.host){
       const w = getEl(el.host);
       h += field('Distance au départ du mur', 't', el.t ?? 0, 'm', '0.01', true);
@@ -7949,6 +8193,7 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
   if (f === 'fireRole'){ pushHist(); if (t.value) el.fireRole = t.value; else delete el.fireRole; state.isSample = false; renderPanel(); return; }
   if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }
+  if (f && f.startsWith('paint')){ pushHist(); state.isSample = false; setPaintField(el, f, t); rebuild(); return; }
   const val = t.tagName === 'SELECT' ? t.value : num(t.value);
   if (typeof val === 'number' && Number.isNaN(val)){ renderPanel(); return; }
   pushHist(); state.isSample = false;
@@ -8016,6 +8261,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'jnedit') openJoineryTool({instId:sel});
   else if (act === 'join-new') openJoineryTool();
   else if (act === 'fire-pdf') printFire();
+  else if (act === 'paint-unmap'){ pushHist(); setPaintField(el, 'paintMap.' + b.dataset.src, null); state.isSample = false; rebuild(); }
   else if (act === 'roof-attach') attachWallsToRoof(el, true);
   else if (act === 'roof-detach') attachWallsToRoof(el, false);
   else if (act === 'slab-hole'){ curLvl = el.lvl; syncLevels(); defs.slab.mode = 'hole'; setTool('slab'); toast('Tracez le rectangle du trou dans la dalle (2 coins)'); }
@@ -8176,25 +8422,43 @@ function openMatEditor(id){
       ${f('gwp', 'Carbone (A1-A3)', 'kg CO₂e/kg')}${f('R', 'Résistance fixe (lame d\'air)', 'm²·K/W', '0.01')}
       <label class="f"><span>Couleur</span><span class="in"><input id="mtColor" type="color" value="${esc(base.color)}"${ro ? ' disabled' : ''}></span></label>
       <label class="f"><span>Motif de rendu</span><span class="in"><select id="mtTex"${ro ? ' disabled' : ''}>${Object.entries(PATTERNS).map(([k, n]) => `<option value="${k}"${k === base.tex ? ' selected' : ''}>${n}</option>`).join('')}</select></span></label>
+      <label class="f"><span>Taille du motif</span><span class="in"><input id="mtScale" type="number" step="0.05" min="0.05" inputmode="decimal" value="${base.texScale > 0 ? base.texScale : ''}" placeholder="${nf(texNat(base)[0])}"><em>m</em></span></label>
+      <label class="f"><span>Rotation du motif</span><span class="in"><input id="mtRot" type="number" step="15" inputmode="decimal" value="${+base.texRot || 0}"><em>°</em></span></label>
+      <div class="f wide"><span>Échelle rapide</span><div class="mtscale">${[0.25, 0.5, 1, 2, 4].map(v => `<button type="button" class="btn" data-mts="${v}">${nf(v)} m</button>`).join('')}<button type="button" class="btn" data-mts="">Naturelle (${nf(texNat(base)[0])} m)</button><button type="button" class="btn" data-mtr="90">⟳ 90°</button></div></div>
       <div class="f wide"><span>Bibliothèque de textures</span><div class="patlib" id="mtPats">${[...new Set(Object.values(TEX_LIB).map(v => v.grp))].map(gp => `<div class="patg"><em>${esc(gp)}</em><div class="patgrid">${Object.entries(TEX_LIB).filter(([, v]) => v.grp === gp).map(([k, v]) => `<button type="button" class="pat${k === base.tex ? ' on' : ''}" data-pat="${k}" title="${esc(v.nom)}"${ro ? ' disabled' : ''}><img alt="" data-patimg="${k}"><span>${esc(v.nom)}</span></button>`).join('')}</div></div>`).join('')}</div></div>
-    </div><canvas id="mtPrev" width="256" height="96" class="mtprev"></canvas>
-    <p class="hint">Laissez « Résistance fixe » vide pour un matériau courant : la résistance est alors e / λ. Pour une lame d'air, indiquez sa résistance (0,18 m²·K/W pour une lame non ventilée).</p></div>
-    <footer class="ed-f">${ro ? '<button class="btn primary" id="mtDup">Dupliquer pour le modifier</button>' : `${owner === 'perso' ? '<button class="btn danger" id="mtDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button><button class="btn primary" id="mtSave">Enregistrer dans ma bibliothèque</button>`}</footer>`;
+    </div><canvas id="mtPrev" width="512" height="160" class="mtprev"></canvas>
+    <p class="hint">Aperçu à l'échelle : la règle indique 1 m. La taille du motif est celle d'une tuile de texture dans la maquette (une brique de parement : 0,50 m de tuile pour 4 rangs) ; les UV de la maquette sont en mètres, le motif garde donc sa taille sur toutes les faces. Laissez « Résistance fixe » vide pour un matériau courant : la résistance est alors e / λ. Pour une lame d'air, indiquez sa résistance (0,18 m²·K/W pour une lame non ventilée).</p></div>
+    <footer class="ed-f">${ro ? '<button class="btn" id="mtScaleApply">Appliquer l\'échelle au projet</button><button class="btn primary" id="mtDup">Dupliquer pour le modifier</button>' : `${owner === 'perso' ? '<button class="btn danger" id="mtDel">Supprimer</button>' : ''}<button class="btn" data-close>Annuler</button><button class="btn primary" id="mtSave">${owner === 'projet' ? 'Enregistrer dans le projet' : 'Enregistrer dans ma bibliothèque'}</button>`}</footer>`;
   const d = openEDlg(html);
-  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const img = paintV2(tmpId) || paint(tmpId).image; delete MATS[tmpId];
-    g.clearRect(0, 0, cv.width, cv.height); const k = cv.height / img.height * 1.4; for (let x = 0; x < cv.width; x += img.width * k) g.drawImage(img, x, 0, img.width * k, img.height * k); };
+  const scaleOf = () => { const v = num(d.querySelector('#mtScale').value); return v > 0 ? v : 0; }, rotOf = () => +d.querySelector('#mtRot').value || 0;
+  const prev = () => { const cv = d.querySelector('#mtPrev'), g = cv.getContext('2d'); const tmpId = '__prev'; MATS[tmpId] = {...base, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value}; const img = paintV2(tmpId) || paint(tmpId).image; const [nx, ny] = texNat(MATS[tmpId]); delete MATS[tmpId];
+    // fenêtre de 4 m × 1,25 m à l'échelle : une tuile = taille du motif
+    const ppm = cv.width / 4, s = scaleOf() || nx, f = s / nx, pat = g.createPattern(img, 'repeat');
+    g.clearRect(0, 0, cv.width, cv.height); g.save(); g.translate(0, cv.height);   // origine en bas à gauche, comme les UV « monde »
+    pat.setTransform(new DOMMatrix().rotate(-rotOf()).scale(nx * f * ppm / img.width, ny * f * ppm / img.height)); g.fillStyle = pat; g.fillRect(0, -cv.height, cv.width, cv.height); g.restore();
+    g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(12, cv.height - 18, ppm, 3); g.fillRect(12, cv.height - 24, 2, 9); g.fillRect(12 + ppm - 2, cv.height - 24, 2, 9); g.font = '600 12px Inter, sans-serif'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 3; g.strokeText('1 m', 16 + ppm, cv.height - 14); g.fillText('1 m', 16 + ppm, cv.height - 14);
+    d.querySelectorAll('[data-mts]').forEach(b => b.classList.toggle('on', (b.dataset.mts === '' ? 0 : +b.dataset.mts) === scaleOf())); };
   const pats = () => { const c = d.querySelector('#mtColor').value; d.querySelectorAll('[data-patimg]').forEach((im, i) => setTimeout(() => { im.src = patternPreview(im.dataset.patimg, c); }, i * 8)); };
-  prev(); pats(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtColor').onchange = pats; d.querySelector('#mtTex').onchange = () => { d.querySelectorAll('[data-pat]').forEach(b => b.classList.toggle('on', b.dataset.pat === d.querySelector('#mtTex').value)); prev(); };
+  prev(); pats(); d.querySelector('#mtColor').oninput = prev; d.querySelector('#mtColor').onchange = pats; d.querySelector('#mtTex').onchange = () => { d.querySelectorAll('[data-pat]').forEach(b => b.classList.toggle('on', b.dataset.pat === d.querySelector('#mtTex').value)); d.querySelector('#mtScale').placeholder = nf(texNat({...base, tex:d.querySelector('#mtTex').value})[0]); prev(); };
+  d.querySelector('#mtScale').oninput = prev; d.querySelector('#mtRot').oninput = prev;
+  d.querySelectorAll('[data-mts]').forEach(b => b.onclick = () => { d.querySelector('#mtScale').value = b.dataset.mts; prev(); });
+  d.querySelector('[data-mtr]').onclick = () => { d.querySelector('#mtRot').value = (rotOf() + 90) % 360; prev(); };
   d.querySelectorAll('[data-pat]').forEach(b => b.onclick = () => { const sel = d.querySelector('#mtTex'); if (![...sel.options].some(o => o.value === b.dataset.pat)) sel.add(new Option(TEX_LIB[b.dataset.pat].nom, b.dataset.pat)); sel.value = b.dataset.pat; sel.onchange(); });
-  const dup = d.querySelector('#mtDup'); if (dup) dup.onclick = () => { const nid = 'M-' + uid8(); USER_LIB.mats[nid] = {...base, nom:base.nom + ' (perso)'}; saveUserLib(); closeEDlg(); openMatEditor(nid); renderPanel(); };
-  const del = d.querySelector('#mtDel'); if (del) del.onclick = () => { delete USER_LIB.mats[id]; saveUserLib(); closeEDlg(); resetMats(); delete texCache[id]; rebuild(); toast('Matériau retiré de ma bibliothèque (les projets qui l\'utilisent en gardent une copie)'); };
+  const dup = d.querySelector('#mtDup'); if (dup) dup.onclick = () => { const nid = 'M-' + uid8(); USER_LIB.mats[nid] = {...base, nom:base.nom + ' (perso)', ...(scaleOf() ? {texScale:scaleOf()} : {}), ...(rotOf() ? {texRot:rotOf()} : {})}; saveUserLib(); closeEDlg(); openMatEditor(nid); renderPanel(); };
+  const del = d.querySelector('#mtDel'); if (del) del.onclick = () => { delete USER_LIB.mats[id]; saveUserLib(); closeEDlg(); resetMats(); texForget(id); rebuild(); toast('Matériau retiré de ma bibliothèque (les projets qui l\'utilisent en gardent une copie)'); };
+  // matériau de base : l'échelle et la rotation du motif se règlent sans le dupliquer, dans ce projet
+  const sa = d.querySelector('#mtScaleApply'); if (sa) sa.onclick = () => { pushHist(); const s = scaleOf(), r = rotOf(); if (!s && !r) delete state.lib.mats[id]; else state.lib.mats[id] = {...MATS[id], ...(s ? {texScale:s} : {}), ...(r ? {texRot:r} : {})}; texForget(id); resetMats(); closeEDlg(); rebuild(); renderPanel(); toast(s || r ? 'Échelle du motif enregistrée pour ce projet' : 'Échelle naturelle rétablie'); };
   const sv = d.querySelector('#mtSave'); if (sv) sv.onclick = () => {
     const m = {nom:d.querySelector('#mtName').value.trim() || 'Matériau', cat:d.querySelector('#mtCat').value, color:d.querySelector('#mtColor').value, tex:d.querySelector('#mtTex').value, rough:base.rough ?? 0.9};
+    if (base.metal != null) m.metal = base.metal; if (base.opacity != null) m.opacity = base.opacity; if (base.tx) m.tx = base.tx; if (base.ty) m.ty = base.ty;
     for (const k of ['rho', 'lambda', 'c', 'mu', 'gwp', 'R']){ const v = num(d.querySelector(`[data-m="${k}"]`).value); if (!Number.isNaN(v)) m[k] = v; }
+    if (scaleOf()) m.texScale = scaleOf(); if (rotOf()) m.texRot = rotOf();
     if (!(m.lambda > 0) && m.R == null) return toast('Indiquez une conductivité λ positive (ou une résistance fixe).');
     if (!(m.rho >= 0)) m.rho = 0;
-    const mid = owner === 'perso' ? id : 'M-' + uid8(); USER_LIB.mats[mid] = m; if (state.lib.mats[mid]) state.lib.mats[mid] = {...m};
-    saveUserLib(); delete texCache[mid]; resetMats(); closeEDlg(); rebuild(); libTab = 'mats'; renderPanel(); toast('Matériau enregistré');
+    let mid = id;
+    if (owner === 'projet'){ pushHist(); state.lib.mats[id] = m; }   // matériau du projet (ou réglage d'un matériau de base) : modifié en place
+    else { mid = owner === 'perso' ? id : 'M-' + uid8(); USER_LIB.mats[mid] = m; if (state.lib.mats[mid]) state.lib.mats[mid] = {...m}; saveUserLib(); }
+    texForget(mid); resetMats(); closeEDlg(); rebuild(); libTab = 'mats'; renderPanel(); toast('Matériau enregistré');
   };
 }
 
@@ -9885,14 +10149,15 @@ function buildIFC(){
 }
 
 /* ---------- GLB pour Archi Vision (Unity) ---------- */
-function exportMat(id, cache){
-  if (cache[id]) return cache[id];
+function exportMat(id, cache, tr = null){
+  const key = id + (tr && (tr.s || tr.r) ? '|' + (tr.s || '') + '|' + (tr.r || 0) : ''); if (cache[key]) return cache[key];
   const m = mat(id), transp = m.opacity != null && m.opacity < 1;
-  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' ? texFor(id) : null,
+  // la texture porte l'échelle et la rotation du motif (KHR_texture_transform dans le glTF)
+  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' ? texAt(id, tr, false) : null,
     roughness:m.rough ?? 0.9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1});
   if (!M.map) M.color = new THREE.Color(m.color);
   M.userData = {archiplanMaterial:id, lambda:m.lambda, rho:m.rho, categorie:m.cat};
-  return cache[id] = M;
+  return cache[key] = M;
 }
 function buildGLB(){
   return new Promise((res, rej) => {
@@ -9902,19 +10167,21 @@ function buildGLB(){
     const cache = {};
     for (const el of state.els){
       const g = new THREE.Group(), info = {id:el.id, type:el.kind};
-      const geoBy = {};
+      const geoBy = {}, fins = {};
       if (el.kind === 'inst'){
         const F = fam(el.fam); g.name = `${F?.nom || 'Composant'} ${el.id}`; Object.assign(info, {famille:F?.nom, categorie:F?.cat, typeFamille:F?.types?.[el.type | 0]?.nom, parametres:F ? famScope(F, el) : {}, hote:el.host || null});
-        for (const so of instSolids(el)) (geoBy[so.m] ??= []).push(solidGeo(so));
+        for (const so of instSolids(el)){ const f = instFinish(el, so.m), k = f ? so.m + '|' + f.m : so.m; (geoBy[k] ??= []).push(solidGeo(so)); fins[k] = f; }
       } else {
         g.name = `${KIND_NAME[el.kind]} ${el.id}`;
         if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof'){ const C = compo(el.type), Lr = layersInToOut(el), th = thermal(Lr, elUse(el)); Object.assign(info, {composition:C.nom, couches:C.layers.map(([m, e]) => ({materiau:mat(m).nom, epaisseur:e})), U:Math.round(th.U * 1000) / 1000, lot:C.lot}); }
         else Object.assign(info, {materiau:mat(el.mat).nom});
-        for (const pc of pieces(el)) (geoBy[pc.mat] ??= []).push(pieceGeo(pc));
+        for (const pc of pieces(el)){ const f = pieceFinish(el, pc), k = f ? pc.mat + '|' + f.m : pc.mat; (geoBy[k] ??= []).push(pieceGeo(pc)); fins[k] = f; }
+        for (const pc of paintCoats(el)){ const k = '~' + pc.mat; (geoBy[k] ??= []).push(pieceGeo(pc)); fins[k] = {m:pc.mat, tr:pc.tr, coat:true}; }   // revêtements d'affichage (Archi Vision les montre)
       }
-      for (const [m, geos] of Object.entries(geoBy)){
+      for (const [k, geos] of Object.entries(geoBy)){
+        const f = fins[k], m = f ? f.m : k, src = f?.coat ? null : k.split('|')[0];
         const geo = geos.length === 1 ? geos[0] : mergeGeos(geos.map(x => x.index ? x.toNonIndexed() : x));
-        const mesh = new THREE.Mesh(geo, exportMat(m, cache)); mesh.name = `${g.name} - ${mat(m).nom}`; mesh.userData = {materiau:mat(m).nom}; g.add(mesh);
+        const mesh = new THREE.Mesh(geo, exportMat(m, cache, f ? f.tr : null)); mesh.name = `${g.name} - ${mat(m).nom}`; mesh.userData = src && src !== m ? {materiau:mat(src).nom, revetement:mat(m).nom} : {materiau:mat(m).nom}; g.add(mesh);
       }
       g.userData = {archiplan:info};
       (lv[el.lvl] || root).add(g);
@@ -10226,6 +10493,10 @@ $('#skModeIn').addEventListener('change', e => { SK.mode = e.target.value; SK.pt
 $('#skDone').addEventListener('click', () => { if (SK.on){ skEnd(); } setTool('select'); });
 $('#shapeIn').addEventListener('change', e => { defs.vol.shape = e.target.value; cancelDraw(); setPrompt(); updatePreview(); });
 $('#topIn').addEventListener('change', e => { if (defs[tool]) defs[tool].top = e.target.value; syncHud(); updatePreview(); });
+$('#paintMat').addEventListener('change', e => { defs.paint.m = e.target.value; defs.paint.s = 0; paintHud(); setPrompt(); });
+$('#paintScale').addEventListener('change', e => { const v = num(e.target.value); defs.paint.s = v > 0 ? v : 0; paintHud(); });
+$('#paintRot').addEventListener('change', e => { defs.paint.r = +e.target.value || 0; });
+$('#paintPip').addEventListener('click', () => { defs.paint.pip = !defs.paint.pip; paintHud(); setPrompt(); });
 $('#sTypeIn').addEventListener('change', e => { defs.stair.st = e.target.value; updatePreview(); });
 $('#sSideIn').addEventListener('change', e => { defs.stair.side = e.target.value; updatePreview(); });
 $('#sMatIn').addEventListener('change', e => { defs.stair.mat = e.target.value; updatePreview(); });
@@ -10282,7 +10553,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim', n:'join', s:'sketch'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim', n:'join', s:'sketch', x:'paint'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 
@@ -10365,7 +10636,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {sk: () => SK, addEl: e => addEl(e), rebuild: () => rebuild(), piecesOf: id => pieces(getEl(id)).length, holesOf: id => slabHoles(getEl(id)), doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {look: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, frame: ids => frameEl(ids), hitAt: (x, y) => { const h = paintHit({clientX:x, clientY:y}); return h ? {id:h.id, n:[+h.normal.x.toFixed(2), +h.normal.y.toFixed(2), +h.normal.z.toFixed(2)], p:[+h.point.x.toFixed(2), +h.point.y.toFixed(2), +h.point.z.toFixed(2)], mat:h.obj.userData.mat, coat:!!h.obj.userData.coat} : null; }, coats: () => modelGroup.children.map(g => [g.userData.id, g.children.filter(o => o.userData.coat).map(o => o.userData.mat + (o.userData.tr ? ' ' + JSON.stringify(o.userData.tr) : '')), g.children.filter(o => o.isMesh && !o.userData.coat && o.userData.src && o.userData.src !== o.userData.mat).map(o => o.userData.src + '>' + o.userData.mat)]), roundtrip: () => { const s = migrate(JSON.parse(projectJSON())); return s.els.map(e => ({id:e.id, paint:e.paint, paintOut:e.paintOut, paintIn:e.paintIn, paintUnder:e.paintUnder, paintMap:e.paintMap})).filter(e => e.paint || e.paintOut || e.paintIn || e.paintUnder || e.paintMap); }, matEd: id => openMatEditor(id), paintDefs: () => ({...defs.paint}), uvDbg: id => { const g = modelGroup.children.find(x => x.userData.id === id), out = []; g?.traverse(o => { if (o.isMesh && !o.userData.coat && o.geometry.attributes.uv){ const uv = o.geometry.attributes.uv, P = o.geometry.attributes.position; const N = o.geometry.attributes.normal, side = [...Array(uv.count).keys()].filter(i => Math.abs(N.getY(i)) < 0.5).slice(0, 8); out.push({mat:o.userData.mat, n:uv.count, uv:side.map(i => [+P.getX(i).toFixed(2), +P.getY(i).toFixed(2), +P.getZ(i).toFixed(2), +uv.getX(i).toFixed(3), +uv.getY(i).toFixed(3)])}); } }); return out; }, doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, sk: () => SK, addEl: e => addEl(e), rebuild: () => rebuild(), piecesOf: id => pieces(getEl(id)).length, holesOf: id => slabHoles(getEl(id)), doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};

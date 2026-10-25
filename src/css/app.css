@@ -528,3 +528,8 @@ body.gripping, body.gripping *{cursor:move!important}
 .grp.fire .perf .pc{min-height:64px}.grp.fire .tbl.rooms th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);text-align:left;padding:4px 6px}.grp.fire .tbl.rooms th.n{text-align:right}
 .grp.fire h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em}
 .tbl .gr{position:static;display:inline-grid;width:20px;height:20px;font-size:11px;vertical-align:middle}
+/* outil Peindre : pilule matériau / motif / pipette, puces des revêtements d'un composant */
+.paintpill{gap:5px}.paintpill select{max-width:190px}.paintpill #paintScale{width:46px}.paintpill #paintRot{width:auto;max-width:60px}
+.paintpill .ib.pip{height:26px;min-width:26px;padding:0;border-radius:7px}.paintpill .ib.pip svg{width:15px;height:15px}.paintpill .ib.pip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .x{border:0;background:transparent;color:var(--mut);font-size:14px;line-height:1;margin-left:4px;cursor:pointer}.chip .x:hover{color:#C0392B}
+.mtscale{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.mtscale .btn{padding:3px 9px;font-size:12px}.mtscale .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}

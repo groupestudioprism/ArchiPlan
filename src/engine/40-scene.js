@@ -107,7 +107,7 @@ function paint(id){
     const rows = 4, rh = S / rows; for (let r = 0; r < rows; r++) for (let c = -1; c < 4; c++){ const x = c * S/3 + (r % 2 ? S/6 : 0); g.fillStyle = shade(base, (R() - .5) * .12); g.fillRect(x + 1, r * rh, S/3 - 2, rh - 2); g.fillStyle = shade(base, -.18); g.fillRect(x, r * rh + rh - 4, S/3, 4); }
   }
   const tex = new THREE.CanvasTexture(cv); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
-  tex.repeat.set(1 / (m.tx || (t === 'plain' || t === 'concrete' || t === 'plaster' ? 2 : 1)), 1 / (m.ty || (t === 'plain' || t === 'concrete' || t === 'plaster' ? 2 : 1)));
+  const [nx, ny] = texNat(m); tex.repeat.set(1 / nx, 1 / ny);
   tex.name = 'archiplan-' + id;
   return tex;
 }
@@ -122,8 +122,8 @@ const ghostEdge = new THREE.LineBasicMaterial({color:0x0877B9});
 const hoverMat = new THREE.MeshBasicMaterial({color:0x1F89C5, transparent:true, opacity:0.18, depthWrite:false, side:THREE.DoubleSide});
 const PLAN_LIGHT = {wall:0.08, col:0.08, slab:0.84, vol:0.55, inst:0.72, host:0.35};
 const planOn = () => view === '2d';
-function matFor(id, selected, light = 0){
-  const plan = planOn(), sec = view === 'sec', st = plan ? 'plan' : sec ? 'shaded' : DISPLAY.style, key = (sec ? 'sec|' : '') + st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '');
+function matFor(id, selected, light = 0, tr = null){
+  const plan = planOn(), sec = view === 'sec', st = plan ? 'plan' : sec ? 'shaded' : DISPLAY.style, key = (sec ? 'sec|' : '') + st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '') + (tr && (tr.s || tr.r) ? '|t' + (tr.s || '') + '|' + (tr.r || 0) : '');
   if (matCache[key]) return matCache[key];
   const m = mat(id); let M;
   const transp = m.opacity != null && m.opacity < 1;
@@ -144,7 +144,7 @@ function matFor(id, selected, light = 0){
   }
   else {
     const textured = st === 'textured' || st === 'realistic';
-    const tx = textured && m.tex && m.tex !== 'glass' ? texFor(id) : null, bm = tx ? bumpFor(id) : null;
+    const tx = textured && m.tex && m.tex !== 'glass' ? texAt(id, tr, false) : null, bm = tx ? texAt(id, tr, true) : null;
     M = new THREE.MeshStandardMaterial({color:tx ? 0xffffff : m.color, map:tx, bumpMap:bm, bumpScale:bm ? (st === 'realistic' ? 1.4 : 0.8) : 1,
       roughness:m.rough ?? .9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1, depthWrite:!transp,
       envMapIntensity:st === 'realistic' ? 0.6 : 0.35});
@@ -165,22 +165,45 @@ function boxGeo(w, d, h){ // boîte aux UV « monde » (motifs à la bonne éche
   for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++){ const i = f * 4 + k; uv.setXY(i, uv.getX(i) * dims[f][0], uv.getY(i) * dims[f][1]); }
   return g;
 }
+/* UV « monde » d'une extrusion : dessus et dessous en (x, y) du plan ; faces latérales : u = abscisse le long de la face
+   (et non x ou y seul, qui étirait le motif d'un mur en diagonale), v = altitude réelle (motif aligné d'un mur à l'autre) */
+function metricUV(base = 0){
+  const V2 = THREE.Vector2;
+  return {
+    generateTopUV:(g, v, a, b, c) => [new V2(v[a * 3], v[a * 3 + 1]), new V2(v[b * 3], v[b * 3 + 1]), new V2(v[c * 3], v[c * 3 + 1])],
+    generateSideWallUV:(g, v, a, b, c, d) => {
+      let dx = v[b * 3] - v[a * 3], dy = v[b * 3 + 1] - v[a * 3 + 1]; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+      if (dx < -1e-9 || (Math.abs(dx) < 1e-9 && dy < 0)){ dx = -dx; dy = -dy; }   // u croît avec x (ou y) : même sens que les faces alignées sur les axes
+      const uv = i => new V2(v[i * 3] * dx + v[i * 3 + 1] * dy, v[i * 3 + 2] + base);
+      return [uv(a), uv(b), uv(c), uv(d)];
+    },
+  };
+}
 function pieceGeo(pc){
   if (pc.sk) return skGeo(pc.sk);
   if (pc.top) return prismGeo(pc.top, pc.ext);
   const shape = new THREE.Shape(pc.poly.map(p => new THREE.Vector2(p[0], p[1])));
   if (pc.holes) pc.holes.forEach(h => shape.holes.push(new THREE.Path(h.map(p => new THREE.Vector2(p[0], p[1])))));
-  const geo = new THREE.ExtrudeGeometry(shape, {depth:Math.max(pc.h, 0.001), bevelEnabled:false});
+  const geo = new THREE.ExtrudeGeometry(shape, {depth:Math.max(pc.h, 0.001), bevelEnabled:false, UVGenerator:metricUV(pc.base)});
   geo.rotateX(-Math.PI / 2); geo.translate(0, pc.base, 0);
   return geo;
+}
+/* UV métriques des solides de révolution : le tour vaut 2πr, la hauteur sa longueur réelle, les faces planes en (x, z) */
+function metricRound(g, r, h, sphere){
+  const P = g.attributes.position, N = g.attributes.normal, uv = g.attributes.uv; if (!uv) return g;
+  for (let i = 0; i < uv.count; i++){
+    if (sphere){ uv.setXY(i, uv.getX(i) * 2 * Math.PI * r, uv.getY(i) * Math.PI * r); continue; }
+    if (Math.abs(N.getY(i)) > 0.9) uv.setXY(i, P.getX(i), P.getZ(i)); else uv.setXY(i, uv.getX(i) * 2 * Math.PI * r, uv.getY(i) * h);
+  }
+  uv.needsUpdate = true; return g;
 }
 function solidGeo(so){
   let g;
   // (correctif : les cylindres et cônes verticaux étaient remplacés par une boîte — poteau rond, tronc d'arbre)
-  if (so.s === 'cyl') g = new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20);
-  else if (so.s === 'cone') g = new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14);
-  else if (so.s === 'sph') g = new THREE.SphereGeometry(so.r, 20, 14);
-  else if (so.s === 'ext'){ g = new THREE.ExtrudeGeometry(new THREE.Shape(so.pts.map(p => new THREE.Vector2(p[0], p[1]))), {depth:so.h, bevelEnabled:false}); g.rotateX(-Math.PI / 2); g.translate(0, -so.h / 2, 0); }
+  if (so.s === 'cyl') g = metricRound(new THREE.CylinderGeometry(so.r, so.r, so.h, so.r > 0.3 ? 40 : 20), so.r, so.h);
+  else if (so.s === 'cone') g = metricRound(new THREE.CylinderGeometry(so.r2 || 0, so.r, so.h, 14), (so.r + (so.r2 || 0)) / 2, so.h);
+  else if (so.s === 'sph') g = metricRound(new THREE.SphereGeometry(so.r, 20, 14), so.r, 0, true);
+  else if (so.s === 'ext'){ g = new THREE.ExtrudeGeometry(new THREE.Shape(so.pts.map(p => new THREE.Vector2(p[0], p[1]))), {depth:so.h, bevelEnabled:false, UVGenerator:metricUV(0)}); g.rotateX(-Math.PI / 2); g.translate(0, -so.h / 2, 0); }
   else g = boxGeo(so.w, so.d, so.h);
   if (so.s === 'cyl' || so.s === 'cone'){ if (so.ax === 'x') g.rotateZ(Math.PI / 2); else if (so.ax === 'y') g.rotateX(Math.PI / 2); }
   if (so.rz) g.rotateY(so.rz);
@@ -224,19 +247,21 @@ function cachedGeo(key, make){
   e.gen = geoGen; return e.g;
 }
 function geoCachePrune(){ for (const [k, e] of GEO_CACHE) if (e.gen !== geoGen){ e.g.dispose(); GEO_CACHE.delete(k); } }
-function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0, key = null){
-  const mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light));
-  mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.light = light;
+function meshOf(geo, matId, ghost, edgeAngle = 25, light = 0, key = null, fin = null){
+  // fin : revêtement d'affichage {m, tr} ; le matériau réel reste dans userData.src (métré, pipette, export)
+  const src = matId; if (fin) matId = fin.m;
+  const tr = fin ? fin.tr : null, mesh = new THREE.Mesh(geo, ghost ? ghostMat : matFor(matId, false, light, tr));
+  mesh.castShadow = !ghost && !(mat(matId).opacity < 1); mesh.receiveShadow = !ghost; mesh.userData.mat = matId; mesh.userData.src = src; mesh.userData.light = light; if (tr) mesh.userData.tr = tr;
   if (edgeAngle >= 0 && (DISPLAY.edges || DISPLAY.style === 'sketch' || DISPLAY.style === 'wire' || planOn() || view === 'sec')){
     const edges = new THREE.LineSegments(key ? cachedGeo(key + '|e' + edgeAngle, () => edgesOf(geo, edgeAngle)) : edgesOf(geo, edgeAngle), ghost ? ghostEdge : edgeMat);
     edges.userData.isEdge = true; mesh.add(edges);
   }
   return mesh;
 }
-function pieceMesh(pc, ghost, light = 0, noEdge = false){
+function pieceMesh(pc, ghost, light = 0, noEdge = false, fin = null){
   const ea = noEdge ? -1 : 25;
-  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, ea, light);
-  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, ea, light, key);
+  if (ghost || !GEO_ON || !geoBuilding) return meshOf(pieceGeo(pc), pc.mat, ghost, ea, light, null, fin);
+  const key = 'p' + JSON.stringify(pc); return meshOf(cachedGeo(key, () => pieceGeo(pc)), pc.mat, false, ea, light, key, fin);
 }
 let GEO_ON = true, geoBuilding = false;
 function disposeGroup(g){ g.traverse(o => { if (o.geometry && !o.geometry.userData.apCached) o.geometry.dispose(); }); g.clear(); }
@@ -247,9 +272,9 @@ function instMeshes(el, ghost, light = 0){
   for (const so of instSolids(el)) (by[so.m] ??= []).push(so);
   const out = [];
   for (const [m, sos] of Object.entries(by)){
-    const make = () => { const geos = sos.map(solidGeo); return geos.length === 1 ? geos[0] : mergeGeos(geos); };
-    if (ghost || !GEO_ON || !geoBuilding){ out.push(meshOf(make(), m, ghost, 30, light)); continue; }
-    const key = 'i' + JSON.stringify(sos); out.push(meshOf(cachedGeo(key, make), m, false, 30, light, key));
+    const make = () => { const geos = sos.map(solidGeo); return geos.length === 1 ? geos[0] : mergeGeos(geos); }, fin = ghost ? null : instFinish(el, m);
+    if (ghost || !GEO_ON || !geoBuilding){ out.push(meshOf(make(), m, ghost, 30, light, null, fin)); continue; }
+    const key = 'i' + JSON.stringify(sos); out.push(meshOf(cachedGeo(key, make), m, false, 30, light, key, fin));
   }
   return out;
 }
@@ -323,7 +348,8 @@ function rebuild(opts = {}){
     g.userData.archiplan = {id:el.id, kind:el.kind, type:el.kind === 'inst' ? el.fam : (el.type || el.mat), niveau:lvlName(el.lvl)};
     if (el.kind === 'inst') instMeshes(el, false, light).forEach(m => { m.name = `${g.name}-${m.userData.mat}`; m.userData.archiplan = {materiau:mat(m.userData.mat).nom, lot:famLot(F)}; g.add(m); });
     else { const cw = el.kind === 'wall' && cleanWallEdges();
-      for (const pc of pieces(el)){ const m = pieceMesh(pc, false, light, cw); m.name = `${g.name}-${pc.mat}`; m.userData.archiplan = {materiau:mat(pc.mat).nom, lot:pc.lot, epaisseur:pc.e ?? null}; g.add(m); }
+      for (const pc of pieces(el)){ const m = pieceMesh(pc, false, light, cw, pieceFinish(el, pc)); m.name = `${g.name}-${pc.mat}`; m.userData.archiplan = {materiau:mat(pc.mat).nom, lot:pc.lot, epaisseur:pc.e ?? null}; g.add(m); }
+      if (!plan) for (const pc of paintCoats(el)){ const m = pieceMesh(pc, false, light, true, {m:pc.mat, tr:pc.tr}); m.name = `${g.name}-revetement`; m.userData.coat = true; g.add(m); }
       if (cw) try { g.add(wallEdgeLines(el)); } catch(e){ console.warn('arêtes du mur', e); } }
     if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
     modelGroup.add(g);
@@ -345,7 +371,7 @@ function applySel(){
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const g of modelGroup.children){
     const on = set.has(g.userData.id);
-    g.traverse(o => { if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
+    g.traverse(o => { if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0, o.userData.tr || null); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
   }
   batchLive(set); dirty = true;
 }
