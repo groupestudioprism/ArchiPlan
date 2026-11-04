@@ -528,6 +528,13 @@ body.gripping, body.gripping *{cursor:move!important}
 #labels .dim.cote{background:color-mix(in srgb,var(--vp) 90%,transparent);font-weight:600;pointer-events:auto;cursor:pointer}
 #labels .dim.cote:hover{color:#C0392B;text-decoration:line-through}
 #labels.drawing .dim.cote{pointer-events:none}
+#labels.drawing.dimtool:not(.dimbusy) .dim.cote{pointer-events:auto}
+#labels .dim.cote.tot{font-weight:700;border:1px solid color-mix(in srgb,var(--ink) 30%,transparent)}
+.dimbar{position:absolute;left:50%;top:104px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);padding:6px 8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12);animation:dbIn .2s ease}
+.dimbar[hidden]{display:none}.dimbar .seg{display:inline-flex;gap:2px;background:color-mix(in srgb,var(--line) 55%,transparent);padding:3px;border-radius:9px}
+.dimbar button{border:0;background:transparent;color:inherit;font:600 12px var(--f-body);padding:6px 9px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s}
+.dimbar .seg button.on{background:var(--panel);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.18)}.dimbar button.sm{border:1px solid var(--line)}.dimbar button:disabled{opacity:.4;cursor:default}.dimbar .sep{width:1px;height:20px;background:var(--line)}
+@keyframes dbIn{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
 .jn-seg{flex-wrap:wrap}.jn-seg button{flex:1 1 31%;min-width:0;white-space:nowrap;padding:0 6px}
 .jn-cv{height:min(380px,42vh)}
 .jn-perf{margin-top:10px}.jn-warns{margin-top:8px}
@@ -5171,6 +5178,12 @@ const isNarrow = matchMedia('(max-width: 860px)');
 /* préférences de l'appareil (bouton Réglages) : qualité graphique, pas de grille, cotes */
 const APP_PREFS = (() => { try { return {gfx:'auto', step:0.05, dimDec:2, dimUnit:'m', ...JSON.parse(localStorage.getItem('ap.prefs') || '{}')}; } catch(e){ return {gfx:'auto', step:0.05, dimDec:2, dimUnit:'m'}; } })();
 const savePrefs = () => { try { localStorage.setItem('ap.prefs', JSON.stringify(APP_PREFS)); } catch(e){} };
+/* unités d'affichage des longueurs (Réglages › Unités) : m, cm, mm, pouces, pieds. Le modèle reste toujours en mètres. */
+const LEN_UNITS = {m:{k:1, s:'m', n:'Mètres (m)'}, cm:{k:100, s:'cm', n:'Centimètres (cm)'}, mm:{k:1000, s:'mm', n:'Millimètres (mm)'}, in:{k:39.37007874, s:'in', n:'Pouces (in)'}, ft:{k:3.280839895, s:'ft', n:'Pieds (ft)'}};
+const lenUnit = () => LEN_UNITS[APP_PREFS.dimUnit] || LEN_UNITS.m;
+function lenDec(){ const u = APP_PREFS.dimUnit; return u === 'cm' ? Math.max(0, APP_PREFS.dimDec - 2) : u === 'mm' ? 0 : u === 'in' ? 1 : u === 'ft' ? 2 : APP_PREFS.dimDec; }
+const lenNum = v => nfmt(lenDec()).format(Math.round(v * lenUnit().k * 10 ** lenDec()) / 10 ** lenDec());      // nombre seul, dans l'unité choisie
+const lenTxt = v => lenNum(v) + ' ' + lenUnit().s;                                                                // avec l'unité
 const LOWPOW = (matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches) || /iPad|Android|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (navigator.deviceMemory || 8) <= 2;
 const GFX_PRESETS = {eco:{n:'Économie', pr:1, aa:false, soft:false, shadows:false, fx:false}, std:{n:'Équilibrée', pr:1.5, aa:true, soft:false, shadows:true, fx:true}, high:{n:'Élevée', pr:2, aa:true, soft:true, shadows:true, fx:true}};
 const GFX = () => GFX_PRESETS[APP_PREFS.gfx === 'auto' ? (LOWPOW ? 'eco' : 'high') : APP_PREFS.gfx] || GFX_PRESETS.high;
@@ -5469,7 +5482,7 @@ function applyThemeToScene(){
     scene.environment = envTex; scene.background = skyTex;
   } else { scene.environment = null; scene.background = new THREE.Color(bgColor()); }
   vpEl.style.setProperty('--vp', bgColor()); vpEl.classList.toggle('dark-bg', !bgLight());
-  groundReal.visible = real; groundShadow.visible = !real && !plan && st !== 'wire' && st !== 'xray';
+  groundReal.visible = real && DISPLAY.ground === true; groundShadow.visible = (!real || DISPLAY.ground !== true) && !plan && st !== 'wire' && st !== 'xray';   // le disque d'herbe est une option (désactivée par défaut) : plus d'élément fantôme
   renderer.toneMappingExposure = real ? DISPLAY.exposure : 1.0;
   renderer.shadowMap.enabled = DISPLAY.shadows && st !== 'wire' && st !== 'xray' && !planOn();
   hemi.intensity = real ? 0.3 : st === 'sketch' ? 1.6 : 1.0;
@@ -5591,7 +5604,7 @@ let labels = [];
 const showDimsOn = () => DISPLAY.dims !== false;
 function buildLabels(){
   const box = $('#labels'); box.textContent = ''; labels = [];
-  const nf = v => APP_PREFS.dimUnit === 'cm' ? NF0.format(Math.round(v * 100 * 10 ** Math.max(0, APP_PREFS.dimDec - 2)) / 10 ** Math.max(0, APP_PREFS.dimDec - 2)) : nfmt(APP_PREFS.dimDec).format(Math.round(v * 10 ** APP_PREFS.dimDec) / 10 ** APP_PREFS.dimDec);   // Réglages : unité et précision des cotes
+  const nf = lenNum;   // Réglages : unité et précision des cotes
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const el of state.els){
     const isSel = set.has(el.id);
@@ -6104,7 +6117,7 @@ function updatePreview(){
   else if (tool === 'wall' && defs.wall.rect && draw.start){ const S0 = draw.start, r = rect(S0, cur); if (Math.abs(cur[0] - S0[0]) > 0.05 && Math.abs(cur[1] - S0[1]) > 0.05){ const ws = r.map((p, i) => tempEl(p, r[(i + 1) % 4])); for (const t of ws) for (const pc of pieces(t, state.els.concat(ws))) previewGroup.add(pieceMesh(pc, true)); } markGroup.add(makeMarker(S0, ac)); text = `Pièce ${nf(Math.abs(cur[0] - S0[0]))} × ${nf(Math.abs(cur[1] - S0[1]))} m · ${nf(Math.abs((cur[0] - S0[0]) * (cur[1] - S0[1])))} m²`; }
   else if (tool === 'slab' && defs.slab.mode === 'poly'){
     const P = draw.poly || []; if (P.length){ const pts = [...P, cur]; for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); markGroup.add(makeMarker(P[0], ac)); if (pts.length >= 3){ markGroup.add(lineObj(cur, P[0], ac, null, true)); try { const t = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), p:[0, 0], q:[1, 1]}; setSlabPoly(t, pts); pieces(t).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } catch(e){} } }
-    text = P.length ? `${nf(V.len(V.sub(cur, P.at(-1))))} m · ${P.length} point${P.length > 1 ? 's' : ''}` : 'Premier point du contour';
+    text = P.length ? `${lenTxt(V.len(V.sub(cur, P.at(-1))))} · ${P.length} point${P.length > 1 ? 's' : ''}` : 'Premier point du contour';
   }
   else if (tool === 'slab' && defs.slab.mode === 'hole'){
     const s = slabAt(draw.start || cur); if (s){ const o = volPoly(s); for (let i = 0; i < o.length; i++) markGroup.add(lineObj(o[i], o[(i + 1) % o.length], sc, lvlZ(s.lvl) + (s.off || 0) + slabT(s), false)); }
@@ -6120,7 +6133,7 @@ function updatePreview(){
     else if (draw.start){ markGroup.add(makeMarker(draw.start, ac)); markGroup.add(lineObj(draw.start, cur, ac)); }
     if (b){ try { pieces(volFrom(b, view === '2d' ? defs.vol.h : 0.02, offFromZ())).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } catch(e){} }
     const sh = defs.vol.shape || 'rect';
-    text = sh === 'circ' && draw.start ? `R ${nf(V.len(V.sub(cur, draw.start)))} m` : sh === 'poly' && P.length ? `${nf(V.len(V.sub(cur, P.at(-1))))} m · ${P.length} point${P.length > 1 ? 's' : ''}` : draw.start ? `${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m` : `x ${nf(cur[0])} · y ${nf(cur[1])}`;
+    text = sh === 'circ' && draw.start ? `R ${lenTxt(V.len(V.sub(cur, draw.start)))}` : sh === 'poly' && P.length ? `${lenTxt(V.len(V.sub(cur, P.at(-1))))} · ${P.length} point${P.length > 1 ? 's' : ''}` : draw.start ? `${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m` : `x ${nf(cur[0])} · y ${nf(cur[1])}`;
   }
   else if (tool === 'roof' && defs.roof.mode === 'walls'){
     const o = wallsOutline(curLvl); if (o){ const t = roofFromPoly(o); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); text = 'Cliquez pour poser la toiture sur les murs du niveau'; } else text = 'Aucun mur sur ce niveau';
@@ -6141,10 +6154,10 @@ function updatePreview(){
     if (tool === 'rotate') previewRotate(Math.atan2(d[1], d[0]));
     if (tool === 'mirror' && L > 0.05){ previewMirror(S, cur); markGroup.add(lineObj(V.add(S, V.mul(V.sub(cur, S), -20)), V.add(S, V.mul(V.sub(cur, S), 20)), '#C0392B', null, true)); }
     let ang = Math.atan2(d[1], d[0]) * 180 / Math.PI; if (ang < 0) ang += 360;
-    text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${nf(Math.abs(d[0]))} × ${nf(Math.abs(d[1]))} m` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${nf(L)} m · ${nf(ang, 1)}°`;
+    text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${lenNum(Math.abs(d[0]))} × ${lenTxt(Math.abs(d[1]))}` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${lenTxt(L)} · ${nf(ang, 1)}°`;
   } else {
     if (tool === 'col'){ const t = tempEl(null, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
-    text = `x ${nf(cur[0])} · y ${nf(cur[1])}${draw.workZ != null && Math.abs(draw.workZ - lvlZ(curLvl)) > 0.001 ? ` · z ${nf(draw.workZ)}` : ''}`;
+    text = `x ${lenNum(cur[0])} · y ${lenNum(cur[1])}${draw.workZ != null && Math.abs(draw.workZ - lvlZ(curLvl)) > 0.001 ? ` · z ${nf(draw.workZ)}` : ''}`;
   }
   const p3 = new THREE.Vector3(cur[0], curZ(), -cur[1]);
   drawSnapGlyph(p3, draw.snap?.kind, draw.snap?.how);
@@ -6283,7 +6296,7 @@ function pushMove(e){
     else { if (n[1] > 0) y1 = Math.max(y0 + 0.01, y1 + v); else y0 = Math.min(y1 - 0.01, y0 - v); }
     el.p = [rnd(x0), rnd(y0)]; el.q = [rnd(x1), rnd(y1)];
   }
-  $('#live').textContent = `${v >= 0 ? '+' : ''}${nf(v)} m`; const [sx, sy] = [e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top];
+  $('#live').textContent = `${v >= 0 ? '+' : ''}${lenTxt(v)}`; const [sx, sy] = [e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top];
   $('#live').style.left = sx + 'px'; $('#live').style.top = sy + 'px'; $('#live').hidden = false;
   rebuild({noPanel:true});
 }
@@ -6305,7 +6318,7 @@ const PROMPTS = {
   move:() => !selIds().length ? '<b>Déplacer</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Déplacer</b> : point de destination, ou <code>@dx;dy</code>' : '<b>Déplacer</b> : point de base',
   copy:() => !selIds().length ? '<b>Copier</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Copier</b> : points de destination (Échap pour finir)' : '<b>Copier</b> : point de base',
   rotate:() => !selIds().length ? '<b>Rotation</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Rotation</b> : angle (clic ou degrés)' : '<b>Rotation</b> : centre de rotation',
-  dim:() => !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote',
+  dim:() => dimPrompt(),
   sketch:() => skPrompt(),
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
   paint:() => view === '2d' ? '<b>Peindre</b> : passez en vue 3D pour cliquer les faces' : defs.paint.pip ? '<b>Pipette</b> : cliquez une face pour reprendre son matériau et l\'échelle de son motif' : `<b>Peindre</b> : cliquez une face (mur : la face visée, dalle : dessus ou dessous, composant : la pièce visée) · <kbd>Alt</kbd> + clic = pipette`,
@@ -6315,17 +6328,17 @@ function setPrompt(){
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
   $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
-function cancelDraw(){ draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
+function cancelDraw(){ draw.dimPts = null; draw.dimOff = false; draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); dimBarSync(); }
 function setTool(t){
   if (t === 'join'){ openJoineryTool(); return; }
   if (!PROMPTS[t]) return;
   if (tool === 'sketch' && t !== 'sketch') skEnd();
-  tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
+  tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); $('#labels').classList.toggle('dimtool', t === 'dim'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
   $$('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t));
   canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : t === 'paint' ? 'cell' : 'crosshair';
   if (t === 'comp' && activeTab !== 'lib'){ activeTab = 'lib'; libTab = 'fams'; renderPanel(); }
   if (t === 'paint' && view === '2d') setView('3d');   // on peint des faces : vue 3D
-  syncHud(); setPrompt();
+  syncHud(); setPrompt(); dimBarSync();
 }
 function syncHud(){
   const tSel = $('#typeSel'), tp = $('#typePill'), hp = $('#hPill');
@@ -6472,7 +6485,7 @@ canvas.addEventListener('pointermove', e => {
   if (push){ pushMove(e); return; }
   if (tool === 'paint'){ if (e.pointerType === 'mouse' || e.pointerType === 'pen') paintHover(e); return; }
   const g = cursorPoint(e);
-  if (g) $('#coords').textContent = `x ${nf(g[0])} · y ${nf(g[1])}${draw.workZ != null ? ` · z ${nf(draw.workZ)}` : ''}`;
+  if (g) $('#coords').textContent = `x ${lenNum(g[0])} · y ${lenNum(g[1])}${draw.workZ != null ? ` · z ${nf(draw.workZ)}` : ''}`;
   if (tool === 'select' || tool === 'push' || !g) { if (tool === 'push' && view !== '2d'){ const h = hitModel(e); canvas.style.cursor = h?.id ? 'ns-resize' : 'default'; } return; }
   if (e.pointerType === 'touch' && !draw.start && !draw.base) return;
   if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;
@@ -6951,7 +6964,7 @@ function previewExtrude(){
   drawSnapGlyph(null);
   if (x.h > 0) pieces(volFrom(x.base, x.h, x.off)).forEach(pc => previewGroup.add(pieceMesh(pc, true)));
   else { const fp = x.base.rect ? rect(x.base.rect[0], x.base.rect[1]) : x.base.poly; for (const zz of [x.z0, x.z0 + x.h]) for (let i = 0; i < fp.length; i++) markGroup.add(lineObj(fp[i], fp[(i + 1) % fp.length], '#C0392B', zz, false)); }
-  const lv = $('#live'), s = toScreen(new THREE.Vector3(x.c[0], x.z0 + x.h, -x.c[1])), H = getEl(x.host); lv.textContent = x.h > 0 ? `H ${nf(x.h)} m` : H && (H.kind === 'slab' || -x.h >= H.h - 1e-3) ? `Trou traversant` : `Poche ${nf(-x.h)} m`; lv.style.left = s[0] + 'px'; lv.style.top = s[1] + 'px'; lv.hidden = false; dirty = true;
+  const lv = $('#live'), s = toScreen(new THREE.Vector3(x.c[0], x.z0 + x.h, -x.c[1])), H = getEl(x.host); lv.textContent = x.h > 0 ? `H ${lenTxt(x.h)}` : H && (H.kind === 'slab' || -x.h >= H.h - 1e-3) ? `Trou traversant` : `Poche ${nf(-x.h)} m`; lv.style.left = s[0] + 'px'; lv.style.top = s[1] + 'px'; lv.hidden = false; dirty = true;
 }
 function endExtrude(h){ const x = draw.ext; if (!x) return; draw.ext = null; $('#live').hidden = true;
   if (h < 0 && x.host) carveHost(getEl(x.host), x.base, -h);
@@ -7158,41 +7171,113 @@ function attachWallsToRoof(roof, on = true){
 /* ==== 56-dims.js ==== */
 /* ============ Cotations libres ============
    Outil Cote (Q) : premier point, second point, puis position de la ligne de cote (décalage). Les cotes sont enregistrées
-   dans le projet (state.dims), dessinées sur le plan du niveau et reprises sur les planches. Clic sur la valeur : supprimer. */
+   dans le projet (state.dims), dessinées sur le plan du niveau et reprises sur les planches. Modes : alignée, horizontale, verticale, cumul (chaîne + total), automatique (clic sur un mur), suppression ; clic sur une valeur : supprimer. */
 const dimGroup = new THREE.Group(); dimGroup.name = 'cotes'; scene.add(dimGroup);
-const dimGeom = (a, b, off) => { const d = V.sub(b, a), L = V.len(d) || 1e-9, u = V.mul(d, 1 / L), n = [-u[1], u[0]]; return {L, u, n, A:V.add(a, V.mul(n, off)), B:V.add(b, V.mul(n, off))}; };
-function dimLines(a, b, off, col, z){
-  const {u, n, A, B} = dimGeom(a, b, off), s = Math.sign(off) || 1, out = [], k = 0.12, t = V.mul(V.add(u, n), 0.11);
+let dimMode = 'align';
+const DIM_MODES = [['align', 'Alignée'], ['h', 'Horizontale'], ['v', 'Verticale'], ['chain', 'Cumul'], ['auto', 'Auto (mur)'], ['del', 'Supprimer']];
+/* géométrie d'une cote : ax = 'h' | 'v' (projection sur un axe) ou absent (alignée sur a→b) */
+const dimGeom = (a, b, off, ax) => {
+  let u, n, A, B, L;
+  if (ax === 'h'){ u = [Math.sign(b[0] - a[0]) || 1, 0]; n = [0, 1]; L = Math.abs(b[0] - a[0]); A = [a[0], a[1] + off]; B = [b[0], a[1] + off]; }
+  else if (ax === 'v'){ u = [0, Math.sign(b[1] - a[1]) || 1]; n = [1, 0]; L = Math.abs(b[1] - a[1]); A = [a[0] + off, a[1]]; B = [a[0] + off, b[1]]; }
+  else { const d = V.sub(b, a); L = V.len(d) || 1e-9; u = V.mul(d, 1 / L); n = [-u[1], u[0]]; A = V.add(a, V.mul(n, off)); B = V.add(b, V.mul(n, off)); }
+  return {L, u, n, A, B};
+};
+function dimLines(a, b, off, col, z, ax){
+  const {u, n, A, B} = dimGeom(a, b, off, ax), out = [], t = V.mul(V.add(u, n), 0.11);
   out.push(lineObj(A, B, col, z, false));
-  if (Math.abs(off) > 0.02){ out.push(lineObj(V.add(a, V.mul(n, s * 0.08)), V.add(A, V.mul(n, s * k)), col, z, false), lineObj(V.add(b, V.mul(n, s * 0.08)), V.add(B, V.mul(n, s * k)), col, z, false)); }
+  for (const [P, Q] of [[a, A], [b, B]]){ const e = V.sub(Q, P), l = V.len(e); if (l > 0.02){ const w = V.mul(e, 1 / l); out.push(lineObj(V.add(P, V.mul(w, 0.08)), V.add(Q, V.mul(w, 0.12)), col, z, false)); } }
   for (const P of [A, B]) out.push(lineObj(V.sub(P, t), V.add(P, t), col, z, false));   // traits obliques d'architecte
   return out;
 }
 function buildDims(){
   disposeGroup(dimGroup); const col = '#1F2937';
-  for (const d of state?.dims || []) if (d.lvl === curLvl && view !== 'sec') dimLines(d.a, d.b, d.off, col, lvlZ(d.lvl) + 0.03).forEach(l => dimGroup.add(l));
+  for (const d of state?.dims || []) if (d.lvl === curLvl && view !== 'sec') dimLines(d.a, d.b, d.off, col, lvlZ(d.lvl) + 0.03, d.ax).forEach(l => dimGroup.add(l));
   dirty = true;
 }
+function delDim(d){ pushHist(); state.dims = state.dims.filter(x => x !== d); state.isSample = false; rebuild({noPanel:true}); toast('Cote supprimée (Ctrl+Z pour annuler)'); }
 function dimLabelsInto(box){
   for (const d of state?.dims || []){ if (d.lvl !== curLvl || view === 'sec') continue;
-    const {L, A, B} = dimGeom(d.a, d.b, d.off), m = V.mul(V.add(A, B), 0.5), el = document.createElement('div');
-    el.className = 'dim cote'; el.textContent = nf(L); el.title = 'Cote · cliquer pour la supprimer';
-    el.onclick = ev => { ev.stopPropagation(); if (tool !== 'select') return; pushHist(); state.dims = state.dims.filter(x => x !== d); state.isSample = false; rebuild({noPanel:true}); toast('Cote supprimée (Ctrl+Z pour annuler)'); };
+    const {L, A, B} = dimGeom(d.a, d.b, d.off, d.ax), m = V.mul(V.add(A, B), 0.5), el = document.createElement('div');
+    el.className = 'dim cote' + (d.tot ? ' tot' : ''); el.textContent = lenNum(L); el.title = 'Cote · cliquer pour la supprimer';
+    el.onclick = ev => { ev.stopPropagation(); if (tool !== 'select' && tool !== 'dim') return; delDim(d); };
     box.appendChild(el); labels.push({d:el, pos:new THREE.Vector3(m[0], lvlZ(d.lvl) + 0.03, -m[1])});
   }
 }
-function dimClick(pt){
-  if (!draw.start){ draw.start = pt; draw.dimB = null; setPrompt(); return; }
-  if (!draw.dimB){ if (V.len(V.sub(pt, draw.start)) < 0.01) return; draw.dimB = pt; setPrompt(); return; }
-  const {n} = dimGeom(draw.start, draw.dimB, 0), off = rnd(V.dot(V.sub(pt, draw.start), n));
-  pushHist(); (state.dims ??= []).push({id:'d' + Date.now().toString(36) + Math.floor(Math.random() * 1e3), a:draw.start.slice(), b:draw.dimB.slice(), off, lvl:curLvl});
-  state.isSample = false; draw.start = null; draw.dimB = null; rebuild({noPanel:true}); setPrompt();
+const dimOff = (a, b, pt, ax) => ax === 'h' ? rnd(pt[1] - a[1]) : ax === 'v' ? rnd(pt[0] - a[0]) : rnd(V.dot(V.sub(pt, a), dimGeom(a, b, 0).n));
+const dimId = () => 'd' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
+const dimPush = ds => { pushHist(); (state.dims ??= []).push(...ds); state.isSample = false; rebuild({noPanel:true}); };
+function distSeg(p, a, b){ const d = V.sub(b, a), l2 = V.dot(d, d) || 1e-9, t = clamp(V.dot(V.sub(p, a), d) / l2, 0, 1); return V.len(V.sub(p, V.add(a, V.mul(d, t)))); }
+function dimBarSync(){
+  let bar = $('#dimBar');
+  if (tool !== 'dim'){ if (bar) bar.hidden = true; return; }
+  if (!bar){ bar = document.createElement('div'); bar.id = 'dimBar'; bar.className = 'dimbar'; vpEl.appendChild(bar);
+    bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.dm){ dimMode = b.dataset.dm; draw.start = null; draw.dimB = null; draw.dimPts = null; draw.dimOff = false; dimBarSync(); setPrompt(); updatePreview(); }
+      else if (b.dataset.da === 'auto-lvl') dimAutoLevel(); else if (b.dataset.da === 'clear-lvl') dimClear(false); else if (b.dataset.da === 'clear-all') dimClear(true); }); }
+  bar.hidden = false; const n = (state.dims || []).filter(d => d.lvl === curLvl).length;
+  bar.innerHTML = `<div class="seg">${DIM_MODES.map(([k, t]) => `<button type="button" data-dm="${k}" class="${k === dimMode ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <span class="sep"></span><button type="button" class="sm" data-da="auto-lvl" title="Ajoute les cotes de chaînes et le total sur le pourtour du niveau">Cotes auto du niveau</button>
+    <button type="button" class="sm" data-da="clear-lvl"${n ? '' : ' disabled'} title="Supprime les cotes libres de ce niveau">Effacer ce niveau (${n})</button>
+    <button type="button" class="sm" data-da="clear-all"${state.dims?.length ? '' : ' disabled'}>Tout effacer</button>`;
+  $('#labels').classList.toggle('dimbusy', !!(draw.start || draw.dimPts));
 }
+function dimClear(all){
+  const n = (state.dims || []).filter(d => all || d.lvl === curLvl).length; if (!n) return;
+  pushHist(); state.dims = (state.dims || []).filter(d => !(all || d.lvl === curLvl)); state.isSample = false; rebuild({noPanel:true}); dimBarSync(); toast(`${n} cote${n > 1 ? 's' : ''} supprimée${n > 1 ? 's' : ''} (Ctrl+Z pour annuler)`);
+}
+function dimAutoLevel(){
+  const W = state.els.filter(e => e.kind === 'wall' && e.lvl === curLvl); if (!W.length) return toast('Aucun mur sur ce niveau');
+  const xs = [...new Set(W.flatMap(w => [w.a[0], w.b[0]]).map(v => rnd(v, 2)))].sort((p, q) => p - q), ys = [...new Set(W.flatMap(w => [w.a[1], w.b[1]]).map(v => rnd(v, 2)))].sort((p, q) => p - q);
+  const x0 = xs[0], x1 = xs.at(-1), y0 = ys[0], y1 = ys.at(-1), out = [], mk = (a, b, ax, off, tot) => out.push({id:dimId(), a, b, off:rnd(off), ax, lvl:curLvl, ...(tot ? {tot:true} : {})});
+  const T = Math.max(...W.map(w => wallT(w))), o1 = T / 2 + 0.5, o2 = o1 + 0.5;
+  for (let i = 0; i + 1 < xs.length; i++) if (xs[i + 1] - xs[i] > 0.05) mk([xs[i], y0], [xs[i + 1], y0], 'h', -o1);
+  if (xs.length > 2) mk([x0, y0], [x1, y0], 'h', -o2, true);
+  for (let i = 0; i + 1 < ys.length; i++) if (ys[i + 1] - ys[i] > 0.05) mk([x0, ys[i]], [x0, ys[i + 1]], 'v', -o1);
+  if (ys.length > 2) mk([x0, y0], [x0, y1], 'v', -o2, true);
+  if (xs.length <= 2 && ys.length <= 2){ mk([x0, y0], [x1, y0], 'h', -o1); mk([x0, y0], [x0, y1], 'v', -o1); }
+  dimPush(out); dimBarSync(); toast(`${out.length} cotes ajoutées`);
+}
+function dimFinishChain(pt){
+  const P = draw.dimPts, a0 = P[0], an = P.at(-1), ax = Math.abs(an[0] - a0[0]) >= Math.abs(an[1] - a0[1]) ? 'h' : 'v', line = ax === 'h' ? pt[1] : pt[0], out = [];
+  for (let i = 0; i + 1 < P.length; i++){ const a = P[i], b = P[i + 1]; if ((ax === 'h' ? Math.abs(b[0] - a[0]) : Math.abs(b[1] - a[1])) < 0.01) continue; out.push({id:dimId(), a, b, off:rnd(line - (ax === 'h' ? a[1] : a[0])), ax, lvl:curLvl}); }
+  if (P.length > 2){ const sgn = line >= (ax === 'h' ? a0[1] : a0[0]) ? 1 : -1; out.push({id:dimId(), a:a0, b:an, off:rnd(line - (ax === 'h' ? a0[1] : a0[0]) + sgn * 0.45), ax, lvl:curLvl, tot:true}); }
+  draw.dimPts = null; draw.dimOff = false; if (out.length) dimPush(out); dimBarSync(); setPrompt();
+}
+function dimClick(pt){
+  if (dimMode === 'del'){ let best = null, bd = 0.35; for (const d of state.dims || []){ if (d.lvl !== curLvl) continue; const {A, B} = dimGeom(d.a, d.b, d.off, d.ax), x = Math.min(distSeg(pt, A, B), distSeg(pt, d.a, A), distSeg(pt, d.b, B)); if (x < bd){ bd = x; best = d; } } if (best) delDim(best); else toast('Cliquez sur une ligne de cote pour la supprimer'); return; }
+  if (dimMode === 'auto'){
+    let best = null, bd = 0.5; for (const w of state.els) if (w.kind === 'wall' && w.lvl === curLvl){ const x = distSeg(pt, w.a, w.b); if (x < bd){ bd = x; best = w; } }
+    if (!best) return toast('Cliquez sur un mur pour coter sa longueur');
+    const {n} = wallAxis(best), m = V.mul(V.add(best.a, best.b), .5), s = V.dot(V.sub(pt, m), n) >= 0 ? 1 : -1;
+    return dimPush([{id:dimId(), a:best.a.slice(), b:best.b.slice(), off:rnd(s * (wallT(best) / 2 + 0.4)), lvl:curLvl}]); }
+  if (dimMode === 'chain'){
+    if (draw.dimOff){ return dimFinishChain(pt); }
+    const P = draw.dimPts ??= []; if (P.length && V.len(V.sub(pt, P.at(-1))) < 0.01){ if (P.length >= 2){ draw.dimOff = true; setPrompt(); } return; }
+    P.push(pt.slice()); setPrompt(); dimBarSync(); return; }
+  const ax = dimMode === 'h' || dimMode === 'v' ? dimMode : undefined;
+  if (!draw.start){ draw.start = pt; draw.dimB = null; setPrompt(); dimBarSync(); return; }
+  if (!draw.dimB){ if (V.len(V.sub(pt, draw.start)) < 0.01) return; draw.dimB = pt; setPrompt(); return; }
+  const a = draw.start.slice(), b = draw.dimB.slice(); draw.start = null; draw.dimB = null;
+  dimPush([{id:dimId(), a, b, off:dimOff(a, b, pt, ax), ...(ax ? {ax} : {}), lvl:curLvl}]); setPrompt(); dimBarSync();
+}
+const dimPrompt = () => dimMode === 'del' ? '<b>Cote</b> : cliquez sur une ligne de cote pour la supprimer' : dimMode === 'auto' ? '<b>Cote auto</b> : cliquez sur un mur (le côté du clic fixe la position)'
+  : dimMode === 'chain' ? (draw.dimOff ? '<b>Cumul</b> : position de la ligne de cote' : !draw.dimPts?.length ? '<b>Cumul</b> : premier point' : `<b>Cumul</b> : point suivant (${draw.dimPts.length}) · <kbd>Entrée</kbd> ou re-cliquer le dernier point pour placer la ligne`)
+  : !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote';
 function previewDim(cur, ac){
-  if (!draw.start) return `x ${nf(cur[0])} · y ${nf(cur[1])}`;
-  if (!draw.dimB){ markGroup.add(makeMarker(draw.start, ac)); markGroup.add(lineObj(draw.start, cur, ac)); return nf(V.len(V.sub(cur, draw.start))) + ' m'; }
-  const {n, L} = dimGeom(draw.start, draw.dimB, 0), off = V.dot(V.sub(cur, draw.start), n);
-  dimLines(draw.start, draw.dimB, off, ac).forEach(l => markGroup.add(l)); return `${nf(L)} m · cliquez pour placer la cote`;
+  if (dimMode === 'del' || dimMode === 'auto') return `x ${lenNum(cur[0])} · y ${lenNum(cur[1])}`;
+  if (dimMode === 'chain'){
+    const P = draw.dimPts || []; if (!P.length) return `x ${lenNum(cur[0])} · y ${lenNum(cur[1])}`;
+    P.forEach((p, i) => { markGroup.add(makeMarker(p, ac)); if (i) markGroup.add(lineObj(P[i - 1], p, ac)); });
+    if (draw.dimOff){ const a0 = P[0], an = P.at(-1), ax = Math.abs(an[0] - a0[0]) >= Math.abs(an[1] - a0[1]) ? 'h' : 'v', line = ax === 'h' ? cur[1] : cur[0];
+      for (let i = 0; i + 1 < P.length; i++) dimLines(P[i], P[i + 1], line - (ax === 'h' ? P[i][1] : P[i][0]), ac, undefined, ax).forEach(l => markGroup.add(l)); return `${lenTxt(V.len(V.sub(an, a0)))} · cliquez pour placer`; }
+    markGroup.add(lineObj(P.at(-1), cur, ac)); return lenTxt(V.len(V.sub(cur, P.at(-1)))) + ' · total ' + lenTxt(V.len(V.sub(cur, P[0])));
+  }
+  const ax = dimMode === 'h' || dimMode === 'v' ? dimMode : undefined;
+  if (!draw.start) return `x ${lenNum(cur[0])} · y ${lenNum(cur[1])}`;
+  if (!draw.dimB){ markGroup.add(makeMarker(draw.start, ac)); markGroup.add(lineObj(draw.start, cur, ac)); const d = V.sub(cur, draw.start); return lenTxt(ax === 'h' ? Math.abs(d[0]) : ax === 'v' ? Math.abs(d[1]) : V.len(d)); }
+  const off = dimOff(draw.start, draw.dimB, cur, ax), {L} = dimGeom(draw.start, draw.dimB, 0, ax);
+  dimLines(draw.start, draw.dimB, off, ac, undefined, ax).forEach(l => markGroup.add(l)); return `${lenTxt(L)} · cliquez pour placer la cote`;
 }
 
 /* ==== 57-sheets.js ==== */
@@ -8318,7 +8403,9 @@ function layersInToOut(el){
   return elUse(el) === 'toiture' ? L.reverse() : L;
 }
 function field(label, f, val, unit, step = '0.01', wide){
-  return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><input id="f-${f}" data-f="${f}" type="number" step="${step}" inputmode="decimal" value="${rnd(val)}"><em>${unit}</em></span></label>`;
+  let uf = '';
+  if (unit === 'm'){ const U = lenUnit(); if (U.k !== 1){ uf = ` data-uf="${U.k}"`; val = val * U.k; unit = U.s; step = String(+(+step * U.k).toPrecision(2)); } }
+  return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><input id="f-${f}" data-f="${f}"${uf} type="number" step="${step}" inputmode="decimal" value="${rnd(val, uf ? 2 : 3)}"><em>${unit}</em></span></label>`;
 }
 function selectField(label, f, opts, cur, wide = true){
   return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><select id="f-${f}" data-f="${f}">${opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></span></label>`;
@@ -8609,6 +8696,7 @@ $('#pbody').addEventListener('change', e => {
   if (t.dataset.fire != null){ const k = t.dataset.fire, cfg = fireCfg(); pushHist(); if (k === 'erpSleep') cfg.erpSleep = t.checked; else if (k === 'cover'){ const v = num(t.value); if (v >= 15 && v <= 70) cfg.cover = v; } else cfg[k] = t.value; state.isSample = false; renderPanel(); return; }
   if (t.dataset.lvn != null){ pushHist(); state.levels[+t.dataset.lvn].n = t.value.trim().slice(0, 30) || 'Niveau'; rebuild(); syncLevels(); return; }
   if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; sortLevels(); rebuild(); syncLevels(); return; }
+  if (t.dataset.uf){ const u = +t.dataset.uf, v = num(t.value); if (!Number.isNaN(v)) t.value = String(v / u); }   // saisie dans l'unité d'affichage → mètres
   const f = t.dataset.f, fp = t.dataset.fp;
   if (f === 'shab'){ const v = num(t.value); pushHist(); state.shab = v > 0 ? Math.round(v * 10) / 10 : 0; state.isSample = false; renderPanel(); return; }
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
@@ -9065,6 +9153,7 @@ function renderRenderPanel(){
       <label class="rng"><span>Hauteur</span><input type="range" min="2" max="88" step="1" data-rset="sunEl" value="${DISPLAY.sunEl}"><b>${n0(DISPLAY.sunEl)}°</b></label>
       <label class="rng"><span>Exposition</span><input type="range" min="0.4" max="2" step="0.05" data-rset="exposure" value="${DISPLAY.exposure}"><b>${nf(DISPLAY.exposure, 2)}</b></label>
       <label class="ap-check2"><input type="checkbox" data-rset="shadows"${DISPLAY.shadows ? ' checked' : ''}> Ombres portées</label>
+      <label class="ap-check2"><input type="checkbox" data-rset="ground"${DISPLAY.ground === true ? ' checked' : ''}> Sol d'herbe sous le bâtiment (Réaliste)</label>
       <label class="ap-check2"><input type="checkbox" data-rset="edges"${DISPLAY.edges ? ' checked' : ''}> Arêtes (traits)</label></div>
     <div class="grp"><h3>Points de vue</h3><div class="chips">${[['iso', 'Perspective'], ['front', 'Face'], ['right', 'Droite'], ['back', 'Arrière'], ['left', 'Gauche'], ['top', 'Dessus']].map(([k, n]) => `<button class="chip" data-act="cam" data-k="${k}">${n}</button>`).join('')}</div></div>
     <div class="grp"><h3>Image</h3><div class="btns"><button class="btn" data-act="png" data-k="2">Capture HD (×2)</button><button class="btn" data-act="png" data-k="4">Capture 4K</button><button class="btn primary" data-act="png" data-k="5">Rendu photo haute qualité</button></div>
@@ -11176,7 +11265,7 @@ $$('[data-style]').forEach(b => { if (!b.closest('#pbody')) b.addEventListener('
 $$('[data-cam]').forEach(b => b.addEventListener('click', () => b.dataset.cam === 'fit' ? fit() : camPreset(b.dataset.cam)));
 $('#undo').addEventListener('click', undo); $('#redo').addEventListener('click', redo);
 $$('.tool').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
-function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${nf(l.z)} m</option>`).join('') + '<option value="manage">Gérer les niveaux…</option>'; }
+function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${lenTxt(l.z)}</option>`).join('') + '<option value="manage">Gérer les niveaux…</option>'; }
 $('#lvlSel').addEventListener('change', e => { if (e.target.value === 'manage'){ e.target.value = curLvl; openLevels(); return; } curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); buildDims(); buildDoorMarks(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
@@ -11248,6 +11337,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Escape'){ if (draw.start || draw.base) cancelDraw(); else if (tool !== 'select') setTool('select'); else select(null); return; }
   if ((k === 'Delete' || k === 'Backspace') && (sel || multi.length)){ e.preventDefault(); deleteSel(); return; }
   if (k === ' ' && tool === 'comp'){ e.preventDefault(); defs.comp.rot = (defs.comp.rot + 90) % 360; updatePreview(); return; }
+  if (k === 'Enter' && tool === 'dim' && dimMode === 'chain' && draw.dimPts?.length >= 2 && !draw.dimOff){ draw.dimOff = true; setPrompt(); updatePreview(); return; }
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
   if (k === 'Enter' && tool === 'vol' && draw.poly?.length >= 3 && !draw.ext){ finishShapePoly(); return; }
@@ -11393,9 +11483,9 @@ PrismSettings.init({
       snapSw('ortho', 'Ortho', 'Tracés à 0° et 90° seulement'),
       snapSw('polar', 'Repérage polaire'),
       {type:'select', label:'Incrément polaire', options:[5, 10, 15, 30, 45, 90].map(a => [a, a + '°']), get:() => SNAP.polarInc, set:v => { SNAP.polarInc = +v; saveSnap(); const p = $('#polarInc'); if (p) p.value = String(+v); }}]},
-    {title:'Cotes', fields:[
-      {type:'seg', label:'Unité', options:[['m', 'Mètres'], ['cm', 'Centimètres']], get:() => APP_PREFS.dimUnit, set:v => { APP_PREFS.dimUnit = v; savePrefs(); buildLabels(); dirty = true; }},
-      {type:'seg', label:'Précision', options:[[1, '0,1 m'], [2, '1 cm'], [3, '1 mm']], get:() => APP_PREFS.dimDec, set:v => { APP_PREFS.dimDec = v; savePrefs(); buildLabels(); dirty = true; }},
+    {title:'Unités et cotes', fields:[
+      {type:'select', label:'Unité des longueurs', sub:'Cotes, saisies et mesures de tout le logiciel (le modèle reste en mètres)', options:Object.entries(LEN_UNITS).map(([k, u]) => [k, u.n]), get:() => APP_PREFS.dimUnit, set:v => { APP_PREFS.dimUnit = v; savePrefs(); buildLabels(); renderPanel(); syncLevels(); dirty = true; }},
+      {type:'seg', label:'Précision', options:[[1, '0,1 m / 1 dm'], [2, '1 cm'], [3, '1 mm']], get:() => APP_PREFS.dimDec, set:v => { APP_PREFS.dimDec = v; savePrefs(); buildLabels(); dirty = true; }},
       {type:'switch', label:'Afficher les cotes en plan', get:() => DISPLAY.dims !== false, set:v => { DISPLAY.dims = v; applyDisplay(); }}]}],
   shortcuts:() => [...document.querySelectorAll('.tool[data-tool]')].map(b => [b.querySelector('kbd')?.textContent || '', b.querySelector('span')?.textContent || '']).filter(r => r[0])
     .concat([...document.querySelectorAll('[data-snap][title]')].map(b => { const m = b.title.match(/^(.*)\((F\d+)\)/); return m ? [m[2], m[1].trim()] : null; }).filter(Boolean))

@@ -4,6 +4,12 @@ const isNarrow = matchMedia('(max-width: 860px)');
 /* préférences de l'appareil (bouton Réglages) : qualité graphique, pas de grille, cotes */
 const APP_PREFS = (() => { try { return {gfx:'auto', step:0.05, dimDec:2, dimUnit:'m', ...JSON.parse(localStorage.getItem('ap.prefs') || '{}')}; } catch(e){ return {gfx:'auto', step:0.05, dimDec:2, dimUnit:'m'}; } })();
 const savePrefs = () => { try { localStorage.setItem('ap.prefs', JSON.stringify(APP_PREFS)); } catch(e){} };
+/* unités d'affichage des longueurs (Réglages › Unités) : m, cm, mm, pouces, pieds. Le modèle reste toujours en mètres. */
+const LEN_UNITS = {m:{k:1, s:'m', n:'Mètres (m)'}, cm:{k:100, s:'cm', n:'Centimètres (cm)'}, mm:{k:1000, s:'mm', n:'Millimètres (mm)'}, in:{k:39.37007874, s:'in', n:'Pouces (in)'}, ft:{k:3.280839895, s:'ft', n:'Pieds (ft)'}};
+const lenUnit = () => LEN_UNITS[APP_PREFS.dimUnit] || LEN_UNITS.m;
+function lenDec(){ const u = APP_PREFS.dimUnit; return u === 'cm' ? Math.max(0, APP_PREFS.dimDec - 2) : u === 'mm' ? 0 : u === 'in' ? 1 : u === 'ft' ? 2 : APP_PREFS.dimDec; }
+const lenNum = v => nfmt(lenDec()).format(Math.round(v * lenUnit().k * 10 ** lenDec()) / 10 ** lenDec());      // nombre seul, dans l'unité choisie
+const lenTxt = v => lenNum(v) + ' ' + lenUnit().s;                                                                // avec l'unité
 const LOWPOW = (matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches) || /iPad|Android|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (navigator.deviceMemory || 8) <= 2;
 const GFX_PRESETS = {eco:{n:'Économie', pr:1, aa:false, soft:false, shadows:false, fx:false}, std:{n:'Équilibrée', pr:1.5, aa:true, soft:false, shadows:true, fx:true}, high:{n:'Élevée', pr:2, aa:true, soft:true, shadows:true, fx:true}};
 const GFX = () => GFX_PRESETS[APP_PREFS.gfx === 'auto' ? (LOWPOW ? 'eco' : 'high') : APP_PREFS.gfx] || GFX_PRESETS.high;
@@ -424,7 +430,7 @@ let labels = [];
 const showDimsOn = () => DISPLAY.dims !== false;
 function buildLabels(){
   const box = $('#labels'); box.textContent = ''; labels = [];
-  const nf = v => APP_PREFS.dimUnit === 'cm' ? NF0.format(Math.round(v * 100 * 10 ** Math.max(0, APP_PREFS.dimDec - 2)) / 10 ** Math.max(0, APP_PREFS.dimDec - 2)) : nfmt(APP_PREFS.dimDec).format(Math.round(v * 10 ** APP_PREFS.dimDec) / 10 ** APP_PREFS.dimDec);   // Réglages : unité et précision des cotes
+  const nf = lenNum;   // Réglages : unité et précision des cotes
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const el of state.els){
     const isSel = set.has(el.id);

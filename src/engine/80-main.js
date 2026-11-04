@@ -18,7 +18,7 @@ $$('[data-style]').forEach(b => { if (!b.closest('#pbody')) b.addEventListener('
 $$('[data-cam]').forEach(b => b.addEventListener('click', () => b.dataset.cam === 'fit' ? fit() : camPreset(b.dataset.cam)));
 $('#undo').addEventListener('click', undo); $('#redo').addEventListener('click', redo);
 $$('.tool').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
-function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${nf(l.z)} m</option>`).join('') + '<option value="manage">Gérer les niveaux…</option>'; }
+function syncLevels(){ $('#lvlSel').innerHTML = state.levels.map((l, i) => `<option value="${i}"${i === curLvl ? ' selected' : ''}>${esc(l.n)} · ${lenTxt(l.z)}</option>`).join('') + '<option value="manage">Gérer les niveaux…</option>'; }
 $('#lvlSel').addEventListener('change', e => { if (e.target.value === 'manage'){ e.target.value = curLvl; openLevels(); return; } curLvl = +e.target.value; snapGeo = null; cancelDraw(); if (view === '2d') rebuild({noPanel:true}); positionGrid(); buildLabels(); buildDims(); buildDoorMarks(); dirty = true; });
 $('#typeSel').addEventListener('change', e => { if (tool === 'comp'){ defs.comp.type = +e.target.value; } else if (defs[tool]) defs[tool].type = e.target.value; updatePreview(); });
 $('#hIn').addEventListener('change', e => { const v = num(e.target.value); if (v > 0 && defs[tool]) defs[tool].h = v; else e.target.value = defs[tool]?.h ?? ''; updatePreview(); });
@@ -90,6 +90,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Escape'){ if (draw.start || draw.base) cancelDraw(); else if (tool !== 'select') setTool('select'); else select(null); return; }
   if ((k === 'Delete' || k === 'Backspace') && (sel || multi.length)){ e.preventDefault(); deleteSel(); return; }
   if (k === ' ' && tool === 'comp'){ e.preventDefault(); defs.comp.rot = (defs.comp.rot + 90) % 360; updatePreview(); return; }
+  if (k === 'Enter' && tool === 'dim' && dimMode === 'chain' && draw.dimPts?.length >= 2 && !draw.dimOff){ draw.dimOff = true; setPrompt(); updatePreview(); return; }
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
   if (k === 'Enter' && tool === 'vol' && draw.poly?.length >= 3 && !draw.ext){ finishShapePoly(); return; }
@@ -235,9 +236,9 @@ PrismSettings.init({
       snapSw('ortho', 'Ortho', 'Tracés à 0° et 90° seulement'),
       snapSw('polar', 'Repérage polaire'),
       {type:'select', label:'Incrément polaire', options:[5, 10, 15, 30, 45, 90].map(a => [a, a + '°']), get:() => SNAP.polarInc, set:v => { SNAP.polarInc = +v; saveSnap(); const p = $('#polarInc'); if (p) p.value = String(+v); }}]},
-    {title:'Cotes', fields:[
-      {type:'seg', label:'Unité', options:[['m', 'Mètres'], ['cm', 'Centimètres']], get:() => APP_PREFS.dimUnit, set:v => { APP_PREFS.dimUnit = v; savePrefs(); buildLabels(); dirty = true; }},
-      {type:'seg', label:'Précision', options:[[1, '0,1 m'], [2, '1 cm'], [3, '1 mm']], get:() => APP_PREFS.dimDec, set:v => { APP_PREFS.dimDec = v; savePrefs(); buildLabels(); dirty = true; }},
+    {title:'Unités et cotes', fields:[
+      {type:'select', label:'Unité des longueurs', sub:'Cotes, saisies et mesures de tout le logiciel (le modèle reste en mètres)', options:Object.entries(LEN_UNITS).map(([k, u]) => [k, u.n]), get:() => APP_PREFS.dimUnit, set:v => { APP_PREFS.dimUnit = v; savePrefs(); buildLabels(); renderPanel(); syncLevels(); dirty = true; }},
+      {type:'seg', label:'Précision', options:[[1, '0,1 m / 1 dm'], [2, '1 cm'], [3, '1 mm']], get:() => APP_PREFS.dimDec, set:v => { APP_PREFS.dimDec = v; savePrefs(); buildLabels(); dirty = true; }},
       {type:'switch', label:'Afficher les cotes en plan', get:() => DISPLAY.dims !== false, set:v => { DISPLAY.dims = v; applyDisplay(); }}]}],
   shortcuts:() => [...document.querySelectorAll('.tool[data-tool]')].map(b => [b.querySelector('kbd')?.textContent || '', b.querySelector('span')?.textContent || '']).filter(r => r[0])
     .concat([...document.querySelectorAll('[data-snap][title]')].map(b => { const m = b.title.match(/^(.*)\((F\d+)\)/); return m ? [m[2], m[1].trim()] : null; }).filter(Boolean))

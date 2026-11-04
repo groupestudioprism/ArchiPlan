@@ -10,7 +10,9 @@ function layersInToOut(el){
   return elUse(el) === 'toiture' ? L.reverse() : L;
 }
 function field(label, f, val, unit, step = '0.01', wide){
-  return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><input id="f-${f}" data-f="${f}" type="number" step="${step}" inputmode="decimal" value="${rnd(val)}"><em>${unit}</em></span></label>`;
+  let uf = '';
+  if (unit === 'm'){ const U = lenUnit(); if (U.k !== 1){ uf = ` data-uf="${U.k}"`; val = val * U.k; unit = U.s; step = String(+(+step * U.k).toPrecision(2)); } }
+  return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><input id="f-${f}" data-f="${f}"${uf} type="number" step="${step}" inputmode="decimal" value="${rnd(val, uf ? 2 : 3)}"><em>${unit}</em></span></label>`;
 }
 function selectField(label, f, opts, cur, wide = true){
   return `<label class="f${wide ? ' wide' : ''}"><span>${label}</span><span class="in"><select id="f-${f}" data-f="${f}">${opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></span></label>`;
@@ -301,6 +303,7 @@ $('#pbody').addEventListener('change', e => {
   if (t.dataset.fire != null){ const k = t.dataset.fire, cfg = fireCfg(); pushHist(); if (k === 'erpSleep') cfg.erpSleep = t.checked; else if (k === 'cover'){ const v = num(t.value); if (v >= 15 && v <= 70) cfg.cover = v; } else cfg[k] = t.value; state.isSample = false; renderPanel(); return; }
   if (t.dataset.lvn != null){ pushHist(); state.levels[+t.dataset.lvn].n = t.value.trim().slice(0, 30) || 'Niveau'; rebuild(); syncLevels(); return; }
   if (t.dataset.lvz != null){ const z = num(t.value); if (Number.isNaN(z)) return renderPanel(); pushHist(); state.levels[+t.dataset.lvz].z = z; sortLevels(); rebuild(); syncLevels(); return; }
+  if (t.dataset.uf){ const u = +t.dataset.uf, v = num(t.value); if (!Number.isNaN(v)) t.value = String(v / u); }   // saisie dans l'unité d'affichage → mètres
   const f = t.dataset.f, fp = t.dataset.fp;
   if (f === 'shab'){ const v = num(t.value); pushHist(); state.shab = v > 0 ? Math.round(v * 10) / 10 : 0; state.isSample = false; renderPanel(); return; }
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }

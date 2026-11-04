@@ -139,7 +139,7 @@ function updatePreview(){
   else if (tool === 'wall' && defs.wall.rect && draw.start){ const S0 = draw.start, r = rect(S0, cur); if (Math.abs(cur[0] - S0[0]) > 0.05 && Math.abs(cur[1] - S0[1]) > 0.05){ const ws = r.map((p, i) => tempEl(p, r[(i + 1) % 4])); for (const t of ws) for (const pc of pieces(t, state.els.concat(ws))) previewGroup.add(pieceMesh(pc, true)); } markGroup.add(makeMarker(S0, ac)); text = `Pièce ${nf(Math.abs(cur[0] - S0[0]))} × ${nf(Math.abs(cur[1] - S0[1]))} m · ${nf(Math.abs((cur[0] - S0[0]) * (cur[1] - S0[1])))} m²`; }
   else if (tool === 'slab' && defs.slab.mode === 'poly'){
     const P = draw.poly || []; if (P.length){ const pts = [...P, cur]; for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); markGroup.add(makeMarker(P[0], ac)); if (pts.length >= 3){ markGroup.add(lineObj(cur, P[0], ac, null, true)); try { const t = {kind:'slab', type:defs.slab.type, lvl:curLvl, off:offFromZ(), p:[0, 0], q:[1, 1]}; setSlabPoly(t, pts); pieces(t).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } catch(e){} } }
-    text = P.length ? `${nf(V.len(V.sub(cur, P.at(-1))))} m · ${P.length} point${P.length > 1 ? 's' : ''}` : 'Premier point du contour';
+    text = P.length ? `${lenTxt(V.len(V.sub(cur, P.at(-1))))} · ${P.length} point${P.length > 1 ? 's' : ''}` : 'Premier point du contour';
   }
   else if (tool === 'slab' && defs.slab.mode === 'hole'){
     const s = slabAt(draw.start || cur); if (s){ const o = volPoly(s); for (let i = 0; i < o.length; i++) markGroup.add(lineObj(o[i], o[(i + 1) % o.length], sc, lvlZ(s.lvl) + (s.off || 0) + slabT(s), false)); }
@@ -155,7 +155,7 @@ function updatePreview(){
     else if (draw.start){ markGroup.add(makeMarker(draw.start, ac)); markGroup.add(lineObj(draw.start, cur, ac)); }
     if (b){ try { pieces(volFrom(b, view === '2d' ? defs.vol.h : 0.02, offFromZ())).forEach(pc => previewGroup.add(pieceMesh(pc, true))); } catch(e){} }
     const sh = defs.vol.shape || 'rect';
-    text = sh === 'circ' && draw.start ? `R ${nf(V.len(V.sub(cur, draw.start)))} m` : sh === 'poly' && P.length ? `${nf(V.len(V.sub(cur, P.at(-1))))} m · ${P.length} point${P.length > 1 ? 's' : ''}` : draw.start ? `${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m` : `x ${nf(cur[0])} · y ${nf(cur[1])}`;
+    text = sh === 'circ' && draw.start ? `R ${lenTxt(V.len(V.sub(cur, draw.start)))}` : sh === 'poly' && P.length ? `${lenTxt(V.len(V.sub(cur, P.at(-1))))} · ${P.length} point${P.length > 1 ? 's' : ''}` : draw.start ? `${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m` : `x ${nf(cur[0])} · y ${nf(cur[1])}`;
   }
   else if (tool === 'roof' && defs.roof.mode === 'walls'){
     const o = wallsOutline(curLvl); if (o){ const t = roofFromPoly(o); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); text = 'Cliquez pour poser la toiture sur les murs du niveau'; } else text = 'Aucun mur sur ce niveau';
@@ -176,10 +176,10 @@ function updatePreview(){
     if (tool === 'rotate') previewRotate(Math.atan2(d[1], d[0]));
     if (tool === 'mirror' && L > 0.05){ previewMirror(S, cur); markGroup.add(lineObj(V.add(S, V.mul(V.sub(cur, S), -20)), V.add(S, V.mul(V.sub(cur, S), 20)), '#C0392B', null, true)); }
     let ang = Math.atan2(d[1], d[0]) * 180 / Math.PI; if (ang < 0) ang += 360;
-    text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${nf(Math.abs(d[0]))} × ${nf(Math.abs(d[1]))} m` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${nf(L)} m · ${nf(ang, 1)}°`;
+    text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${lenNum(Math.abs(d[0]))} × ${lenTxt(Math.abs(d[1]))}` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${lenTxt(L)} · ${nf(ang, 1)}°`;
   } else {
     if (tool === 'col'){ const t = tempEl(null, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
-    text = `x ${nf(cur[0])} · y ${nf(cur[1])}${draw.workZ != null && Math.abs(draw.workZ - lvlZ(curLvl)) > 0.001 ? ` · z ${nf(draw.workZ)}` : ''}`;
+    text = `x ${lenNum(cur[0])} · y ${lenNum(cur[1])}${draw.workZ != null && Math.abs(draw.workZ - lvlZ(curLvl)) > 0.001 ? ` · z ${nf(draw.workZ)}` : ''}`;
   }
   const p3 = new THREE.Vector3(cur[0], curZ(), -cur[1]);
   drawSnapGlyph(p3, draw.snap?.kind, draw.snap?.how);
@@ -318,7 +318,7 @@ function pushMove(e){
     else { if (n[1] > 0) y1 = Math.max(y0 + 0.01, y1 + v); else y0 = Math.min(y1 - 0.01, y0 - v); }
     el.p = [rnd(x0), rnd(y0)]; el.q = [rnd(x1), rnd(y1)];
   }
-  $('#live').textContent = `${v >= 0 ? '+' : ''}${nf(v)} m`; const [sx, sy] = [e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top];
+  $('#live').textContent = `${v >= 0 ? '+' : ''}${lenTxt(v)}`; const [sx, sy] = [e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top];
   $('#live').style.left = sx + 'px'; $('#live').style.top = sy + 'px'; $('#live').hidden = false;
   rebuild({noPanel:true});
 }
@@ -340,7 +340,7 @@ const PROMPTS = {
   move:() => !selIds().length ? '<b>Déplacer</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Déplacer</b> : point de destination, ou <code>@dx;dy</code>' : '<b>Déplacer</b> : point de base',
   copy:() => !selIds().length ? '<b>Copier</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Copier</b> : points de destination (Échap pour finir)' : '<b>Copier</b> : point de base',
   rotate:() => !selIds().length ? '<b>Rotation</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Rotation</b> : angle (clic ou degrés)' : '<b>Rotation</b> : centre de rotation',
-  dim:() => !draw.start ? '<b>Cote</b> : premier point' : !draw.dimB ? '<b>Cote</b> : second point' : '<b>Cote</b> : position de la ligne de cote',
+  dim:() => dimPrompt(),
   sketch:() => skPrompt(),
   measure:() => draw.start ? '<b>Mesure</b> : second point' : '<b>Mesure</b> : premier point',
   paint:() => view === '2d' ? '<b>Peindre</b> : passez en vue 3D pour cliquer les faces' : defs.paint.pip ? '<b>Pipette</b> : cliquez une face pour reprendre son matériau et l\'échelle de son motif' : `<b>Peindre</b> : cliquez une face (mur : la face visée, dalle : dessus ou dessous, composant : la pièce visée) · <kbd>Alt</kbd> + clic = pipette`,
@@ -350,17 +350,17 @@ function setPrompt(){
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
   $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
-function cancelDraw(){ draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); }
+function cancelDraw(){ draw.dimPts = null; draw.dimOff = false; draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); dimBarSync(); }
 function setTool(t){
   if (t === 'join'){ openJoineryTool(); return; }
   if (!PROMPTS[t]) return;
   if (tool === 'sketch' && t !== 'sketch') skEnd();
-  tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
+  tool = t; $('#labels').classList.toggle('drawing', t !== 'select'); $('#labels').classList.toggle('dimtool', t === 'dim'); cancelDraw(); draw.cursor = null; draw.measure = null; updatePreview();
   $$('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t));
   canvas.style.cursor = t === 'select' ? 'default' : t === 'push' ? 'ns-resize' : t === 'paint' ? 'cell' : 'crosshair';
   if (t === 'comp' && activeTab !== 'lib'){ activeTab = 'lib'; libTab = 'fams'; renderPanel(); }
   if (t === 'paint' && view === '2d') setView('3d');   // on peint des faces : vue 3D
-  syncHud(); setPrompt();
+  syncHud(); setPrompt(); dimBarSync();
 }
 function syncHud(){
   const tSel = $('#typeSel'), tp = $('#typePill'), hp = $('#hPill');
@@ -507,7 +507,7 @@ canvas.addEventListener('pointermove', e => {
   if (push){ pushMove(e); return; }
   if (tool === 'paint'){ if (e.pointerType === 'mouse' || e.pointerType === 'pen') paintHover(e); return; }
   const g = cursorPoint(e);
-  if (g) $('#coords').textContent = `x ${nf(g[0])} · y ${nf(g[1])}${draw.workZ != null ? ` · z ${nf(draw.workZ)}` : ''}`;
+  if (g) $('#coords').textContent = `x ${lenNum(g[0])} · y ${lenNum(g[1])}${draw.workZ != null ? ` · z ${nf(draw.workZ)}` : ''}`;
   if (tool === 'select' || tool === 'push' || !g) { if (tool === 'push' && view !== '2d'){ const h = hitModel(e); canvas.style.cursor = h?.id ? 'ns-resize' : 'default'; } return; }
   if (e.pointerType === 'touch' && !draw.start && !draw.base) return;
   if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;

@@ -520,6 +520,13 @@ body.gripping, body.gripping *{cursor:move!important}
 #labels .dim.cote{background:color-mix(in srgb,var(--vp) 90%,transparent);font-weight:600;pointer-events:auto;cursor:pointer}
 #labels .dim.cote:hover{color:#C0392B;text-decoration:line-through}
 #labels.drawing .dim.cote{pointer-events:none}
+#labels.drawing.dimtool:not(.dimbusy) .dim.cote{pointer-events:auto}
+#labels .dim.cote.tot{font-weight:700;border:1px solid color-mix(in srgb,var(--ink) 30%,transparent)}
+.dimbar{position:absolute;left:50%;top:104px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);padding:6px 8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12);animation:dbIn .2s ease}
+.dimbar[hidden]{display:none}.dimbar .seg{display:inline-flex;gap:2px;background:color-mix(in srgb,var(--line) 55%,transparent);padding:3px;border-radius:9px}
+.dimbar button{white-space:nowrap;border:0;background:transparent;color:inherit;font:600 12px var(--f-body);padding:6px 9px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s}
+.dimbar .seg button.on{background:var(--panel);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.18)}.dimbar button.sm{border:1px solid var(--line)}.dimbar button:disabled{opacity:.4;cursor:default}.dimbar .sep{width:1px;height:20px;background:var(--line)}
+@keyframes dbIn{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
 .jn-seg{flex-wrap:wrap}.jn-seg button{flex:1 1 31%;min-width:0;white-space:nowrap;padding:0 6px}
 .jn-cv{height:min(380px,42vh)}
 .jn-perf{margin-top:10px}.jn-warns{margin-top:8px}

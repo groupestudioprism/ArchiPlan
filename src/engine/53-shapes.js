@@ -33,7 +33,7 @@ function previewExtrude(){
   drawSnapGlyph(null);
   if (x.h > 0) pieces(volFrom(x.base, x.h, x.off)).forEach(pc => previewGroup.add(pieceMesh(pc, true)));
   else { const fp = x.base.rect ? rect(x.base.rect[0], x.base.rect[1]) : x.base.poly; for (const zz of [x.z0, x.z0 + x.h]) for (let i = 0; i < fp.length; i++) markGroup.add(lineObj(fp[i], fp[(i + 1) % fp.length], '#C0392B', zz, false)); }
-  const lv = $('#live'), s = toScreen(new THREE.Vector3(x.c[0], x.z0 + x.h, -x.c[1])), H = getEl(x.host); lv.textContent = x.h > 0 ? `H ${nf(x.h)} m` : H && (H.kind === 'slab' || -x.h >= H.h - 1e-3) ? `Trou traversant` : `Poche ${nf(-x.h)} m`; lv.style.left = s[0] + 'px'; lv.style.top = s[1] + 'px'; lv.hidden = false; dirty = true;
+  const lv = $('#live'), s = toScreen(new THREE.Vector3(x.c[0], x.z0 + x.h, -x.c[1])), H = getEl(x.host); lv.textContent = x.h > 0 ? `H ${lenTxt(x.h)}` : H && (H.kind === 'slab' || -x.h >= H.h - 1e-3) ? `Trou traversant` : `Poche ${nf(-x.h)} m`; lv.style.left = s[0] + 'px'; lv.style.top = s[1] + 'px'; lv.hidden = false; dirty = true;
 }
 function endExtrude(h){ const x = draw.ext; if (!x) return; draw.ext = null; $('#live').hidden = true;
   if (h < 0 && x.host) carveHost(getEl(x.host), x.base, -h);
