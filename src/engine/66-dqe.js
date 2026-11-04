@@ -344,7 +344,7 @@ function dqeXLSX(){
   return makeZip(files);
 }
 /* PDF : document HTML mis en page, imprimé par le navigateur (« Enregistrer au format PDF ») */
-function dqeHTML(){
+function dqeHTML0(){
   const {o, tva, groups, cols} = dqeTable(), ht = groups.reduce((s, g) => s + g.total, 0), D = state.dqe || {}, today = new Date().toLocaleDateString('fr-FR');
   const logo = document.querySelector('.brand-mark img')?.src || '', site = state.site || {}, wide = cols.length > 7;
   const isN = key => !['des', 'num', 'u'].includes(key);
@@ -397,4 +397,16 @@ function dqeHTML(){
 function printDqe(){
   const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
   f.srcdoc = dqeHTML(); f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch(e){ toast('Impression impossible dans ce navigateur'); } setTimeout(() => f.remove(), 60000); };
+}
+
+/* options de style du PDF : couleurs, police, corps, papier, orientation, marges, zébrage, filigrane */
+const DQE_FONTS = {inter:['Inter', 'Inter,"Segoe UI",Arial,sans-serif'], serif:['Serif (Georgia)', 'Georgia,"Times New Roman",serif'], arial:['Arial', 'Arial,Helvetica,sans-serif'], mono:['Technique (mono)', '"Courier New",monospace']};
+const DQE_STYLE0 = {ac:'#E2861B', dk:'#1D2026', font:'inter', size:9.5, paper:'A4', orient:'auto', margin:15, zebra:true, mark:''};
+function dqeHTML(){
+  const st = {...DQE_STYLE0, ...(state.dqe?.style || {})}; let h = dqeHTML0();
+  h = h.replace(/#1D2026/gi, st.dk).replace(/#E2861B/gi, st.ac);
+  h = h.replace('font:9.5pt/1.4 Inter,"Segoe UI",Arial,sans-serif', `font:${st.size}pt/1.4 ${(DQE_FONTS[st.font] || DQE_FONTS.inter)[1]}`);
+  h = h.replace(/@page\{size:A4 (landscape|portrait);margin:20mm 15mm 22mm 20mm;/, (m0, ori) => `@page{size:${st.paper} ${st.orient === 'auto' ? ori : st.orient};margin:${st.margin + 5}mm ${st.margin}mm ${st.margin + 7}mm ${st.margin + 5}mm;`);
+  const extra = `${st.zebra ? '' : '.recap tbody tr:nth-child(even) td,.det tbody tr:nth-child(even) td{background:transparent!important}'}${st.mark ? `body::before{content:"${st.mark.replace(/["\\<]/g, '')}";position:fixed;top:45%;left:0;right:0;text-align:center;font-size:90pt;font-weight:800;color:rgba(0,0,0,.06);transform:rotate(-30deg);z-index:-1;pointer-events:none}` : ''}`;
+  return h.replace('</style>', extra + '</style>');
 }

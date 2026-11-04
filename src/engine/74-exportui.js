@@ -30,12 +30,27 @@ function openExport3D(kind, arg){
 (() => { const orig = openDqeExport;
   openDqeExport = function(){
     orig(); const d = document.querySelector('.ed-dlg, dialog[open], .edlg') || document.body, body = document.querySelector('.dqe-x'); if (!body) return;
+    const st0 = {...DQE_STYLE0, ...(state.dqe?.style || {})}, sec2 = body.children[1];
+    const opt = (o, v) => Object.entries(o).map(([k, x]) => `<option value="${k}"${k == v ? ' selected' : ''}>${Array.isArray(x) ? x[0] : x}</option>`).join('');
+    const g = document.createElement('div'); g.className = 'grp'; g.innerHTML = `<h3>Style du PDF</h3><div class="fields">
+      <label class="f"><span>Couleur d'accent</span><span class="in"><input type="color" data-dxs="ac" value="${st0.ac}"></span></label>
+      <label class="f"><span>Couleur du texte et titres</span><span class="in"><input type="color" data-dxs="dk" value="${st0.dk}"></span></label>
+      <label class="f"><span>Police</span><span class="in"><select data-dxs="font">${opt(DQE_FONTS, st0.font)}</select></span></label>
+      <label class="f"><span>Corps (pt)</span><span class="in"><select data-dxs="size">${[8, 9, 9.5, 10, 11, 12].map(v => `<option${v == st0.size ? ' selected' : ''}>${v}</option>`).join('')}</select></span></label>
+      <label class="f"><span>Papier</span><span class="in"><select data-dxs="paper">${opt({A4:'A4', A3:'A3', Letter:'Letter'}, st0.paper)}</select></span></label>
+      <label class="f"><span>Orientation</span><span class="in"><select data-dxs="orient">${opt({auto:'Automatique', portrait:'Portrait', landscape:'Paysage'}, st0.orient)}</select></span></label>
+      <label class="f"><span>Marges (mm)</span><span class="in"><select data-dxs="margin">${[8, 10, 12, 15, 20, 25].map(v => `<option${v == st0.margin ? ' selected' : ''}>${v}</option>`).join('')}</select></span></label>
+      <label class="f"><span>Filigrane</span><span class="in"><input type="text" data-dxs="mark" value="${esc(st0.mark)}" placeholder="ex. PROVISOIRE" style="font-family:var(--f-body)"></span></label></div>
+      <label class="ap-check2"><input type="checkbox" data-dxs="zebra"${st0.zebra ? ' checked' : ''}> Lignes alternées (zébrage)</label>`;
+    if (sec2) sec2.appendChild(g);
+    const readStyle = () => { const o = {}; body.querySelectorAll('[data-dxs]').forEach(c => { const k = c.dataset.dxs; o[k] = c.type === 'checkbox' ? c.checked : (['size', 'margin'].includes(k) ? +c.value : c.value); }); return o; };
     const box = document.createElement('section'); box.innerHTML = '<div class="grp" style="margin-top:0"><h3>Aperçu</h3><iframe id="dxPrev" style="width:100%;height:420px;border:1px solid var(--line,#ddd);border-radius:8px;background:#fff"></iframe></div>'; body.appendChild(box);
     body.style.gridTemplateColumns = 'minmax(260px,1fr) minmax(260px,1fr) minmax(300px,1.4fr)'; body.style.display = 'grid'; body.style.gap = '16px';
-    const keep = state.dqe, upd = () => { const o = {}; body.querySelectorAll('[data-dxo]').forEach(c => o[c.dataset.dxo] = c.checked);
+    const upd = () => { const o = {}; body.querySelectorAll('[data-dxo]').forEach(c => o[c.dataset.dxo] = c.checked);
       const off = [...body.querySelectorAll('[data-dxlot]')].filter(c => !c.checked).map(c => c.dataset.dxlot), bak = state.dqe;
-      state.dqe = {...(bak || {}), pu:bak?.pu || {}, opts:o, lotsOff:off, title:body.querySelector('#dxT').value, mo:body.querySelector('#dxMo').value, by:body.querySelector('#dxBy').value, tva:+body.querySelector('#dxTva').value};
+      state.dqe = {...(bak || {}), pu:bak?.pu || {}, opts:o, lotsOff:off, title:body.querySelector('#dxT').value, mo:body.querySelector('#dxMo').value, by:body.querySelector('#dxBy').value, tva:+body.querySelector('#dxTva').value, style:readStyle()};
       try { body.querySelector('#dxPrev').srcdoc = dqeHTML(); } finally { state.dqe = bak; } };
-    body.addEventListener('input', upd); body.addEventListener('change', upd); upd();
+    const sv = () => { state.dqe = {...(state.dqe || {}), style:readStyle()}; };
+    body.addEventListener('input', sv); body.addEventListener('change', sv); body.addEventListener('input', upd); body.addEventListener('change', upd); upd();
   };
 })();

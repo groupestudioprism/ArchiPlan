@@ -96,38 +96,49 @@ function sheetHTML(sheets, opt){
     .bar{position:relative;height:6mm;margin-left:2mm} .bar div{display:flex;border:0.2mm solid #111;height:1.6mm} .bar i{display:block;height:100%} .bar span{position:absolute;top:2mm;font-size:2.4mm;transform:translateX(-50%)} .bar span:first-of-type{left:0}
     table.cart{position:absolute;right:10mm;bottom:10mm;width:190mm;border-collapse:collapse;font-size:2.8mm} .cart td{border:0.3mm solid #111;padding:1.2mm 2mm;vertical-align:top} .cart em{display:block;font-style:normal;font-size:2.2mm;color:#555;text-transform:uppercase;letter-spacing:.03em}
     .cart .t{font-size:4.4mm;font-weight:800} .cart .logo{width:34mm;text-align:center;vertical-align:middle} .cart .logo b{font-size:4.6mm;letter-spacing:.02em} .cart .logo b span{color:#0E8FB0} .cart .logo small{display:block;font-size:2.4mm;color:#555}
-    @media print{body{background:#fff} .sheet{margin:0;box-shadow:none}}
+    @media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact} body{background:#fff} .sheet{margin:0;box-shadow:none}}
   </style></head><body>${sheets.map((S, k) => `<div class="sheet"><div class="frame"></div>${S.map(v => `<figure style="left:${v.x}mm;top:${v.y}mm"><img src="${v.url}" style="width:${v.wmm}mm;height:${v.hmm}mm"><figcaption>${esc(v.name)} <span>1/${v.scale}</span>${v.kind === 'plan' ? bar(v.scale) : ''}</figcaption>${v.kind === 'plan' ? `<div class="nord">${north}</div>` : ''}</figure>`).join('')}${cart(k)}</div>`).join('')}</body></html>`;
+}
+/* assemble les planches : chaque vue est rendue à l'échelle choisie (0 = ajustée automatiquement à la planche) ; une vue trop grande descend à l'échelle inférieure,
+   et au-delà du 1/500 reçoit une échelle exacte ajustée, toujours affichée telle qu'appliquée */
+async function buildSheets(o, defsL, cache, prog){
+  const [SW, SH] = SHEET_FMT[o.fmt], maxW = SW - 20, maxH = SH - 20 - 46 - 4 - 9, items = [];
+  const render = async (v, sc) => { const k = v.key + '|' + sc; if (!(k in cache)) cache[k] = await renderSheetView(v, sc); return cache[k]; };
+  for (const v of defsL.filter(x => o.pick.includes(x.key))){
+    prog?.(`Rendu : ${v.name}…`); await new Promise(r => setTimeout(r, 20));
+    let sc = o.scale || SHEET_SCALES[0], r = await render(v, sc); if (!r) continue;
+    const fits = () => r.wM * 1000 / sc <= maxW && r.hM * 1000 / sc <= maxH;
+    while (!fits() && sc < 500){ sc = SHEET_SCALES.find(x => x > sc) || 500; r = await render(v, sc) || r; }
+    if (!fits()){ sc = Math.ceil(Math.max(r.wM * 1000 / maxW, r.hM * 1000 / maxH)); r = await render(v, sc) || r; }
+    items.push({...v, url:r.url, scale:sc, wmm:r.wM * 1000 / sc, hmm:r.hM * 1000 / sc});
+  }
+  const sheets = sheetPack(items, o.fmt); return {sheets, html:sheetHTML(sheets, o)};
 }
 function openSheets(){
   const o = state.sheet ??= {fmt:'A3', scale:100, phase:'APS', indice:'A', moa:'', auteur:$('#umName')?.textContent?.trim() || '', pick:null};
   const defsL = sheetDefs(), pick = new Set(o.pick || defsL.filter(d => d.kind === 'plan' || d.kind === 'coupe' || d.key === 'elev-S' || d.key === 'elev-E').map(d => d.key));
   const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Exporter</span><h3 class="ed-t2">Planches à imprimer (PDF)</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
-    <div class="ed-body"><div class="fields">
+    <div class="ed-body ia" style="grid-template-columns:minmax(280px,.8fr) minmax(0,1.6fr)"><section><div class="fields">
       <label class="f"><span>Format</span><span class="in"><select id="shF">${Object.keys(SHEET_FMT).map(k => `<option${k === o.fmt ? ' selected' : ''}>${k}</option>`).join('')}</select></span></label>
-      <label class="f"><span>Échelle</span><span class="in"><select id="shS">${SHEET_SCALES.map(s => `<option value="${s}"${s === o.scale ? ' selected' : ''}>1/${s}</option>`).join('')}</select></span></label>
+      <label class="f"><span>Échelle</span><span class="in"><select id="shS"><option value="0"${!o.scale ? ' selected' : ''}>Auto (ajustée)</option>${SHEET_SCALES.map(s => `<option value="${s}"${s === o.scale ? ' selected' : ''}>1/${s}</option>`).join('')}</select></span></label>
       <label class="f"><span>Phase</span><span class="in"><select id="shP">${SHEET_PHASES.map(p => `<option${p === o.phase ? ' selected' : ''}>${p}</option>`).join('')}</select></span></label>
       <label class="f"><span>Indice</span><span class="in"><input id="shI" value="${esc(o.indice)}" maxlength="4"></span></label>
       <label class="f wide"><span>Maître d'ouvrage</span><span class="in"><input id="shM" value="${esc(o.moa)}" style="font-family:var(--f-body)"></span></label>
       <label class="f wide"><span>Dessiné par</span><span class="in"><input id="shA" value="${esc(o.auteur)}" style="font-family:var(--f-body)"></span></label></div>
       <div class="grp"><h3>Vues</h3>${defsL.map(v => `<label class="f wide rchk"><input type="checkbox" data-sv="${esc(v.key)}"${pick.has(v.key) ? ' checked' : ''}> ${esc(v.name)}</label>`).join('')}</div>
-      <p class="hint">Les vues trop grandes pour la planche à l'échelle choisie passent automatiquement à l'échelle inférieure. Dans la fenêtre d'impression, choisissez « Enregistrer au format PDF » et le même format de papier.</p>
-      <div id="shProg" class="hint" hidden></div></div>
-    <footer class="ed-f"><button class="btn" data-close>Annuler</button><button class="btn primary" id="shGo">Créer les planches</button></footer>`, 'small');
-  d.querySelector('#shGo').onclick = async () => {
-    Object.assign(o, {fmt:d.querySelector('#shF').value, scale:+d.querySelector('#shS').value, phase:d.querySelector('#shP').value, indice:d.querySelector('#shI').value.trim(), moa:d.querySelector('#shM').value.trim(), auteur:d.querySelector('#shA').value.trim()});
-    o.pick = [...d.querySelectorAll('[data-sv]:checked')].map(x => x.dataset.sv); if (!o.pick.length) return toast('Choisissez au moins une vue');
-    const prog = d.querySelector('#shProg'), btn = d.querySelector('#shGo'); btn.disabled = true; prog.hidden = false;
-    const [SW, SH] = SHEET_FMT[o.fmt], maxW = SW - 20, maxH = SH - 20 - 46 - 4 - 9, items = [];
-    for (const v of defsL.filter(x => o.pick.includes(x.key))){
-      prog.textContent = `Rendu : ${v.name}…`; await new Promise(r => setTimeout(r, 30));
-      let sc = o.scale, r = await renderSheetView(v, sc); if (!r) continue;
-      while (sc < 500 && (r.wM * 1000 / sc > maxW || r.hM * 1000 / sc > maxH)){ sc = SHEET_SCALES.find(s => s > sc) || 500; }
-      if (sc !== o.scale) r = await renderSheetView(v, sc);
-      items.push({...v, url:r.url, scale:sc, wmm:r.wM * 1000 / sc, hmm:r.hM * 1000 / sc});
-    }
-    const sheets = sheetPack(items, o.fmt); closeEDlg(); showSheets(sheetHTML(sheets, o), sheets.length);
-  };
+      <p class="hint">Une vue trop grande pour la planche passe à l'échelle inférieure ; l'échelle réellement appliquée est écrite sous chaque vue et dans le cartouche. Imprimez à 100 % (sans « ajuster à la page »).</p></section>
+    <section><div class="grp" style="margin-top:0"><h3>Aperçu <span id="shProg" class="hint"></span></h3><iframe id="shFrame" title="Planches" style="width:100%;height:62vh;border:1px solid var(--line,#ddd);border-radius:8px;background:#E5E7EB"></iframe></div></section></div>
+    <footer class="ed-f"><span class="hint" id="shN"></span><button class="btn" data-close>Fermer</button><button class="btn" id="shDl">Télécharger (.html)</button><button class="btn primary" id="shPr">Imprimer / PDF</button></footer>`, 'wide');
+  const cache = {}; let html = '', run = 0, tm;
+  const read = () => { Object.assign(o, {fmt:d.querySelector('#shF').value, scale:+d.querySelector('#shS').value, phase:d.querySelector('#shP').value, indice:d.querySelector('#shI').value.trim(), moa:d.querySelector('#shM').value.trim(), auteur:d.querySelector('#shA').value.trim()});
+    o.pick = [...d.querySelectorAll('[data-sv]:checked')].map(x => x.dataset.sv); };
+  const refresh = async () => { if (!d.querySelector('#shF')) return; const my = ++run; read(); if (!o.pick.length){ d.querySelector('#shFrame').srcdoc = ''; return; }
+    const prog = d.querySelector('#shProg'); const r = await buildSheets(o, defsL, cache, t => { if (my === run) prog.textContent = t; });
+    if (my !== run || !d.isConnected) return; html = r.html; const fr = d.querySelector('#shFrame'), z = Math.min(1, (fr.clientWidth - 24) / (SHEET_FMT[o.fmt][0] * 96 / 25.4 + 40)).toFixed(3); fr.srcdoc = html.replace('</style>', `body{zoom:${z}}@media print{body{zoom:1}}</style>`); prog.textContent = ''; d.querySelector('#shN').textContent = `${r.sheets.length} planche${r.sheets.length > 1 ? 's' : ''}`; };
+  const later = () => { clearTimeout(tm); tm = setTimeout(refresh, 350); };
+  d.addEventListener('change', later); d.addEventListener('input', e => { if (e.target.matches('input[type=text],input:not([type])')) later(); }); refresh();
+  d.querySelector('#shPr').onclick = () => { const f = d.querySelector('#shFrame'); try { f.contentWindow.focus(); f.contentWindow.print(); } catch(e){ const w = window.open('', '_blank'); if (w){ w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400); } } };
+  d.querySelector('#shDl').onclick = () => offer(`${fileBase()}_planches.html`, new Blob([html], {type:'text/html'}));
 }
 function showSheets(html, n){
   const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">${n} planche${n > 1 ? 's' : ''}</span><h3 class="ed-t2">Aperçu avant impression</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
