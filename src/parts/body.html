@@ -294,6 +294,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
 </div>
 <div class="menu" id="secMenu" hidden></div>
 <div class="menu" id="exportMenu" hidden><div class="lbl">Exporter <span class="lock" hidden>· licence requise</span></div>
+  <button data-act="archivision"><b>Archi Vision (.archivision)</b><span>Format natif, options GLB conservées</span></button>
   <button data-act="glb"><b>Archi Vision (.glb)</b><span>Modèle 3D texturé pour la réalité augmentée</span></button>
   <button data-act="pack"><b>Paquet complet (.zip)</b><span>GLB + IFC4 + métré CSV + projet</span></button>
   <button data-act="ifc"><b>Maquette BIM IFC4 (.ifc)</b><span>Murs à couches, ouvertures, menuiseries</span></button>
@@ -302,7 +303,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
   <button data-act="fire"><b>Rapport sécurité incendie (PDF)</b><span>Résistance au feu estimée des parois, exigences, verdicts</span></button>
   <button data-act="sheets"><b>Planches à imprimer (PDF)</b><span>Plans, élévations, coupes à l'échelle, cartouche</span></button>
   <button data-act="png" data-k="2"><b>Image (.png)</b><span>Capture HD de la vue et du style actuels</span></button>
-  <button data-act="json"><b>Projet ARCHIPLAN (.json)</b><span>Sauvegarde à garder sur votre appareil</span></button>
+  <button data-act="json"><b>Projet ARCHIPLAN (.archiplan)</b><span>Sauvegarde à garder sur votre appareil</span></button>
 </div>
 <div class="menu" id="userMenu" hidden>
   <div class="who"><b id="umName"></b><span id="umMail"></span></div><span class="lic" id="umLic"></span><hr>
@@ -342,7 +343,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     <footer class="h-foot">Studio Prism · Creative &amp; Technical Solutions · ARCHIPLAN</footer>
   </div>
   <div class="h-busy" id="homeBusy" hidden><div class="ap-spin" aria-hidden="true"></div><span></span></div>
-  <input type="file" id="homeFile" accept=".json,application/json" hidden>
+  <input type="file" id="homeFile" accept=".archiplan,.json,application/json" hidden>
 </section>
 <div class="menu" id="viewMenu" hidden></div>
 <div class="menu" id="treeMenu" hidden></div>
@@ -350,4 +351,4 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
 <div id="apDlg" hidden role="dialog" aria-modal="true"><div class="dlg-card"></div></div>
 <div id="engDlg" hidden role="dialog" aria-modal="true"><div class="edlg-card"></div></div>
 <div id="toast" hidden></div>
-<input type="file" id="fileIn" accept=".json,application/json" hidden>
+<input type="file" id="fileIn" accept=".archiplan,.json,application/json" hidden>

@@ -121,7 +121,7 @@ fileMenu.addEventListener('click', e => {
   else if (act === 'open') $('#fileIn').click();
   else if (act === 'home') $('#homeBtn').click();
 });
-expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } doExport(b.dataset.act, +b.dataset.k || undefined); });
+expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } if (['glb','ifc','pack','archivision','png'].includes(b.dataset.act) && state.els.length && window.SPAccess?.canExport) return openExport3D(b.dataset.act, +b.dataset.k || undefined); doExport(b.dataset.act, +b.dataset.k || undefined); });
 $('#fileIn').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return;
   const rd = new FileReader();

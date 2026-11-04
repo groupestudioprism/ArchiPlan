@@ -643,7 +643,7 @@ $a('#homeImport').addEventListener('click', () => $a('#homeFile').click());
 $a('#homeSample').addEventListener('click', async () => { try { await openInModel(window.APModel?.sample() || {els:[]}, null, ''); $a('#projName').textContent = 'Exemple · non enregistré'; } catch(x){ toastA('Le moteur 3D n\'est pas encore chargé. Réessayez.'); } });
 $a('#homeFile').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return; const rd = new FileReader();
-  rd.onload = async () => { e.target.value = ''; try { const s = JSON.parse(rd.result); if (!Array.isArray(s.els)) throw 0; await newProject(s.name || f.name.replace(/\.(archiplan\.)?json$/i, ''), JSON.stringify(s)); } catch(x){ toastA('Ce fichier n\'est pas un projet ARCHIPLAN valide.'); } };
+  rd.onload = async () => { e.target.value = ''; try { const s = JSON.parse(rd.result); if (!Array.isArray(s.els)) throw 0; await newProject(s.name || f.name.replace(/\.(archiplan(\.json)?|json)$/i, ''), JSON.stringify(s)); } catch(x){ toastA('Ce fichier n\'est pas un projet ARCHIPLAN valide.'); } };
   rd.readAsText(f);
 });
 $a('#homeLic').addEventListener('click', () => show('licence'));

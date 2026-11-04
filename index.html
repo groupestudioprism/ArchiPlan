@@ -1334,6 +1334,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
 </div>
 <div class="menu" id="secMenu" hidden></div>
 <div class="menu" id="exportMenu" hidden><div class="lbl">Exporter <span class="lock" hidden>· licence requise</span></div>
+  <button data-act="archivision"><b>Archi Vision (.archivision)</b><span>Format natif, options GLB conservées</span></button>
   <button data-act="glb"><b>Archi Vision (.glb)</b><span>Modèle 3D texturé pour la réalité augmentée</span></button>
   <button data-act="pack"><b>Paquet complet (.zip)</b><span>GLB + IFC4 + métré CSV + projet</span></button>
   <button data-act="ifc"><b>Maquette BIM IFC4 (.ifc)</b><span>Murs à couches, ouvertures, menuiseries</span></button>
@@ -1342,7 +1343,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
   <button data-act="fire"><b>Rapport sécurité incendie (PDF)</b><span>Résistance au feu estimée des parois, exigences, verdicts</span></button>
   <button data-act="sheets"><b>Planches à imprimer (PDF)</b><span>Plans, élévations, coupes à l'échelle, cartouche</span></button>
   <button data-act="png" data-k="2"><b>Image (.png)</b><span>Capture HD de la vue et du style actuels</span></button>
-  <button data-act="json"><b>Projet ARCHIPLAN (.json)</b><span>Sauvegarde à garder sur votre appareil</span></button>
+  <button data-act="json"><b>Projet ARCHIPLAN (.archiplan)</b><span>Sauvegarde à garder sur votre appareil</span></button>
 </div>
 <div class="menu" id="userMenu" hidden>
   <div class="who"><b id="umName"></b><span id="umMail"></span></div><span class="lic" id="umLic"></span><hr>
@@ -1382,7 +1383,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     <footer class="h-foot">Studio Prism · Creative &amp; Technical Solutions · ARCHIPLAN</footer>
   </div>
   <div class="h-busy" id="homeBusy" hidden><div class="ap-spin" aria-hidden="true"></div><span></span></div>
-  <input type="file" id="homeFile" accept=".json,application/json" hidden>
+  <input type="file" id="homeFile" accept=".archiplan,.json,application/json" hidden>
 </section>
 <div class="menu" id="viewMenu" hidden></div>
 <div class="menu" id="treeMenu" hidden></div>
@@ -1390,7 +1391,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
 <div id="apDlg" hidden role="dialog" aria-modal="true"><div class="dlg-card"></div></div>
 <div id="engDlg" hidden role="dialog" aria-modal="true"><div class="edlg-card"></div></div>
 <div id="toast" hidden></div>
-<input type="file" id="fileIn" accept=".json,application/json" hidden>
+<input type="file" id="fileIn" accept=".archiplan,.json,application/json" hidden>
 <script>
 (() => {
 'use strict';
@@ -2964,7 +2965,7 @@ $a('#homeImport').addEventListener('click', () => $a('#homeFile').click());
 $a('#homeSample').addEventListener('click', async () => { try { await openInModel(window.APModel?.sample() || {els:[]}, null, ''); $a('#projName').textContent = 'Exemple · non enregistré'; } catch(x){ toastA('Le moteur 3D n\'est pas encore chargé. Réessayez.'); } });
 $a('#homeFile').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return; const rd = new FileReader();
-  rd.onload = async () => { e.target.value = ''; try { const s = JSON.parse(rd.result); if (!Array.isArray(s.els)) throw 0; await newProject(s.name || f.name.replace(/\.(archiplan\.)?json$/i, ''), JSON.stringify(s)); } catch(x){ toastA('Ce fichier n\'est pas un projet ARCHIPLAN valide.'); } };
+  rd.onload = async () => { e.target.value = ''; try { const s = JSON.parse(rd.result); if (!Array.isArray(s.els)) throw 0; await newProject(s.name || f.name.replace(/\.(archiplan(\.json)?|json)$/i, ''), JSON.stringify(s)); } catch(x){ toastA('Ce fichier n\'est pas un projet ARCHIPLAN valide.'); } };
   rd.readAsText(f);
 });
 $a('#homeLic').addEventListener('click', () => show('licence'));
@@ -11026,7 +11027,14 @@ function buildIFC(){
     storeys[li] = {pl, z, id:E(`IFCBUILDINGSTOREY('${guid()}',$,${ifcS(lvlName(li))},$,$,${pl},$,$,.ELEMENT.,${R(z)})`), items:[]};
   }
   if (used.length) E(`IFCRELAGGREGATES('${guid()}',$,$,$,${BLD},(${used.map(li => storeys[li].id).join(',')}))`);
-  const matIds = {}; const imat = k => matIds[k] ??= E(`IFCMATERIAL(${ifcS(mat(k).nom)},$,$)`);
+  const matIds = {}; const imat = k => { if (matIds[k]) return matIds[k]; const m = mat(k), id = matIds[k] = E(`IFCMATERIAL(${ifcS(m.nom)},$,$)`);
+    try { const c = new THREE.Color(m.color), tr = m.opacity != null && m.opacity < 1 ? 1 - m.opacity : (m.tex === 'glass' ? 0.7 : 0);
+      const rgb = E(`IFCCOLOURRGB($,${c.r.toFixed(3)},${c.g.toFixed(3)},${c.b.toFixed(3)})`);
+      const rnd = E(`IFCSURFACESTYLERENDERING(${rgb},${tr.toFixed(2)},$,$,$,$,$,$,.NOTDEFINED.)`);
+      const sty = E(`IFCSURFACESTYLE(${ifcS(m.nom)},.BOTH.,(${rnd}))`);
+      const si = E(`IFCSTYLEDITEM($,(${sty}),$)`);
+      E(`IFCMATERIALDEFINITIONREPRESENTATION($,$,(${E(`IFCSTYLEDREPRESENTATION(${BODY},'Style','Material',(${si}))`)}),${id})`); } catch(e){}
+    return id; };
   const layerSets = {}; const lset = (key, name, layers) => layerSets[key] ??= E(`IFCMATERIALLAYERSET((${layers.map(([m, e]) => E(`IFCMATERIALLAYER(${imat(m)},${R(e)},$,${ifcS(mat(m).nom)},$,$,$)`)).join(',')}),${ifcS(name)},$)`);
   const extrudePoly = (poly, base, h) => {
     const pts = poly.map(p => E(`IFCCARTESIANPOINT((${R(p[0])},${R(p[1])}))`));
@@ -11120,9 +11128,10 @@ function exportMat(id, cache, tr = null){
   const key = id + (tr && (tr.s || tr.r) ? '|' + (tr.s || '') + '|' + (tr.r || 0) : ''); if (cache[key]) return cache[key];
   const m = mat(id), transp = m.opacity != null && m.opacity < 1;
   // la texture porte l'échelle et la rotation du motif (KHR_texture_transform dans le glTF)
-  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' ? texAt(id, tr, false) : null,
+  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' && EXPCFG.tex !== false ? texAt(id, tr, false) : null,
     roughness:m.rough ?? 0.9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1});
   if (!M.map) M.color = new THREE.Color(m.color);
+  if (EXPCFG.glass === false && transp){ M.transparent = false; M.opacity = 1; }
   M.userData = {archiplanMaterial:id, lambda:m.lambda, rho:m.rho, categorie:m.cat};
   return cache[key] = M;
 }
@@ -11183,6 +11192,7 @@ function makeZip(files){
   return new Blob([...parts, ...cen, end], {type:'application/zip'});
 }
 const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:4}, null, 2); };
+const EXPCFG = {tex:true, glass:true};
 async function doExport(kind, arg){
   if (!window.SPAccess?.canExport){ window.SPLicense?.prompt('export'); return; }
   window.SPLicense?.usage?.();   // rappel d'usage (non commercial) une fois par session
@@ -11193,7 +11203,8 @@ async function doExport(kind, arg){
   try {
     if (kind === 'csv') return offer(`${base}_metre.csv`, buildCSV());
     if (kind === 'dqe'){ if (arg === 'pdf') return printDqe(); if (arg === 'csv') return offer(`${base}_DQE.csv`, dqeCSV()); return offer(`${base}_DQE.xlsx`, new Blob([dqeXLSX()], {type:MIME.xlsx})); }
-    if (kind === 'json') return offer(`${base}.archiplan.json`, projectJSON());
+    if (kind === 'json') return offer(`${base}.archiplan`, projectJSON());
+    if (kind === 'archivision'){ toast('Préparation du modèle Archi Vision…'); return offer(`${base}.archivision`, await buildGLB()); }
     if (kind === 'ifc') return offer(`${base}.ifc`, buildIFC());
     if (kind === 'glb'){ toast('Préparation du modèle Archi Vision…'); return offer(`${base}_archivision.glb`, await buildGLB()); }
     if (kind === 'png'){ toast('Calcul de l\'image…'); return offer(`${base}_rendu.png`, await captureImage(arg || 2)); }
@@ -11544,6 +11555,49 @@ function openChecks(){
 }
 const checksCard = () => { let n = 0; try { n = runChecks().filter(c => !CHK.ignored.has(c.key)).length; } catch(e){} return `<div class="grp"><h3>Vérifications du bâtiment</h3><p class="hint">Hauteurs, portes, descente de charges, poutres et poteaux, escaliers, toitures : règles courantes.</p><div class="btns tight"><button class="btn${n ? ' primary' : ''}" data-act="checks">${n ? `Vérifier le bâtiment · ${n} point${n > 1 ? 's' : ''}` : 'Vérifier le bâtiment'}</button><button class="btn" data-act="addbeam">Poutre</button></div></div>`; };
 
+/* ==== 74-exportui.js ==== */
+/* Interface d'export 3D : options (niveaux, textures, verre) + aperçu en direct de la scène */
+const EXP3D = {glb:['Archi Vision (.glb)', 'Modèle glTF texturé'], archivision:['Archi Vision (.archivision)', 'Format natif Archi Vision'], ifc:['Maquette BIM (.ifc)', 'IFC4 avec matériaux, couleurs et transparence'],
+  pack:['Paquet complet (.zip)', 'GLB + IFC + métré + projet'], png:['Image (.png)', 'Capture de la vue 3D courante']};
+function openExport3D(kind, arg){
+  const cfg = EXP3D[kind], lv = state.levels.map((l, i) => [i, l.n]).filter(([i]) => state.els.some(e => e.lvl === i));
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Export</span><h3 class="ed-t2">${cfg[0]}</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body ia"><section><p class="hint">${cfg[1]}</p>
+      <div class="grp" style="margin-top:0"><h3>Niveaux inclus</h3>${lv.map(([i, n]) => `<label class="ap-check2"><input type="checkbox" data-xl="${i}" checked> ${esc(n)}</label>`).join('')}</div>
+      ${kind === 'png' ? `<div class="grp"><h3>Définition</h3><span class="in"><select id="xqS"><option value="1">Standard</option><option value="2" ${arg === 2 || !arg ? 'selected' : ''}>Haute (x2)</option><option value="4">Très haute (x4)</option></select></span></div>` : `<div class="grp"><h3>Matériaux</h3>
+      <label class="ap-check2"><input type="checkbox" id="xTex" checked> Textures des matériaux</label>
+      <label class="ap-check2"><input type="checkbox" id="xGl" checked> Verre transparent</label></div>`}
+    </section><section><div class="grp" style="margin-top:0"><h3>Aperçu</h3><div id="xPrev" style="aspect-ratio:4/3;border-radius:10px;background:var(--bg2,#eee) center/cover no-repeat;display:grid;place-items:center;font-size:12px;color:#888">Calcul…</div>
+      <p class="hint" id="xInfo"></p></div></section></div>
+    <footer class="ed-f"><span class="hint"></span><button class="btn" data-close>Annuler</button><button class="btn primary" id="xGo">Exporter</button></footer>`, 'mid');
+  const sub = () => { const on = new Set([...d.querySelectorAll('[data-xl]')].filter(c => c.checked).map(c => +c.dataset.xl)); return state.els.filter(e => on.has(e.lvl)); };
+  const withEls = async fn => { const all = state.els, keep = sub(); state.els = keep; try { rebuild(); return await fn(); } finally { state.els = all; rebuild(); } };
+  let tm; const prev = () => { clearTimeout(tm); tm = setTimeout(async () => {
+    const n = sub().length; d.querySelector('#xInfo').textContent = `${n} élément${n > 1 ? 's' : ''} exporté${n > 1 ? 's' : ''}`;
+    try { const b = await withEls(() => captureImage(1)); const u = URL.createObjectURL(b); const el = d.querySelector('#xPrev'); if (el){ el.style.backgroundImage = `url(${u})`; el.textContent = ''; } } catch(e){}
+  }, 250); };
+  d.addEventListener('change', prev); prev();
+  d.querySelector('#xGo').onclick = async () => {
+    if (!sub().length) return toast('Sélectionnez au moins un niveau');
+    EXPCFG.tex = d.querySelector('#xTex')?.checked ?? true; EXPCFG.glass = d.querySelector('#xGl')?.checked ?? true;
+    const q = +d.querySelector('#xqS')?.value || arg; closeEDlg();
+    await withEls(() => doExport(kind, q)); EXPCFG.tex = EXPCFG.glass = true;
+  };
+}
+/* Aperçu en direct du DQE : le document est recalculé à chaque changement d'option */
+(() => { const orig = openDqeExport;
+  openDqeExport = function(){
+    orig(); const d = document.querySelector('.ed-dlg, dialog[open], .edlg') || document.body, body = document.querySelector('.dqe-x'); if (!body) return;
+    const box = document.createElement('section'); box.innerHTML = '<div class="grp" style="margin-top:0"><h3>Aperçu</h3><iframe id="dxPrev" style="width:100%;height:420px;border:1px solid var(--line,#ddd);border-radius:8px;background:#fff"></iframe></div>'; body.appendChild(box);
+    body.style.gridTemplateColumns = 'minmax(260px,1fr) minmax(260px,1fr) minmax(300px,1.4fr)'; body.style.display = 'grid'; body.style.gap = '16px';
+    const keep = state.dqe, upd = () => { const o = {}; body.querySelectorAll('[data-dxo]').forEach(c => o[c.dataset.dxo] = c.checked);
+      const off = [...body.querySelectorAll('[data-dxlot]')].filter(c => !c.checked).map(c => c.dataset.dxlot), bak = state.dqe;
+      state.dqe = {...(bak || {}), pu:bak?.pu || {}, opts:o, lotsOff:off, title:body.querySelector('#dxT').value, mo:body.querySelector('#dxMo').value, by:body.querySelector('#dxBy').value, tva:+body.querySelector('#dxTva').value};
+      try { body.querySelector('#dxPrev').srcdoc = dqeHTML(); } finally { state.dqe = bak; } };
+    body.addEventListener('input', upd); body.addEventListener('change', upd); upd();
+  };
+})();
+
 /* ==== 79-wheel.js ==== */
 /* Zoom à la molette maîtrisé.
  * Le zoom intégré d'OrbitControls (three r160) divise l'écart de la molette par devicePixelRatio arrondi à l'entier :
@@ -11730,7 +11784,7 @@ fileMenu.addEventListener('click', e => {
   else if (act === 'open') $('#fileIn').click();
   else if (act === 'home') $('#homeBtn').click();
 });
-expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } doExport(b.dataset.act, +b.dataset.k || undefined); });
+expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } if (['glb','ifc','pack','archivision','png'].includes(b.dataset.act) && state.els.length && window.SPAccess?.canExport) return openExport3D(b.dataset.act, +b.dataset.k || undefined); doExport(b.dataset.act, +b.dataset.k || undefined); });
 $('#fileIn').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return;
   const rd = new FileReader();

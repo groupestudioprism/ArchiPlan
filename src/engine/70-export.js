@@ -55,7 +55,14 @@ function buildIFC(){
     storeys[li] = {pl, z, id:E(`IFCBUILDINGSTOREY('${guid()}',$,${ifcS(lvlName(li))},$,$,${pl},$,$,.ELEMENT.,${R(z)})`), items:[]};
   }
   if (used.length) E(`IFCRELAGGREGATES('${guid()}',$,$,$,${BLD},(${used.map(li => storeys[li].id).join(',')}))`);
-  const matIds = {}; const imat = k => matIds[k] ??= E(`IFCMATERIAL(${ifcS(mat(k).nom)},$,$)`);
+  const matIds = {}; const imat = k => { if (matIds[k]) return matIds[k]; const m = mat(k), id = matIds[k] = E(`IFCMATERIAL(${ifcS(m.nom)},$,$)`);
+    try { const c = new THREE.Color(m.color), tr = m.opacity != null && m.opacity < 1 ? 1 - m.opacity : (m.tex === 'glass' ? 0.7 : 0);
+      const rgb = E(`IFCCOLOURRGB($,${c.r.toFixed(3)},${c.g.toFixed(3)},${c.b.toFixed(3)})`);
+      const rnd = E(`IFCSURFACESTYLERENDERING(${rgb},${tr.toFixed(2)},$,$,$,$,$,$,.NOTDEFINED.)`);
+      const sty = E(`IFCSURFACESTYLE(${ifcS(m.nom)},.BOTH.,(${rnd}))`);
+      const si = E(`IFCSTYLEDITEM($,(${sty}),$)`);
+      E(`IFCMATERIALDEFINITIONREPRESENTATION($,$,(${E(`IFCSTYLEDREPRESENTATION(${BODY},'Style','Material',(${si}))`)}),${id})`); } catch(e){}
+    return id; };
   const layerSets = {}; const lset = (key, name, layers) => layerSets[key] ??= E(`IFCMATERIALLAYERSET((${layers.map(([m, e]) => E(`IFCMATERIALLAYER(${imat(m)},${R(e)},$,${ifcS(mat(m).nom)},$,$,$)`)).join(',')}),${ifcS(name)},$)`);
   const extrudePoly = (poly, base, h) => {
     const pts = poly.map(p => E(`IFCCARTESIANPOINT((${R(p[0])},${R(p[1])}))`));
@@ -149,9 +156,10 @@ function exportMat(id, cache, tr = null){
   const key = id + (tr && (tr.s || tr.r) ? '|' + (tr.s || '') + '|' + (tr.r || 0) : ''); if (cache[key]) return cache[key];
   const m = mat(id), transp = m.opacity != null && m.opacity < 1;
   // la texture porte l'échelle et la rotation du motif (KHR_texture_transform dans le glTF)
-  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' ? texAt(id, tr, false) : null,
+  const M = new THREE.MeshStandardMaterial({name:m.nom, color:m.tex && m.tex !== 'glass' ? 0xffffff : m.color, map:m.tex && m.tex !== 'glass' && m.tex !== 'plain' && EXPCFG.tex !== false ? texAt(id, tr, false) : null,
     roughness:m.rough ?? 0.9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1});
   if (!M.map) M.color = new THREE.Color(m.color);
+  if (EXPCFG.glass === false && transp){ M.transparent = false; M.opacity = 1; }
   M.userData = {archiplanMaterial:id, lambda:m.lambda, rho:m.rho, categorie:m.cat};
   return cache[key] = M;
 }
@@ -212,6 +220,7 @@ function makeZip(files){
   return new Blob([...parts, ...cen, end], {type:'application/zip'});
 }
 const projectJSON = () => { embedUsedLib(); return JSON.stringify({...state, format:'archiplan', v:4}, null, 2); };
+const EXPCFG = {tex:true, glass:true};
 async function doExport(kind, arg){
   if (!window.SPAccess?.canExport){ window.SPLicense?.prompt('export'); return; }
   window.SPLicense?.usage?.();   // rappel d'usage (non commercial) une fois par session
@@ -222,7 +231,8 @@ async function doExport(kind, arg){
   try {
     if (kind === 'csv') return offer(`${base}_metre.csv`, buildCSV());
     if (kind === 'dqe'){ if (arg === 'pdf') return printDqe(); if (arg === 'csv') return offer(`${base}_DQE.csv`, dqeCSV()); return offer(`${base}_DQE.xlsx`, new Blob([dqeXLSX()], {type:MIME.xlsx})); }
-    if (kind === 'json') return offer(`${base}.archiplan.json`, projectJSON());
+    if (kind === 'json') return offer(`${base}.archiplan`, projectJSON());
+    if (kind === 'archivision'){ toast('Préparation du modèle Archi Vision…'); return offer(`${base}.archivision`, await buildGLB()); }
     if (kind === 'ifc') return offer(`${base}.ifc`, buildIFC());
     if (kind === 'glb'){ toast('Préparation du modèle Archi Vision…'); return offer(`${base}_archivision.glb`, await buildGLB()); }
     if (kind === 'png'){ toast('Calcul de l\'image…'); return offer(`${base}_rendu.png`, await captureImage(arg || 2)); }
