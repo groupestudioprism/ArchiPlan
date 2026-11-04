@@ -302,7 +302,7 @@ function applyThemeToScene(){
     scene.environment = envTex; scene.background = skyTex;
   } else { scene.environment = null; scene.background = new THREE.Color(bgColor()); }
   vpEl.style.setProperty('--vp', bgColor()); vpEl.classList.toggle('dark-bg', !bgLight());
-  groundReal.visible = real; groundShadow.visible = !real && !plan && st !== 'wire' && st !== 'xray';
+  groundReal.visible = real && DISPLAY.ground === true; groundShadow.visible = (!real || DISPLAY.ground !== true) && !plan && st !== 'wire' && st !== 'xray';   // le disque d'herbe est une option (désactivée par défaut) : plus d'élément fantôme
   renderer.toneMappingExposure = real ? DISPLAY.exposure : 1.0;
   renderer.shadowMap.enabled = DISPLAY.shadows && st !== 'wire' && st !== 'xray' && !planOn();
   hemi.intensity = real ? 0.3 : st === 'sketch' ? 1.6 : 1.0;

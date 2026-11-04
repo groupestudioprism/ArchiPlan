@@ -11,6 +11,7 @@ function renderRenderPanel(){
       <label class="rng"><span>Hauteur</span><input type="range" min="2" max="88" step="1" data-rset="sunEl" value="${DISPLAY.sunEl}"><b>${n0(DISPLAY.sunEl)}°</b></label>
       <label class="rng"><span>Exposition</span><input type="range" min="0.4" max="2" step="0.05" data-rset="exposure" value="${DISPLAY.exposure}"><b>${nf(DISPLAY.exposure, 2)}</b></label>
       <label class="ap-check2"><input type="checkbox" data-rset="shadows"${DISPLAY.shadows ? ' checked' : ''}> Ombres portées</label>
+      <label class="ap-check2"><input type="checkbox" data-rset="ground"${DISPLAY.ground === true ? ' checked' : ''}> Sol d'herbe sous le bâtiment (Réaliste)</label>
       <label class="ap-check2"><input type="checkbox" data-rset="edges"${DISPLAY.edges ? ' checked' : ''}> Arêtes (traits)</label></div>
     <div class="grp"><h3>Points de vue</h3><div class="chips">${[['iso', 'Perspective'], ['front', 'Face'], ['right', 'Droite'], ['back', 'Arrière'], ['left', 'Gauche'], ['top', 'Dessus']].map(([k, n]) => `<button class="chip" data-act="cam" data-k="${k}">${n}</button>`).join('')}</div></div>
     <div class="grp"><h3>Image</h3><div class="btns"><button class="btn" data-act="png" data-k="2">Capture HD (×2)</button><button class="btn" data-act="png" data-k="4">Capture 4K</button><button class="btn primary" data-act="png" data-k="5">Rendu photo haute qualité</button></div>

@@ -245,4 +245,4 @@ PrismSettings.init({
 });
 
 /* diagnostic : accès en lecture à l'état (tests automatiques) */
-Object.assign(window.APDebug, {state: () => state, tool: () => tool, sel: () => sel, select: id => select(id), setTool: t => setTool(t), view: () => view, lvl: () => curLvl, rebuild: () => rebuild(), eval: s => (0, eval)(s)});
+Object.assign(window.APDebug, {state: () => state, tool: () => tool, sel: () => sel, select: id => select(id), setTool: t => setTool(t), view: () => view, lvl: () => curLvl, rebuild: () => rebuild(), eval: s => eval(s)});
