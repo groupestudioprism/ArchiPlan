@@ -80,6 +80,13 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === 'y'){ e.preventDefault(); redo(); return; }
   if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === 'a'){ e.preventDefault(); const ids = state.els.filter(x => x.lvl === curLvl).map(x => x.id); sel = ids[0] || null; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (k.startsWith('Arrow') && (sel || multi.length) && tool === 'select'){
+    e.preventDefault(); const st = e.shiftKey ? 0.5 : 0.05, c = cam(), tg = (view === '2d' ? c2 : c3).target;
+    const sc = v => { const a = tg.clone().project(c), b = tg.clone().add(new THREE.Vector3(v[0], 0, -v[1])).project(c); return [b.x - a.x, b.y - a.y]; };
+    const want = {ArrowRight:[1,0], ArrowLeft:[-1,0], ArrowUp:[0,1], ArrowDown:[0,-1]}[k];
+    let best = null, bs = -9; for (const ax of [[1,0],[-1,0],[0,1],[0,-1]]){ const s2 = sc(ax), l = Math.hypot(s2[0], s2[1]) || 1, sc2 = (s2[0] * want[0] + s2[1] * want[1]) / l; if (sc2 > bs){ bs = sc2; best = ax; } }
+    applyMove([best[0] * st, best[1] * st], false); applySel(); renderPanel(); return;
+  }
   if (k === 'Escape'){ if (draw.start || draw.base) cancelDraw(); else if (tool !== 'select') setTool('select'); else select(null); return; }
   if ((k === 'Delete' || k === 'Backspace') && (sel || multi.length)){ e.preventDefault(); deleteSel(); return; }
   if (k === ' ' && tool === 'comp'){ e.preventDefault(); defs.comp.rot = (defs.comp.rot + 90) % 360; updatePreview(); return; }
@@ -236,3 +243,6 @@ PrismSettings.init({
     .concat([...document.querySelectorAll('[data-snap][title]')].map(b => { const m = b.title.match(/^(.*)\((F\d+)\)/); return m ? [m[2], m[1].trim()] : null; }).filter(Boolean))
     .concat([['Suppr', 'Effacer la sélection'], ['Ctrl+Z', 'Annuler'], ['Ctrl+Y', 'Rétablir'], ['Échap', 'Quitter l\'outil en cours']])
 });
+
+/* diagnostic : accès en lecture à l'état (tests automatiques) */
+Object.assign(window.APDebug, {state: () => state, tool: () => tool, sel: () => sel, select: id => select(id), setTool: t => setTool(t), view: () => view, lvl: () => curLvl, rebuild: () => rebuild(), eval: s => (0, eval)(s)});

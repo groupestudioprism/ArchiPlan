@@ -38,3 +38,13 @@ function segInter(a, b, c, d){ // intersection de deux segments (ou null)
   const t = V.cross(V.sub(c, a), s) / den, u = V.cross(V.sub(c, a), r) / den;
   return t >= -1e-6 && t <= 1 + 1e-6 && u >= -1e-6 && u <= 1 + 1e-6 ? V.add(a, V.mul(r, t)) : null;
 }
+
+/* Échap deux fois de suite (< 0,9 s) : retour au mode sélection, quel que soit l'outil */
+let __escT = 0;
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || e.repeat) return; const now = performance.now(), dbl = now - __escT < 900; __escT = now;
+  if (!dbl || typeof tool === 'undefined' || tool === 'select') return;
+  if (document.getElementById('engDlg') && !document.getElementById('engDlg').hidden) return;
+  e.stopImmediatePropagation(); e.preventDefault(); __escT = 0;
+  try { if (tool === 'sketch' && typeof skEnd === 'function') skEnd(); cancelDraw(); setTool('select'); toast('Mode sélection'); } catch(_){}
+}, {capture:true});
