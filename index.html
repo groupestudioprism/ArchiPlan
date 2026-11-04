@@ -1330,6 +1330,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
   <button data-act="home"><b>Accueil</b><span>Mes projets et dossiers dans le cloud</span></button>
   <button data-act="new"><b>Nouveau projet</b><span>Enregistré automatiquement dans le cloud</span></button>
   <button data-act="open"><b>Importer un projet…</b><span>Fichier ARCHIPLAN .json</span></button>
+  <button data-act="tuto"><b>Tutoriel</b><span>Visite guidée des outils et des options</span></button>
   <button data-act="sample"><b>Charger l'exemple</b><span>Maison plain-pied avec menuiseries et mobilier</span></button>
 </div>
 <div class="menu" id="secMenu" hidden></div>
@@ -4140,6 +4141,58 @@ function joineryFamily(spec, opt = {}){
   add('porte-coupe-feu', {kind:'pi', w:0.93, h:2.04, n:1, frame:'acier', leaf:'pleine', hinge:'g', fire:'EI30'}, [T('93 × 204', {}), T('83 × 204', {w:0.83})], ['Portes', 'Intérieure', 'Coupe-feu']);
   FAMS['porte-coupe-feu'].nom = 'Porte coupe-feu EI 30, huisserie métallique';
   // les familles « FAM_PATH » explicites (13-families-plus) gardent la priorité ; les nouvelles passent par F.path
+})();
+
+/* ==== 15-library-gen.js ==== */
+/* ============ Bibliothèque générée : mobilier et équipements paramétriques × finitions ============
+   Chaque modèle est un gabarit de pièces (boîtes / cylindres) paramétré ; chaque finition en fait une famille distincte. */
+(() => {
+  const bx = (m, x, y, z, w, d, h) => ({s:'box', m, x, y, z, w, d, h});
+  const cy = (m, x, y, z, r, h) => ({s:'cyl', m, x, y, z, r, h});
+  const legs = (m, inset, th, hh) => [[0, 0], [1, 0], [0, 1], [1, 1]].map(([i, j]) => bx(m, i ? `w/2-${inset + th}` : `-w/2+${inset}`, j ? `d/2-${inset + th}` : `-d/2+${inset}`, 0, th, th, hh));
+  const L = (m, th, hh) => legs(m, 0.03, th, hh);
+  const pp = (w, d, h) => ({w:P(w, 'Largeur'), d:P(d, 'Profondeur'), h:P(h, 'Hauteur')});
+  /* gabarits : [id, nom, sous-dossier, params, types, fn(m, m2) -> pièces] */
+  const B = [
+    ['table', 'Table à manger', 'Tables', pp(1.6, 0.9, 0.75), [['4 pers. 120', {w:1.2, d:0.8}], ['6 pers. 160', {}], ['8 pers. 220', {w:2.2, d:1.0}]], (m) => [bx(m, '-w/2', '-d/2', 'h-0.04', 'w', 'd', 0.04), ...L(m, 0.06, 'h-0.04')]],
+    ['table-basse', 'Table basse', 'Tables', pp(1.0, 0.55, 0.4), [['100 × 55', {}], ['120 × 60', {w:1.2, d:0.6}]], (m) => [bx(m, '-w/2', '-d/2', 'h-0.04', 'w', 'd', 0.04), ...L(m, 0.04, 'h-0.04')]],
+    ['table-ronde', 'Table ronde', 'Tables', {w:P(1.1, 'Diamètre'), d:P(1.1, 'Diamètre'), h:P(0.75, 'Hauteur')}, [['4 pers. Ø110', {}], ['6 pers. Ø140', {w:1.4, d:1.4}]], (m) => [cy(m, 0, 0, 'h-0.04', 'w/2', 0.04), cy(m, 0, 0, 0, 0.05, 'h-0.04'), cy(m, 0, 0, 0, 0.22, 0.03)]],
+    ['bureau', 'Bureau', 'Tables', pp(1.4, 0.7, 0.74), [['140 × 70', {}], ['160 × 80', {w:1.6, d:0.8}]], (m, m2) => [bx(m, '-w/2', '-d/2', 'h-0.03', 'w', 'd', 0.03), bx(m2, '-w/2', '-d/2', 0, 0.04, 'd', 'h-0.03'), bx(m2, 'w/2-0.04', '-d/2', 0, 0.04, 'd', 'h-0.03')]],
+    ['console', 'Console', 'Tables', pp(1.0, 0.3, 0.8), [['100 × 30', {}], ['120 × 35', {w:1.2, d:0.35}]], (m) => [bx(m, '-w/2', '-d/2', 'h-0.03', 'w', 'd', 0.03), ...L(m, 0.03, 'h-0.03')]],
+    ['chaise', 'Chaise', 'Assises', {w:P(0.45, 'Largeur'), d:P(0.5, 'Profondeur'), h:P(0.9, 'Hauteur')}, [['Standard', {}]], (m, m2) => [bx(m2, '-w/2', '-d/2', 0.43, 'w', 'd', 0.04), bx(m, '-w/2', 'd/2-0.04', 0.47, 'w', 0.03, 'h-0.47'), ...L(m, 0.035, 0.43)]],
+    ['tabouret', 'Tabouret', 'Assises', {w:P(0.35, 'Diamètre'), d:P(0.35, 'Diamètre'), h:P(0.46, 'Hauteur')}, [['Bas 46', {}], ['Bar 65', {h:0.65}], ['Bar 75', {h:0.75}]], (m, m2) => [cy(m2, 0, 0, 'h-0.04', 'w/2', 0.04), cy(m, 0, 0, 0, 0.03, 'h-0.04'), cy(m, 0, 0, 0, 'w/2-0.03', 0.02)]],
+    ['banc', 'Banc', 'Assises', pp(1.4, 0.38, 0.45), [['140', {}], ['180', {w:1.8}]], (m) => [bx(m, '-w/2', '-d/2', 'h-0.04', 'w', 'd', 0.04), bx(m, '-w/2+0.05', '-d/2+0.04', 0, 0.05, 'd-0.08', 'h-0.04'), bx(m, 'w/2-0.1', '-d/2+0.04', 0, 0.05, 'd-0.08', 'h-0.04')]],
+    ['fauteuil', 'Fauteuil', 'Assises', pp(0.8, 0.8, 0.85), [['Standard', {}], ['Large', {w:0.95, d:0.9}]], (m, m2) => [bx(m2, '-w/2', '-d/2', 0.15, 'w', 'd', 0.28), bx(m2, '-w/2', 'd/2-0.18', 0.15, 'w', 0.18, 'h-0.15'), bx(m2, '-w/2', '-d/2', 0.15, 0.15, 'd', 0.4), bx(m2, 'w/2-0.15', '-d/2', 0.15, 0.15, 'd', 0.4), ...L(m, 0.04, 0.15)]],
+    ['canape', 'Canapé', 'Assises', pp(2.0, 0.9, 0.85), [['2 places', {w:1.6}], ['3 places', {}], ['4 places', {w:2.5}]], (m, m2) => [bx(m2, '-w/2', '-d/2', 0.15, 'w', 'd', 0.28), bx(m2, '-w/2', 'd/2-0.2', 0.15, 'w', 0.2, 'h-0.15'), bx(m2, '-w/2', '-d/2', 0.15, 0.18, 'd', 0.42), bx(m2, 'w/2-0.18', '-d/2', 0.15, 0.18, 'd', 0.42), ...L(m, 0.04, 0.15)]],
+    ['lit', 'Lit', 'Chambre', {w:P(1.6, 'Largeur'), d:P(2.0, 'Longueur'), h:P(0.95, 'Hauteur')}, [['90', {w:0.9, d:1.9}], ['140', {w:1.4, d:1.9}], ['160', {}], ['180', {w:1.8, d:2.0}]], (m, m2) => [bx(m, '-w/2-0.03', '-d/2', 0, 'w+0.06', 'd', 0.3), bx(m2, '-w/2', '-d/2', 0.3, 'w', 'd', 0.22), bx(m, '-w/2-0.03', '-d/2-0.05', 0, 'w+0.06', 0.05, 'h')]],
+    ['chevet', 'Table de chevet', 'Chambre', pp(0.45, 0.4, 0.5), [['Standard', {}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0.1, 'w', 'd', 'h-0.1'), bx(m2, '-w/2+0.02', '-d/2-0.005', 0.14, 'w-0.04', 0.01, 0.14), ...L(m2, 0.03, 0.1)]],
+    ['commode', 'Commode', 'Rangements', pp(1.2, 0.5, 0.85), [['3 tiroirs', {w:0.9}], ['4 tiroirs', {}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0.1, 'w', 'd', 'h-0.1'), bx(m2, '-w/2+0.03', '-d/2-0.01', 0.14, 'w-0.06', 0.012, 'h-0.2'), ...L(m2, 0.04, 0.1)]],
+    ['buffet', 'Buffet bas', 'Rangements', pp(1.8, 0.45, 0.8), [['160', {w:1.6}], ['180', {}], ['220', {w:2.2}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0.12, 'w', 'd', 'h-0.12'), bx(m2, '-w/2+0.02', '-d/2-0.012', 0.16, 'w/2-0.025', 0.012, 'h-0.24'), bx(m2, '0.005', '-d/2-0.012', 0.16, 'w/2-0.025', 0.012, 'h-0.24'), ...L(m2, 0.04, 0.12)]],
+    ['meuble-tv', 'Meuble TV', 'Rangements', pp(1.6, 0.4, 0.45), [['140', {w:1.4}], ['160', {}], ['200', {w:2.0}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0.1, 'w', 'd', 'h-0.1'), bx(m2, '-w/2+0.03', '-d/2-0.01', 0.14, 'w-0.06', 0.012, 'h-0.2'), ...L(m2, 0.03, 0.1)]],
+    ['armoire', 'Armoire', 'Rangements', pp(1.2, 0.6, 2.2), [['2 portes', {}], ['3 portes', {w:1.8}], ['4 portes', {w:2.4}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0, 'w', 'd', 'h'), bx(m2, '-w/2+0.02', '-d/2-0.015', 0.05, 'w-0.04', 0.015, 'h-0.1')]],
+    ['etagere', 'Étagère ouverte', 'Rangements', pp(0.9, 0.35, 1.8), [['90 × 180', {}], ['120 × 200', {w:1.2, h:2.0}]], (m) => [bx(m, '-w/2', '-d/2', 0, 0.03, 'd', 'h'), bx(m, 'w/2-0.03', '-d/2', 0, 0.03, 'd', 'h'), ...[0, 1, 2, 3, 4].map(i => bx(m, '-w/2', '-d/2', `${i}*(h-0.03)/4`, 'w', 'd', 0.03))]],
+    ['bibliotheque', 'Bibliothèque', 'Rangements', pp(1.6, 0.35, 2.2), [['160 × 220', {}], ['240 × 240', {w:2.4, h:2.4}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0, 0.03, 'd', 'h'), bx(m, 'w/2-0.03', '-d/2', 0, 0.03, 'd', 'h'), bx(m2, '-w/2', 'd/2-0.01', 0, 'w', 0.01, 'h'), ...[0, 1, 2, 3, 4, 5].map(i => bx(m, '-w/2', '-d/2', `${i}*(h-0.03)/5`, 'w', 'd', 0.03))]],
+    ['banc-jardin', 'Banc de jardin', 'Extérieur', pp(1.5, 0.55, 0.85), [['150', {}], ['180', {w:1.8}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0.43, 'w', 'd', 0.04), bx(m, '-w/2', 'd/2-0.03', 0.5, 'w', 0.03, 'h-0.5'), bx(m2, '-w/2+0.08', '-d/2', 0, 0.05, 'd', 0.43), bx(m2, 'w/2-0.13', '-d/2', 0, 0.05, 'd', 0.43)]],
+    ['table-jardin', 'Table de jardin', 'Extérieur', pp(1.8, 0.9, 0.74), [['180 × 90', {}], ['240 × 100', {w:2.4, d:1.0}]], (m, m2) => [bx(m, '-w/2', '-d/2', 'h-0.04', 'w', 'd', 0.04), ...L(m2, 0.06, 'h-0.04')]],
+    ['jardiniere', 'Jardinière', 'Extérieur', pp(1.2, 0.4, 0.5), [['120', {}], ['160', {w:1.6}], ['80', {w:0.8}]], (m) => [bx(m, '-w/2', '-d/2', 0, 'w', 'd', 'h'), {s:'box', m:'terreVeg', x:'-w/2+0.03', y:'-d/2+0.03', z:'h-0.06', w:'w-0.06', d:'d-0.06', h:0.05}]],
+    ['plan-vasque', 'Meuble vasque', 'Salle de bains', pp(0.8, 0.46, 0.85), [['60', {w:0.6}], ['80', {}], ['120 double', {w:1.2}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0.2, 'w', 'd', 'h-0.2-0.03'), bx(m2, '-w/2-0.01', '-d/2-0.01', 'h-0.03', 'w+0.02', 'd+0.02', 0.03), {s:'box', m:'inox', x:'-0.02', y:'d/2-0.07', z:'h', w:0.04, d:0.04, h:0.18}]],
+    ['ilot', 'Îlot de cuisine', 'Cuisine', pp(2.4, 1.0, 0.92), [['180 × 90', {w:1.8, d:0.9}], ['240 × 100', {}], ['300 × 110', {w:3.0, d:1.1}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0.1, 'w', 'd', 'h-0.14'), bx(m2, '-w/2-0.03', '-d/2-0.03', 'h-0.04', 'w+0.06', 'd+0.06', 0.04), bx('inox', '-w/2', '-d/2', 0, 'w', 'd', 0.1)]],
+    ['bar', 'Bar / comptoir', 'Cuisine', pp(1.8, 0.5, 1.05), [['180', {}], ['240', {w:2.4}]], (m, m2) => [bx(m, '-w/2', '-d/2', 0, 'w', 'd-0.1', 'h-0.04'), bx(m2, '-w/2-0.02', '-d/2-0.02', 'h-0.04', 'w+0.04', 'd+0.04', 0.04)]],
+    ['lampadaire', 'Lampadaire', 'Éclairage', {w:P(0.35, 'Diamètre'), d:P(0.35, 'Diamètre'), h:P(1.7, 'Hauteur')}, [['170', {}], ['190', {h:1.9}]], (m, m2) => [cy(m, 0, 0, 0, 'w/2', 0.02), cy(m, 0, 0, 0, 0.015, 'h-0.3'), cy(m2, 0, 0, 'h-0.35', 'w/2', 0.35)]],
+    ['pot-plante', 'Pot et plante', 'Décoration', {w:P(0.4, 'Diamètre'), d:P(0.4, 'Diamètre'), h:P(1.2, 'Hauteur')}, [['Petit 80', {h:0.8, w:0.3, d:0.3}], ['Moyen 120', {}], ['Grand 170', {h:1.7, w:0.55, d:0.55}]], (m) => [cy(m, 0, 0, 0, 'w/2', 0.35), {s:'cyl', m:'feuillageC', x:0, y:0, z:0.35, r:'w/2+0.1', h:'h-0.35'}]],
+    ['paravent', 'Claustra / paravent', 'Décoration', pp(1.2, 0.04, 1.8), [['120 × 180', {}], ['180 × 200', {w:1.8, h:2.0}]], (m, m2) => [bx(m2, '-w/2', '-d/2', 0, 0.04, 'd', 'h'), bx(m2, 'w/2-0.04', '-d/2', 0, 0.04, 'd', 'h'), ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => bx(m, `-w/2+0.04+${i}*(w-0.08)/8`, '-d/2', 0.05, 0.025, 'd', 'h-0.1'))]],
+    ['pergola-mod', 'Pergola', 'Extérieur', pp(3.0, 3.0, 2.5), [['3 × 3', {}], ['4 × 3', {w:4.0}], ['5 × 4', {w:5.0, d:4.0}]], (m, m2) => [...[[0, 0], ['w-0.12', 0], [0, 'd-0.12'], ['w-0.12', 'd-0.12']].map(([x, y]) => bx(m, `-w/2+${x}`.replace('+0', ''), `-d/2+${y}`.replace('+0', ''), 0, 0.12, 0.12, 'h')), ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => bx(m2, '-w/2-0.1', `-d/2+${i}*(d-0.05)/9`, 'h', 'w+0.2', 0.05, 0.1))]],
+  ];
+  /* finitions : [clé, libellé, matériau principal, matériau d'assise/secondaire] */
+  const S = [['chene', 'chêne', 'chene', 'textile'], ['douglas', 'douglas', 'douglas', 'textile'], ['meleze', 'mélèze', 'meleze', 'textile'], ['contreplaque', 'contreplaqué', 'contreplaque', 'textile'],
+    ['acier', 'acier noir', 'acierLaque', 'chene'], ['alu', 'aluminium anthracite', 'aluAnthr', 'textile'], ['inox', 'inox', 'inox', 'chene'], ['beton', 'béton ciré', 'betonCire', 'acier'],
+    ['pierre', 'pierre', 'pierreSol', 'acierLaque'], ['mdf', 'laqué blanc', 'peintBlancCasse', 'chene'], ['gris', 'laqué gris perle', 'peintGrisPerle', 'chene'], ['nuit', 'laqué bleu nuit', 'peintBleuNuit', 'chene']];
+  const idle = new Set(Object.keys(FAMS)); let n = 0;
+  B.forEach(([id, nom, sub, params, types, fn]) => S.forEach(([sk, sl, m, m2]) => {
+    const fid = `gen-${id}-${sk}`; if (idle.has(fid) || !MATS[m] || !MATS[m2]) return;
+    FAMS[fid] = {nom:`${nom}, ${sl}`, cat:'Mobilier', path:['Mobilier', sub, nom], host:'free', params:JSON.parse(JSON.stringify(params)), types:types.map(([t, p]) => ({nom:t, p})), parts:fn(m, m2)}; n++;
+  }));
+  window.GEN_FAM_COUNT = n;
 })();
 
 /* ==== 16-search.js ==== */
@@ -11598,6 +11651,28 @@ function openExport3D(kind, arg){
   };
 })();
 
+/* ==== 75-tutorial.js ==== */
+/* Tutoriel : visite guidée en pas à pas, accessible depuis le menu Fichier */
+const TUTO = [
+  ['Dessiner', 'Mur (M), Dalle (D), Toit (T), Escalier (E), Poteau (P) et Poutre (H) : cliquez des points, tapez une longueur puis Entrée. Échap annule ; deux Échap ramènent à la sélection.'],
+  ['Sélectionner et déplacer', 'Cliquez un élément, Maj pour en ajouter. Les flèches du clavier le déplacent du pas affiché (Maj : x10). Le panneau de droite donne ses propriétés.'],
+  ['Composants et menuiseries', 'L\'onglet Bibliothèque propose plus de 700 modèles : portes, fenêtres, mobilier, équipements. Chaque modèle a des types et des paramètres modifiables.'],
+  ['Escaliers', 'Le panneau Escalier offre 25 modèles (droit, quart tournant, hélicoïdal, suspendu…) en 5 styles de matériaux, avec une galerie illustrée.'],
+  ['Cotes et mesures', 'L\'outil Mesure pose des cotes cumulées ou automatiques ; Suppr efface la cote sélectionnée. L\'unité (m, cm, mm…) se règle dans Réglages.'],
+  ['Niveaux et affichage', 'Le menu Affichage permet de voir le niveau inférieur en plan (masqué si une dalle existe), de masquer ou redimensionner les barres et de replier les sections.'],
+  ['Vérifications du bâtiment', 'Dans l\'onglet Projet, « Vérifier le bâtiment » contrôle hauteurs, portes, escaliers, toitures et descente de charges, et propose un correctif problème par problème.'],
+  ['Rendu Réaliste', 'Le mode Rendu > Réaliste active ciel, reflets, ombres douces et verre transparent.'],
+  ['Exporter', 'Le menu Exporter ouvre une interface avec aperçu en direct : DQE (PDF, Excel), IFC, Archi Vision (.glb ou .archivision), paquet, image, projet .archiplan.']
+];
+function openTutorial(i = 0){
+  const [t, tx] = TUTO[i];
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Tutoriel · ${i + 1} / ${TUTO.length}</span><h3 class="ed-t2">${esc(t)}</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body"><p style="font-size:15px;line-height:1.6">${esc(tx)}</p><div style="height:4px;background:var(--line,#ddd);border-radius:4px;margin-top:18px"><div style="height:100%;width:${(i + 1) / TUTO.length * 100}%;background:var(--ac,#0b7a9b);border-radius:4px;transition:width .3s"></div></div></div>
+    <footer class="ed-f"><span class="hint"></span>${i ? '<button class="btn" id="tuP">Précédent</button>' : '<button class="btn" data-close>Passer</button>'}<button class="btn primary" id="tuN">${i < TUTO.length - 1 ? 'Suivant' : 'Terminer'}</button></footer>`, 'mid');
+  d.querySelector('#tuN').onclick = () => { closeEDlg(); if (i < TUTO.length - 1) openTutorial(i + 1); else try { localStorage.setItem('ap.tuto', '1'); } catch(e){} };
+  const p = d.querySelector('#tuP'); if (p) p.onclick = () => { closeEDlg(); openTutorial(i - 1); };
+}
+
 /* ==== 79-wheel.js ==== */
 /* Zoom à la molette maîtrisé.
  * Le zoom intégré d'OrbitControls (three r160) divise l'écart de la molette par devicePixelRatio arrondi à l'entier :
@@ -11782,6 +11857,7 @@ fileMenu.addEventListener('click', e => {
   if (act === 'new'){ if (window.APCloudActive && window.APHome) return window.APHome.newProject(); pushHist(); state = migrate({name:'Nouveau projet', els:[]}); sel = null; multi = []; rebuild(); fit(); syncLevels(); toast('Nouveau projet (Ctrl+Z pour revenir)'); }
   else if (act === 'sample'){ pushHist(); state = migrate(sample()); sel = null; multi = []; rebuild(); fit(); syncLevels(); }
   else if (act === 'open') $('#fileIn').click();
+  else if (act === 'tuto') openTutorial();
   else if (act === 'home') $('#homeBtn').click();
 });
 expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } if (['glb','ifc','pack','archivision','png'].includes(b.dataset.act) && state.els.length && window.SPAccess?.canExport) return openExport3D(b.dataset.act, +b.dataset.k || undefined); doExport(b.dataset.act, +b.dataset.k || undefined); });

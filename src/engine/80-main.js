@@ -119,6 +119,7 @@ fileMenu.addEventListener('click', e => {
   if (act === 'new'){ if (window.APCloudActive && window.APHome) return window.APHome.newProject(); pushHist(); state = migrate({name:'Nouveau projet', els:[]}); sel = null; multi = []; rebuild(); fit(); syncLevels(); toast('Nouveau projet (Ctrl+Z pour revenir)'); }
   else if (act === 'sample'){ pushHist(); state = migrate(sample()); sel = null; multi = []; rebuild(); fit(); syncLevels(); }
   else if (act === 'open') $('#fileIn').click();
+  else if (act === 'tuto') openTutorial();
   else if (act === 'home') $('#homeBtn').click();
 });
 expMenu.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (!b) return; expMenu.hidden = true; if (b.dataset.act === 'dqe'){ if (!window.SPAccess?.canExport) return window.SPLicense?.prompt('export'); return openDqeExport(); } if (['glb','ifc','pack','archivision','png'].includes(b.dataset.act) && state.els.length && window.SPAccess?.canExport) return openExport3D(b.dataset.act, +b.dataset.k || undefined); doExport(b.dataset.act, +b.dataset.k || undefined); });
