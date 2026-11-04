@@ -28,10 +28,10 @@ function hitModel(e){
 /* ---------- géométrie d'accroche (mise en cache à chaque reconstruction) ---------- */
 let snapGeo = null;
 function snapData(){
-  if (snapGeo && snapGeo.lvl === curLvl && snapGeo.n === state.els.length && snapGeo.v === rebuildSeq) return snapGeo;
+  const bl = belowOn(); if (snapGeo && snapGeo.lvl === curLvl && snapGeo.bl === bl && snapGeo.n === state.els.length && snapGeo.v === rebuildSeq) return snapGeo;
   const ends = [], mids = [], cens = [], segs = [], faceSegs = [];
   for (const el of state.els){
-    if (el.lvl !== curLvl) continue;
+    if (el.lvl !== curLvl && !(bl && isBelowEl(el))) continue;
     const k = elKeyPoints(el);
     (k.ends || []).forEach(p => ends.push(p)); (k.mids || []).forEach(p => mids.push(p)); (k.centers || []).forEach(p => cens.push(p));
     (k.segs || []).forEach(s => segs.push(s)); (k.faces || []).forEach(s => faceSegs.push(s));
@@ -40,7 +40,7 @@ function snapData(){
   for (let i = 0; i < all.length && all.length < 400; i++) for (let j = i + 1; j < all.length; j++){
     const p = segInter(all[i][0], all[i][1], all[j][0], all[j][1]); if (p && !ends.some(q => V.eq(q, p))) ints.push(p);
   }
-  return snapGeo = {lvl:curLvl, n:state.els.length, v:rebuildSeq, ends, mids, cens, segs, faceSegs, ints,
+  return snapGeo = {lvl:curLvl, bl, n:state.els.length, v:rebuildSeq, ends, mids, cens, segs, faceSegs, ints,
     faceEnds:faceSegs.flat(), faceMids:faceSegs.map(([a, b]) => V.mul(V.add(a, b), .5))};
 }
 let rebuildSeq = 0;

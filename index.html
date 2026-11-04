@@ -5307,8 +5307,11 @@ groundReal.rotation.x = -Math.PI / 2; groundReal.position.y = -0.01; groundReal.
 let pmrem = null, envTex = null, skyTex = null;
 
 let gridMajor, gridMinor;
-const modelGroup = new THREE.Group(), previewGroup = new THREE.Group(), markGroup = new THREE.Group();
-scene.add(modelGroup, previewGroup, markGroup);
+const modelGroup = new THREE.Group(), previewGroup = new THREE.Group(), markGroup = new THREE.Group(), belowGroup = new THREE.Group();
+scene.add(modelGroup, previewGroup, markGroup, belowGroup);
+/* niveau du dessous en plan (murs et escaliers seulement, estompés, non sélectionnables) : repère pour placer les murs ; masqué si un sol existe sur le niveau courant */
+const belowOn = () => planOn() && curLvl > 0 && DISPLAY.below !== false && !state.els.some(e => e.kind === 'slab' && e.lvl === curLvl);
+const isBelowEl = el => el.lvl === curLvl - 1 && (el.kind === 'wall' || el.kind === 'stair');
 
 /* Réglages d'affichage (enregistrés par appareil) */
 const DISPLAY = {style:'shaded', sunAz:215, sunEl:42, exposure:1.0, shadows:true, edges:true, bg:'', grid:true, dims:true};
@@ -5601,14 +5604,15 @@ function positionGrid(){
 /* ---------- reconstruction ---------- */
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
-  rebuildSeq++; applyLinks(); disposeGroup(modelGroup); geoGen++; geoBuilding = true;
-  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
+  rebuildSeq++; applyLinks(); disposeGroup(modelGroup); disposeGroup(belowGroup); geoGen++; geoBuilding = true;
+  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5, below = belowOn();
   for (const el of state.els){
-    if (plan && el.lvl !== curLvl) continue; // plan : seulement le niveau courant
+    const isB = plan && el.lvl !== curLvl && below && isBelowEl(el);
+    if (plan && el.lvl !== curLvl && !isB) continue; // plan : seulement le niveau courant (et, estompé, le niveau du dessous)
     if (isHidden(el)) continue;
     const g = new THREE.Group(); g.userData.id = el.id;
     const F = el.kind === 'inst' ? fam(el.fam) : null;
-    const light = plan ? (el.kind === 'inst' && el.host ? PLAN_LIGHT.host : PLAN_LIGHT[el.kind] ?? 0) : 0;
+    const light = isB ? 0.82 : plan ? (el.kind === 'inst' && el.host ? PLAN_LIGHT.host : PLAN_LIGHT[el.kind] ?? 0) : 0;
     g.name = el.kind === 'inst' ? `${F?.nom || 'Composant'}-${el.id}` : `${KIND_NAME[el.kind]}-${el.id}`;
     g.userData.archiplan = {id:el.id, kind:el.kind, type:el.kind === 'inst' ? el.fam : (el.type || el.mat), niveau:lvlName(el.lvl)};
     if (el.kind === 'inst') instMeshes(el, false, light).forEach(m => { m.name = `${g.name}-${m.userData.mat}`; m.userData.archiplan = {materiau:mat(m.userData.mat).nom, lot:famLot(F)}; g.add(m); });
@@ -5617,7 +5621,7 @@ function rebuild(opts = {}){
       if (!plan) for (const pc of paintCoats(el)){ const m = pieceMesh(pc, false, light, true, {m:pc.mat, tr:pc.tr}); m.name = `${g.name}-revetement`; m.userData.coat = true; g.add(m); }
       if (cw) try { g.add(wallEdgeLines(el)); } catch(e){ console.warn('arêtes du mur', e); } }
     if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
-    modelGroup.add(g);
+    if (isB){ g.userData.below = true; g.userData.id = -1; belowGroup.add(g); } else modelGroup.add(g);
   }
   geoBuilding = false; geoCachePrune();
   batchBuild(); applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
@@ -6091,10 +6095,10 @@ function hitModel(e){
 /* ---------- géométrie d'accroche (mise en cache à chaque reconstruction) ---------- */
 let snapGeo = null;
 function snapData(){
-  if (snapGeo && snapGeo.lvl === curLvl && snapGeo.n === state.els.length && snapGeo.v === rebuildSeq) return snapGeo;
+  const bl = belowOn(); if (snapGeo && snapGeo.lvl === curLvl && snapGeo.bl === bl && snapGeo.n === state.els.length && snapGeo.v === rebuildSeq) return snapGeo;
   const ends = [], mids = [], cens = [], segs = [], faceSegs = [];
   for (const el of state.els){
-    if (el.lvl !== curLvl) continue;
+    if (el.lvl !== curLvl && !(bl && isBelowEl(el))) continue;
     const k = elKeyPoints(el);
     (k.ends || []).forEach(p => ends.push(p)); (k.mids || []).forEach(p => mids.push(p)); (k.centers || []).forEach(p => cens.push(p));
     (k.segs || []).forEach(s => segs.push(s)); (k.faces || []).forEach(s => faceSegs.push(s));
@@ -6103,7 +6107,7 @@ function snapData(){
   for (let i = 0; i < all.length && all.length < 400; i++) for (let j = i + 1; j < all.length; j++){
     const p = segInter(all[i][0], all[i][1], all[j][0], all[j][1]); if (p && !ends.some(q => V.eq(q, p))) ints.push(p);
   }
-  return snapGeo = {lvl:curLvl, n:state.els.length, v:rebuildSeq, ends, mids, cens, segs, faceSegs, ints,
+  return snapGeo = {lvl:curLvl, bl, n:state.els.length, v:rebuildSeq, ends, mids, cens, segs, faceSegs, ints,
     faceEnds:faceSegs.flat(), faceMids:faceSegs.map(([a, b]) => V.mul(V.add(a, b), .5))};
 }
 let rebuildSeq = 0;
@@ -11533,7 +11537,7 @@ function renderViewMenu(){
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
     <hr><div class="lbl">Thème de l'interface</div><div class="thm">${[['light', 'Clair'], ['dark', 'Sombre']].map(([k, n]) => `<button type="button" data-thm="${k}" aria-pressed="${(document.documentElement.dataset.theme || 'light') === k}">${n}</button>`).join('')}</div>
     <hr><div class="lbl">Afficher</div>
-    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['below', 'Niveau du dessous (plan : murs et escaliers)'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function setTheme(t){ document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; try { localStorage.setItem('ap.theme', document.documentElement.dataset.theme); } catch(e){} }

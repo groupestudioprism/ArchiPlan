@@ -48,8 +48,11 @@ groundReal.rotation.x = -Math.PI / 2; groundReal.position.y = -0.01; groundReal.
 let pmrem = null, envTex = null, skyTex = null;
 
 let gridMajor, gridMinor;
-const modelGroup = new THREE.Group(), previewGroup = new THREE.Group(), markGroup = new THREE.Group();
-scene.add(modelGroup, previewGroup, markGroup);
+const modelGroup = new THREE.Group(), previewGroup = new THREE.Group(), markGroup = new THREE.Group(), belowGroup = new THREE.Group();
+scene.add(modelGroup, previewGroup, markGroup, belowGroup);
+/* niveau du dessous en plan (murs et escaliers seulement, estompés, non sélectionnables) : repère pour placer les murs ; masqué si un sol existe sur le niveau courant */
+const belowOn = () => planOn() && curLvl > 0 && DISPLAY.below !== false && !state.els.some(e => e.kind === 'slab' && e.lvl === curLvl);
+const isBelowEl = el => el.lvl === curLvl - 1 && (el.kind === 'wall' || el.kind === 'stair');
 
 /* Réglages d'affichage (enregistrés par appareil) */
 const DISPLAY = {style:'shaded', sunAz:215, sunEl:42, exposure:1.0, shadows:true, edges:true, bg:'', grid:true, dims:true};
@@ -342,14 +345,15 @@ function positionGrid(){
 /* ---------- reconstruction ---------- */
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
-  rebuildSeq++; applyLinks(); disposeGroup(modelGroup); geoGen++; geoBuilding = true;
-  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5;
+  rebuildSeq++; applyLinks(); disposeGroup(modelGroup); disposeGroup(belowGroup); geoGen++; geoBuilding = true;
+  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5, below = belowOn();
   for (const el of state.els){
-    if (plan && el.lvl !== curLvl) continue; // plan : seulement le niveau courant
+    const isB = plan && el.lvl !== curLvl && below && isBelowEl(el);
+    if (plan && el.lvl !== curLvl && !isB) continue; // plan : seulement le niveau courant (et, estompé, le niveau du dessous)
     if (isHidden(el)) continue;
     const g = new THREE.Group(); g.userData.id = el.id;
     const F = el.kind === 'inst' ? fam(el.fam) : null;
-    const light = plan ? (el.kind === 'inst' && el.host ? PLAN_LIGHT.host : PLAN_LIGHT[el.kind] ?? 0) : 0;
+    const light = isB ? 0.82 : plan ? (el.kind === 'inst' && el.host ? PLAN_LIGHT.host : PLAN_LIGHT[el.kind] ?? 0) : 0;
     g.name = el.kind === 'inst' ? `${F?.nom || 'Composant'}-${el.id}` : `${KIND_NAME[el.kind]}-${el.id}`;
     g.userData.archiplan = {id:el.id, kind:el.kind, type:el.kind === 'inst' ? el.fam : (el.type || el.mat), niveau:lvlName(el.lvl)};
     if (el.kind === 'inst') instMeshes(el, false, light).forEach(m => { m.name = `${g.name}-${m.userData.mat}`; m.userData.archiplan = {materiau:mat(m.userData.mat).nom, lot:famLot(F)}; g.add(m); });
@@ -358,7 +362,7 @@ function rebuild(opts = {}){
       if (!plan) for (const pc of paintCoats(el)){ const m = pieceMesh(pc, false, light, true, {m:pc.mat, tr:pc.tr}); m.name = `${g.name}-revetement`; m.userData.coat = true; g.add(m); }
       if (cw) try { g.add(wallEdgeLines(el)); } catch(e){ console.warn('arêtes du mur', e); } }
     if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
-    modelGroup.add(g);
+    if (isB){ g.userData.below = true; g.userData.id = -1; belowGroup.add(g); } else modelGroup.add(g);
   }
   geoBuilding = false; geoCachePrune();
   batchBuild(); applySel(); updateSunTarget(); buildLabels(); if (!opts.noPanel) renderPanel(); updUndo(); save(); dirty = true;
