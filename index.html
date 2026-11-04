@@ -983,6 +983,37 @@ a.ap-link{text-decoration:none}
 .pctx-k{margin-left:12px;font:600 11px var(--f-body,system-ui,sans-serif);color:var(--mut,#4B5563);background:var(--chip,#EEF4F8);border-radius:5px;padding:1px 6px}
 .pctx-ar{margin-left:8px;color:var(--mut,#4B5563);font-size:15px;line-height:1}
 @media (pointer:coarse){.pctx{min-width:260px}.pctx-i{padding:12px 12px;font-size:15px}.pctx-h{font-size:12px}}
+/* ---- disposition : barres masquables, panneau redimensionnable ---- */
+#app{grid-template-columns:74px minmax(0,1fr) var(--panelW,352px);transition:grid-template-columns .22s cubic-bezier(.3,.9,.3,1)}
+#app.no-panel{grid-template-columns:74px minmax(0,1fr) 0px}#app.no-tools{grid-template-columns:0px minmax(0,1fr) var(--panelW,352px)}#app.no-panel.no-tools{grid-template-columns:0px minmax(0,1fr) 0px}
+#app.no-panel #panel,#app.no-tools .tools{display:none}
+#app.hide-cmd .cmdin,#app.hide-status .status,#app.hide-vtools .vtools,#app.hide-hud .hud{display:none}
+.panel{position:relative}
+.panel-res{position:absolute;left:-4px;top:0;bottom:0;width:9px;cursor:col-resize;z-index:5;touch-action:none}
+.panel-res::after{content:"";position:absolute;left:3px;top:50%;width:3px;height:44px;margin-top:-22px;border-radius:3px;background:var(--line);transition:background .15s,height .15s}
+.panel-res:hover::after,.panel-res.on::after{background:var(--accent);height:72px;margin-top:-36px}
+.split-res{flex:none;height:9px;margin:-5px 0 -4px;cursor:row-resize;position:relative;z-index:2;touch-action:none}
+.split-res::after{content:"";position:absolute;left:50%;top:3px;width:44px;height:3px;margin-left:-22px;border-radius:3px;background:var(--line);transition:background .15s,width .15s}
+.split-res:hover::after,.split-res.on::after{background:var(--accent);width:72px;margin-left:-36px}
+.seg-row{display:flex;flex-wrap:wrap;gap:5px;padding:2px 10px 6px}.seg-row .chip{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:4px 10px;font:600 12px var(--f-body);cursor:pointer;transition:background .15s,border-color .15s}.seg-row .chip.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
+/* ---- panneau de droite : onglets, encadrés repliables, lisibilité ---- */
+.tabs{position:relative;padding:0 8px;gap:0;background:color-mix(in srgb,var(--panel) 94%,var(--line))}
+.tabs button{flex:1 1 auto;padding:12px 6px 11px;font-size:13px;border-bottom:0;transition:color .18s,background .18s}.tabs button:hover{color:var(--ink);background:color-mix(in srgb,var(--line) 30%,transparent)}
+.tabs button[aria-selected="true"]{border-bottom:0}
+.tabs .ink{position:absolute;left:0;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--accent);width:0;transition:transform .28s cubic-bezier(.3,.9,.3,1),width .28s cubic-bezier(.3,.9,.3,1);pointer-events:none}
+.pbody{font-size:13.5px;line-height:1.5}.prop-pane{font-size:13.5px}
+.grp{margin-top:14px;padding:10px 12px 12px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--panel) 96%,var(--line));animation:grpIn .25s ease both}
+@keyframes grpIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grp>h3{margin:-2px -4px 8px;padding:4px;border-radius:8px;font-size:11.5px;letter-spacing:.08em;color:var(--ink);opacity:.85;user-select:none}
+.grp>h3.fold{cursor:pointer;justify-content:space-between}.grp>h3.fold::after{content:"";width:8px;height:8px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s;flex:none}
+.grp>h3.fold:hover{background:color-mix(in srgb,var(--line) 40%,transparent)}
+.grp.closed>h3.fold::after{transform:rotate(-45deg)}.grp.closed>:not(h3){display:none}.grp.closed{padding-bottom:6px}.grp.closed>h3{margin-bottom:0}
+.f>span{font-size:12px}.f .in input,.f .in select{font-size:13.5px}
+.btn{transition:transform .12s,box-shadow .15s,background .15s}.btn:active{transform:scale(.97)}
+.f.rchk input{transition:transform .15s}.f.rchk input:active{transform:scale(.85)}
+.tr{transition:background .12s}
+.ph h2{font-size:18px}
+@media (prefers-reduced-motion:reduce){.grp{animation:none}}
 </style>
 
 <div id="splash" role="status" aria-live="polite">
@@ -11277,6 +11308,66 @@ document.addEventListener('contextmenu', ev => {
   PrismCtx.open(ev.clientX, ev.clientY, items, key.startsWith('E') && getEl(+key.slice(1)) ? ctxNameOf(getEl(+key.slice(1))) : undefined);
 });
 
+/* ==== 72-layout.js ==== */
+/* ============ Disposition : barres masquables, panneau de droite redimensionnable, sections repliables ============
+   Mémorisé sur l'appareil (ap.layout). Barres : outils (gauche), panneau de droite, barre de commande, aides au dessin, commandes de vue. */
+const LAYOUT = (() => { try { return {panelW:352, treeH:0, bars:{}, closed:{}, ...JSON.parse(localStorage.getItem('ap.layout') || '{}')}; } catch(e){ return {panelW:352, treeH:0, bars:{}, closed:{}}; } })();
+const saveLayout = () => { try { localStorage.setItem('ap.layout', JSON.stringify(LAYOUT)); } catch(e){} };
+const BARS = [['tools', 'Outils (à gauche)', '.tools'], ['panel', 'Panneau de droite', '#panel'], ['cmd', 'Barre de commande', '.cmdin'], ['status', 'Aides au dessin (accroches)', '.status'], ['vtools', 'Commandes de vue', '.vtools'], ['hud', 'Niveau, matériau, pas', '.hud']];
+function applyLayout(){
+  const app = $('#app'); if (!app) return;
+  const narrow = matchMedia('(max-width:860px)').matches;
+  for (const [k] of BARS) app.classList.toggle('hide-' + k, !!LAYOUT.bars[k]);
+  app.style.setProperty('--panelW', Math.round(clamp(LAYOUT.panelW, 260, Math.max(300, innerWidth * 0.6))) + 'px');
+  app.classList.toggle('no-panel', !narrow && !!LAYOUT.bars.panel); app.classList.toggle('no-tools', !narrow && !!LAYOUT.bars.tools);
+  const tp = $('#pbody .tree-pane'); if (tp && LAYOUT.treeH) tp.style.maxHeight = tp.style.height = LAYOUT.treeH + 'px';
+  window.dispatchEvent(new Event('resize'));
+}
+function layoutMenuHtml(){
+  return `<hr><div class="lbl">Barres affichées</div>${BARS.map(([k, n]) => `<label class="mi"><input type="checkbox" data-bar="${k}"${LAYOUT.bars[k] ? '' : ' checked'}> ${n}</label>`).join('')}
+    <div class="lbl" style="margin-top:6px">Largeur du panneau</div><div class="seg-row">${[[300, 'Étroit'], [352, 'Normal'], [440, 'Large'], [560, 'Très large']].map(([w, n]) => `<button type="button" class="chip${LAYOUT.panelW === w ? ' on' : ''}" data-pw="${w}">${n}</button>`).join('')}</div>`;
+}
+document.addEventListener('change', e => { const k = e.target.dataset?.bar; if (!k) return; LAYOUT.bars[k] = !e.target.checked; saveLayout(); applyLayout(); toast(e.target.checked ? 'Barre affichée' : 'Barre masquée (Réglages › Affichage pour la remettre)'); });
+document.addEventListener('click', e => { const b = e.target.closest?.('[data-pw]'); if (!b) return; LAYOUT.panelW = +b.dataset.pw; saveLayout(); applyLayout(); renderViewMenu(); });
+/* poignée de largeur du panneau */
+(() => {
+  const app = $('#app'), panel = $('#panel'); if (!app || !panel) return;
+  const h = document.createElement('div'); h.className = 'panel-res'; h.title = 'Glisser pour régler la largeur du panneau (double clic : réinitialiser)'; h.setAttribute('role', 'separator'); h.setAttribute('aria-orientation', 'vertical'); panel.prepend(h);
+  let drag = null;
+  h.addEventListener('pointerdown', e => { drag = {x:e.clientX, w:panel.getBoundingClientRect().width}; h.setPointerCapture(e.pointerId); h.classList.add('on'); e.preventDefault(); });
+  h.addEventListener('pointermove', e => { if (!drag) return; LAYOUT.panelW = drag.w + (drag.x - e.clientX); applyLayout(); });
+  h.addEventListener('pointerup', () => { drag = null; h.classList.remove('on'); saveLayout(); });
+  h.addEventListener('dblclick', () => { LAYOUT.panelW = 352; saveLayout(); applyLayout(); });
+  h.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){ LAYOUT.panelW += (e.key === 'ArrowLeft' ? 24 : -24); saveLayout(); applyLayout(); } }); h.tabIndex = 0;
+})();
+/* sections repliables : clic sur un titre d'encadré ; poignée de hauteur entre l'arborescence et les propriétés */
+function enhancePanel(){
+  const body = $('#pbody'); if (!body) return;
+  body.querySelectorAll('.grp > h3').forEach(h3 => {
+    const g = h3.parentElement; if (g.dataset.fold) return; g.dataset.fold = '1'; h3.classList.add('fold'); h3.tabIndex = 0; h3.setAttribute('role', 'button');
+    const key = h3.textContent.trim().slice(0, 40); g.classList.toggle('closed', !!LAYOUT.closed[key]); h3.setAttribute('aria-expanded', !LAYOUT.closed[key]);
+    const tog = () => { const c = !g.classList.contains('closed'); g.classList.toggle('closed', c); h3.setAttribute('aria-expanded', !c); if (c) LAYOUT.closed[key] = 1; else delete LAYOUT.closed[key]; saveLayout(); };
+    h3.onclick = ev => { if (ev.target.closest('button,a,input,select')) return; tog(); };
+    h3.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); tog(); } };
+  });
+  const tp = body.querySelector('.tree-pane'), pp = body.querySelector('.prop-pane');
+  if (tp && pp && !tp.nextElementSibling?.classList.contains('split-res')){
+    const r = document.createElement('div'); r.className = 'split-res'; r.title = 'Glisser pour régler la hauteur de l\'arborescence'; tp.after(r); let d = null;
+    r.addEventListener('pointerdown', e => { d = {y:e.clientY, h:tp.getBoundingClientRect().height}; r.setPointerCapture(e.pointerId); r.classList.add('on'); e.preventDefault(); });
+    r.addEventListener('pointermove', e => { if (!d) return; LAYOUT.treeH = clamp(d.h + e.clientY - d.y, 90, body.clientHeight - 140); tp.style.maxHeight = tp.style.height = LAYOUT.treeH + 'px'; });
+    r.addEventListener('pointerup', () => { d = null; r.classList.remove('on'); saveLayout(); });
+    r.addEventListener('dblclick', () => { LAYOUT.treeH = 0; tp.style.height = tp.style.maxHeight = ''; saveLayout(); });
+  }
+  if (tp && LAYOUT.treeH) tp.style.maxHeight = tp.style.height = LAYOUT.treeH + 'px';
+}
+new MutationObserver(() => enhancePanel()).observe($('#pbody'), {childList:true, subtree:true});
+/* indicateur animé sous l'onglet actif */
+function tabInk(){ const t = $('.tabs'); if (!t) return; let ink = t.querySelector('.ink'); if (!ink){ ink = document.createElement('i'); ink.className = 'ink'; t.appendChild(ink); }
+  const b = t.querySelector('button[aria-selected="true"]'); if (b){ ink.style.width = b.offsetWidth + 'px'; ink.style.transform = `translateX(${b.offsetLeft}px)`; } }
+new MutationObserver(() => requestAnimationFrame(tabInk)).observe($('.tabs'), {attributes:true, subtree:true, attributeFilter:['aria-selected', 'hidden']});
+window.addEventListener('resize', () => requestAnimationFrame(tabInk));
+applyLayout(); enhancePanel(); requestAnimationFrame(tabInk);
+
 /* ==== 79-wheel.js ==== */
 /* Zoom à la molette maîtrisé.
  * Le zoom intégré d'OrbitControls (three r160) divise l'écart de la molette par devicePixelRatio arrondi à l'entier :
@@ -11538,6 +11629,7 @@ function renderViewMenu(){
     <hr><div class="lbl">Thème de l'interface</div><div class="thm">${[['light', 'Clair'], ['dark', 'Sombre']].map(([k, n]) => `<button type="button" data-thm="${k}" aria-pressed="${(document.documentElement.dataset.theme || 'light') === k}">${n}</button>`).join('')}</div>
     <hr><div class="lbl">Afficher</div>
     ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['below', 'Niveau du dessous (plan : murs et escaliers)'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${layoutMenuHtml()}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function setTheme(t){ document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; try { localStorage.setItem('ap.theme', document.documentElement.dataset.theme); } catch(e){} }
