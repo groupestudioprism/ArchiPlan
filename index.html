@@ -3067,6 +3067,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { SSAARenderPass } from 'three/addons/postprocessing/SSAARenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 const APP_VERSION = '0.7';
 
 /* ==== 01-util.js ==== */
@@ -5467,9 +5468,17 @@ function matFor(id, selected, light = 0, tr = null){
   else {
     const textured = st === 'textured' || st === 'realistic';
     const tx = textured && m.tex && m.tex !== 'glass' ? texAt(id, tr, false) : null, bm = tx ? texAt(id, tr, true) : null;
-    M = new THREE.MeshStandardMaterial({color:tx ? 0xffffff : m.color, map:tx, bumpMap:bm, bumpScale:bm ? (st === 'realistic' ? 1.4 : 0.8) : 1,
+    const real = st === 'realistic', glass = transp && (m.tex === 'glass' || /verre|vitrage|polycarb/i.test(id + m.nom)), metal = (m.metal ?? 0) > 0.4;
+    if (real && glass){ // verre : transmission physique (on voit à travers, reflets du ciel, teinte légère)
+      M = new THREE.MeshPhysicalMaterial({color:0xffffff, roughness:0.02, metalness:0, transmission:0.96, ior:1.5, thickness:0.03, attenuationColor:new THREE.Color(m.color), attenuationDistance:0.6, specularIntensity:1, envMapIntensity:1.6, side:THREE.DoubleSide, transparent:false});
+    } else if (real){ // PBR : relief, reflets du ciel, vernis sur sols et bois finis
+      const fin = m.cat === 'Revêtements de sol' || /carrelage|faience|resine|betonCire|parquet|stratifie/i.test(id), wood = m.cat === 'Bois et dérivés';
+      M = new THREE.MeshPhysicalMaterial({color:tx ? 0xffffff : m.color, map:tx, bumpMap:bm, bumpScale:bm ? 1.6 : 1, roughness:m.rough ?? .9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1, depthWrite:!transp,
+        envMapIntensity:metal ? 1.5 : 0.9, clearcoat:fin ? 0.3 : wood ? 0.08 : 0, clearcoatRoughness:0.25, sheen:/moquette|textile|tissu/i.test(id + m.nom) ? 0.6 : 0, specularIntensity:metal ? 1 : 0.55});
+    } else
+    M = new THREE.MeshStandardMaterial({color:tx ? 0xffffff : m.color, map:tx, bumpMap:bm, bumpScale:bm ? 0.8 : 1,
       roughness:m.rough ?? .9, metalness:m.metal ?? 0, transparent:transp, opacity:m.opacity ?? 1, depthWrite:!transp,
-      envMapIntensity:st === 'realistic' ? 0.6 : 0.35});
+      envMapIntensity:0.35});
   }
   M.polygonOffset = true; M.polygonOffsetFactor = 1; M.polygonOffsetUnits = 1; M.name = m.nom;
   if (sec){ // coupe : les faces arrière découvertes par le plan de coupe sont peintes en sombre (poché)
@@ -5611,23 +5620,41 @@ function mergeGeos(geos){
 }
 
 /* ---------- ambiance selon le style ---------- */
-function skyTexture(){
-  const cv = document.createElement('canvas'); cv.width = 16; cv.height = 256; const g = cv.getContext('2d');
-  const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#5D8FC7'); gr.addColorStop(0.55, '#B9D3EC'); gr.addColorStop(0.75, '#E9EEF2'); gr.addColorStop(1, '#D9DCD3');
-  g.fillStyle = gr; g.fillRect(0, 0, 16, 256); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+/* Ciel photoréaliste (uniquement en style Réaliste) : panorama équirectangulaire procédural (dégradé atmosphérique, halo et disque solaire à
+   la position réglée, voile de nuages) ; il sert à la fois de fond, d'éclairage ambiant et de reflets (PMREM). Régénéré quand le soleil bouge. */
+let skyKey = '';
+function skyEquirect(){
+  const W = 1024, H = 512, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, '#2E64B3'); gr.addColorStop(0.22, '#4C86CB'); gr.addColorStop(0.38, '#86B4E3'); gr.addColorStop(0.47, '#C6DAEC'); gr.addColorStop(0.5, '#E4ECF0');
+  gr.addColorStop(0.505, '#9A9C95'); gr.addColorStop(0.62, '#6D6F68'); gr.addColorStop(1, '#4A4C47');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  const az = DISPLAY.sunAz * Math.PI / 180, el = DISPLAY.sunEl * Math.PI / 180, dir = [Math.cos(el) * Math.sin(az), Math.sin(el), -Math.cos(el) * Math.cos(az)];
+  const sx = (Math.atan2(dir[2], dir[0]) / (2 * Math.PI) + 0.5) * W, sy = (0.5 - Math.asin(dir[1]) / Math.PI) * H;
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  g.globalCompositeOperation = 'source-over';
+  for (let i = 0; i < 46; i++){ const x = rnd() * W, y = (0.12 + rnd() * 0.33) * H, r = 24 + rnd() * 70, a = 0.05 + rnd() * 0.1, cg = g.createRadialGradient(x, y, 0, x, y, r); cg.addColorStop(0, `rgba(255,255,255,${a})`); cg.addColorStop(1, 'rgba(255,255,255,0)'); g.save(); g.scale(1.9, 0.5); g.translate(0, 0); g.fillStyle = cg; g.beginPath(); g.arc(x / 1.9, y / 0.5, r, 0, 7); g.fill(); g.restore(); }
+  g.globalCompositeOperation = 'lighter';
+  for (const [r, c] of [[300, 'rgba(255,214,150,0.18)'], [120, 'rgba(255,230,190,0.35)'], [40, 'rgba(255,244,220,0.8)']]){ for (const dx of [-W, 0, W]){ const rg = g.createRadialGradient(sx + dx, sy, 0, sx + dx, sy, r); rg.addColorStop(0, c); rg.addColorStop(1, 'rgba(255,200,120,0)'); g.fillStyle = rg; g.fillRect(sx + dx - r, sy - r, 2 * r, 2 * r); } }
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(sx, sy, 7, 0, 7); g.fill();
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.mapping = THREE.EquirectangularReflectionMapping; return t;
+}
+function skyUpdate(){
+  if (!pmrem) pmrem = new THREE.PMREMGenerator(renderer);
+  const key = Math.round(DISPLAY.sunAz / 4) + '|' + Math.round(DISPLAY.sunEl / 2); if (key === skyKey && skyTex && envTex) return skyKey = key;
+  skyKey = key; const t = skyEquirect(); if (envTex) envTex.dispose(); envTex = pmrem.fromEquirectangular(t).texture; if (skyTex) skyTex.dispose(); skyTex = t;
 }
 function applyThemeToScene(){
   const plan = planOn(), st = DISPLAY.style, real = st === 'realistic' && !plan;
   if (real){
-    if (!pmrem){ pmrem = new THREE.PMREMGenerator(renderer); envTex = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture; }
-    if (!skyTex) skyTex = skyTexture();
-    scene.environment = envTex; scene.background = skyTex;
+    skyUpdate(); scene.environment = envTex; scene.background = skyTex; scene.backgroundBlurriness = 0.03; scene.environmentIntensity = 1.0;
   } else { scene.environment = null; scene.background = new THREE.Color(bgColor()); }
   vpEl.style.setProperty('--vp', bgColor()); vpEl.classList.toggle('dark-bg', !bgLight());
   groundReal.visible = real && DISPLAY.ground === true; groundShadow.visible = (!real || DISPLAY.ground !== true) && !plan && st !== 'wire' && st !== 'xray';   // le disque d'herbe est une option (désactivée par défaut) : plus d'élément fantôme
   renderer.toneMappingExposure = real ? DISPLAY.exposure : 1.0;
   renderer.shadowMap.enabled = DISPLAY.shadows && st !== 'wire' && st !== 'xray' && !planOn();
   hemi.intensity = real ? 0.3 : st === 'sketch' ? 1.6 : 1.0;
+  groundShadow.material.opacity = real ? 0.34 : 0.16; sun.shadow.radius = real ? 3 : 1;
   sun.color.set(real ? 0xFFF1DC : 0xffffff); sun.intensity = real ? 3.2 : st === 'sketch' ? 0.6 : 1.9;
   sun.castShadow = renderer.shadowMap.enabled;
   const dark = !bgLight();
@@ -5705,6 +5732,7 @@ function positionSun(){
   const az = DISPLAY.sunAz * Math.PI / 180, el = DISPLAY.sunEl * Math.PI / 180, d = 60, t = sun.target.position;
   // azimut depuis le nord (plan +y) dans le sens horaire ; plan (x, y) → scène (x, −z)
   sun.position.set(t.x + d * Math.cos(el) * Math.sin(az), t.y + d * Math.sin(el), t.z - d * Math.cos(el) * Math.cos(az));
+  if (DISPLAY.style === 'realistic' && !planOn() && typeof skyUpdate === 'function'){ const k = skyKey; skyUpdate(); if (k !== skyKey){ scene.environment = envTex; scene.background = skyTex; } }
   dirty = true;
 }
 function frameEl(ids){ // centrer la vue sur des éléments
@@ -5971,10 +5999,11 @@ function fxBuild(){
   const w = vpEl.clientWidth || 800, h = vpEl.clientHeight || 600, c = new EffectComposer(renderer);
   const rp = new RenderPass(scene, persp), ao = new GTAOPass(scene, persp, w, h); ao.updateGtaoMaterial({radius:0.6, distanceExponent:1.5, thickness:1.5, scale:1.1, samples:12}); ao.blendIntensity = 0.85;
   const aa = new SMAAPass(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()), out = new OutputPass();
-  c.addPass(rp); c.addPass(ao); c.addPass(aa); c.addPass(out);
-  return fxq = {c, rp, ao, aa, out};
+  const bl = new UnrealBloomPass(new THREE.Vector2(w, h), 0.12, 0.6, 0.92);   // halo discret sur les reflets du soleil et le verre
+  c.addPass(rp); c.addPass(ao); c.addPass(bl); c.addPass(aa); c.addPass(out);
+  return fxq = {c, rp, ao, aa, out, bl};
 }
-function fxResize(w, h){ if (!fxq) return; fxq.c.setPixelRatio(renderer.getPixelRatio()); fxq.c.setSize(w, h); fxq.ao.setSize(w, h); }
+function fxResize(w, h){ if (!fxq) return; fxq.c.setPixelRatio(renderer.getPixelRatio()); fxq.c.setSize(w, h); fxq.ao.setSize(w, h); fxq.bl?.setSize(w, h); }
 function renderFrame(){
   if (fxOn()){ try { (fxq || fxBuild()).c.render(); return; } catch(e){ console.warn('[ARCHIPLAN] post-traitement indisponible', e); DISPLAY.fx = false; } }
   renderer.render(scene, cam());

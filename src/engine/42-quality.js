@@ -7,10 +7,11 @@ function fxBuild(){
   const w = vpEl.clientWidth || 800, h = vpEl.clientHeight || 600, c = new EffectComposer(renderer);
   const rp = new RenderPass(scene, persp), ao = new GTAOPass(scene, persp, w, h); ao.updateGtaoMaterial({radius:0.6, distanceExponent:1.5, thickness:1.5, scale:1.1, samples:12}); ao.blendIntensity = 0.85;
   const aa = new SMAAPass(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()), out = new OutputPass();
-  c.addPass(rp); c.addPass(ao); c.addPass(aa); c.addPass(out);
-  return fxq = {c, rp, ao, aa, out};
+  const bl = new UnrealBloomPass(new THREE.Vector2(w, h), 0.12, 0.6, 0.92);   // halo discret sur les reflets du soleil et le verre
+  c.addPass(rp); c.addPass(ao); c.addPass(bl); c.addPass(aa); c.addPass(out);
+  return fxq = {c, rp, ao, aa, out, bl};
 }
-function fxResize(w, h){ if (!fxq) return; fxq.c.setPixelRatio(renderer.getPixelRatio()); fxq.c.setSize(w, h); fxq.ao.setSize(w, h); }
+function fxResize(w, h){ if (!fxq) return; fxq.c.setPixelRatio(renderer.getPixelRatio()); fxq.c.setSize(w, h); fxq.ao.setSize(w, h); fxq.bl?.setSize(w, h); }
 function renderFrame(){
   if (fxOn()){ try { (fxq || fxBuild()).c.render(); return; } catch(e){ console.warn('[ARCHIPLAN] post-traitement indisponible', e); DISPLAY.fx = false; } }
   renderer.render(scene, cam());
