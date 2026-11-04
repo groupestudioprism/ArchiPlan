@@ -77,8 +77,8 @@ function spkPlace(){
   const d = SPK.pop; if (!d || d.hidden) return; const sheet = innerWidth < 640; d.classList.toggle('sheet', sheet);
   if (sheet){ d.style.cssText = ''; return; }
   const r = SPK.anchor ? SPK.anchor.getBoundingClientRect() : {left:innerWidth / 2 - 220, right:innerWidth / 2 + 220, top:80, bottom:80, width:440};
-  const W = Math.min(Math.max(r.width, 420), innerWidth - 24); let left = Math.max(12, Math.min(r.left, innerWidth - W - 12));
-  const below = innerHeight - r.bottom - 12, above = r.top - 12, maxH = 460, H = Math.min(maxH, Math.max(below, above));
+  const W = Math.min(Math.max(r.width, 540), innerWidth - 24); let left = Math.max(12, Math.min(r.left, innerWidth - W - 12));
+  const below = innerHeight - r.bottom - 12, above = r.top - 12, maxH = 560, H = Math.min(maxH, Math.max(below, above));
   const up = below < 280 && above > below;
   d.style.left = left + 'px'; d.style.width = W + 'px'; d.style.maxHeight = H + 'px';
   if (up){ d.style.top = ''; d.style.bottom = (innerHeight - r.top + 4) + 'px'; } else { d.style.bottom = ''; d.style.top = (r.bottom + 4) + 'px'; }

@@ -36,3 +36,19 @@
 .chk-b h4{margin:0 0 3px;font-size:14px}.chk-b p{margin:0 0 4px;font-size:13px}.chk-b small{display:block;color:var(--mut);font-size:11.5px;margin-bottom:8px}.chk-a{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .chk-ok{text-align:center;padding:30px 10px}.chk-ok i{display:inline-grid;place-items:center;width:54px;height:54px;border-radius:50%;background:color-mix(in srgb,#2E9E6B 18%,transparent);color:#2E9E6B;font:700 26px var(--f-body);font-style:normal;animation:chkPop .5s cubic-bezier(.3,1.6,.4,1)}
 @keyframes chkPop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+/* liste de choix (compositions, matériaux, familles) : plus lisible */
+.spk-pop{border-radius:16px;box-shadow:0 24px 60px rgb(7 27 85 / .32),0 2px 6px rgb(0 0 0 / .08);animation:spkIn .18s cubic-bezier(.2,.9,.3,1)}
+@keyframes spkIn{from{opacity:0;transform:translateY(-6px) scale(.985)}to{opacity:1;transform:none}}
+.spk-top{padding:10px 10px 10px 14px;background:color-mix(in srgb,var(--panel) 90%,var(--line))}
+.spk-q{font-size:15px;height:40px}
+.spk-chips{padding:10px 12px 4px;gap:6px}.spk-chip{padding:5px 12px;font-size:12px;transition:transform .12s,background .15s,border-color .15s}.spk-chip:hover{transform:translateY(-1px)}
+.spk-list{padding:4px 10px 10px}
+.spk-g{position:sticky;top:-4px;z-index:1;display:flex;align-items:center;gap:8px;padding:12px 6px 6px;margin:0 -4px;background:var(--panel);font-size:11px;color:var(--ink);opacity:1}
+.spk-g::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}.spk-g::after{content:"";flex:1;height:1px;background:var(--line)}
+.spk-r{min-height:56px;padding:8px 12px;margin:3px 0;border:1px solid transparent;border-radius:12px;gap:14px;transition:background .14s,border-color .14s,transform .14s,box-shadow .14s}
+.spk-r:hover,.spk-r.act{background:color-mix(in srgb,var(--accent) 7%,var(--panel));border-color:color-mix(in srgb,var(--accent) 35%,var(--line));transform:translateX(2px);box-shadow:0 4px 12px rgb(7 27 85 / .08)}
+.spk-r.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.spk-r .lbar{width:78px;height:18px;border-radius:5px;border:1px solid rgb(0 0 0 / .18);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .35)}
+.spk-r .swt{width:30px;height:30px;border-radius:8px;border:1px solid rgb(0 0 0 / .12)}
+.spk-t b{font-size:14px;white-space:normal;line-height:1.25}.spk-t small{font-size:12px;white-space:normal;line-height:1.35}
+.spk-foot{padding:8px 14px;background:color-mix(in srgb,var(--panel) 92%,var(--line))}
