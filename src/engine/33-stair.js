@@ -5,7 +5,7 @@
    Le tracé se construit « à la tortue » : volées droites et quarts tournants à marches rayonnantes (3 par quart). Hauteur de marche
    ≈ 17,5 cm, giron selon Blondel (2h + g ≈ 63 cm). Une trémie est découpée dans le plancher d'arrivée, au-dessus de l'escalier. */
 const STAIR_TYPES = {droit:'Droit', quart:'Quart tournant', demi:'Demi-tournant', tq:'Trois-quarts tournant', helico:'Hélicoïdal (colimaçon)'};
-const STAIR_MATS = {bois:'Bois (marches 45 mm, limons)', beton:'Béton (paillasse)', acier:'Acier et bois (limon central)'};
+const STAIR_MATS = {bois:'Bois (marches 45 mm, limons)', beton:'Béton (paillasse)', acier:'Acier et bois (limon central)'};   // ancien réglage, remplacé par STAIR_STYLES
 function stairH(el){ if (el.H > 0) return el.H; const z0 = lvlZ(el.lvl) + (el.off || 0), nxt = state.levels[el.lvl + 1]; return nxt ? Math.max(0.5, nxt.z - z0) : 2.8; }
 function stairDims(el){
   const H = stairH(el), hT = el.hs > 0.1 ? el.hs : (el.use === 'erp' ? 0.16 : 0.175), n = el.n >= 3 ? el.n | 0 : Math.max(3, Math.round(H / hT)), h = H / n;
@@ -56,10 +56,10 @@ function stairTreads(el){
   }
   const turns = {droit:0, quart:1, demi:2, tq:3}[st] ?? 0, pal = !!el.pal && turns > 0, kT = pal ? 1 : 3, rest = Math.max(0, nT - turns * kT); let k = 0;
   const plan = turns === 0 ? [['f', nT]] : turns === 1 ? [['f', Math.ceil(rest / 2)], ['t'], ['f', Math.floor(rest / 2)]] : turns === 2 ? [['f', Math.ceil(rest / 2)], ['t'], ['t'], ['f', Math.floor(rest / 2)]]
-    : [['f', Math.ceil(rest / 2)], ['t'], ['t'], ['t'], ['f', Math.floor(rest / 2)]];
+    : (() => { const q = Math.floor(rest / 4), r = rest - q * 4, f = [0, 1, 2, 3].map(x => q + (x < r ? 1 : 0)); return [['f', f[0]], ['t'], ['f', f[1]], ['t'], ['f', f[2]], ['t'], ['f', f[3]]]; })();
   let A = [0, 0], B = [w, 0], d = [0, 1]; const out = [], add = (p, q) => [p[0] + q[0], p[1] + q[1]], mul = (p, s) => [p[0] * s, p[1] * s];
   for (const [op, n] of plan){
-    if (op === 'f') for (let i = 0; i < n; i++){ const A2 = add(A, mul(d, D.g)), B2 = add(B, mul(d, D.g)); out.push({poly:[A, B, B2, A2], walk:mul(add(add(A, B), mul(d, D.g)), 0.5), outer:right ? [A, A2] : [B, B2], k:++k}); A = A2; B = B2; }
+    if (op === 'f') for (let i = 0; i < n; i++){ const A2 = add(A, mul(d, D.g)), B2 = add(B, mul(d, D.g)); out.push({poly:[A, B, B2, A2], walk:mul(add(add(A, B), mul(d, D.g)), 0.5), outer:right ? [A, A2] : [B, B2], inner:right ? [B, B2] : [A, A2], k:++k}); A = A2; B = B2; }
     else if (pal){ // palier carré au tournant : une seule hauteur de marche, deux triangles de même niveau
       const pv = right ? B : A, s0 = right ? A : B, c1 = add(s0, mul(d, w)), e = add(pv, mul(d, w)); k++;
       out.push({poly:right ? [pv, s0, c1] : [pv, c1, s0], walk:mul(add(add(pv, s0), c1), 1 / 3), outer:[s0, c1], k, pal:true}, {poly:right ? [pv, c1, e] : [pv, e, c1], walk:mul(add(add(pv, c1), e), 1 / 3), outer:[c1, e], k, pal:true});
@@ -67,7 +67,7 @@ function stairTreads(el){
     } else {
       const pv = right ? B : A, s0 = right ? A : B, c1 = add(s0, mul(d, w)), e = add(pv, mul(d, w)), path = [s0, c1, e], L = 2 * w;
       const at = t => t <= w ? add(s0, mul(d, t)) : add(c1, mul([e[0] - c1[0], e[1] - c1[1]], (t - w) / w));
-      for (let k = 0; k < kT; k++){ const t0 = L * k / kT, t1 = L * (k + 1) / kT, pts = [at(t0)]; if (t0 < w && t1 > w) pts.push(c1); pts.push(at(t1));
+      for (let q = 0; q < kT; q++){ const t0 = L * q / kT, t1 = L * (q + 1) / kT, pts = [at(t0)]; if (t0 < w && t1 > w) pts.push(c1); pts.push(at(t1));
         const poly = right ? [pv, ...pts] : [pv, ...pts.reverse()], mid = at((t0 + t1) / 2); out.push({poly, walk:mul(add(pv, mid), 0.5), outer:[at(t0), at(t1)], k:++k}); }
       if (right){ A = e; B = pv; d = rotR(d); } else { A = pv; B = e; d = rotL(d); }
     }
@@ -76,38 +76,91 @@ function stairTreads(el){
 }
 const stairXf = el => { const a = (el.rot || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), o = el.c || [0, 0]; return p => [o[0] + p[0] * c - p[1] * s, o[1] + p[0] * s + p[1] * c]; };
 function stairFootprint(el){ const X = stairXf(el), pts = stairTreads(el).flatMap(t => t.poly.map(X)); if (!pts.length) return null; const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); return {x0:Math.min(...xs), x1:Math.max(...xs), y0:Math.min(...ys), y1:Math.max(...ys)}; }
+/* ---------- 25 designs × 5 styles de matériaux ----------
+   Un design fixe la forme (type d'escalier, palier), la structure (limons, crémaillère, limon central, marches flottantes, paillasse,
+   tirants, fût) et le garde-corps ; un style fixe les matériaux. Les deux se combinent librement (125 variantes). */
+const STAIR_STYLES = [
+  {id:1, n:'Bois chaud',            sw:['#B88A57', '#7A5530'], mat:'bois',  tread:'chene',      str:'chene',  rail:'chene',    bal:'acierLaque', riser:'chene',   mass:'ba'},
+  {id:2, n:'Béton et acier loft',   sw:['#9FA3A6', '#3A3F46'], mat:'beton', tread:'betonCire',  str:'beton',  rail:'acierLaque', bal:'acierLaque', riser:'betonCire', mass:'beton'},
+  {id:3, n:'Acier industriel',      sw:['#8C96A2', '#4A5058'], mat:'acier', tread:'acier',      str:'acier',  rail:'acier',    bal:'acier',      riser:'acier',   mass:'acier'},
+  {id:4, n:'Verre et inox',         sw:['#9FD0E2', '#B9C0C6'], mat:'acier', tread:'verre',      str:'inox',   rail:'inox',     bal:'inox',       riser:'verre',   mass:'inox', glass:'vitrage'},
+  {id:5, n:'Pierre naturelle et bois', sw:['#C9BFA9', '#8A6238'], mat:'beton', tread:'pierreSol', str:'granit', rail:'chene',  bal:'acierLaque', riser:'pierreSol', mass:'pierreSol'}];
+const D_ = (n, st, str, balu, o = {}) => ({n, st, str, balu, ...o});
+const STAIR_DESIGNS = [
+  D_('Droit à limons latéraux', 'droit', 'lim2', 'barr'), D_('Droit à crémaillère', 'droit', 'crem', 'main'), D_('Droit à limon central', 'droit', 'cen', 'cable'),
+  D_('Droit flottant sur mur', 'droit', 'flot', 'main'), D_('Droit béton à paillasse', 'droit', 'pail', 'plein'), D_('Droit à contremarches et verre', 'droit', 'lim1', 'verre', {cm:true}),
+  D_('Droit suspendu à tirants', 'droit', 'tir', 'cable'), D_('Droit à double rampe', 'droit', 'lim2', 'main', {rail2:true}), D_('Droit monobloc épais et verre', 'droit', 'flot', 'verre', {thick:0.09}),
+  D_('Quart tournant à limons', 'quart', 'lim1', 'barr'), D_('Quart tournant à crémaillère', 'quart', 'crem', 'main'), D_('Quart tournant avec palier', 'quart', 'lim2', 'barr', {pal:true}),
+  D_('Quart tournant flottant', 'quart', 'flot', 'verre'), D_('Quart tournant béton', 'quart', 'pail', 'plein'), D_('Quart tournant à limon central', 'quart', 'cen', 'cable'),
+  D_('Demi-tournant à limons', 'demi', 'lim1', 'barr'), D_('Demi-tournant à palier (en U)', 'demi', 'lim2', 'verre', {pal:true}), D_('Demi-tournant à crémaillère', 'demi', 'crem', 'cable'),
+  D_('Demi-tournant béton', 'demi', 'pail', 'plein'), D_('Trois-quarts tournant à limons', 'tq', 'lim1', 'barr'), D_('Trois-quarts à paliers', 'tq', 'lim2', 'main', {pal:true}),
+  D_('Hélicoïdal à fût central', 'helico', 'colim', 'barr'), D_('Hélicoïdal et verre', 'helico', 'colim', 'verre'), D_('Hélicoïdal à câbles', 'helico', 'colim', 'cable'),
+  D_('Échelle de meunier (pente raide)', 'droit', 'lim1', 'main', {w:0.6, hs:0.21, g:0.21})];
+const stairStyle = el => STAIR_STYLES.find(x => x.id === el.sty) || STAIR_STYLES.find(x => x.mat === (el.mat || 'bois')) || STAIR_STYLES[0];
+const stairCfg = el => { const d = STAIR_DESIGNS[(el.dsg | 0) - 1]; return d ? d : {st:el.st || 'droit', str:(el.mat === 'beton' ? 'pail' : 'lim1'), balu:'main'}; };
+/* applique un design (et un style) à un escalier : forme, palier, contremarches, emmarchement, hauteur / giron imposés */
+function stairApplyDesign(el, dsg, sty){
+  if (sty) { el.sty = sty; el.mat = stairStyle(el).mat; }
+  if (!dsg) return el;
+  const d = STAIR_DESIGNS[dsg - 1]; if (!d) return el;
+  el.dsg = dsg; el.st = d.st; el.pal = !!d.pal; el.cm = !!d.cm; el.rail2 = !!d.rail2;
+  if (d.w) el.w = d.w; else if (el.w < 0.8) el.w = 0.9;
+  if (d.hs) el.hs = d.hs; else delete el.hs;
+  if (d.g) el.g = d.g; else delete el.g;
+  if (d.st === 'helico' && !el.R) el.R = 0.8;
+  return el;
+}
 function stairPieces(el){
-  const D = stairDims(el), X = stairXf(el), z0 = lvlZ(el.lvl) + (el.off || 0), T = stairTreads(el), out = [], m = el.mat || 'bois';
-  const wood = m === 'beton' ? 'ba' : 'chene', tread = m === 'beton' ? 'beton' : 'chene';
+  const D = stairDims(el), X = stairXf(el), z0 = lvlZ(el.lvl) + (el.off || 0), T = stairTreads(el), out = [], ST = stairStyle(el), C = stairCfg(el), st = el.st || 'droit', helico = st === 'helico';
+  const lot = 'Second œuvre', add = (p, mt, l = lot) => out.push({...p, mat:mt, lot:l, stair:true});
+  const mem = (A, B, w, h, mt, kind = 'limon') => add(memberPiece({A, B, w, h, kind, id:''}), mt);
+  const str = C.str, tT = str === 'flot' ? (C.thick || 0.07) : str === 'pail' ? 0.03 : 0.045;
+  const zt = (t, i) => z0 + (t.k ?? i + 1) * D.h;
+  const xy = (p, z) => { const q = X(p); return [q[0], q[1], z]; };
+  /* marches, contremarches, masse (paillasse) */
   T.forEach((t, i) => {
-    const poly = t.poly.map(X), zt = z0 + (t.k ?? i + 1) * D.h;
-    if (m === 'beton'){ const hh = D.h + 0.14; out.push({poly, top:poly.map(p => [p[0], p[1], zt]), ext:[0, 0, -Math.min(hh, zt - z0)], base:zt - Math.min(hh, zt - z0), h:Math.min(hh, zt - z0), mat:'beton', lot:'Gros œuvre', stair:true}); }
-    else out.push({poly, top:poly.map(p => [p[0], p[1], zt]), ext:[0, 0, -0.045], base:zt - 0.045, h:0.045, mat:tread, lot:'Second œuvre', stair:true});
-    if (m !== 'beton' && el.cm){ // contremarches fermées : plaque verticale au nez de la marche suivante (bord d'attaque)
-      const [a, b] = [poly[0], poly[1]], n = V.norm([-(b[1] - a[1]), b[0] - a[0]]), e = 0.02, q = [a, b, V.add(b, V.mul(n, e)), V.add(a, V.mul(n, e))].map(p => [p[0], p[1]]);
-      out.push({poly:q, top:q.map(p => [p[0], p[1], zt - 0.045]), ext:[0, 0, -(D.h - 0.045)], base:zt - D.h, h:D.h - 0.045, mat:wood, lot:'Second œuvre', stair:true}); }
+    const poly = t.poly.map(X), z = zt(t, i);
+    if (str === 'pail'){ const hh = Math.min(D.h + 0.14, z - z0) - tT; out.push({poly, top:poly.map(p => [p[0], p[1], z - tT]), ext:[0, 0, -hh], base:z - tT - hh, h:hh, mat:ST.mass, lot:'Gros œuvre', stair:true}); }
+    out.push({poly, top:poly.map(p => [p[0], p[1], z]), ext:[0, 0, -tT], base:z - tT, h:tT, mat:ST.tread, lot, stair:true});
+    if (el.cm && str !== 'pail' && !t.pal && !helico){ const [a, b] = [poly[0], poly[1]], n = V.norm([-(b[1] - a[1]), b[0] - a[0]]), e = 0.02, q = [a, b, V.add(b, V.mul(n, e)), V.add(a, V.mul(n, e))];
+      add({poly:q, top:q.map(p => [p[0], p[1], z - tT]), ext:[0, 0, -(D.h - tT)], base:z - D.h, h:D.h - tT}, ST.riser); }
   });
-  const mem = (A, B, w, h, mt = 'chene') => { const mb = {A, B, w, h, kind:'limon', id:''}; const p = memberPiece(mb); return {...p, mat:mt, lot:'Second œuvre', stair:true}; };
-  if (m !== 'beton' && (el.st || 'droit') !== 'helico'){
-    // limons : le long de chaque bord extérieur des marches (et du bord intérieur des volées droites), suivant la pente
-    T.forEach((t, i) => { const zt = z0 + (t.k ?? i + 1) * D.h, [p0, p1] = t.outer.map(X); if (t.pal){ out.push(mem([p0[0], p0[1], zt + 0.03], [p1[0], p1[1], zt + 0.03], 0.045, 0.28, m === 'acier' ? 'acier' : 'chene')); return; } out.push(mem([p0[0], p0[1], zt + 0.03], [p1[0], p1[1], zt + D.h + 0.03], 0.045, 0.28, m === 'acier' ? 'acier' : 'chene')); });
-  }
-  if ((el.st || 'droit') === 'helico'){ // fût central
+  /* ligne de nez de marche : points (x, y, z) le long du bord extérieur */
+  const NL = []; T.forEach((t, i) => { const [p0] = t.outer.map(X); NL.push([p0[0], p0[1], zt(t, i)]); });
+  if (T.length){ const t = T.at(-1), p1 = X(t.outer[1]); NL.push([p1[0], p1[1], zt(t, T.length - 1) + (t.pal ? 0 : D.h)]); }
+  /* structure */
+  const segs = [], lim = (A, B, w, h, mt, up = 0.08) => mem([A[0], A[1], A[2] + up], [B[0], B[1], B[2] + up], w, h, mt);
+  if (str === 'lim1' || str === 'lim2'){
+    T.forEach((t, i) => { const [p0, p1] = t.outer.map(X), z = zt(t, i); lim([p0[0], p0[1], z], [p1[0], p1[1], z + (t.pal ? 0 : D.h)], 0.045, 0.3, ST.str);
+      if (str === 'lim2' && t.inner){ const [q0, q1] = t.inner.map(X); lim([q0[0], q0[1], z], [q1[0], q1[1], z + D.h], 0.045, 0.3, ST.str); } });
+  } else if (str === 'crem'){
+    T.forEach((t, i) => { const z = zt(t, i), [p0, p1] = t.outer.map(X), c = X(t.walk), m = V.mul(V.add(p0, p1), .5), dir = V.norm(V.sub(c, m)), o = V.mul(dir, 0.07), q = [p0, p1, V.add(p1, o), V.add(p0, o)];
+      add({poly:q, top:q.map(p => [p[0], p[1], z - tT]), ext:[0, 0, -(D.h + 0.1)], base:z - tT - D.h - 0.1, h:D.h + 0.1}, ST.str); });
+  } else if (str === 'cen'){
+    for (let i = 0; i + 1 < T.length; i++){ const a = X(T[i].walk), b = X(T[i + 1].walk), z = zt(T[i], i); if (V.len(V.sub(a, b)) < 1e-3) continue; mem([a[0], a[1], z - tT - 0.02], [b[0], b[1], z + D.h - tT - 0.02], 0.12, 0.22, ST.str); }
+    if (T.length){ const a = X(T[0].walk), z = zt(T[0], 0); mem([a[0], a[1], z - tT - 0.02 - D.h], [a[0], a[1], z - tT - 0.02], 0.12, 0.22, ST.str); }
+  } else if (str === 'tir'){
+    const zTop = z0 + D.H + 0.3; T.forEach((t, i) => { const [p0] = t.outer.map(X), z = zt(t, i); mem([p0[0], p0[1], zTop], [p0[0], p0[1], z], 0.016, 0.016, ST.str === 'chene' ? 'acierLaque' : ST.str, 'post'); });
+  } else if (str === 'colim' || helico){
     const c = X([0, 0]), r = 0.08, circ = Array.from({length:12}, (_, k) => [c[0] + r * Math.cos(k * Math.PI / 6), c[1] + r * Math.sin(k * Math.PI / 6)]), H = D.H + 1;
-    out.push({poly:circ, top:circ.map(p => [p[0], p[1], z0 + H]), ext:[0, 0, -H], base:z0, h:H, mat:'acier', lot:'Second œuvre', stair:true});
+    out.push({poly:circ, top:circ.map(p => [p[0], p[1], z0 + H]), ext:[0, 0, -H], base:z0, h:H, mat:ST.mass === 'ba' ? 'acier' : ST.mass, lot, stair:true});
   }
-  const railH = el.railH > 0.5 ? el.railH : 0.9;   // main courante : 0,80 à 1,00 m au nez de marche (NF P 01-012)
-  if (el.rail !== false){ // main courante et poteaux, côté extérieur
-    let prev = null; T.forEach((t, i) => { const zt = z0 + (t.k ?? i + 1) * D.h, p = X(t.outer[1]), q = [p[0], p[1], zt + railH];
-      if (prev) out.push({...memberPiece({A:prev, B:q, w:0.045, h:0.045, kind:'rail', id:''}), mat:m === 'acier' ? 'acier' : 'chene', lot:'Second œuvre', stair:true});
-      if (i % 3 === 0 || i === T.length - 1) out.push({...memberPiece({A:[q[0], q[1], q[2]], B:[q[0], q[1], zt], w:0.04, h:0.04, kind:'post', id:''}), mat:m === 'acier' ? 'acier' : 'chene', lot:'Second œuvre', stair:true});
-      prev = q; });
+  /* garde-corps : main courante le long de la ligne de nez, poteaux, remplissage */
+  const railH = el.railH > 0.5 ? el.railH : 0.9, B = C.balu, RM = ST.rail;
+  if (el.rail !== false && NL.length > 1 && B !== 'none'){
+    const up = p => [p[0], p[1], p[2] + railH];
+    for (let i = 0; i + 1 < NL.length; i++){ const a = NL[i], b = NL[i + 1], hl = Math.hypot(b[0] - a[0], b[1] - a[1]); if (hl < 1e-3) continue;
+      mem(up(a), up(b), 0.045, 0.045, RM, 'rail');
+      if (B === 'verre') mem([a[0], a[1], a[2] + railH - 0.045], [b[0], b[1], b[2] + railH - 0.045], 0.012, railH - 0.12, ST.glass || 'vitrage', 'verre');
+      else if (B === 'plein') mem([a[0], a[1], a[2] + railH - 0.045], [b[0], b[1], b[2] + railH - 0.045], 0.04, railH - 0.14, ST.mass, 'plein');
+      else if (B === 'barr'){ for (const f of [1 / 3, 2 / 3]){ const x = a[0] + (b[0] - a[0]) * f, y = a[1] + (b[1] - a[1]) * f, z = a[2] + (b[2] - a[2]) * f; mem([x, y, z + railH - 0.045], [x, y, z + 0.04], 0.014, 0.014, ST.bal, 'post'); } }
+      else if (B === 'cable'){ for (const f of [0.25, 0.5, 0.75]) mem([a[0], a[1], a[2] + railH * f], [b[0], b[1], b[2] + railH * f], 0.008, 0.008, 'inox', 'rail'); }
+    }
+    if (str !== 'flot' || B !== 'main') NL.forEach((p, i) => { if (i % 3 === 0 || i === NL.length - 1) mem(up(p), [p[0], p[1], p[2] + (B === 'verre' ? 0.08 : 0)], 0.04, 0.04, B === 'verre' || B === 'cable' ? 'inox' : RM, 'post'); });
   }
-  if (el.rail2 && (el.st || 'droit') !== 'helico'){ // seconde main courante, côté intérieur (murs ou vide central)
-    let prev = null; T.forEach((t, i) => { const zt = z0 + (t.k ?? i + 1) * D.h, inner = null, p = X(right2(t)), q = [p[0], p[1], zt + railH];
-      if (prev) out.push({...memberPiece({A:prev, B:q, w:0.045, h:0.045, kind:'rail', id:''}), mat:m === 'acier' ? 'acier' : 'chene', lot:'Second œuvre', stair:true});
-      if (i % 3 === 0 || i === T.length - 1) out.push({...memberPiece({A:q, B:[q[0], q[1], zt], w:0.04, h:0.04, kind:'post', id:''}), mat:m === 'acier' ? 'acier' : 'chene', lot:'Second œuvre', stair:true});
-      prev = q; void inner; });
+  if (el.rail2 && !helico){ // seconde main courante côté intérieur (volées droites)
+    const IL = []; T.forEach((t, i) => { if (!t.inner) return; const [q0, q1] = t.inner.map(X), z = zt(t, i); IL.push([q0[0], q0[1], z + railH], [q1[0], q1[1], z + D.h + railH]); });
+    for (let i = 0; i + 1 < IL.length; i += 2) if (IL[i + 1]) mem(IL[i], IL[i + 1], 0.045, 0.045, RM, 'rail');
   }
   return out;
 }
@@ -134,3 +187,24 @@ function slabHoles(slab){
   return holes.filter(h => !(h[2] - h[0] > (sx1 - sx0) - 0.05 && h[3] - h[1] > (sy1 - sy0) - 0.05)).map(([x0, y0, x1, y1]) => [[Math.max(x0, sx0 + 0.02), Math.max(y0, sy0 + 0.02)], [Math.min(x1, sx1 - 0.02), Math.max(y0, sy0 + 0.02)], [Math.min(x1, sx1 - 0.02), Math.min(y1, sy1 - 0.02)], [Math.max(x0, sx0 + 0.02), Math.min(y1, sy1 - 0.02)]]);
 }
 function stairPlace(el, a, b){ el.c = a.slice(); if (b && Math.hypot(b[0] - a[0], b[1] - a[1]) > 0.05) el.rot = Math.round(((Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI - 90) + 720) % 360 * 10) / 10; }
+
+/* ---------- galerie : 25 designs × 5 styles, vignettes tracées par le code (plan des marches) ---------- */
+function stairThumb(dsg, sty){
+  const d = STAIR_DESIGNS[dsg - 1], S = STAIR_STYLES[sty - 1], t0 = stairApplyDesign({st:d.st, side:'d', w:0.9, lvl:0, H:2.8}, dsg, null), T = stairTreads(t0);
+  const pts = T.flatMap(t => t.poly), xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), k = 86 / Math.max(x1 - x0, y1 - y0, 0.5);
+  const tx = x => ((x - x0) * k + (96 - (x1 - x0) * k) / 2).toFixed(1), ty = y => (96 - ((y - y0) * k + (96 - (y1 - y0) * k) / 2)).toFixed(1);
+  return `<svg viewBox="0 0 96 96" aria-hidden="true">${T.map(t => `<polygon points="${t.poly.map(p => tx(p[0]) + ',' + ty(p[1])).join(' ')}" fill="${S.sw[0]}" stroke="${S.sw[1]}" stroke-width="1"/>`).join('')}</svg>`;
+}
+function openStairGallery(id){
+  const el = getEl(id); if (!el) return; let sty = stairStyle(el).id;
+  const render = () => `<header class="ed-h"><div><span class="eyebrow">Escalier ${el.id}</span><h3 class="ed-t2">Galerie des escaliers</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body"><div class="stg-sty">${STAIR_STYLES.map(x => `<button type="button" class="${x.id === sty ? 'on' : ''}" data-sty="${x.id}"><i style="background:linear-gradient(135deg,${x.sw[0]} 50%,${x.sw[1]} 50%)"></i>${esc(x.n)}</button>`).join('')}</div>
+    <div class="stg">${STAIR_DESIGNS.map((d, i) => `<button type="button" class="stg-c${(el.dsg | 0) === i + 1 ? ' on' : ''}" data-dsg="${i + 1}">${stairThumb(i + 1, sty)}<b>${i + 1}</b><span>${esc(d.n)}</span></button>`).join('')}</div></div>
+    <footer class="ed-f"><button class="btn primary" data-close>Terminer</button></footer>`;
+  const wire = d => {
+    d.querySelectorAll('[data-sty]').forEach(b => b.onclick = () => { sty = +b.dataset.sty; pushHist(); stairApplyDesign(el, null, sty); state.isSample = false; rebuild({noPanel:true}); const dd = openEDlg(render(), 'wide'); wire(dd); });
+    d.querySelectorAll('[data-dsg]').forEach(b => b.onclick = () => { pushHist(); stairApplyDesign(el, +b.dataset.dsg, sty); state.isSample = false; rebuild({noPanel:true}); const dd = openEDlg(render(), 'wide'); wire(dd); });
+    d.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { closeEDlg(); renderPanel(); });
+  };
+  wire(openEDlg(render(), 'wide'));
+}

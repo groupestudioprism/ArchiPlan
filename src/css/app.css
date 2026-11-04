@@ -603,3 +603,11 @@ mark{background:color-mix(in srgb,var(--sel) 28%,transparent);color:inherit;bord
 .gs-more{display:block;width:100%;border:0;background:transparent;color:var(--accent);font:600 12px var(--f-body);text-align:left;padding:6px 10px;cursor:pointer;border-radius:8px}.gs-more:hover{background:var(--chip)}
 .gs-hint{padding:12px 10px 4px;color:var(--mut);font-size:12.5px;line-height:1.55}
 @media (max-width:560px){#gsPal{padding:0;align-items:stretch}.gs-box{max-height:none;border-radius:0;width:100%}.gs-foot span:first-child{display:none}}
+
+/* galerie des escaliers */
+.stg-sty{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.stg-sty button{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:inherit;border-radius:999px;padding:6px 12px 6px 6px;font:600 12.5px var(--f-body);cursor:pointer;transition:transform .15s,border-color .15s,background .15s}
+.stg-sty button i{width:22px;height:22px;border-radius:50%;border:1px solid var(--line)}.stg-sty button:hover{transform:translateY(-1px)}.stg-sty button.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent)}
+.stg{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.stg-c{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;text-align:center}
+.stg-c:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1)}.stg-c.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
+.stg-c svg{width:84px;height:84px}.stg-c b{position:absolute;top:6px;left:8px;font:700 11px var(--f-mono);color:var(--mut)}.stg-c span{font-size:11.5px;line-height:1.25;font-weight:600}

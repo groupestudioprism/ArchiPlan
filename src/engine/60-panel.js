@@ -114,8 +114,11 @@ function renderProps(){
       <div class="btns"><button class="btn danger" data-act="del">Supprimer</button></div>`;
   } else if (el.kind === 'stair'){
     const D = stairDims(el), F = stairFootprint(el), okB = D.blondel >= 0.60 && D.blondel <= 0.65;
-    h += selectField('Type', 'sttype', Object.entries(STAIR_TYPES), el.st || 'droit', false) + (el.st && el.st !== 'droit' ? selectField('Tournant', 'stside', [['d', 'à droite'], ['g', 'à gauche']], el.side || 'd', false) : '');
-    h += selectField('Matériau', 'stmat', Object.entries(STAIR_MATS), el.mat || 'bois') + (el.st === 'helico' ? field('Rayon', 'stR', el.R || 0.8, 'm') : field('Emmarchement', 'stw', el.w || 0.9, 'm'));
+    h += selectField('Design', 'stdsg', [[0, 'Personnalisé (ancien réglage)'], ...STAIR_DESIGNS.map((d, i) => [i + 1, `${i + 1}. ${d.n}`])], el.dsg || 0)
+      + selectField('Style de matériaux', 'ststy', STAIR_STYLES.map(x => [x.id, x.n]), stairStyle(el).id)
+      + `<div class="f wide"><button class="btn" data-act="stairGallery" type="button">Galerie : 25 designs × 5 styles…</button></div>`
+      + (el.st && el.st !== 'droit' ? selectField('Tournant', 'stside', [['d', 'à droite'], ['g', 'à gauche']], el.side || 'd', false) : '')
+      + (el.st === 'helico' ? field('Rayon', 'stR', el.R || 0.8, 'm') : field('Emmarchement', 'stw', el.w || 0.9, 'm'));
     h += field('Hauteur à monter', 'stH', D.H, 'm') + selectField('Niveau de départ', 'lvl', lvlOpts(), el.lvl, false) + field('Départ x', 'icx', el.c[0], 'm') + field('Départ y', 'icy', el.c[1], 'm') + field('Orientation', 'strot', el.rot || 0, '°', '1');
     h += `</div><div class="grp"><h3>Marches</h3><div class="fields">` + selectField('Usage (règles)', 'stuse', [['hab', 'Habitation'], ['erp', 'ERP / lieu de travail']], el.use || 'hab', false)
       + field('Nombre de marches (0 = auto)', 'stn', el.n || 0, '', '1') + field('Hauteur de marche visée', 'sths', el.hs || (el.use === 'erp' ? 0.16 : 0.175), 'm', '0.005') + field('Giron (0 = auto)', 'stg', el.g || 0, 'm', '0.005')
@@ -309,8 +312,8 @@ $('#pbody').addEventListener('change', e => {
   if (f === 'pname'){ pushHist(); state.name = t.value.trim() || 'Projet sans nom'; state.isSample = false; rebuild(); return; }
   const el = getEl(sel); if (!el || (!f && !fp)) return;
   if (fp){ const v = num(t.value); if (Number.isNaN(v)) return renderPanel(); pushHist(); el.params = {...(el.params || {}), [fp]:v}; state.isSample = false; rebuild(); return; }
-  if (el.kind === 'stair' && ['sttype', 'stside', 'stmat', 'stw', 'stH', 'stR', 'strot', 'strail', 'sttrem', 'stuse', 'stn', 'sths', 'stg', 'stpal', 'stcm', 'strail2', 'strailh', 'stfull'].includes(f)){ pushHist(); state.isSample = false;
-    if (f === 'sttype') el.st = t.value; else if (f === 'stside') el.side = t.value; else if (f === 'stmat') el.mat = t.value; else if (f === 'strail') el.rail = t.checked; else if (f === 'sttrem') el.tremie = t.checked;
+  if (el.kind === 'stair' && ['sttype', 'stdsg', 'ststy', 'stside', 'stmat', 'stw', 'stH', 'stR', 'strot', 'strail', 'sttrem', 'stuse', 'stn', 'sths', 'stg', 'stpal', 'stcm', 'strail2', 'strailh', 'stfull'].includes(f)){ pushHist(); state.isSample = false;
+    if (f === 'stdsg') stairApplyDesign(el, +t.value, null); else if (f === 'ststy') stairApplyDesign(el, null, +t.value); else if (f === 'sttype') el.st = t.value; else if (f === 'stside') el.side = t.value; else if (f === 'stmat') el.mat = t.value; else if (f === 'strail') el.rail = t.checked; else if (f === 'sttrem') el.tremie = t.checked;
     else if (f === 'stuse') el.use = t.value; else if (f === 'stpal') el.pal = t.checked; else if (f === 'stcm') el.cm = t.checked; else if (f === 'strail2') el.rail2 = t.checked; else if (f === 'stfull') el.fullTremie = t.checked;
     else { const v = num(t.value); if (!Number.isNaN(v)){ if (f === 'stw') el.w = clamp(v, 0.6, 2.5); else if (f === 'stH') el.H = clamp(v, 0.3, 8); else if (f === 'stR') el.R = clamp(v, 0.6, 1.6); else if (f === 'strot') el.rot = ((v % 360) + 360) % 360;
       else if (f === 'stn') el.n = v >= 3 ? Math.round(v) : 0; else if (f === 'sths') el.hs = clamp(v, 0.1, 0.25); else if (f === 'stg') el.g = v >= 0.15 ? clamp(v, 0.15, 0.45) : 0; else if (f === 'strailh') el.railH = clamp(v, 0.8, 1.2); } }
@@ -375,6 +378,7 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'add-opening' && el){ libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'insul' && el) openInsulAdjust(el.id);
+  else if (act === 'stairGallery' && el) openStairGallery(el.id);
   else if (act === 'site') openSiteDialog();
   else if (act === 'tolevel') openCopyToLevel();
   else if (act === 'roof-fit' && el){ pushHist(); if (roofFitWalls(el)){ rebuild(); toast(`Toiture calée sur les murs : appui à ${nf(el.off)} m`); } else toast('Aucun mur sous cette toiture sur ce niveau'); }
