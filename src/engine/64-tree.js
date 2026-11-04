@@ -251,8 +251,18 @@ function openInsulAdjust(id){
     q('#iaFU').onchange = e => { S.forceU = e.target.value; if (num(S.forceU) > 0) S.forceR = ''; draw(); };
     q('#iaFR').onchange = e => { S.forceR = e.target.value; if (num(S.forceR) > 0) S.forceU = ''; draw(); };
     q('#iaFN').onchange = e => { S.note = e.target.value; };
-    q('#iaOne').onclick = () => apply([el]);
-    q('#iaAll').onclick = () => apply(state.els.filter(x => x.type === el.type));
+    // les boutons Appliquer ne volent pas le focus (sinon le « change » du champ en cours redessine la fenêtre et le clic est perdu)
+    [q('#iaOne'), q('#iaAll')].forEach(b => b.onmousedown = ev => ev.preventDefault());
+    q('#iaOne').onclick = () => { readFields(d); apply([el]); };
+    q('#iaAll').onclick = () => { readFields(d); apply(state.els.filter(x => x.type === el.type)); };
+  };
+  const readFields = d => {   // reprend les valeurs saisies non encore validées
+    const g = i => d.querySelector('#' + i);
+    if (g('iaLam')){ const v = num(g('iaLam').value); if (v > 0.004) S.lambda = v; }
+    if (S.mode === 'e' && g('iaE')){ const v = num(g('iaE').value); if (v > 0) S.e = v / 1000; }
+    if (g('iaT')){ S.target = g('iaT').value; if (S.mode !== 'e') solve(); }
+    if (g('iaFU')) S.forceU = g('iaFU').value; if (g('iaFR')) S.forceR = g('iaFR').value; if (g('iaFN')) S.note = g('iaFN').value;
+    if (num(S.forceU) > 0) S.forceR = ''; else if (num(S.forceR) > 0) S.forceU = '';
   };
   const apply = targets => {
     delete state.lib.mats.__tmp;
