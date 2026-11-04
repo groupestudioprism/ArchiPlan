@@ -27,14 +27,15 @@ function roofFrame(el){
     const P = (u, v, z) => W.ax ? [u, v, z] : [v, u, z], und = z => z - W.Tv;   // sous-face de la couverture
     const fermettes = O.kind === 'fermettes' && (el.shape || '2') === '2';
     // sablières sur les murs gouttereaux
-    for (const v of (el.shape === '1' ? [W.V0] : [W.V0, W.V1])) add('sabliere', P(W.U0, v, W.base), P(W.U1, v, W.base), O.sabliere);
+    const lift = roofLift(el), zs = W.base - lift + O.sabliere[1], so = 0.05 + O.sabliere[0] / 2;   // sablière posée sur le mur, à l'intérieur de l'épaisseur
+    for (const v of (el.shape === '1' ? [W.V0] : [W.V0, W.V1])){ const vv = v === W.V0 ? v + so : v - so; add('sabliere', P(W.U0, vv, zs), P(W.U1, vv, zs), O.sabliere); }
     if (fermettes){
       const n = Math.max(1, Math.round((W.U1 - W.U0) / O.sp));
       for (let k = 0; k <= n; k++){
         const u = W.U0 + (W.U1 - W.U0) * k / n, zr = W.base + W.W / 2 * W.tp, s = O.ferm, zEo = W.base - (W.V0 - W.v0) * W.tp;
-        const L = P(u, W.v0, zEo), R = P(u, W.v1, zEo), T = P(u, W.vm, zr), B1 = P(u, W.V0 + W.W / 3, W.base + s[1]), B2 = P(u, W.V0 + 2 * W.W / 3, W.base + s[1]);
+        const L = P(u, W.v0, zEo), R = P(u, W.v1, zEo), T = P(u, W.vm, zr), B1 = P(u, W.V0 + W.W / 3, zs + s[1]), B2 = P(u, W.V0 + 2 * W.W / 3, zs + s[1]);
         const M1 = P(u, W.V0 + W.W / 4, W.base + W.W / 4 * W.tp), M2 = P(u, W.V1 - W.W / 4, W.base + W.W / 4 * W.tp);
-        add('arbal', L, T, s); add('arbal', R, T, s); add('entrait', P(u, W.V0, W.base + s[1]), P(u, W.V1, W.base + s[1]), s);
+        add('arbal', L, T, s); add('arbal', R, T, s); add('entrait', P(u, W.V0, zs + s[1]), P(u, W.V1, zs + s[1]), s);
         add('diag', B1, M1, s); add('diag', B1, T, s); add('diag', B2, T, s); add('diag', B2, M2, s);
       }
       continue;

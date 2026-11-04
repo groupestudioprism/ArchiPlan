@@ -102,6 +102,7 @@ function renderProps(){
     h += selectField('Posée sur les murs du niveau', 'lvl', lvlOpts(), el.lvl, false) + (el.onWalls ? lockF(field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) : field('Appui (dessus des murs)', 'off', el.off ?? 2.7, 'm')) + onWallsField(el);
     if (!poly) h += field('Longueur (x)', 'lx', r[1][0] - r[0][0], 'm') + field('Largeur (y)', 'ly', r[2][1] - r[1][1], 'm') + field('Origine x', 'px', r[0][0], 'm') + field('Origine y', 'py', r[0][1], 'm');
     h += selectField('Plafond', 'rceil', Object.entries(ROOF_CEIL), el.ceil || '', false);
+    h += `<label class="f wide rchk"><input type="checkbox" data-f="rframe"${el.frameShow ? ' checked' : ''}> Afficher la charpente avec la toiture</label>`;
     h += `<label class="f wide rchk"><input type="checkbox" data-f="rgable"${el.gable !== false ? ' checked' : ''}> Pignons (2 pans et appentis)</label>`;
     if (el.gable !== false && (el.shape || '2') !== '4' && (el.shape || '2') !== '0') h += selectField('Mur des pignons', 'rgtype', wallOpts, el.gableType || '', false);
     h += paintFields(el);
@@ -320,6 +321,7 @@ $('#pbody').addEventListener('change', e => {
     rebuild(); return; }
   if (f === 'rceil' || f === 'rgtype'){ pushHist(); if (f === 'rceil') el.ceil = t.value; else el.gableType = t.value; state.isSample = false; rebuild(); return; }
   if (f === 'lvl' && el.kind === 'roof'){ pushHist(); el.lvl = +t.value; roofFitWalls(el); state.isSample = false; rebuild(); syncLevels?.(); return; }
+  if (f === 'rframe'){ pushHist(); el.frameShow = t.checked; state.isSample = false; rebuild(); return; }
   if (f === 'rgable'){ pushHist(); el.gable = t.checked; state.isSample = false; rebuild(); return; }
   if (f === 'fireRole'){ pushHist(); if (t.value) el.fireRole = t.value; else delete el.fireRole; state.isSample = false; renderPanel(); return; }
   if (['onSlab', 'top', 'topOff', 'bind', 'onWalls'].includes(f)){ pushHist(); state.isSample = false; setLinkField(el, f, t); rebuild(); return; }

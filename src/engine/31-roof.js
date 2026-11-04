@@ -11,6 +11,8 @@ const ROOF_CEIL = {'':'Sans plafond (rampants habillés)', platre:'Plafond en pl
 const roofPitch = el => el.shape === '0' ? 0 : clamp(el.pitch ?? 35, 3, 70);
 const roofT = el => compo(el.type).layers.reduce((s, [, e]) => s + e, 0);
 const roofBase = el => lvlZ(el.lvl) + (el.off ?? 2.7);
+/* quand la charpente est affichée, la couverture est relevée de la hauteur de charpente : sablière posée sur le haut du mur, chevrons sur la sablière, couverture sur les chevrons */
+const roofLift = el => (el.frameShow || el.frameView) && (el.shape || '2') !== '0' ? frameOpts(el).chev[1] / Math.cos(roofPitch(el) * Math.PI / 180) + frameOpts(el).sabliere[1] : 0;
 const roofWallPoly = el => el.poly && el.poly.length >= 4 ? el.poly.map(q => [q[0], q[1]]) : rect(el.p, el.q);
 const sArea = p => { let a = 0; for (let i = 0; i < p.length; i++){ const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return a / 2; };
 function ptInPoly(x, y, p){ let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++){ const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
@@ -60,7 +62,7 @@ function roofRects(el){
 }
 /* Géométrie d'une aile. Les pans (dessus de couverture) sont relevés de l'épaisseur verticale de la toiture : leur sous-face passe par le dessus des murs. */
 function roofWing(el, R){
-  const ov = Math.max(0, el.ov ?? 0.4), a = roofPitch(el) * Math.PI / 180, tp = Math.tan(a), base = roofBase(el), Tv = roofT(el) / Math.cos(a), zE = base + Tv;
+  const ov = Math.max(0, el.ov ?? 0.4), a = roofPitch(el) * Math.PI / 180, tp = Math.tan(a), base0 = roofBase(el), lift = roofLift(el), base = base0 + lift, Tv = roofT(el) / Math.cos(a), zE = base + Tv;
   const ax = R.ax, U0 = ax ? R.x0 : R.y0, U1 = ax ? R.x1 : R.y1, V0 = ax ? R.y0 : R.x0, V1 = ax ? R.y1 : R.x1, W = V1 - V0, vm = (V0 + V1) / 2;
   const P = (u, v, z) => ax ? [u, v, z] : [v, u, z];
   const ovU = el.ovg != null && el.ovg >= 0 ? el.ovg : ov;   // débord de pignon (peut différer du débord d'égout)
@@ -74,8 +76,8 @@ function roofWing(el, R){
   else if (shape === '1'){
     const z1 = zE + (W + ov) * tp; pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(u1, v1, z1), P(u0, v1, z1)]);
     const zt = base + W * tp;
-    if (wantG('u0')) gables.push({tri:[P(U0, V0, base), P(U0, V1, base), P(U0, V1, zt)], dir:gIn(1), end:'u0'});
-    if (wantG('u1')) gables.push({tri:[P(U1, V0, base), P(U1, V1, base), P(U1, V1, zt)], dir:gIn(-1), end:'u1'});
+    if (wantG('u0')) gables.push({tri:[P(U0, V0, base0), P(U0, V1, base0), P(U0, V1, zt)], dir:gIn(1), end:'u0'});
+    if (wantG('u1')) gables.push({tri:[P(U1, V0, base0), P(U1, V1, base0), P(U1, V1, zt)], dir:gIn(-1), end:'u1'});
   } else if (shape === '2' || R.open.u0 || R.open.u1){
     // 2 pans ; une croupe n'est posée qu'aux bouts extérieurs d'un toit à 4 pans
     const zR = zE + (asym ? (vr - V0) : W / 2) * tp, hip = shape === '4', h0 = hip && !R.open.u0 ? Math.min(W / 2, (U1 - U0) / 2) : 0, h1 = hip && !R.open.u1 ? Math.min(W / 2, (U1 - U0) / 2) : 0;
@@ -85,8 +87,8 @@ function roofWing(el, R){
     if (h1){ pans.push([P(u1, v0, zEo), P(u1, v1, zEo), P(ur1, vm, zR)]); hips.push([P(u1, v0, zEo), P(ur1, vm, zR)], [P(u1, v1, zEo), P(ur1, vm, zR)]); }
     if (ur1 - ur0 > 1e-3) ridges.push([P(ur0, vr, zR), P(ur1, vr, zR)]);
     const zg = base + (asym ? (vr - V0) : W / 2) * tp;
-    if (!hip && wantG('u0')) gables.push({tri:[P(U0, V0, base), P(U0, V1, base), P(U0, vr, zg)], dir:gIn(1), end:'u0'});
-    if (!hip && wantG('u1')) gables.push({tri:[P(U1, V0, base), P(U1, V1, base), P(U1, vr, zg)], dir:gIn(-1), end:'u1'});
+    if (!hip && wantG('u0')) gables.push({tri:[P(U0, V0, base0), P(U0, V1, base0), P(U0, vr, zg)], dir:gIn(1), end:'u0'});
+    if (!hip && wantG('u1')) gables.push({tri:[P(U1, V0, base0), P(U1, V1, base0), P(U1, vr, zg)], dir:gIn(-1), end:'u1'});
   } else { // 4 pans
     const half = Math.min(W / 2, (U1 - U0) / 2), zR = zE + half * tp, ur0 = U0 + half, ur1 = U1 - half;
     pans.push([P(u0, v0, zEo), P(u1, v0, zEo), P(ur1, vm, zR), P(ur0, vm, zR)], [P(u1, v1, zEo), P(u0, v1, zEo), P(ur0, vm, zR), P(ur1, vm, zR)],
@@ -141,7 +143,7 @@ function roofPieces(el){
   if (el.ceil){ const wp = roofWallPoly(el), b = G.base;
     out.push({poly:wp, base:b - 0.013, h:0.013, mat:'ba13', lot:'Second œuvre', e:0.013, ceil:true});
     if (el.ceil === 'combles') out.push({poly:wp, base:b, h:0.3, mat:'laineVerre', lot:'Second œuvre', e:0.3, ceil:true}); }
-  if (fv) for (const mb of roofFrame(el).filter(m => !m.off)) out.push(memberPiece(mb));
+  if (fv || el.frameShow) for (const mb of roofFrame(el).filter(m => !m.off)) out.push(memberPiece(mb));
   return out;
 }
 /* Surfaces utiles au métré : rampants (vraie grandeur, = projection / cos pente pour une pente unique), égouts, faîtages, arêtiers, pignons */
