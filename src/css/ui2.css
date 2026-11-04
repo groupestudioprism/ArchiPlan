@@ -29,3 +29,10 @@
 .tr{transition:background .12s}
 .ph h2{font-size:18px}
 @media (prefers-reduced-motion:reduce){.grp{animation:none}}
+
+/* vérifications du bâtiment */
+.chk{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-left:4px solid #D69E2E;border-radius:12px;margin:10px 0;background:var(--panel);animation:grpIn .25s ease both}.chk.bad{border-left-color:#C0392B}
+.chk-ic{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 15px var(--f-body);font-style:normal;background:color-mix(in srgb,#D69E2E 20%,transparent);color:#9A6B00}.chk.bad .chk-ic{background:color-mix(in srgb,#C0392B 18%,transparent);color:#C0392B}
+.chk-b h4{margin:0 0 3px;font-size:14px}.chk-b p{margin:0 0 4px;font-size:13px}.chk-b small{display:block;color:var(--mut);font-size:11.5px;margin-bottom:8px}.chk-a{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chk-ok{text-align:center;padding:30px 10px}.chk-ok i{display:inline-grid;place-items:center;width:54px;height:54px;border-radius:50%;background:color-mix(in srgb,#2E9E6B 18%,transparent);color:#2E9E6B;font:700 26px var(--f-body);font-style:normal;animation:chkPop .5s cubic-bezier(.3,1.6,.4,1)}
+@keyframes chkPop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}

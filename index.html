@@ -1014,6 +1014,13 @@ a.ap-link{text-decoration:none}
 .tr{transition:background .12s}
 .ph h2{font-size:18px}
 @media (prefers-reduced-motion:reduce){.grp{animation:none}}
+
+/* vérifications du bâtiment */
+.chk{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-left:4px solid #D69E2E;border-radius:12px;margin:10px 0;background:var(--panel);animation:grpIn .25s ease both}.chk.bad{border-left-color:#C0392B}
+.chk-ic{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 15px var(--f-body);font-style:normal;background:color-mix(in srgb,#D69E2E 20%,transparent);color:#9A6B00}.chk.bad .chk-ic{background:color-mix(in srgb,#C0392B 18%,transparent);color:#C0392B}
+.chk-b h4{margin:0 0 3px;font-size:14px}.chk-b p{margin:0 0 4px;font-size:13px}.chk-b small{display:block;color:var(--mut);font-size:11.5px;margin-bottom:8px}.chk-a{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chk-ok{text-align:center;padding:30px 10px}.chk-ok i{display:inline-grid;place-items:center;width:54px;height:54px;border-radius:50%;background:color-mix(in srgb,#2E9E6B 18%,transparent);color:#2E9E6B;font:700 26px var(--f-body);font-style:normal;animation:chkPop .5s cubic-bezier(.3,1.6,.4,1)}
+@keyframes chkPop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
 </style>
 
 <div id="splash" role="status" aria-live="polite">
@@ -1244,7 +1251,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     </div>
   </header>
   <nav class="tools" role="toolbar" aria-label="Outils">
-    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="sketch" aria-pressed="false" title="Esquisse 3D (S) : dessinez sur n'importe quelle face, puis tirez les contours fermés"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l5-5M9 15l9-9 2 2-9 9zM12 6l6 6M4 4h6M4 8h3"/></svg><span>Esquisse</span><kbd>S</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><button class="tool" data-tool="join" aria-pressed="false" title="Menuiserie sur mesure (N) : fenêtre, porte, baie — dimensions, vitrage, performances"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM5 12h14M12 3v9M8 16h.01"/></svg><span>Menuiserie</span><kbd>N</kbd></button><button class="tool" data-tool="paint" aria-pressed="false" title="Peindre (X) : appliquer un matériau et l'échelle de son motif sur une face"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l7-5 7 5-7 5zM11 14v6M11 20c-2 0-3-1-3-3M18 9v3c0 2-1 3-3 3"/><path d="M6 17c0 2 1.5 3 3 3"/></svg><span>Peindre</span><kbd>X</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button><button class="tool" data-tool="dim" aria-pressed="false" title="Cote (Q) : deux points puis la position de la ligne de cote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v10M20 7v10M4 12h16M6 10l-2 2 2 2M18 10l2 2-2 2"/></svg><span>Cote</span><kbd>Q</kbd></button>
+    <button class="tool" data-tool="select" aria-pressed="false" title="Sélection (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 8-6 1.5L9 19z"/></svg><span>Sélection</span><kbd>V</kbd></button><button class="tool" data-tool="move" aria-pressed="false" title="Déplacer (G)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Déplacer</span><kbd>G</kbd></button><button class="tool" data-tool="copy" aria-pressed="false" title="Copier (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM4 16V4h12"/></svg><span>Copier</span><kbd>C</kbd></button><button class="tool" data-tool="rotate" aria-pressed="false" title="Rotation (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Rotation</span><kbd>O</kbd></button><button class="tool" data-tool="mirror" aria-pressed="false" title="Symétrie (Y)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M9 7L4 17h5zM15 7l5 10h-5z"/></svg><span>Symétrie</span><kbd>Y</kbd></button><hr><button class="tool" data-tool="wall" aria-pressed="false" title="Mur (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM3 12h18M9 7v5M15 12v5"/></svg><span>Mur</span><kbd>M</kbd></button><button class="tool" data-tool="slab" aria-pressed="false" title="Dalle (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l9-5 9 5-9 5zM3 15v2l9 5 9-5v-2"/></svg><span>Dalle</span><kbd>D</kbd></button><button class="tool" data-tool="roof" aria-pressed="false" title="Toit (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12l10-7 10 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span>Toit</span><kbd>T</kbd></button><button class="tool" data-tool="stair" aria-pressed="false" title="Escalier (E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h4v-4h4V8h5M3 20V9"/></svg><span>Escalier</span><kbd>E</kbd></button><button class="tool" data-tool="col" aria-pressed="false" title="Poteau (P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v18H9zM7 3h10M7 21h10"/></svg><span>Poteau</span><kbd>P</kbd></button><button class="tool" data-tool="beam" aria-pressed="false" title="Poutre (H)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18v5H3zM6 14v5M18 14v5"/></svg><span>Poutre</span><kbd>H</kbd></button><button class="tool" data-tool="vol" aria-pressed="false" title="Forme 3D (B) : rectangle, cercle ou polygone, puis tirer en hauteur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/></svg><span>Forme</span><kbd>B</kbd></button><button class="tool" data-tool="sketch" aria-pressed="false" title="Esquisse 3D (S) : dessinez sur n'importe quelle face, puis tirez les contours fermés"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l5-5M9 15l9-9 2 2-9 9zM12 6l6 6M4 4h6M4 8h3"/></svg><span>Esquisse</span><kbd>S</kbd></button><button class="tool" data-tool="comp" aria-pressed="false" title="Composant (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM12 4v16M4 12h16"/></svg><span>Composant</span><kbd>F</kbd></button><button class="tool" data-tool="join" aria-pressed="false" title="Menuiserie sur mesure (N) : fenêtre, porte, baie — dimensions, vitrage, performances"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM5 12h14M12 3v9M8 16h.01"/></svg><span>Menuiserie</span><kbd>N</kbd></button><button class="tool" data-tool="paint" aria-pressed="false" title="Peindre (X) : appliquer un matériau et l'échelle de son motif sur une face"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l7-5 7 5-7 5zM11 14v6M11 20c-2 0-3-1-3-3M18 9v3c0 2-1 3-3 3"/><path d="M6 17c0 2 1.5 3 3 3"/></svg><span>Peindre</span><kbd>X</kbd></button><hr><button class="tool" data-tool="cut" aria-pressed="false" title="Coupe (K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M4 9v6M20 9v6M8 6l-4 3M16 18l4-3"/></svg><span>Coupe</span><kbd>K</kbd></button><button class="tool" data-tool="push" aria-pressed="false" title="Pousser / Tirer (U)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14h12v6H6zM12 3v8M9 6l3-3 3 3"/></svg><span>Pousser / Tirer</span><kbd>U</kbd></button><button class="tool" data-tool="measure" aria-pressed="false" title="Mesure (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg><span>Mesure</span><kbd>R</kbd></button><button class="tool" data-tool="dim" aria-pressed="false" title="Cote (Q) : deux points puis la position de la ligne de cote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v10M20 7v10M4 12h16M6 10l-2 2 2 2M18 10l2 2-2 2"/></svg><span>Cote</span><kbd>Q</kbd></button>
   </nav>
   <main class="vp" id="vp">
     <canvas id="c"></canvas>
@@ -6102,7 +6109,7 @@ try { Object.assign(SNAP, JSON.parse(localStorage.getItem('ap.snap') || '{}')); 
 const saveSnap = () => { try { localStorage.setItem('ap.snap', JSON.stringify(SNAP)); } catch(e){} };
 const SNAP_NAMES = {end:'Extrémité', mid:'Milieu', cen:'Centre', int:'Intersection', perp:'Perpendiculaire', near:'Proche', face:'Face de mur', track:'Repérage', polar:'Polaire', ortho:'Ortho', grid:'Grille', surf:'Surface'};
 let tool = 'select';
-const defs = {wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois', dsg:1, sty:1}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, sketch:{type:'acier'}, comp:{fam:'fenetre-2v', type:1, rot:0}, paint:{m:'peintBlancCasse', s:0, r:0, pip:false}};
+const defs = {beam:{type:'ba', w:0.2, h:0.3}, wall:{type:'MUR-EXT-01', h:2.7, top:'next'}, slab:{type:'DAL-BA-20', mode:'rect'}, mirror:{keep:true}, roof:{type:'TOIT-TUILE', h:2.7, shape:'2', pitch:35, ov:0.4, mode:'rect'}, stair:{st:'droit', side:'d', w:0.9, mat:'bois', dsg:1, sty:1}, vol:{type:'acier', h:0.5, shape:'rect'}, col:{type:'ba', h:2.7, w:0.25, top:'next'}, sketch:{type:'acier'}, comp:{fam:'fenetre-2v', type:1, rot:0}, paint:{m:'peintBlancCasse', s:0, r:0, pip:false}};
 let draw = {start:null, cursor:null, chainFirst:null, chainN:0, measure:null, snap:null, workZ:null, hostHit:null, track:[], base:null, copies:0};
 
 /* ---------- rayon, plans de travail ---------- */
@@ -6276,6 +6283,7 @@ function updatePreview(){
     let ang = Math.atan2(d[1], d[0]) * 180 / Math.PI; if (ang < 0) ang += 360;
     text = (tool === 'slab' || tool === 'vol' || tool === 'roof') ? `${lenNum(Math.abs(d[0]))} × ${lenTxt(Math.abs(d[1]))}` : tool === 'rotate' ? `${nf(ang, 1)}°` : `${lenTxt(L)} · ${nf(ang, 1)}°`;
   } else {
+    if (tool === 'beam' && draw.start){ const t = beamEl(draw.start, cur, defs.beam); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); text = lenTxt(V.len(V.sub(cur, draw.start))); }
     if (tool === 'col'){ const t = tempEl(null, cur); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); }
     text = `x ${lenNum(cur[0])} · y ${lenNum(cur[1])}${draw.workZ != null && Math.abs(draw.workZ - lvlZ(curLvl)) > 0.001 ? ` · z ${nf(draw.workZ)}` : ''}`;
   }
@@ -6433,6 +6441,7 @@ const PROMPTS = {
   stair:() => draw.start ? '<b>Escalier</b> : direction de la montée (clic ou angle)' : '<b>Escalier</b> : point de départ (coin gauche de la première marche ; centre pour un colimaçon)',
   vol:() => draw.ext ? '<b>Forme</b> : montez la souris pour tirer la forme en hauteur, cliquez pour valider (ou tapez la hauteur puis <kbd>Entrée</kbd>)' : (defs.vol.shape === 'circ' ? (draw.start ? '<b>Cercle</b> : rayon (clic ou valeur)' : '<b>Cercle</b> : centre (au sol ou sur une face)') : defs.vol.shape === 'poly' ? (draw.poly?.length ? '<b>Polygone</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Polygone</b> : premier point (au sol ou sur une face)') : (draw.start ? '<b>Rectangle</b> : coin opposé, ou <code>L;l</code>' : '<b>Rectangle</b> : premier coin (au sol ou sur une face)')),
   col:() => '<b>Poteau</b> : position du centre (ou x;y)',
+  beam:() => draw.start ? '<b>Poutre</b> : second appui (sous le plancher du niveau)' : '<b>Poutre</b> : premier appui',
   comp:() => fam(defs.comp.fam)?.host === 'wall' ? `<b>${esc(fam(defs.comp.fam)?.nom)}</b> : cliquez dans un mur, du côté où elle s'ouvre` : `<b>${esc(fam(defs.comp.fam)?.nom || 'Composant')}</b> : point d'insertion · <kbd>Espace</kbd> pivote de 90°`,
   push:() => '<b>Pousser/Tirer</b> : glissez la face supérieure (hauteur) ou une face latérale d\'une dalle ou d\'un volume',
   move:() => !selIds().length ? '<b>Déplacer</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Déplacer</b> : point de destination, ou <code>@dx;dy</code>' : '<b>Déplacer</b> : point de base',
@@ -6466,7 +6475,7 @@ function syncHud(){
   if (tool === 'wall'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'wall').map(([k, v]) => [k, v.nom]); cur = defs.wall.type; lbl = 'Mur'; }
   else if (tool === 'slab'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'slab').map(([k, v]) => [k, v.nom]); cur = defs.slab.type; lbl = 'Plancher'; }
   else if (tool === 'roof'){ opts = Object.entries(libCompos()).filter(([, v]) => v.kind === 'roof').map(([k, v]) => [k, v.nom]); cur = defs.roof.type; lbl = 'Toiture'; }
-  else if (tool === 'vol' || tool === 'col' || tool === 'sketch'){ opts = Object.entries(libMats()).map(([k, v]) => [k, v.nom]).sort((a, b) => a[1].localeCompare(b[1], 'fr')); cur = defs[tool].type; lbl = 'Matériau'; }
+  else if (tool === 'vol' || tool === 'col' || tool === 'sketch' || tool === 'beam'){ opts = Object.entries(libMats()).map(([k, v]) => [k, v.nom]).sort((a, b) => a[1].localeCompare(b[1], 'fr')); cur = defs[tool].type; lbl = 'Matériau'; }
   else if (tool === 'comp'){ const F = fam(defs.comp.fam); opts = (F?.types || []).map((t, i) => [i, `${F.nom} · ${t.nom}`]); cur = defs.comp.type; lbl = 'Type'; }
   tp.hidden = !opts;
   if (opts){ tSel.innerHTML = opts.map(([k, n]) => `<option value="${esc(k)}"${String(k) === String(cur) ? ' selected' : ''}>${esc(n)}</option>`).join(''); $('#typeLbl').textContent = lbl; }
@@ -6517,7 +6526,8 @@ function placePoint(pt){
     if (!S) draw.start = pt;
     else if (Math.abs(pt[0] - S[0]) > 0.01 && Math.abs(pt[1] - S[1]) > 0.01){ const r = rect(S, pt), t = tempEl(r[0], r[2]); if (t.kind === 'roof') roofFitWalls(t); addEl(t); draw.start = null; draw.workZ = null; }
     else toast('Le rectangle doit avoir deux côtés non nuls');
-  } else if (tool === 'col'){ addEl(tempEl(null, pt)); }
+  } else if (tool === 'beam'){ if (!S) draw.start = pt; else if (V.len(V.sub(pt, S)) > 0.2){ addEl(beamEl(S, pt, defs.beam)); draw.start = null; } }
+  else if (tool === 'col'){ addEl(tempEl(null, pt)); }
   else if (tool === 'comp'){ placeComp(pt); }
   else if (tool === 'measure'){
     if (!S){ draw.start = pt; draw.measure = null; }
@@ -6532,7 +6542,7 @@ function placePoint(pt){
 }
 
 /* ---------- ligne de commande : 4,2 · 4,2<90 · @5;3 · 2;3 · commandes (MUR, DEP, CO, RO, PP, ZE…) ---------- */
-const CMDS = {mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', forme:'vol', esquisse:'sketch', s:'sketch', composant:'comp', f:'comp', fenetre:'join', porte:'join',
+const CMDS = {poutre:'beam', h:'beam', mur:'wall', m:'wall', dalle:'slab', d:'slab', toit:'roof', toiture:'roof', t:'roof', escalier:'stair', e:'stair', poteau:'col', p:'col', volume:'vol', b:'vol', forme:'vol', esquisse:'sketch', s:'sketch', composant:'comp', f:'comp', fenetre:'join', porte:'join',
   symetrie:'mirror', sym:'mirror', mi:'mirror', y:'mirror', piece:'wall', menuiserie:'join', n:'join', coupe:'cut', k:'cut', deplacer:'move', dep:'move', g:'move', copier:'copy', co:'copy', c:'copy', rotation:'rotate', ro:'rotate', o:'rotate', pp:'push', pousser:'push', u:'push', mesure:'measure', cote:'dim', cotation:'dim', dim:'dim', q:'dim', di:'measure', r:'measure', selection:'select', v:'select', peindre:'paint', peinture:'paint', texture:'paint', x:'paint'};
 function parseCmd(raw){
   let s = raw.trim(); if (!s) return null;
@@ -8578,6 +8588,7 @@ function renderProps(){
       ${glazingCard()}
       ${joineryProjectCard()}
       ${fireProjectCard()}
+      ${checksCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -8892,6 +8903,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'irot90' && el){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); }
   else if (act === 'add-opening' && el){ libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
+  else if (act === 'checks') openChecks();
+  else if (act === 'addbeam') setTool('beam');
   else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'stairGallery' && el) openStairGallery(el.id);
   else if (act === 'site') openSiteDialog();
@@ -9617,7 +9630,7 @@ function elName(el){
   if (el.kind === 'inst'){ const F = fam(el.fam); const t = F?.types?.[el.type | 0]?.nom; return `${F?.nom || 'Composant'}${t ? ' · ' + t : ''}`; }
   if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
   if (el.kind === 'stair') return `Escalier ${el.id} · ${STAIR_TYPES[el.st || 'droit']}`;
-  return `${KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
+  return `${el.beam ? 'Poutre' : KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
 }
 function forcedPerf(el){ return el.forceU > 0 ? {U:el.forceU, R:null} : el.forceR > 0 ? {U:null, R:el.forceR} : null; }
 function elMeta(el){
@@ -10345,7 +10358,7 @@ function dqeItems(){
       add(`C|${el.mat}|${n0(el.w * 100)}x${n0(el.d * 100)}`, lot, `Poteau ${lc(M.nom)}`, `section ${n0(el.w * 100)} × ${n0(el.d * 100)} cm`, 'u', 1, el.lvl, lot === '11' ? Math.round(kg * 4.5) : lot === '03' ? Math.round(v * 1400 + 60) : Math.round(v * 600 + 120), kg, kg * (M.gwp || 0));
     } else if (el.kind === 'vol'){
       const M = mat(el.mat), r = volPoly(el), v = area(r) * el.h, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
-      add(`V|${el.mat}`, lot, `Ouvrage en ${lc(M.nom)}`, 'volume', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
+      add(`V|${el.mat}${el.beam ? '|poutre' : ''}`, lot, `${el.beam ? 'Poutre' : 'Ouvrage'} en ${lc(M.nom)}`, 'volume', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
     } else if (el.kind === 'sk'){
       const M = mat(el.mat), v = (Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0)) * el.d, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
       add(`K|${el.mat}`, lot, `Ouvrage sur mesure en ${lc(M.nom)}`, 'esquisse 3D', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
@@ -11368,6 +11381,124 @@ new MutationObserver(() => requestAnimationFrame(tabInk)).observe($('.tabs'), {a
 window.addEventListener('resize', () => requestAnimationFrame(tabInk));
 applyLayout(); enhancePanel(); requestAnimationFrame(tabInk);
 
+/* ==== 73-checks.js ==== */
+/* ============ Poutres et « Vérifications du bâtiment » ============
+   Poutre = forme rectangulaire orientée (kind 'vol', beam:true), posée sous le plancher du niveau. Le contrôle passe en revue le
+   bâtiment d'après des règles courantes (France) ; chaque problème est expliqué et peut être corrigé un par un :
+   - hauteur sous plafond ≥ 2,20 m (décret n° 2002-120, logement décent ; RSD) ;
+   - une pièce principale d'au moins 9 m² (même décret) ;
+   - porte : passage libre ≥ 0,83 m, hauteur ≥ 2,04 m (accessibilité, arrêté du 20 avril 2017 ; 0,90 m de vantail) ;
+   - garde-corps / allège ≥ 1,00 m au-dessus de 1 m de chute (NF P 01-012, DTU 36.5) ; allège de fenêtre d'étage ;
+   - plancher béton : portée libre max. ≈ 5 m sans appui intermédiaire (dalle pleine 20 cm), poutre h ≈ L/12, poteau élancement ≤ 15 ;
+   - murs d'étage appuyés sur un mur, un poteau ou une poutre en dessous (descente de charges) ;
+   - pente de toiture mini. selon la couverture (tuiles ≥ 30 %, ardoise ≥ 22°…) ; escaliers (NF P 21-211 : 2h + g, échappée 1,90 m).
+   Calculs de pré-dimensionnement, indicatifs : ils ne remplacent ni un bureau d'études structure ni le contrôle technique. */
+function beamEl(a, b, o = {}){
+  const w = o.w || 0.2, h = o.h || 0.3, d = V.norm(V.sub(b, a)), n = [-d[1] * w / 2, d[0] * w / 2];
+  const poly = [V.sub(a, n), V.sub(b, n), V.add(b, n), V.add(a, n)].map(p => [rnd(p[0]), rnd(p[1])]), xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+  const lvl = o.lvl ?? curLvl, nx = state.levels[lvl + 1], top = o.top ?? (nx ? nx.z - state.levels[lvl].z : 2.8);
+  return {kind:'vol', beam:true, mat:o.type || o.mat || 'ba', p:[Math.min(...xs), Math.min(...ys)], q:[Math.max(...xs), Math.max(...ys)], poly, h, lvl, off:rnd(top - h), bw:w, a:a.map(rnd), b:b.map(rnd)};
+}
+const beamLen = e => V.len(V.sub(e.b, e.a));
+const beamSec = L => ({h:Math.max(0.25, Math.ceil(L / 12 / 0.05) * 0.05), w:L > 5 ? 0.25 : 0.2});
+/* appuis sous un niveau : murs, poteaux et poutres du niveau d'en dessous (segments et points) */
+function supportsBelow(lvl){
+  const seg = [], pts = [];
+  for (const e of state.els){ if (e.lvl !== lvl) continue;
+    if (e.kind === 'wall') seg.push([e.a, e.b, wallT(e) / 2 + 0.05]);
+    else if (e.kind === 'col') pts.push([e.c, Math.max(e.w, e.d) / 2 + 0.05]);
+    else if (e.beam && e.a) seg.push([e.a, e.b, (e.bw || 0.2) / 2 + 0.05]); }
+  return {seg, pts};
+}
+function distSupport(p, S){ let d = Infinity; for (const [a, b, t] of S.seg){ const c = segClosest(p, a, b); d = Math.min(d, Math.max(0, V.len(V.sub(c.pt, p)) - t)); } for (const [c, t] of S.pts) d = Math.min(d, Math.max(0, V.len(V.sub(c, p)) - t)); return d; }
+const polyBox = poly => { const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; };
+/* plus grande portée libre d'une dalle d'étage : point le plus éloigné de tout appui (murs, poteaux, poutres du niveau dessous) */
+function slabSpan(s){
+  const poly = volPoly(s), [x0, y0, x1, y1] = polyBox(poly), S = supportsBelow(s.lvl - 1), n = 14; let best = {d:0, p:null};
+  for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++){ const p = [x0 + (x1 - x0) * (i + .5) / (n + 1), y0 + (y1 - y0) * (j + .5) / (n + 1)]; if (!ptInPoly(p[0], p[1], poly)) continue; const d = distSupport(p, S); if (d > best.d) best = {d, p}; }
+  return {span:best.d * 2, p:best.p, bb:[x0, y0, x1, y1], poly};
+}
+function polyChord(poly, p, horizontal){   // extrémités de la droite (horizontale ou verticale) par p dans le polygone
+  const hits = []; for (let i = 0; i < poly.length; i++){ const a = poly[i], b = poly[(i + 1) % poly.length];
+    if (horizontal){ if ((a[1] > p[1]) !== (b[1] > p[1])) hits.push(a[0] + (p[1] - a[1]) * (b[0] - a[0]) / (b[1] - a[1])); }
+    else if ((a[0] > p[0]) !== (b[0] > p[0])) hits.push(a[1] + (p[0] - a[0]) * (b[1] - a[1]) / (b[0] - a[0])); }
+  if (hits.length < 2) return null; hits.sort((u, v) => u - v); const u = hits[0], v = hits.at(-1); return horizontal ? [[u, p[1]], [v, p[1]]] : [[p[0], u], [p[0], v]];
+}
+/* ---------- règles ---------- */
+const CHECK_REF = {ceil:'Décret n° 2002-120 (logement décent) : hauteur sous plafond ≥ 2,20 m.', room:'Décret n° 2002-120 : au moins une pièce principale de 9 m² minimum.',
+  door:'Arrêté du 20 avril 2017 (accessibilité) : porte ≥ 0,90 m (passage libre ≥ 0,83 m), hauteur ≥ 2,04 m.', sill:'NF P 01-012 / DTU 36.5 : protection de 1,00 m au-dessus d\'une chute de 1 m ; allège de fenêtre d\'étage ≥ 0,90 m.',
+  span:'Règle de pré-dimensionnement : dalle béton pleine, portée libre ≈ 5 m max. sans appui ; poutre h ≈ L/12 (BAEL / Eurocode 2).', col:'Poteau béton : élancement h / côté ≤ 15 (pré-dimensionnement) ; côté ≥ 0,20 m.',
+  load:'Descente de charges : un mur d\'étage s\'appuie sur un mur, un poteau ou une poutre en dessous.', roof:'DTU 40.21/40.11 : pente mini. tuiles 30 % (≈ 17°), ardoises 22° (≈ 40 %).',
+  stair:'NF P 21-211 : 2h + g = 60 à 65 cm, giron ≥ 24 cm, hauteur ≤ 19 cm, échappée 1,90 m.', slab:'Un niveau habité a un plancher : sans dalle, les murs d\'étage ne reposent sur rien.'};
+function runChecks(){
+  const out = [], E = state.els, add = (id, lvl, title, detail, ref, fix, els = []) => out.push({id, lvl, title, detail, ref, fix, els, key:id + '|' + els.join(',')});
+  const lv = i => state.levels[i]?.n || `Niveau ${i}`;
+  // 1. hauteur sous plafond
+  for (const w of E) if (w.kind === 'wall' && w.h < 2.2 - 1e-6 && !w.partition) add('ceil', 'bad', `Mur ${w.id} (${lv(w.lvl)}) : hauteur ${lenTxt(w.h)}`, 'Hauteur sous plafond inférieure à 2,20 m (pièce habitable).', CHECK_REF.ceil, {t:'Porter la hauteur à 2,50 m', run:() => { w.h = 2.5; delete w.top; }}, [w.id]);
+  // 2. pièce principale 9 m²
+  const rooms = []; for (let i = 0; i < state.levels.length; i++) try { for (const r of detectRooms(i)) rooms.push({...r, lvl:i}); } catch(e){}
+  if (rooms.length && !rooms.some(r => r.area >= 9)) add('room', 'warn', 'Aucune pièce de 9 m² ou plus', `La plus grande pièce mesure ${nf(Math.max(...rooms.map(r => r.area)), 1)} m².`, CHECK_REF.room, null);
+  // 3. portes et allèges
+  for (const e of E) if (e.kind === 'inst' && e.host){ const F = fam(e.fam), c = famCut(e); if (!F || !c) continue;
+    const isDoor = /^Portes$/.test(F.cat || '') || /porte(?!-fen)/.test(e.fam || '');
+    if (isDoor && /entree|simple|double|porte/.test(e.fam || '') && !/garage|fenetre/.test(e.fam || '')){
+      if (c.w < 0.83 - 1e-6 || c.h < 2.04 - 1e-6) add('door', 'warn', `${F.nom} ${e.id} : ${n0(c.w * 100)} × ${n0(c.h * 100)} cm`, 'Passage trop étroit ou trop bas pour l\'accessibilité (≥ 0,83 m libre, ≥ 2,04 m).', CHECK_REF.door, {t:'Passer à 90 × 210 cm', run:() => { e.params = {...(e.params || {}), w:Math.max(0.9, c.w), h:Math.max(2.1, c.h)}; }}, [e.id]); }
+    else if (!isDoor && e.lvl > 0 && c.sill < 0.9 - 1e-6 && c.sill + c.h > 1 && !/porte-fen|baie/.test(e.fam || '')) add('sill', 'warn', `${F.nom} ${e.id} (${lv(e.lvl)}) : allège ${n0(c.sill * 100)} cm`, 'Fenêtre d\'étage à allège basse : garde-corps de 1 m nécessaire, ou allège ≥ 0,90 m.', CHECK_REF.sill, {t:'Allège à 0,90 m', run:() => { e.params = {...(e.params || {}), sill:0.9}; }}, [e.id]);
+  }
+  // 4. niveaux sans plancher
+  for (let i = 1; i < state.levels.length; i++){ const walls = E.filter(w => w.kind === 'wall' && w.lvl === i); if (walls.length && !E.some(s => s.kind === 'slab' && s.lvl === i && (s.off || 0) <= 1.2 && elUse(s) !== 'toiture'))
+    add('slab', 'bad', `${lv(i)} : murs sans plancher`, `${walls.length} mur(s) à ce niveau, aucune dalle de plancher.`, CHECK_REF.slab, {t:'Créer une dalle béton sur l\'emprise des murs', run:() => { const [x0, y0, x1, y1] = polyBox(walls.flatMap(w => [w.a, w.b])); const d = state.lib?.compos && Object.keys(libCompos()).includes('DAL-BA-20') ? 'DAL-BA-20' : defs.slab.type; const t = slabT({type:d}); state.els.push({kind:'slab', type:d, p:[x0, y0], q:[x1, y1], lvl:i, off:-t, id:state.nextId++}); }}, walls.map(w => w.id)); }
+  // 5. dalles : portée libre
+  for (const s of E) if (s.kind === 'slab' && s.lvl > 0 && elUse(s) !== 'toiture' && (s.off || 0) <= 1.2){
+    const R = slabSpan(s); if (R.span > 5.2 && R.p){
+      const c1 = polyChord(R.poly, R.p, true), c2 = polyChord(R.poly, R.p, false), len = c => c ? V.len(V.sub(c[1], c[0])) : Infinity;
+      const ch = len(c1) <= len(c2) ? c1 : c2; if (!ch) continue; /* poutre dans le sens le plus court, portée par les murs d'about */ const L = V.len(V.sub(ch[1], ch[0])), sec = beamSec(L > 6 ? L / 2 : L);
+      add('span', 'bad', `${lv(s.lvl)} · dalle ${s.id} : portée libre ≈ ${nf(R.span, 1)} m`, 'Portée supérieure à ≈ 5 m sans appui intermédiaire : ajouter une poutre (et un poteau si elle dépasse 6 m).', CHECK_REF.span,
+        {t:`Ajouter une poutre ${n0(sec.w * 100)} × ${n0(sec.h * 100)} cm${L > 6 ? ' et un poteau' : ''}`, run:() => {
+          const lvl = s.lvl - 1, zb = lvlZ(s.lvl) + (s.off || 0) - lvlZ(lvl), b = beamEl(ch[0], ch[1], {lvl, top:zb, h:sec.h, w:sec.w}); b.id = state.nextId++; state.els.push(b);
+          if (L > 6){ const m = V.mul(V.add(ch[0], ch[1]), .5), cs = Math.max(0.25, Math.ceil((zb - sec.h) / 15 / 0.05) * 0.05); state.els.push({kind:'col', mat:'ba', c:m.map(rnd), w:cs, d:cs, h:rnd(zb - sec.h), lvl, off:0, id:state.nextId++}); } }}, [s.id]); } }
+  // 6. poutres : portée et appuis
+  for (const b of E) if (b.beam && b.a){ const L = beamLen(b), S = supportsBelow(b.lvl - 1), Sw = supportsBelow(b.lvl), ends = [b.a, b.b].filter(p => distSupport(p, Sw) > 0.15 && !(b.lvl > 0 && distSupport(p, S) <= 0.15 && false));
+    const ts = [0, L, ...E.filter(c => c.kind === 'col' && c.lvl === b.lvl).map(c => { const q = segClosest(c.c, b.a, b.b); return V.len(V.sub(q.pt, c.c)) < 0.4 ? q.t * L : null; }).filter(v => v != null)].sort((u, v) => u - v);
+    const gap = Math.max(...ts.slice(1).map((v, i) => v - ts[i]));
+    if (gap > 6.5) add('span', 'warn', `Poutre ${b.id} : portée ${nf(gap, 1)} m`, 'Portée de poutre importante (> 6,5 m) : ajouter un appui intermédiaire.', CHECK_REF.span, {t:'Ajouter un poteau à mi-portée', run:() => { const m = V.mul(V.add(b.a, b.b), .5), z0 = lvlZ(b.lvl) + (b.off || 0); state.els.push({kind:'col', mat:'ba', c:m.map(rnd), w:0.25, d:0.25, h:rnd(z0 - lvlZ(b.lvl)), lvl:b.lvl, off:0, id:state.nextId++}); }}, [b.id]);
+    if (b.h < gap / 14 - 1e-6) add('span', 'warn', `Poutre ${b.id} : hauteur ${n0(b.h * 100)} cm pour ${nf(gap, 1)} m`, 'Hauteur insuffisante (règle h ≈ L/12 pour une poutre béton).', CHECK_REF.span, {t:`Porter à ${n0(beamSec(gap).h * 100)} cm`, run:() => { const sec = beamSec(gap), top = (b.off || 0) + b.h; b.h = sec.h; b.off = rnd(top - sec.h); }}, [b.id]);
+    for (const p of ends) if (!E.some(w => w.kind === 'wall' && w.lvl === b.lvl && V.len(V.sub(segClosest(p, w.a, w.b).pt, p)) < wallT(w) / 2 + 0.1) && !E.some(c => c.kind === 'col' && c.lvl === b.lvl && V.len(V.sub(c.c, p)) < Math.max(c.w, c.d) / 2 + 0.1))
+      add('load', 'warn', `Poutre ${b.id} : appui manquant`, 'Une extrémité ne repose ni sur un mur ni sur un poteau.', CHECK_REF.load, {t:'Ajouter un poteau sous cet appui', run:() => { const z0 = lvlZ(b.lvl) + (b.off || 0); state.els.push({kind:'col', mat:'ba', c:p.map(rnd), w:0.25, d:0.25, h:rnd(z0 - lvlZ(b.lvl)), lvl:b.lvl, off:0, id:state.nextId++}); }}, [b.id]); }
+  // 7. poteaux : section et élancement
+  for (const c of E) if (c.kind === 'col' && /^(ba|beton)/.test(c.mat || '')){ const m = Math.min(c.w, c.d), need = Math.max(0.2, Math.ceil(c.h / 15 / 0.05) * 0.05);
+    if (m < need - 1e-6) add('col', m < 0.2 - 1e-6 ? 'bad' : 'warn', `Poteau ${c.id} : ${n0(c.w * 100)} × ${n0(c.d * 100)} cm pour ${nf(c.h, 2)} m`, 'Section trop faible pour la hauteur (élancement > 15) ou côté < 20 cm.', CHECK_REF.col, {t:`Porter la section à ${n0(need * 100)} × ${n0(need * 100)} cm`, run:() => { c.w = Math.max(c.w, need); c.d = Math.max(c.d, need); }}, [c.id]); }
+  // 8. murs d'étage sans appui
+  for (let i = 1; i < state.levels.length; i++){ const S = supportsBelow(i - 1), hasFloor = E.some(s => s.kind === 'slab' && s.lvl === i && (s.off || 0) <= 1.2);
+    if (!hasFloor || !S.seg.length && !S.pts.length) continue;
+    for (const w of E) if (w.kind === 'wall' && w.lvl === i){ const L = V.len(V.sub(w.b, w.a)), pts = [0.1, 0.5, 0.9].map(t => V.add(w.a, V.mul(V.sub(w.b, w.a), t))), un = pts.filter(p => distSupport(p, S) > wallT(w) / 2 + 0.1).length;
+      if (un >= 2 && L > 1.5 && !w.partition){ const sec = beamSec(L); add('load', 'warn', `${lv(i)} · mur ${w.id} en porte-à-faux (${nf(L, 1)} m)`, 'Ce mur d\'étage n\'a ni mur, ni poteau, ni poutre en dessous : il est porté par le plancher seul.', CHECK_REF.load,
+        {t:`Ajouter une poutre de reprise ${n0(sec.w * 100)} × ${n0(sec.h * 100)} cm sous le mur`, run:() => { const lvl = i - 1, zb = lvlZ(i) + (E.find(s => s.kind === 'slab' && s.lvl === i && (s.off || 0) <= 1.2)?.off || 0) - lvlZ(lvl), b = beamEl(w.a, w.b, {lvl, top:zb, h:sec.h, w:Math.max(sec.w, wallT(w))}); b.id = state.nextId++; state.els.push(b); }}, [w.id]); } } }
+  // 9. toitures
+  for (const r of E) if (r.kind === 'roof' && (r.shape || '2') !== '0'){ const C = compo(r.type), tile = /tuile|ardoise|zinc|bac/i, name = C?.nom || ''; const min = /ardoise/i.test(name) ? 22 : /tuile/i.test(name) ? 17 : /bac|zinc|membrane|v[ée]g[ée]/i.test(name) ? 3 : 5;
+    if ((r.pitch ?? 35) < min - 1e-6 && tile) add('roof', 'warn', `Toiture ${r.id} : pente ${n0(r.pitch)}° pour « ${name} »`, `Pente inférieure au minimum usuel (${min}°) pour cette couverture.`, CHECK_REF.roof, {t:`Passer à ${min + 3}°`, run:() => { r.pitch = min + 3; }}, [r.id]); }
+  // 10. escaliers
+  for (const s of E) if (s.kind === 'stair'){ const bad = stairCheck(s).checks.filter(c => c.lvl === 'bad'); if (bad.length) add('stair', 'bad', `Escalier ${s.id} : ${bad.length} point${bad.length > 1 ? 's' : ''} bloquant${bad.length > 1 ? 's' : ''}`, bad.map(c => c.t).join(' '), CHECK_REF.stair, {t:'Hauteur, giron et emmarchement automatiques', run:() => { delete s.n; delete s.hs; delete s.g; s.w = Math.max(s.w || 0.9, s.use === 'erp' ? 1.2 : 0.9); }}, [s.id]); }
+  return out;
+}
+const CHK = {ignored:new Set(), list:[]};
+function openChecks(){
+  CHK.list = runChecks().filter(c => !CHK.ignored.has(c.key));
+  const bad = CHK.list.filter(c => c.lvl === 'bad').length, warn = CHK.list.length - bad;
+  const row = (c, i) => `<article class="chk ${c.lvl}" style="animation-delay:${Math.min(i, 8) * 30}ms"><i class="chk-ic" aria-hidden="true">${c.lvl === 'bad' ? '!' : '?'}</i><div class="chk-b"><h4>${esc(c.title)}</h4><p>${esc(c.detail)}</p><small>${esc(c.ref)}</small>
+    <div class="chk-a">${c.els[0] ? `<button class="btn" data-chk-sel="${i}">Voir</button>` : ''}${c.fix ? `<button class="btn primary" data-chk-fix="${i}">${esc(c.fix.t)}</button>` : '<span class="mut">À corriger manuellement</span>'}<button class="btn ghost" data-chk-ign="${i}">Ignorer</button></div></div></article>`;
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Projet</span><h3 class="ed-t2">Vérifications du bâtiment</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body chk-body">${CHK.list.length ? `<p class="hint"><b>${bad}</b> problème${bad > 1 ? 's' : ''} bloquant${bad > 1 ? 's' : ''}, <b>${warn}</b> point${warn > 1 ? 's' : ''} d'attention. Chaque correction est appliquée une par une (Ctrl+Z pour annuler).</p>${CHK.list.map(row).join('')}`
+      : '<div class="chk-ok"><i>✓</i><h4>Aucun problème détecté</h4><p>Hauteurs, portes, planchers, descente de charges, poutres, poteaux, toitures et escaliers respectent les règles courantes contrôlées.</p></div>'}
+      <p class="hint">Contrôle indicatif de pré-dimensionnement (règles françaises courantes) : il ne remplace pas une étude de structure ni le contrôle technique.</p></div>
+    <footer class="ed-f"><button class="btn" id="chkAddBeam">Ajouter une poutre…</button><button class="btn primary" data-close>Fermer</button></footer>`, 'mid');
+  d.querySelectorAll('[data-chk-fix]').forEach(b => b.onclick = () => { const c = CHK.list[+b.dataset.chkFix]; pushHist(); state.isSample = false; try { c.fix.run(); } catch(e){ console.warn(e); } rebuild(); toast('Corrigé : ' + c.fix.t); openChecks(); });
+  d.querySelectorAll('[data-chk-ign]').forEach(b => b.onclick = () => { CHK.ignored.add(CHK.list[+b.dataset.chkIgn].key); openChecks(); });
+  d.querySelectorAll('[data-chk-sel]').forEach(b => b.onclick = () => { const c = CHK.list[+b.dataset.chkSel]; closeEDlg(); const el = getEl(c.els[0]); if (el){ if (el.lvl !== curLvl){ curLvl = el.lvl; syncLevels(); rebuild(); } select(c.els[0]); frameEl(c.els[0]); } });
+  d.querySelector('#chkAddBeam').onclick = () => { closeEDlg(); setTool('beam'); toast('Poutre : cliquez les deux appuis'); };
+}
+const checksCard = () => { let n = 0; try { n = runChecks().filter(c => !CHK.ignored.has(c.key)).length; } catch(e){} return `<div class="grp"><h3>Vérifications du bâtiment</h3><p class="hint">Hauteurs, portes, descente de charges, poutres et poteaux, escaliers, toitures : règles courantes.</p><div class="btns tight"><button class="btn${n ? ' primary' : ''}" data-act="checks">${n ? `Vérifier le bâtiment · ${n} point${n > 1 ? 's' : ''}` : 'Vérifier le bâtiment'}</button><button class="btn" data-act="addbeam">Poutre</button></div></div>`; };
+
 /* ==== 79-wheel.js ==== */
 /* Zoom à la molette maîtrisé.
  * Le zoom intégré d'OrbitControls (three r160) divise l'écart de la molette par devicePixelRatio arrondi à l'entier :
@@ -11532,7 +11663,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim', n:'join', s:'sketch', x:'paint'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', h:'beam', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim', n:'join', s:'sketch', x:'paint'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 

@@ -14,7 +14,7 @@ function elName(el){
   if (el.kind === 'inst'){ const F = fam(el.fam); const t = F?.types?.[el.type | 0]?.nom; return `${F?.nom || 'Composant'}${t ? ' · ' + t : ''}`; }
   if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
   if (el.kind === 'stair') return `Escalier ${el.id} · ${STAIR_TYPES[el.st || 'droit']}`;
-  return `${KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
+  return `${el.beam ? 'Poutre' : KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
 }
 function forcedPerf(el){ return el.forceU > 0 ? {U:el.forceU, R:null} : el.forceR > 0 ? {U:null, R:el.forceR} : null; }
 function elMeta(el){

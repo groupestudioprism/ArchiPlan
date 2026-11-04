@@ -65,6 +65,7 @@ function renderProps(){
       ${glazingCard()}
       ${joineryProjectCard()}
       ${fireProjectCard()}
+      ${checksCard()}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -379,6 +380,8 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'irot90' && el){ pushHist(); el.rot = ((el.rot || 0) + 90) % 360; rebuild(); }
   else if (act === 'add-opening' && el){ libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
+  else if (act === 'checks') openChecks();
+  else if (act === 'addbeam') setTool('beam');
   else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'stairGallery' && el) openStairGallery(el.id);
   else if (act === 'site') openSiteDialog();

@@ -99,7 +99,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }
   if (k.toLowerCase() === 'z'){ fit(); return; }
-  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim', n:'join', s:'sketch', x:'paint'};
+  const map = {v:'select', m:'wall', d:'slab', t:'roof', e:'stair', k:'cut', y:'mirror', p:'col', h:'beam', b:'vol', f:'comp', u:'push', g:'move', c:'copy', o:'rotate', r:'measure', q:'dim', n:'join', s:'sketch', x:'paint'};
   if (map[k.toLowerCase()]) setTool(map[k.toLowerCase()]);
 });
 
