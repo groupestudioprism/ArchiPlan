@@ -40,7 +40,7 @@ function skKeyPoints(el){ const pc = skPieces(el)[0], r = pc.poly; return {ends:
 /* ---------- session d'esquisse ---------- */
 let skMat = new THREE.LineBasicMaterial({color:0x0E7490, depthTest:false, transparent:true}), skMatSel = new THREE.LineBasicMaterial({color:0xE2861B, depthTest:false}),
   skFill = new THREE.MeshBasicMaterial({color:0x22B8CF, transparent:true, opacity:0.18, side:THREE.DoubleSide, depthTest:false}), skFillSel = new THREE.MeshBasicMaterial({color:0xE2861B, transparent:true, opacity:0.3, side:THREE.DoubleSide, depthTest:false});
-function skStart(fr){ SK.on = true; SK.fr = fr; SK.pts = []; SK.ents = []; SK.faceSel = -1; SK.stroke = null; SK.pull = null; skDraw(); setPrompt(); syncHud(); }
+function skStart(fr){ if (view === '2d'){ setView('3d'); toast('Esquisse : passage en 3D pour pouvoir extruder les faces'); } SK.on = true; SK.fr = fr; SK.pts = []; SK.ents = []; SK.faceSel = -1; SK.stroke = null; SK.pull = null; skDraw(); setPrompt(); syncHud(); }
 function skEnd(){ if (SK.ents.some(e => e.closed)) toast('Contours non extrudés abandonnés'); SK.on = false; SK.fr = null; SK.pts = []; SK.ents = []; SK.faceSel = -1; SK.stroke = null; SK.pull = null; disposeGroup(skGroup); c3.enabled = view !== '2d'; dirty = true; }
 /* point du plan sous le pointeur : (a, b) dans le repère du plan, aimanté à la grille et aux sommets déjà dessinés */
 function skHit(e, raw = false){
@@ -157,7 +157,7 @@ canvas.addEventListener('pointerdown', e => {
   if (tool !== 'sketch' || e.button !== 0) return;
   skDown = {x:e.clientX, y:e.clientY, t:performance.now(), id:e.pointerId, pen:e.pointerType === 'pen', moved:false};
   if (!SK.on) return;   // le choix du plan se fait au relâchement
-  if (SK.faceSel >= 0 && !SK.pts.length && (SK.mode === 'sel' || SK.mode === 'free')){ const fh = skFaceAt(e); if (fh === SK.faceSel && skPullStart(e, fh)){ skDown.pull = true; e.stopImmediatePropagation(); canvas.setPointerCapture(e.pointerId); return; } }
+  if (SK.faceSel >= 0 && !SK.pts.length){ const fh = skFaceAt(e); if (fh === SK.faceSel && skPullStart(e, fh)){ skDown.pull = true; e.stopImmediatePropagation(); canvas.setPointerCapture(e.pointerId); return; } }
   if (SK.mode === 'free' || (skDown.pen && !SK.pts.length)){ const p = skHit(e, true); if (p){ SK.stroke = [p]; skDown.stroke = true; c3.enabled = false; e.stopImmediatePropagation(); canvas.setPointerCapture(e.pointerId); } }
 }, {capture:true});
 canvas.addEventListener('pointermove', e => {
@@ -170,7 +170,7 @@ canvas.addEventListener('pointermove', e => {
 }, {capture:true});
 canvas.addEventListener('pointerup', e => {
   if (tool !== 'sketch' || e.button !== 0) return; const d = skDown; skDown = null;
-  if (SK.pull){ skPullEnd(); e.stopImmediatePropagation(); return; }
+  if (SK.pull){ const tiny = Math.abs(SK.pull.d) < 0.005 && !['sel', 'free'].includes(SK.mode); skPullEnd(); e.stopImmediatePropagation(); if (tiny){ const p = skHit(e); if (p) skPlace(p); } return; }
   if (d?.stroke){ e.stopImmediatePropagation(); c3.enabled = view !== '2d'; const st = SK.stroke; SK.stroke = null;
     if (d.moved && st.length > 2){ const r = skRecognize(st); if (r){ if (r.closed) skClosed(r); else { SK.ents.push(r); SK.pts = []; } toast(r.kind === 'circ' ? 'Cercle reconnu' : r.kind === 'rect' ? 'Rectangle reconnu' : r.closed ? 'Polygone fermé' : 'Trait'); } skDraw(); setPrompt(); return; }
     // appui bref au stylet sans mouvement : sélection d'une face, ou point dans le mode courant
