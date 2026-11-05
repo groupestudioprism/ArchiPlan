@@ -173,12 +173,16 @@ function openInsulAdjust(id){
   const base = compo(el.type), use = elUse(el), layers0 = base.layers.map(l => l.slice());
   const S = {idx:mainInsulIdx(layers0), mode:'e', target:''};
   S.mat = layers0[S.idx][0]; S.e = layers0[S.idx][1]; S.lambda = mat(S.mat).lambda ?? 0.035;
+  /* paroi sans isolant : on AJOUTE une couche (on ne remplace jamais la couche porteuse) ; sinon on peut au choix modifier l'isolant ou en ajouter un autre */
+  S.add = !layers0.some(([m]) => mat(m).cat === 'Isolants'); S.side = 'int';
+  const SIDES = el.kind === 'wall' ? {ext:'Côté extérieur (ITE)', int:'Côté intérieur (doublage)'} : {ext:'Dessus / côté extérieur', int:'Dessous / côté intérieur'};
+  if (S.add){ const k = ['laineVerre', 'laine', 'pse'].find(x => libMats()[x]) || Object.keys(libMats()).find(x => libMats()[x].cat === 'Isolants'); S.mat = k; S.e = 0.1; S.lambda = mat(k).lambda ?? 0.035; }
   S.forceU = el.forceU || ''; S.forceR = el.forceR || ''; S.note = el.forceNote || '';
   const insulOpts = () => { const by = {}; for (const [k, m] of Object.entries(libMats())) if (m.R == null) (by[m.cat] ??= []).push([k, m.nom]);
     const cats = ['Isolants', ...Object.keys(by).filter(c => c !== 'Isolants')];
     return cats.filter(c => by[c]).map(c => `<optgroup label="${esc(c)}">${by[c].sort((a, b) => a[1].localeCompare(b[1], 'fr')).map(([k, n]) => `<option value="${esc(k)}"${k === S.mat ? ' selected' : ''}>${esc(n)}</option>`).join('')}</optgroup>`).join(''); };
   const tmpMat = () => { const M = mat(S.mat); return Math.abs((M.lambda ?? 0) - S.lambda) > 1e-6 ? {...M, lambda:S.lambda, nom:`${M.nom} (λ ${nf(S.lambda, 3)})`} : null; };
-  const newLayers = () => { const L = layers0.map(l => l.slice()); const t = tmpMat(); if (t){ state.lib.mats.__tmp = t; } L[S.idx] = [t ? '__tmp' : S.mat, S.e]; return L; };
+  const newLayers = () => { const L = layers0.map(l => l.slice()); const t = tmpMat(); if (t){ state.lib.mats.__tmp = t; } const nl = [t ? '__tmp' : S.mat, S.e]; if (S.add) L.splice(S.side === 'ext' ? 0 : L.length, 0, nl); else L[S.idx] = nl; return L; };
   const report = L => wallReport(layersCalc(el.kind, use, L), use);
   const solve = () => { // épaisseur pour atteindre un U ou un R cible
     const v = num(S.target); if (!(v > 0)) return;
@@ -197,8 +201,10 @@ function openInsulAdjust(id){
     return `<header class="ed-h"><div><span class="eyebrow">${el.kind === 'wall' ? 'Mur' : 'Plancher'} ${el.id} · ${esc(USES[use] || '')}</span><h3 class="ed-t2">Ajuster l'isolant et les performances</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
     <div class="ed-body ia">
       <section>
-        <p class="hint">Composition actuelle : <b>${esc(base.nom)}</b>. Choisissez la couche à modifier, puis l'épaisseur ou un objectif.</p>
-        <div class="ia-layers">${L1.map(([m, e], i) => { const M = mat(m); return `<button class="ia-l${i === S.idx ? ' on' : ''}" data-ial="${i}"><span class="sw" style="background:${M.color}"></span><span>${esc(M.nom)}</span><em>${nf(e * 1000, 0)} mm</em></button>`; }).join('')}</div>
+        <p class="hint">Composition actuelle : <b>${esc(base.nom)}</b>.${S.add ? ' Cette paroi n\'a pas (ou vous ajoutez) une couche d\'isolant : elle sera ajoutée à la composition, les autres couches sont conservées.' : ' Choisissez la couche à modifier, puis l\'épaisseur ou un objectif.'}</p>
+        <div class="seg" style="margin-bottom:8px"><button class="${S.add ? '' : 'on'}" data-iaadd="0">Modifier une couche</button><button class="${S.add ? 'on' : ''}" data-iaadd="1">Ajouter une couche d'isolant</button></div>
+        ${S.add ? `<div class="seg" style="margin-bottom:8px">${Object.entries(SIDES).map(([k, n]) => `<button class="${S.side === k ? 'on' : ''}" data-iaside="${k}">${n}</button>`).join('')}</div>` : ''}
+        <div class="ia-layers">${L1.map(([m, e], i) => { const M = mat(m); return `<button class="ia-l${(S.add ? i === (S.side === 'ext' ? 0 : L1.length - 1) : i === S.idx) ? ' on' : ''}" data-ial="${i}"${S.add ? ' disabled' : ''}><span class="sw" style="background:${M.color}"></span><span>${esc(M.nom)}</span><em>${nf(e * 1000, 0)} mm</em></button>`; }).join('')}</div>
         <div class="fields">
           <label class="f wide"><span>Matériau de la couche</span><span class="in"><select id="iaMat">${insulOpts()}</select></span></label>
           <label class="f"><span>λ (conductivité)</span><span class="in"><input id="iaLam" type="text" inputmode="decimal" step="0.001" min="0.005" value="${rnd(S.lambda, 4)}"><em>W/m·K</em></span></label>
@@ -240,7 +246,9 @@ function openInsulAdjust(id){
   const draw = () => { const d = openEDlg(render(msg), 'mid'); wire(d); };
   const wire = d => {
     const q = s => d.querySelector(s);
-    d.querySelectorAll('[data-ial]').forEach(b => b.onclick = () => { S.idx = +b.dataset.ial; S.mat = layers0[S.idx][0]; S.e = layers0[S.idx][1]; S.lambda = mat(S.mat).lambda ?? 0.035; msg = ''; draw(); });
+    d.querySelectorAll('[data-iaadd]').forEach(b => b.onclick = () => { S.add = b.dataset.iaadd === '1'; if (S.add){ if (mat(S.mat).cat !== 'Isolants'){ const k = ['laineVerre', 'laine', 'pse'].find(x => libMats()[x]); S.mat = k; S.lambda = mat(k).lambda ?? 0.035; S.e = 0.1; } } else { S.idx = mainInsulIdx(layers0); S.mat = layers0[S.idx][0]; S.e = layers0[S.idx][1]; S.lambda = mat(S.mat).lambda ?? 0.035; } msg = ''; draw(); });
+    d.querySelectorAll('[data-iaside]').forEach(b => b.onclick = () => { S.side = b.dataset.iaside; msg = S.mode !== 'e' ? solve() || '' : ''; draw(); });
+    d.querySelectorAll('[data-ial]').forEach(b => b.onclick = () => { if (S.add) return; S.idx = +b.dataset.ial; S.mat = layers0[S.idx][0]; S.e = layers0[S.idx][1]; S.lambda = mat(S.mat).lambda ?? 0.035; msg = ''; draw(); });
     q('#iaMat').onchange = e => { S.mat = e.target.value; S.lambda = mat(S.mat).lambda ?? 0.035; if (S.mode !== 'e') msg = solve() || ''; draw(); };
     q('#iaLam').onchange = e => { const v = num(e.target.value); if (v > 0.004) S.lambda = v; if (S.mode !== 'e') msg = solve() || ''; draw(); };
     q('#iaE').onchange = e => { const v = num(e.target.value); if (v > 0) { S.e = v / 1000; S.mode = 'e'; } msg = ''; draw(); };
@@ -266,7 +274,7 @@ function openInsulAdjust(id){
   };
   const apply = targets => {
     delete state.lib.mats.__tmp;
-    const changed = Math.abs(S.e - layers0[S.idx][1]) > 1e-6 || S.mat !== layers0[S.idx][0] || Math.abs((mat(S.mat).lambda ?? 0) - S.lambda) > 1e-6;
+    const changed = S.add || Math.abs(S.e - layers0[S.idx][1]) > 1e-6 || S.mat !== layers0[S.idx][0] || Math.abs((mat(S.mat).lambda ?? 0) - S.lambda) > 1e-6;
     pushHist(); state.isSample = false;
     let typeId = el.type;
     if (changed){
@@ -275,7 +283,7 @@ function openInsulAdjust(id){
         const M = mat(S.mat); mid = Object.entries(state.lib.mats).find(([, x]) => x.base === S.mat && Math.abs(x.lambda - S.lambda) < 1e-6)?.[0] || 'P-' + uid8();
         state.lib.mats[mid] = {...M, lambda:S.lambda, nom:`${M.nom} (λ ${nf(S.lambda, 3)})`, base:S.mat};
       }
-      const L = layers0.map(l => l.slice()); L[S.idx] = [mid, rnd(S.e, 3)];
+      const L = layers0.map(l => l.slice()); if (S.add) L.splice(S.side === 'ext' ? 0 : L.length, 0, [mid, rnd(S.e, 3)]); else L[S.idx] = [mid, rnd(S.e, 3)];
       const sig = JSON.stringify(L), found = Object.entries(libCompos()).find(([, c]) => c.kind === base.kind && JSON.stringify(c.layers) === sig);
       if (found) typeId = found[0];
       else { typeId = 'P-' + uid8(); state.lib.compos[typeId] = {...JSON.parse(JSON.stringify(base)), layers:L, nom:`${base.nom.replace(/ · isolant .*$/, '')} · isolant ${n0(S.e * 1000)} mm`, from:el.type}; }
