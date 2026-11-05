@@ -3,7 +3,7 @@
    avec cartouche, échelle graphique et nord. Les vues sont rendues hors écran avec leurs textes (cotes, pièces, niveaux),
    assemblées dans un aperçu, puis imprimées en PDF par le navigateur. */
 const SHEET_FMT = {A4:[297, 210], A3:[420, 297], A2:[594, 420], A1:[841, 594]};
-const SHEET_SCALES = [20, 50, 100, 200, 500];
+const SHEET_SCALES = [5, 10, 20, 50, 100, 200, 500];
 const SHEET_PHASES = ['ESQ', 'APS', 'APD', 'PC', 'PRO', 'DCE', 'EXE', 'DOE'];
 function sheetDefs(){
   const out = [];
@@ -12,7 +12,7 @@ function sheetDefs(){
   return out;
 }
 /* rendu hors écran d'une vue : {url, wM, hM} (dimensions réelles en mètres) */
-async function renderSheetView(v, scale, dpi = 150){
+async function renderSheetView(v, scale, dpi = scale <= 20 ? 110 : 150){
   const keep = {view, curLvl, curSec, sel, multi:multi.slice(), bg:scene.background, fog:scene.fog, clip:renderer.clippingPlanes, pr:renderer.getPixelRatio(), w:vpEl.clientWidth, h:vpEl.clientHeight,
     vis:[[gridMajor, gridMajor?.visible], [gridMinor, gridMinor?.visible], [markGroup, markGroup.visible], [previewGroup, previewGroup.visible], [terrainGroup, terrainGroup.visible]]};
   sel = null; multi = [];
@@ -45,11 +45,11 @@ async function renderSheetView(v, scale, dpi = 150){
       renderer.clippingPlanes = v.kind === 'coupe' ? secClip() : [];
     }
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
-    const {W, D} = cam.userData, ppm = Math.min((1000 / scale) / 25.4 * dpi, 4000 / Math.max(W, D)), wpx = Math.round(W * ppm), hpx = Math.round(D * ppm);
+    const {W, D} = cam.userData, ppm = Math.min((1000 / scale) / 25.4 * dpi, 6000 / Math.max(W, D)), wpx = Math.round(W * ppm), hpx = Math.round(D * ppm);
     renderer.setPixelRatio(1); renderer.setSize(wpx, hpx, false); renderer.render(scene, cam);
     const cv = document.createElement('canvas'); cv.width = wpx; cv.height = hpx; const g = cv.getContext('2d');
     g.fillStyle = '#fff'; g.fillRect(0, 0, wpx, hpx); g.drawImage(renderer.domElement, 0, 0);
-    const P = p => { const q = p.clone().project(cam); return [(q.x + 1) / 2 * wpx, (1 - q.y) / 2 * hpx]; }, fs = Math.max(11, Math.round(ppm * 0.21));
+    const P = p => { const q = p.clone().project(cam); return [(q.x + 1) / 2 * wpx, (1 - q.y) / 2 * hpx]; }, fs = Math.max(11, Math.round(ppm * scale * 0.0027));   // texte ≈ 2,7 mm sur le papier, quelle que soit l'échelle
     const tag = (x, y, lines, bold) => { g.font = `${bold ? 600 : 500} ${fs}px Inter, Arial, sans-serif`; const wmax = Math.max(...lines.map(t => g.measureText(t).width)), hh = fs * 1.2 * lines.length;
       g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(x - wmax / 2 - 3, y - hh / 2 - 2, wmax + 6, hh + 4); g.fillStyle = '#1F2937'; g.textAlign = 'center'; g.textBaseline = 'middle'; lines.forEach((t, i) => g.fillText(t, x, y - hh / 2 + fs * 0.6 + i * fs * 1.2)); };
     if (v.kind === 'plan') for (const l of labels){ if (!l.d.isConnected || l.d.classList.contains('grip')) continue; const t = l.d.innerText.trim(); if (!t) continue; const [x, y] = P(l.pos); tag(x, y, t.split('\n'), l.d.classList.contains('room') || l.d.classList.contains('cote')); }
@@ -72,7 +72,8 @@ function sheetPack(items, fmt){
   const newSheet = () => { cur = []; sheets.push(cur); x = 0; y = 0; rowH = 0; };
   newSheet();
   for (const it of items){
-    const w = it.wmm, h = it.hmm + CAP;
+    if (it.solo && (x > 0 || y > 0)) newSheet();
+    const w = it.cw ?? it.wmm, h = (it.ch ?? it.hmm) + CAP;
     if (x > 0 && x + w > W){ x = 0; y += rowH + GAP; rowH = 0; }
     if (y + h > H && (x > 0 || y > 0)){ newSheet(); }
     cur.push({...it, x:M + x, y:M + y}); x += w + GAP; rowH = Math.max(rowH, h);
@@ -97,22 +98,48 @@ function sheetHTML(sheets, opt){
     table.cart{position:absolute;right:10mm;bottom:10mm;width:190mm;border-collapse:collapse;font-size:2.8mm} .cart td{border:0.3mm solid #111;padding:1.2mm 2mm;vertical-align:top} .cart em{display:block;font-style:normal;font-size:2.2mm;color:#555;text-transform:uppercase;letter-spacing:.03em}
     .cart .t{font-size:4.4mm;font-weight:800} .cart .logo{width:34mm;text-align:center;vertical-align:middle} .cart .logo b{font-size:4.6mm;letter-spacing:.02em} .cart .logo b span{color:#0E8FB0} .cart .logo small{display:block;font-size:2.4mm;color:#555}
     @media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact} body{background:#fff} .sheet{margin:0;box-shadow:none}}
-  </style></head><body>${sheets.map((S, k) => `<div class="sheet"><div class="frame"></div>${S.map(v => `<figure style="left:${v.x}mm;top:${v.y}mm"><img src="${v.url}" style="width:${v.wmm}mm;height:${v.hmm}mm"><figcaption>${esc(v.name)} <span>1/${v.scale}</span>${v.kind === 'plan' ? bar(v.scale) : ''}</figcaption>${v.kind === 'plan' ? `<div class="nord">${north}</div>` : ''}</figure>`).join('')}${cart(k)}</div>`).join('')}</body></html>`;
+  </style></head><body>${sheets.map((S, k) => `<div class="sheet"><div class="frame"></div>${S.map(v => `<figure style="left:${v.x}mm;top:${v.y}mm"><div style="width:${v.cw ?? v.wmm}mm;height:${v.ch ?? v.hmm}mm;overflow:hidden;position:relative"><img src="${v.url}" style="position:absolute;left:${-(v.ox || 0)}mm;top:${-(v.oy || 0)}mm;width:${v.wmm}mm;height:${v.hmm}mm"></div><figcaption>${esc(v.name)} <span>1/${v.scale}</span>${v.kind === 'plan' ? bar(v.scale) : ''}</figcaption>${v.kind === 'plan' ? `<div class="nord">${north}</div>` : ''}</figure>`).join('')}${cart(k)}</div>`).join('')}</body></html>`;
 }
 /* assemble les planches : chaque vue est rendue à l'échelle choisie (0 = ajustée automatiquement à la planche) ; une vue trop grande descend à l'échelle inférieure,
    et au-delà du 1/500 reçoit une échelle exacte ajustée, toujours affichée telle qu'appliquée */
 async function buildSheets(o, defsL, cache, prog){
-  const [SW, SH] = SHEET_FMT[o.fmt], maxW = SW - 20, maxH = SH - 20 - 46 - 4 - 9, items = [];
+  const [SW, SH] = SHEET_FMT[o.fmt], maxW = SW - 20, maxH = SH - 20 - 46 - 4 - 9, items = [], warns = [];
   const render = async (v, sc) => { const k = v.key + '|' + sc; if (!(k in cache)) cache[k] = await renderSheetView(v, sc); return cache[k]; };
   for (const v of defsL.filter(x => o.pick.includes(x.key))){
     prog?.(`Rendu : ${v.name}…`); await new Promise(r => setTimeout(r, 20));
-    let sc = o.scale || SHEET_SCALES[0], r = await render(v, sc); if (!r) continue;
-    const fits = () => r.wM * 1000 / sc <= maxW && r.hM * 1000 / sc <= maxH;
-    while (!fits() && sc < 500){ sc = SHEET_SCALES.find(x => x > sc) || 500; r = await render(v, sc) || r; }
-    if (!fits()){ sc = Math.ceil(Math.max(r.wM * 1000 / maxW, r.hM * 1000 / maxH)); r = await render(v, sc) || r; }
-    items.push({...v, url:r.url, scale:sc, wmm:r.wM * 1000 / sc, hmm:r.hM * 1000 / sc});
+    try {
+      let sc = o.scale || 100, r = await render(v, sc);
+      if (!r){ warns.push(`« ${v.name} » est vide : la vue est ignorée.`); continue; }
+      const need = Math.max(r.wM * 1000 / maxW, r.hM * 1000 / maxH);   // échelle (1/x) qui fait tenir la vue exactement sur la planche
+      if (!o.scale){   // ajustée : la plus grande échelle ronde qui tient, une vue par planche
+        sc = need <= 5 ? 5 : need <= 10 ? 10 : need <= 20 ? 20 : Math.ceil(need / 5) * 5; r = await render(v, sc) || r;
+        items.push({...v, url:r.url, scale:sc, wmm:r.wM * 1000 / sc, hmm:r.hM * 1000 / sc, solo:true}); continue;
+      }
+      const wmm = r.wM * 1000 / sc, hmm = r.hM * 1000 / sc;
+      if (wmm <= maxW && hmm <= maxH){ items.push({...v, url:r.url, scale:sc, wmm, hmm}); continue; }
+      if (o.split === false){   // pas de découpe : on garde l'échelle la plus proche qui tient, et on le dit
+        const sc2 = SHEET_SCALES.find(x => x >= need) || Math.ceil(need); r = await render(v, sc2) || r;
+        warns.push(`« ${v.name} » ne tient pas à l'échelle 1/${sc} sur un ${o.fmt} : passée à 1/${sc2}.`);
+        items.push({...v, url:r.url, scale:sc2, wmm:r.wM * 1000 / sc2, hmm:r.hM * 1000 / sc2}); continue;
+      }
+      const nc = Math.ceil(wmm / maxW - 1e-6), nr = Math.ceil(hmm / maxH - 1e-6), tw = wmm / nc, th = hmm / nr;
+      warns.push(`« ${v.name} » mesure ${Math.round(wmm)} × ${Math.round(hmm)} mm à 1/${sc} : découpée en ${nc * nr} parties (${nc} × ${nr}) sur plusieurs planches ${o.fmt}.`);
+      for (let j = 0; j < nr; j++) for (let k = 0; k < nc; k++)
+        items.push({...v, name:`${v.name} (partie ${j * nc + k + 1}/${nc * nr})`, url:r.url, scale:sc, wmm, hmm, cw:tw, ch:th, ox:k * tw, oy:j * th, solo:true, tile:true});
+    } catch(e){ console.error(e); warns.push(`Erreur de mise en page pour « ${v.name} » (${e.message || e}) : vue non placée.`); }
   }
-  const sheets = sheetPack(items, o.fmt); return {sheets, html:sheetHTML(sheets, o)};
+  const sheets = sheetPack(items, o.fmt); warns.push(...sheetIssues(sheets, o.fmt));
+  return {sheets, warns, html:sheetHTML(sheets, o)};
+}
+/* contrôle de la mise en page : chaque vue doit rester dans le cadre et hors du cartouche */
+function sheetIssues(sheets, fmt){
+  const [SW, SH] = SHEET_FMT[fmt], out = [], fr = 7, cart = {x:SW - 10 - 190, y:SH - 10 - 46, w:190, h:46};
+  sheets.forEach((S, k) => S.forEach(v => {
+    const w = v.cw ?? v.wmm, h = (v.ch ?? v.hmm) + 9;
+    if (v.x < fr || v.y < fr || v.x + w > SW - fr + 0.01 || v.y + h > SH - fr + 0.01) out.push(`Planche ${k + 1} : « ${v.name} » dépasse du cadre.`);
+    else if (v.x + w > cart.x && v.y + h > cart.y) out.push(`Planche ${k + 1} : « ${v.name} » chevauche le cartouche.`);
+  }));
+  return out;
 }
 function openSheets(){
   const o = state.sheet ??= {fmt:'A3', scale:100, phase:'APS', indice:'A', moa:'', auteur:$('#umName')?.textContent?.trim() || '', pick:null};
@@ -126,15 +153,15 @@ function openSheets(){
       <label class="f wide"><span>Maître d'ouvrage</span><span class="in"><input id="shM" value="${esc(o.moa)}" style="font-family:var(--f-body)"></span></label>
       <label class="f wide"><span>Dessiné par</span><span class="in"><input id="shA" value="${esc(o.auteur)}" style="font-family:var(--f-body)"></span></label></div>
       <div class="grp"><h3>Vues</h3>${defsL.map(v => `<label class="f wide rchk"><input type="checkbox" data-sv="${esc(v.key)}"${pick.has(v.key) ? ' checked' : ''}> ${esc(v.name)}</label>`).join('')}</div>
-      <p class="hint">Une vue trop grande pour la planche passe à l'échelle inférieure ; l'échelle réellement appliquée est écrite sous chaque vue et dans le cartouche. Imprimez à 100 % (sans « ajuster à la page »).</p></section>
-    <section><div class="grp" style="margin-top:0"><h3>Aperçu <span id="shProg" class="hint"></span></h3><iframe id="shFrame" title="Planches" style="width:100%;height:62vh;border:1px solid var(--line,#ddd);border-radius:8px;background:#E5E7EB"></iframe></div></section></div>
+      <label class="ap-check2"><input type="checkbox" id="shSp"${o.split === false ? '' : ' checked'}> Échelle imposée : découper une grande vue sur plusieurs planches</label><p class="hint">« Ajusté » prend la plus grande échelle qui fait tenir chaque vue sur sa planche. Avec une échelle imposée, une vue trop grande est découpée (ou, si la case est décochée, passée à une échelle plus petite). L'échelle appliquée est écrite sous chaque vue et dans le cartouche. Imprimez à 100 % (sans « ajuster à la page »).</p></section>
+    <section><div id="shWarn" role="alert" hidden style="margin-bottom:8px;padding:8px 12px;border-radius:8px;background:#FEF3C7;border:1px solid #F59E0B;color:#78350F;font-size:12.5px"></div><div class="grp" style="margin-top:0"><h3>Aperçu <span id="shProg" class="hint"></span></h3><iframe id="shFrame" title="Planches" style="width:100%;height:62vh;border:1px solid var(--line,#ddd);border-radius:8px;background:#E5E7EB"></iframe></div></section></div>
     <footer class="ed-f"><span class="hint" id="shN"></span><button class="btn" data-close>Fermer</button><button class="btn" id="shDl">Télécharger (.html)</button><button class="btn primary" id="shPr">Imprimer / PDF</button></footer>`, 'wide');
   const cache = {}; let html = '', run = 0, tm;
   const read = () => { Object.assign(o, {fmt:d.querySelector('#shF').value, scale:+d.querySelector('#shS').value, phase:d.querySelector('#shP').value, indice:d.querySelector('#shI').value.trim(), moa:d.querySelector('#shM').value.trim(), auteur:d.querySelector('#shA').value.trim()});
-    o.pick = [...d.querySelectorAll('[data-sv]:checked')].map(x => x.dataset.sv); };
+    o.split = d.querySelector('#shSp').checked; o.pick = [...d.querySelectorAll('[data-sv]:checked')].map(x => x.dataset.sv); };
   const refresh = async () => { if (!d.querySelector('#shF')) return; const my = ++run; read(); if (!o.pick.length){ d.querySelector('#shFrame').srcdoc = ''; return; }
-    const prog = d.querySelector('#shProg'); const r = await buildSheets(o, defsL, cache, t => { if (my === run) prog.textContent = t; });
-    if (my !== run || !d.isConnected) return; html = r.html; const fr = d.querySelector('#shFrame'), z = Math.min(1, (fr.clientWidth - 24) / (SHEET_FMT[o.fmt][0] * 96 / 25.4 + 40)).toFixed(3); fr.srcdoc = html.replace('</style>', `body{zoom:${z}}@media print{body{zoom:1}}</style>`); prog.textContent = ''; d.querySelector('#shN').textContent = `${r.sheets.length} planche${r.sheets.length > 1 ? 's' : ''}`; };
+    const prog = d.querySelector('#shProg'), wb = d.querySelector('#shWarn'); let r; try { r = await buildSheets(o, defsL, cache, t => { if (my === run) prog.textContent = t; }); } catch(e){ console.error(e); if (my === run){ wb.hidden = false; wb.innerHTML = '<b>Erreur de mise en page :</b> les planches n\'ont pas pu être générées (' + esc(e.message || String(e)) + '). Essayez un autre format ou une autre échelle.'; prog.textContent = ''; } return; }
+    if (my !== run || !d.isConnected) return; html = r.html; wb.hidden = !r.warns.length; wb.innerHTML = r.warns.length ? '<b>Attention, mise en page :</b><ul style="margin:4px 0 0 18px;padding:0">' + r.warns.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' : ''; const fr = d.querySelector('#shFrame'), z = Math.min(1, (fr.clientWidth - 24) / (SHEET_FMT[o.fmt][0] * 96 / 25.4 + 40)).toFixed(3); fr.srcdoc = html.replace('</style>', `body{zoom:${z}}@media print{body{zoom:1}}</style>`); prog.textContent = ''; d.querySelector('#shN').textContent = `${r.sheets.length} planche${r.sheets.length > 1 ? 's' : ''}`; };
   const later = () => { clearTimeout(tm); tm = setTimeout(refresh, 350); };
   d.addEventListener('change', later); d.addEventListener('input', e => { if (e.target.matches('input[type=text],input:not([type])')) later(); }); refresh();
   d.querySelector('#shPr').onclick = () => { const f = d.querySelector('#shFrame'); try { f.contentWindow.focus(); f.contentWindow.print(); } catch(e){ const w = window.open('', '_blank'); if (w){ w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400); } } };
