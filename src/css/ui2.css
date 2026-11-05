@@ -70,3 +70,10 @@
 .vtools>.bar-h,.hud>.bar-h{align-self:flex-end}.hud>.bar-h{align-self:center}
 @media (max-width:860px){.bar-tools,.bar-panel{display:none}}
 @media (prefers-reduced-motion:reduce){.bar-h,.bar-h svg{transition:none}}
+
+.vgrp.cams{flex-wrap:wrap;max-width:min(340px,100%);justify-content:flex-end}
+
+.nbtog{display:inline-flex;gap:2px;padding:2px;pointer-events:auto}.nbtog button{border:0;background:transparent;border-radius:8px;height:26px;padding:0 8px;display:inline-flex;align-items:center;gap:4px;font:600 12px var(--f-body);color:var(--mut);cursor:pointer;transition:background .15s,color .15s}
+.nbtog button svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.nbtog button:hover{background:var(--chip)}
+.nbtog button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+body[data-mode="sec"] .nbtog,body[data-mode="render"] .nbtog{display:none}

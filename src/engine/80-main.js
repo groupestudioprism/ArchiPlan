@@ -1,6 +1,6 @@
 /* ============ Interface : modes, outils, barre d'état, clavier, menus ============ */
 function setView(v){
-  const prev = view; view = v;
+  const prev = view; view = v; if (typeof syncNbBtns === 'function') setTimeout(syncNbBtns, 0);
   c3.enabled = v === '3d' || v === 'render'; c2.enabled = v === '2d'; c4.enabled = v === 'sec'; renderer.clippingPlanes = v === 'sec' ? secClip() : [];
   if (v !== 'sec') $('#secBar').hidden = true;
   if (typeof buildLevelMarks === 'function') setTimeout(() => { buildLevelMarks(); buildDims(); buildDoorMarks(); }, 0);
@@ -197,13 +197,19 @@ function renderViewMenu(){
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
     <hr><div class="lbl">Thème de l'interface</div><div class="thm">${[['light', 'Clair'], ['dark', 'Sombre']].map(([k, n]) => `<button type="button" data-thm="${k}" aria-pressed="${(document.documentElement.dataset.theme || 'light') === k}">${n}</button>`).join('')}</div>
     <hr><div class="lbl">Afficher</div>
-    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['below', 'Niveau du dessous (plan : murs et escaliers)'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['below', 'Niveau du dessous en plan (estompé)'], ['above', 'Niveau du dessus en plan (estompé)'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : k === 'above' ? DISPLAY.above === true : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     ${layoutMenuHtml()}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function setTheme(t){ document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; try { localStorage.setItem('ap.theme', document.documentElement.dataset.theme); } catch(e){} }
 window.APTheme = setTheme;
-function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }
+/* boutons « Sup. » / « Inf. » : niveaux voisins affichés ou non (en plan : estompés ; en 3D : masqués) */
+function nbKeys(){ return view === '2d' ? ['above', 'below', false, true] : ['up3', 'low3', true, true]; }
+function syncNbBtns(){ const [ku, kd, du, dd] = nbKeys(), on = (k, d) => d ? DISPLAY[k] !== false : DISPLAY[k] === true;
+  $('#nbUp').setAttribute('aria-pressed', on(ku, du)); $('#nbDn').setAttribute('aria-pressed', on(kd, dd));
+  $('#nbUp').title = (on(ku, du) ? 'Masquer' : 'Afficher') + ' le niveau supérieur' + (view === '2d' ? ' (estompé)' : ''); $('#nbDn').title = (on(kd, dd) ? 'Masquer' : 'Afficher') + ' le niveau inférieur' + (view === '2d' ? ' (estompé)' : ''); }
+$('#nbTog').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const [ku, kd, du, dd] = nbKeys(), k = b.id === 'nbUp' ? ku : kd, d = b.id === 'nbUp' ? du : dd, cur = d ? DISPLAY[k] !== false : DISPLAY[k] === true; DISPLAY[k] = !cur; applyDisplay(); });
+function applyDisplay(){ syncNbBtns(); saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }
 $('#viewSet').addEventListener('click', e => {
   e.stopPropagation(); const m = $('#viewMenu'); if (!m.hidden){ m.hidden = true; return; }
   renderViewMenu(); m.hidden = false; const r = e.currentTarget.getBoundingClientRect();

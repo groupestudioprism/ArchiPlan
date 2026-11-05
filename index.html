@@ -1056,6 +1056,13 @@ a.ap-link{text-decoration:none}
 .vtools>.bar-h,.hud>.bar-h{align-self:flex-end}.hud>.bar-h{align-self:center}
 @media (max-width:860px){.bar-tools,.bar-panel{display:none}}
 @media (prefers-reduced-motion:reduce){.bar-h,.bar-h svg{transition:none}}
+
+.vgrp.cams{flex-wrap:wrap;max-width:min(340px,100%);justify-content:flex-end}
+
+.nbtog{display:inline-flex;gap:2px;padding:2px;pointer-events:auto}.nbtog button{border:0;background:transparent;border-radius:8px;height:26px;padding:0 8px;display:inline-flex;align-items:center;gap:4px;font:600 12px var(--f-body);color:var(--mut);cursor:pointer;transition:background .15s,color .15s}
+.nbtog button svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.nbtog button:hover{background:var(--chip)}
+.nbtog button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+body[data-mode="sec"] .nbtog,body[data-mode="render"] .nbtog{display:none}
 </style>
 
 <div id="splash" role="status" aria-live="polite">
@@ -1297,6 +1304,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     <div id="secBar" class="secbar" hidden></div>
     <div class="hud">
       <label class="pill"><span>Niveau</span><select id="lvlSel" aria-label="Niveau de travail"></select></label>
+      <span class="pill nbtog" id="nbTog" role="group" aria-label="Niveaux voisins"><button type="button" id="nbUp" aria-pressed="false" title="Afficher le niveau supérieur"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5"/></svg>Sup.</button><button type="button" id="nbDn" aria-pressed="true" title="Afficher le niveau inférieur"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg>Inf.</button></span>
       <label class="pill" id="typePill" hidden><span id="typeLbl">Type</span><select id="typeSel"></select><button type="button" class="spk-hud" id="typeFind" title="Rechercher (vapeur, isolant, ossature bois…)" aria-label="Rechercher"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button></label>
       <label class="pill" id="hPill" hidden><span id="hLbl">H</span><input id="hIn" type="number" step="0.05" inputmode="decimal" aria-label="Hauteur"><em>m</em></label>
       <label class="pill" id="skPill" hidden><span>Tracé</span><select id="skModeIn" aria-label="Mode d'esquisse"><option value="sel">Sélection / tirer</option><option value="rect">Rectangle</option><option value="line">Ligne / polygone</option><option value="circ">Cercle</option><option value="arc">Arc (3 points)</option><option value="free">Main levée (stylet)</option></select><button type="button" class="btn" id="skDone" style="height:28px;padding:0 10px">Terminer</button></label>
@@ -1313,7 +1321,7 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
     </div>
     <div class="vtools" role="toolbar" aria-label="Affichage">
       <div class="vgrp"><button data-style="shaded" title="Ombré" aria-pressed="false"><i class="sw-shaded"></i><span>Ombré</span></button><button data-style="textured" title="Matériaux" aria-pressed="false"><i class="sw-textured"></i><span>Matériaux</span></button><button data-style="realistic" title="Réaliste" aria-pressed="false"><i class="sw-realistic"></i><span>Réaliste</span></button><button data-style="sketch" title="Croquis" aria-pressed="false"><i class="sw-sketch"></i><span>Croquis</span></button><button data-style="wire" title="Filaire" aria-pressed="false"><i class="sw-wire"></i><span>Filaire</span></button><button data-style="xray" title="Rayons X" aria-pressed="false"><i class="sw-xray"></i><span>Rayons X</span></button></div>
-      <div class="vgrp cams"><button data-cam="iso" title="ISO">ISO</button><button data-cam="top" title="Dessus">Dessus</button><button data-cam="front" title="Face">Face</button><button data-cam="right" title="Droite">Droite</button><button data-cam="fit" title="Tout voir">Tout voir</button></div>
+      <div class="vgrp cams"><button data-cam="iso" title="ISO">ISO</button><button data-cam="top" title="Dessus">Dessus</button><button data-cam="bottom" title="Dessous">Dessous</button><button data-cam="front" title="Face : élévation sud">Face</button><button data-cam="right" title="Droite : élévation est">Droite</button><button data-cam="back" title="Arrière : élévation nord">Arrière</button><button data-cam="left" title="Gauche : élévation ouest">Gauche</button><button data-cam="fit" title="Tout voir">Tout voir</button></div>
       <div class="vgrp vset"><button id="viewSet" title="Paramètres d'affichage" aria-haspopup="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Affichage</span></button></div>
     </div>
     <div class="badge" id="coords">x 0,00 · y 0,00</div>
@@ -5533,8 +5541,13 @@ let gridMajor, gridMinor;
 const modelGroup = new THREE.Group(), previewGroup = new THREE.Group(), markGroup = new THREE.Group(), belowGroup = new THREE.Group();
 scene.add(modelGroup, previewGroup, markGroup, belowGroup);
 /* niveau du dessous en plan (murs et escaliers seulement, estompés, non sélectionnables) : repère pour placer les murs ; masqué si un sol existe sur le niveau courant */
-const belowOn = () => planOn() && curLvl > 0 && DISPLAY.below !== false && !state.els.some(e => e.kind === 'slab' && e.lvl === curLvl);
+const belowOn = () => !nbrOff && planOn() && curLvl > 0 && DISPLAY.below !== false && !state.els.some(e => e.kind === 'slab' && e.lvl === curLvl);
 const isBelowEl = el => el.lvl === curLvl - 1 && (el.kind === 'wall' || el.kind === 'stair');
+/* niveaux voisins : en plan, le niveau du dessous (par défaut) et/ou du dessus s'affichent estompés ; en 3D, on peut masquer ce qui est au-dessus et/ou au-dessous du niveau courant */
+let nbrOff = false;   // vrai pendant le rendu des planches : l'affichage ne dépend pas de ces réglages
+const aboveOn = () => !nbrOff && planOn() && DISPLAY.above === true && curLvl < state.levels.length - 1;
+const isAboveEl = el => el.lvl === curLvl + 1 && (el.kind === 'wall' || el.kind === 'stair');
+const nbrHidden = el => !nbrOff && !planOn() && ((DISPLAY.up3 === false && el.lvl > curLvl) || (DISPLAY.low3 === false && el.lvl < curLvl));
 
 /* Réglages d'affichage (enregistrés par appareil) */
 const DISPLAY = {style:'shaded', sunAz:215, sunEl:42, exposure:1.0, shadows:true, edges:true, bg:'', grid:true, dims:true};
@@ -5854,9 +5867,10 @@ function positionGrid(){
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
   rebuildSeq++; applyLinks(); disposeGroup(modelGroup); disposeGroup(belowGroup); geoGen++; geoBuilding = true;
-  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5, below = belowOn();
+  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5, below = belowOn(), above = aboveOn();
   for (const el of state.els){
-    const isB = plan && el.lvl !== curLvl && below && isBelowEl(el);
+    const isB = plan && el.lvl !== curLvl && ((below && isBelowEl(el)) || (above && isAboveEl(el)));
+    if (nbrHidden(el)) continue;
     if (plan && el.lvl !== curLvl && !isB) continue; // plan : seulement le niveau courant (et, estompé, le niveau du dessous)
     if (isHidden(el)) continue;
     const g = new THREE.Group(); g.userData.id = el.id;
@@ -5922,10 +5936,13 @@ function fit(){
   dirty = true;
 }
 function camPreset(k){
-  if (view === '2d') setView('3d');
+  /* Face / Droite / Arrière / Gauche : vraies élévations orthographiques (même rendu que les coupes), pas une perspective de face */
+  const EL = {front:'elev-S', right:'elev-E', back:'elev-N', left:'elev-O'};
+  if (EL[k] && typeof openSection === 'function'){ const d = secDefs().find(x => x.id === EL[k]); if (d && state.els.length){ openSection(d); return; } }
+  if (view === '2d' || view === 'sec'){ curSec = null; renderer.clippingPlanes = []; setView('3d'); }
   const b = bbox(), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3()), r = Math.max(s.x, s.z, s.y, 4) * 1.25 + 2;
   c3.target.copy(c);
-  const P = {iso:[-0.75, 0.8, 0.95], front:[0, 0.12, 1], right:[1, 0.12, 0], back:[0, 0.12, -1], left:[-1, 0.12, 0], top:[0.0001, 1, 0.0001]}[k] || [-0.75, 0.8, 0.95];
+  const P = {iso:[-0.75, 0.8, 0.95], front:[0, 0.12, 1], right:[1, 0.12, 0], back:[0, 0.12, -1], left:[-1, 0.12, 0], top:[0.0001, 1, 0.0001], bottom:[0.0001, -1, 0.0001]}[k] || [-0.75, 0.8, 0.95];
   const v = new THREE.Vector3(...P).normalize().multiplyScalar(r); persp.position.copy(c).add(v); c3.update(); dirty = true;
 }
 function resize(){
@@ -7650,7 +7667,7 @@ function sheetDefs(){
 async function renderSheetView(v, scale, dpi = scale <= 20 ? 110 : 150){
   const keep = {view, curLvl, curSec, sel, multi:multi.slice(), bg:scene.background, fog:scene.fog, clip:renderer.clippingPlanes, pr:renderer.getPixelRatio(), w:vpEl.clientWidth, h:vpEl.clientHeight,
     vis:[[gridMajor, gridMajor?.visible], [gridMinor, gridMinor?.visible], [markGroup, markGroup.visible], [previewGroup, previewGroup.visible], [terrainGroup, terrainGroup.visible]]};
-  sel = null; multi = [];
+  sel = null; multi = []; nbrOff = true;
   let cam, levelsLines = null;
   try {
     if (v.kind === 'plan'){ curLvl = v.lvl; curSec = null; if (view !== '2d') setView('2d'); rebuild({noPanel:true}); }
@@ -7694,7 +7711,7 @@ async function renderSheetView(v, scale, dpi = scale <= 20 ? 110 : 150){
       g.setLineDash([]); }
     return {url:cv.toDataURL('image/png'), wM:W, hM:D};
   } finally {
-    renderer.setPixelRatio(keep.pr); renderer.setSize(keep.w, keep.h, false); renderer.clippingPlanes = keep.clip; scene.background = keep.bg; scene.fog = keep.fog;
+    nbrOff = false; renderer.setPixelRatio(keep.pr); renderer.setSize(keep.w, keep.h, false); renderer.clippingPlanes = keep.clip; scene.background = keep.bg; scene.fog = keep.fog;
     keep.vis.forEach(([o, vv]) => { if (o) o.visible = vv; });
     curLvl = keep.curLvl; curSec = keep.curSec; sel = keep.sel; multi = keep.multi;
     if (keep.view === 'sec' && keep.curSec) openSection(keep.curSec); else { setView(keep.view); rebuild({noPanel:true}); }
@@ -11958,7 +11975,7 @@ document.getElementById('labels')?.addEventListener('wheel', ev => { ev.preventD
 /* ==== 80-main.js ==== */
 /* ============ Interface : modes, outils, barre d'état, clavier, menus ============ */
 function setView(v){
-  const prev = view; view = v;
+  const prev = view; view = v; if (typeof syncNbBtns === 'function') setTimeout(syncNbBtns, 0);
   c3.enabled = v === '3d' || v === 'render'; c2.enabled = v === '2d'; c4.enabled = v === 'sec'; renderer.clippingPlanes = v === 'sec' ? secClip() : [];
   if (v !== 'sec') $('#secBar').hidden = true;
   if (typeof buildLevelMarks === 'function') setTimeout(() => { buildLevelMarks(); buildDims(); buildDoorMarks(); }, 0);
@@ -12155,13 +12172,19 @@ function renderViewMenu(){
     <label class="bgs custom" title="Autre couleur"><input type="color" data-bgc value="${esc(DISPLAY.bg || '#ffffff')}" aria-label="Autre couleur"></label></div>
     <hr><div class="lbl">Thème de l'interface</div><div class="thm">${[['light', 'Clair'], ['dark', 'Sombre']].map(([k, n]) => `<button type="button" data-thm="${k}" aria-pressed="${(document.documentElement.dataset.theme || 'light') === k}">${n}</button>`).join('')}</div>
     <hr><div class="lbl">Afficher</div>
-    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['below', 'Niveau du dessous (plan : murs et escaliers)'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
+    ${[['grid', 'Grille'], ['dims', 'Cotes en plan'], ['edges', 'Arêtes (traits)'], ['shadows', 'Ombres portées'], ['below', 'Niveau du dessous en plan (estompé)'], ['above', 'Niveau du dessus en plan (estompé)'], ['terrain', 'Terrain (relief, courbes NGF)'], ['env', 'Environnement (bâti, arbres, routes)']].map(([k, n]) => `<label class="mi"><input type="checkbox" data-vopt="${k}"${(k === 'grid' ? DISPLAY.grid !== false && SNAP.grid : k === 'above' ? DISPLAY.above === true : DISPLAY[k] !== false) ? ' checked' : ''}> ${n}</label>`).join('')}
     ${layoutMenuHtml()}
     <p class="hint" style="margin:6px 10px 4px">Réglages mémorisés sur cet appareil.</p>`;
 }
 function setTheme(t){ document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; try { localStorage.setItem('ap.theme', document.documentElement.dataset.theme); } catch(e){} }
 window.APTheme = setTheme;
-function applyDisplay(){ saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }
+/* boutons « Sup. » / « Inf. » : niveaux voisins affichés ou non (en plan : estompés ; en 3D : masqués) */
+function nbKeys(){ return view === '2d' ? ['above', 'below', false, true] : ['up3', 'low3', true, true]; }
+function syncNbBtns(){ const [ku, kd, du, dd] = nbKeys(), on = (k, d) => d ? DISPLAY[k] !== false : DISPLAY[k] === true;
+  $('#nbUp').setAttribute('aria-pressed', on(ku, du)); $('#nbDn').setAttribute('aria-pressed', on(kd, dd));
+  $('#nbUp').title = (on(ku, du) ? 'Masquer' : 'Afficher') + ' le niveau supérieur' + (view === '2d' ? ' (estompé)' : ''); $('#nbDn').title = (on(kd, dd) ? 'Masquer' : 'Afficher') + ' le niveau inférieur' + (view === '2d' ? ' (estompé)' : ''); }
+$('#nbTog').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const [ku, kd, du, dd] = nbKeys(), k = b.id === 'nbUp' ? ku : kd, d = b.id === 'nbUp' ? du : dd, cur = d ? DISPLAY[k] !== false : DISPLAY[k] === true; DISPLAY[k] = !cur; applyDisplay(); });
+function applyDisplay(){ syncNbBtns(); saveDisplay(); resetMats(); applyThemeToScene(); rebuild({noPanel:true}); positionGrid(); buildLabels(); }
 $('#viewSet').addEventListener('click', e => {
   e.stopPropagation(); const m = $('#viewMenu'); if (!m.hidden){ m.hidden = true; return; }
   renderViewMenu(); m.hidden = false; const r = e.currentTarget.getBoundingClientRect();

@@ -15,7 +15,7 @@ function sheetDefs(){
 async function renderSheetView(v, scale, dpi = scale <= 20 ? 110 : 150){
   const keep = {view, curLvl, curSec, sel, multi:multi.slice(), bg:scene.background, fog:scene.fog, clip:renderer.clippingPlanes, pr:renderer.getPixelRatio(), w:vpEl.clientWidth, h:vpEl.clientHeight,
     vis:[[gridMajor, gridMajor?.visible], [gridMinor, gridMinor?.visible], [markGroup, markGroup.visible], [previewGroup, previewGroup.visible], [terrainGroup, terrainGroup.visible]]};
-  sel = null; multi = [];
+  sel = null; multi = []; nbrOff = true;
   let cam, levelsLines = null;
   try {
     if (v.kind === 'plan'){ curLvl = v.lvl; curSec = null; if (view !== '2d') setView('2d'); rebuild({noPanel:true}); }
@@ -59,7 +59,7 @@ async function renderSheetView(v, scale, dpi = scale <= 20 ? 110 : 150){
       g.setLineDash([]); }
     return {url:cv.toDataURL('image/png'), wM:W, hM:D};
   } finally {
-    renderer.setPixelRatio(keep.pr); renderer.setSize(keep.w, keep.h, false); renderer.clippingPlanes = keep.clip; scene.background = keep.bg; scene.fog = keep.fog;
+    nbrOff = false; renderer.setPixelRatio(keep.pr); renderer.setSize(keep.w, keep.h, false); renderer.clippingPlanes = keep.clip; scene.background = keep.bg; scene.fog = keep.fog;
     keep.vis.forEach(([o, vv]) => { if (o) o.visible = vv; });
     curLvl = keep.curLvl; curSec = keep.curSec; sel = keep.sel; multi = keep.multi;
     if (keep.view === 'sec' && keep.curSec) openSection(keep.curSec); else { setView(keep.view); rebuild({noPanel:true}); }

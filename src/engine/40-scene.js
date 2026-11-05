@@ -51,8 +51,13 @@ let gridMajor, gridMinor;
 const modelGroup = new THREE.Group(), previewGroup = new THREE.Group(), markGroup = new THREE.Group(), belowGroup = new THREE.Group();
 scene.add(modelGroup, previewGroup, markGroup, belowGroup);
 /* niveau du dessous en plan (murs et escaliers seulement, estompés, non sélectionnables) : repère pour placer les murs ; masqué si un sol existe sur le niveau courant */
-const belowOn = () => planOn() && curLvl > 0 && DISPLAY.below !== false && !state.els.some(e => e.kind === 'slab' && e.lvl === curLvl);
+const belowOn = () => !nbrOff && planOn() && curLvl > 0 && DISPLAY.below !== false && !state.els.some(e => e.kind === 'slab' && e.lvl === curLvl);
 const isBelowEl = el => el.lvl === curLvl - 1 && (el.kind === 'wall' || el.kind === 'stair');
+/* niveaux voisins : en plan, le niveau du dessous (par défaut) et/ou du dessus s'affichent estompés ; en 3D, on peut masquer ce qui est au-dessus et/ou au-dessous du niveau courant */
+let nbrOff = false;   // vrai pendant le rendu des planches : l'affichage ne dépend pas de ces réglages
+const aboveOn = () => !nbrOff && planOn() && DISPLAY.above === true && curLvl < state.levels.length - 1;
+const isAboveEl = el => el.lvl === curLvl + 1 && (el.kind === 'wall' || el.kind === 'stair');
+const nbrHidden = el => !nbrOff && !planOn() && ((DISPLAY.up3 === false && el.lvl > curLvl) || (DISPLAY.low3 === false && el.lvl < curLvl));
 
 /* Réglages d'affichage (enregistrés par appareil) */
 const DISPLAY = {style:'shaded', sunAz:215, sunEl:42, exposure:1.0, shadows:true, edges:true, bg:'', grid:true, dims:true};
@@ -372,9 +377,10 @@ function positionGrid(){
 let curLvl = 0, step = APP_PREFS.step || 0.05;
 function rebuild(opts = {}){
   rebuildSeq++; applyLinks(); disposeGroup(modelGroup); disposeGroup(belowGroup); geoGen++; geoBuilding = true;
-  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5, below = belowOn();
+  const plan = planOn(), cutZ = lvlZ(curLvl) + 1.5, below = belowOn(), above = aboveOn();
   for (const el of state.els){
-    const isB = plan && el.lvl !== curLvl && below && isBelowEl(el);
+    const isB = plan && el.lvl !== curLvl && ((below && isBelowEl(el)) || (above && isAboveEl(el)));
+    if (nbrHidden(el)) continue;
     if (plan && el.lvl !== curLvl && !isB) continue; // plan : seulement le niveau courant (et, estompé, le niveau du dessous)
     if (isHidden(el)) continue;
     const g = new THREE.Group(); g.userData.id = el.id;
@@ -440,10 +446,13 @@ function fit(){
   dirty = true;
 }
 function camPreset(k){
-  if (view === '2d') setView('3d');
+  /* Face / Droite / Arrière / Gauche : vraies élévations orthographiques (même rendu que les coupes), pas une perspective de face */
+  const EL = {front:'elev-S', right:'elev-E', back:'elev-N', left:'elev-O'};
+  if (EL[k] && typeof openSection === 'function'){ const d = secDefs().find(x => x.id === EL[k]); if (d && state.els.length){ openSection(d); return; } }
+  if (view === '2d' || view === 'sec'){ curSec = null; renderer.clippingPlanes = []; setView('3d'); }
   const b = bbox(), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3()), r = Math.max(s.x, s.z, s.y, 4) * 1.25 + 2;
   c3.target.copy(c);
-  const P = {iso:[-0.75, 0.8, 0.95], front:[0, 0.12, 1], right:[1, 0.12, 0], back:[0, 0.12, -1], left:[-1, 0.12, 0], top:[0.0001, 1, 0.0001]}[k] || [-0.75, 0.8, 0.95];
+  const P = {iso:[-0.75, 0.8, 0.95], front:[0, 0.12, 1], right:[1, 0.12, 0], back:[0, 0.12, -1], left:[-1, 0.12, 0], top:[0.0001, 1, 0.0001], bottom:[0.0001, -1, 0.0001]}[k] || [-0.75, 0.8, 0.95];
   const v = new THREE.Vector3(...P).normalize().multiplyScalar(r); persp.position.copy(c).add(v); c3.update(); dirty = true;
 }
 function resize(){
