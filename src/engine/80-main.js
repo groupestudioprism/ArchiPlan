@@ -45,7 +45,7 @@ $('#stepSel').addEventListener('change', e => { step = +e.target.value; position
 $('#cmdOk').addEventListener('click', runCmd);
 $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!e.target.value.trim() && tool === 'wall' && draw.start) cancelDraw(); else runCmd(); } else if (e.key === 'Escape'){ e.target.value = ''; e.target.blur(); cancelDraw(); } });
 $('#endBtn').addEventListener('click', cancelDraw);
-$('#closeBtn').addEventListener('click', () => { if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (tool === 'vol' && draw.poly?.length) return finishShapePoly(); if (tool === 'slab' && draw.poly?.length) return finishSlabPoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
+$('#closeBtn').addEventListener('click', () => { if (tool === 'stair' && draw.poly?.length) return finishStairPath(); if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (tool === 'vol' && draw.poly?.length) return finishShapePoly(); if (tool === 'slab' && draw.poly?.length) return finishSlabPoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
 
 /* barre d'état : accroches (façon AutoCAD) */
 function syncStatus(){
@@ -95,6 +95,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'dim' && dimMode === 'chain' && draw.dimPts?.length >= 2 && !draw.dimOff){ draw.dimOff = true; setPrompt(); updatePreview(); return; }
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
+  if (k === 'Enter' && tool === 'stair' && draw.poly?.length){ finishStairPath(); return; }
   if (k === 'Enter' && tool === 'vol' && draw.poly?.length >= 3 && !draw.ext){ finishShapePoly(); return; }
   if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }

@@ -5253,13 +5253,14 @@ function openFrameDialog(id){
           mat 'bois'|'beton'|'acier', R (rayon du colimaçon), rail (garde-corps / main courante), tremie (trémie auto dans le plancher d'arrivée)}
    Le tracé se construit « à la tortue » : volées droites et quarts tournants à marches rayonnantes (3 par quart). Hauteur de marche
    ≈ 17,5 cm, giron selon Blondel (2h + g ≈ 63 cm). Une trémie est découpée dans le plancher d'arrivée, au-dessus de l'escalier. */
-const STAIR_TYPES = {droit:'Droit', quart:'Quart tournant', demi:'Demi-tournant', tq:'Trois-quarts tournant', helico:'Hélicoïdal (colimaçon)'};
+const STAIR_TYPES = {perso:'Sur tracé libre', droit:'Droit', quart:'Quart tournant', demi:'Demi-tournant', tq:'Trois-quarts tournant', helico:'Hélicoïdal (colimaçon)'};
 const STAIR_MATS = {bois:'Bois (marches 45 mm, limons)', beton:'Béton (paillasse)', acier:'Acier et bois (limon central)'};   // ancien réglage, remplacé par STAIR_STYLES
 function stairH(el){ if (el.H > 0) return el.H; const z0 = lvlZ(el.lvl) + (el.off || 0), nxt = state.levels[el.lvl + 1]; return nxt ? Math.max(0.5, nxt.z - z0) : 2.8; }
 function stairDims(el){
   const H = stairH(el), hT = el.hs > 0.1 ? el.hs : (el.use === 'erp' ? 0.16 : 0.175), n = el.n >= 3 ? el.n | 0 : Math.max(3, Math.round(H / hT)), h = H / n;
   const g = el.g > 0.15 ? el.g : clamp(0.63 - 2 * h, el.use === 'erp' ? 0.28 : 0.24, 0.32);
-  return {H, n, h, g, blondel:2 * h + g};
+  const gp = el.st === 'perso' && el.path?.length >= 2 ? stairPathLen(el.path) / Math.max(1, n - 1) : g;   // tracé libre : giron moyen = longueur du tracé / nombre de marches
+  return {H, n, h, g:gp, blondel:2 * h + gp};
 }
 /* contrôles réglementaires et de confort (habitation : NF P 21-211 et usages ; ERP : arrêté du 25 juin 1980, art. CO 36 et AM ; accessibilité : arrêté du 20 avril 2017) */
 function stairCheck(el){
@@ -5294,8 +5295,27 @@ function stairTremie(el, slab){
 }
 const rotR = d => [d[1], -d[0]], rotL = d => [-d[1], d[0]];
 /* Marches dans le repère local (montée vers +y, emmarchement sur x ∈ [0, w]) : [{poly, walk:[x,y], outer:[[x,y]…]}] */
+const stairPathLen = P => P.reduce((t, q, i) => i ? t + Math.hypot(q[0] - P[i - 1][0], q[1] - P[i - 1][1]) : 0, 0);
+/* Escalier sur tracé libre : la ligne de foulée (points saisis) est balayée sur la largeur de l'escalier ; les marches sont réparties à égale distance, les angles donnent des marches balancées */
+function stairPathTreads(el, D){
+  const w = el.w || 0.9, P = el.path, right = (el.side || 'd') === 'd', nT = D.n - 1, hw = w / 2;
+  const dirs = P.slice(1).map((q, i) => { const dx = q[0] - P[i][0], dy = q[1] - P[i][1], l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }), cum = [0]; P.slice(1).forEach((q, i) => cum.push(cum[i] + Math.hypot(q[0] - P[i][0], q[1] - P[i][1])));
+  const off = P.map((q, i) => { const d0 = dirs[Math.max(0, i - 1)], d1 = dirs[Math.min(dirs.length - 1, i)], n0 = [d0[1], -d0[0]], n1 = [d1[1], -d1[0]], m = [n0[0] + n1[0], n0[1] + n1[1]], ml = Math.hypot(m[0], m[1]) || 1, k = Math.min(2.5, 2 / (ml * ml) * 1) ;
+    const mm = [m[0] / ml, m[1] / ml], dot = mm[0] * n0[0] + mm[1] * n0[1], f = hw / Math.max(0.4, dot); return {R:[q[0] + mm[0] * f, q[1] + mm[1] * f], L:[q[0] - mm[0] * f, q[1] - mm[1] * f]}; });
+  const at = (s, side) => { let i = 0; while (i < P.length - 2 && s > cum[i + 1]) i++; const t = clamp((s - cum[i]) / ((cum[i + 1] - cum[i]) || 1), 0, 1), a = off[i][side], b = off[i + 1][side]; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; };
+  const Lt = cum.at(-1), out = [];
+  for (let k = 0; k < nT; k++){
+    const s0 = Lt * k / nT, s1 = Lt * (k + 1) / nT, mids = []; cum.forEach((c, i) => { if (c > s0 + 1e-6 && c < s1 - 1e-6) mids.push(i); });
+    const poly = [at(s0, 'L'), at(s0, 'R'), ...mids.map(i => off[i].R), at(s1, 'R'), at(s1, 'L'), ...mids.slice().reverse().map(i => off[i].L)];
+    const c0 = [(at(s0, 'L')[0] + at(s0, 'R')[0]) / 2, (at(s0, 'L')[1] + at(s0, 'R')[1]) / 2], c1 = [(at(s1, 'L')[0] + at(s1, 'R')[0]) / 2, (at(s1, 'L')[1] + at(s1, 'R')[1]) / 2];
+    const sd = right ? 'L' : 'R';
+    out.push({poly, walk:[(c0[0] + c1[0]) / 2, (c0[1] + c1[1]) / 2], outer:[at(s0, sd), at(s1, sd)], inner:[at(s0, right ? 'R' : 'L'), at(s1, right ? 'R' : 'L')], k:k + 1});
+  }
+  return out;
+}
 function stairTreads(el){
   const D = stairDims(el), w = el.w || 0.9, nT = D.n - 1, st = el.st || 'droit', right = (el.side || 'd') === 'd';
+  if (st === 'perso' && el.path?.length >= 2) return stairPathTreads(el, D);
   if (st === 'helico'){
     const R = Math.max(0.6, el.R || 0.8), r0 = 0.08, rw = Math.max(r0 + 0.15, R * 0.62), dA = D.g * 0.92 / rw, out = [];
     for (let i = 0; i < nT; i++){ const a0 = i * dA * (right ? -1 : 1), a1 = (i + 1) * dA * (right ? -1 : 1), P = (r, a) => [r * Math.cos(a), r * Math.sin(a)];
@@ -5303,7 +5323,7 @@ function stairTreads(el){
       out.push({poly:[P(r0, a0), ...outer, P(r0, a1)], walk:P(rw, (a0 + a1) / 2), outer:[outer[0], outer[5]], k:i + 1}); }
     return out;
   }
-  const turns = {droit:0, quart:1, demi:2, tq:3}[st] ?? 0, pal = !!el.pal && turns > 0, kT = pal ? 1 : 3, rest = Math.max(0, nT - turns * kT); let k = 0;
+  const turns = {droit:0, quart:1, demi:2, tq:3, perso:0}[st] ?? 0, pal = !!el.pal && turns > 0, kT = pal ? 1 : 3, rest = Math.max(0, nT - turns * kT); let k = 0;
   const plan = turns === 0 ? [['f', nT]] : turns === 1 ? [['f', Math.ceil(rest / 2)], ['t'], ['f', Math.floor(rest / 2)]] : turns === 2 ? [['f', Math.ceil(rest / 2)], ['t'], ['t'], ['f', Math.floor(rest / 2)]]
     : (() => { const q = Math.floor(rest / 4), r = rest - q * 4, f = [0, 1, 2, 3].map(x => q + (x < r ? 1 : 0)); return [['f', f[0]], ['t'], ['f', f[1]], ['t'], ['f', f[2]], ['t'], ['f', f[3]]]; })();
   let A = [0, 0], B = [w, 0], d = [0, 1]; const out = [], add = (p, q) => [p[0] + q[0], p[1] + q[1]], mul = (p, s) => [p[0] * s, p[1] * s];
@@ -5344,7 +5364,8 @@ const STAIR_DESIGNS = [
   D_('Demi-tournant à limons', 'demi', 'lim1', 'barr'), D_('Demi-tournant à palier (en U)', 'demi', 'lim2', 'verre', {pal:true}), D_('Demi-tournant à crémaillère', 'demi', 'crem', 'cable'),
   D_('Demi-tournant béton', 'demi', 'pail', 'plein'), D_('Trois-quarts tournant à limons', 'tq', 'lim1', 'barr'), D_('Trois-quarts à paliers', 'tq', 'lim2', 'main', {pal:true}),
   D_('Hélicoïdal à fût central', 'helico', 'colim', 'barr'), D_('Hélicoïdal et verre', 'helico', 'colim', 'verre'), D_('Hélicoïdal à câbles', 'helico', 'colim', 'cable'),
-  D_('Échelle de meunier (pente raide)', 'droit', 'lim1', 'main', {w:0.6, hs:0.21, g:0.21})];
+  D_('Échelle de meunier (pente raide)', 'droit', 'lim1', 'main', {w:0.6, hs:0.21, g:0.21}),
+  D_('Sur tracé libre (cliquez le parcours)', 'perso', 'lim1', 'barr')];
 const stairStyle = el => STAIR_STYLES.find(x => x.id === el.sty) || STAIR_STYLES.find(x => x.mat === (el.mat || 'bois')) || STAIR_STYLES[0];
 const stairCfg = el => { const d = STAIR_DESIGNS[(el.dsg | 0) - 1]; return d ? d : {st:el.st || 'droit', str:(el.mat === 'beton' ? 'pail' : 'lim1'), balu:'main'}; };
 /* applique un design (et un style) à un escalier : forme, palier, contremarches, emmarchement, hauteur / giron imposés */
@@ -6443,6 +6464,7 @@ function updatePreview(){
     if (draw.start){ const r = rect(draw.start, cur); for (let i = 0; i < 4; i++) markGroup.add(lineObj(r[i], r[(i + 1) % 4], '#C0392B', s ? lvlZ(s.lvl) + (s.off || 0) + slabT(s) : null, false)); text = `Trou ${nf(Math.abs(cur[0] - draw.start[0]))} × ${nf(Math.abs(cur[1] - draw.start[1]))} m`; } else text = s ? `Dalle ${s.id} : premier coin du trou` : 'Survolez une dalle';
   }
   else if (tool === 'slab' && defs.slab.mode !== 'rect'){ const r = defs.slab.mode === 'room' ? roomAt(cur) : null; if (r){ const sh = r.poly; for (let i = 0; i < sh.length; i++) markGroup.add(lineObj(sh[i], sh[(i + 1) % sh.length], ac, null, false)); text = `${r.name} · ${nf(r.net, 2)} m² : cliquez pour poser la dalle`; } else text = defs.slab.mode === 'room' ? 'Survolez une pièce fermée' : 'Cliquez pour poser la dalle sous tous les murs du niveau'; }
+  else if (tool === 'stair' && defs.stair.st === 'perso'){ const pts = [...(draw.poly || []), cur]; if (draw.poly?.length){ const t = stairFromPath(pts); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); const D = stairDims(t); text = `Tracé libre · ${nf(stairPathLen(t.path), 2)} m · ${D.n} marches de ${nf(D.h * 100, 1)} cm · giron ${nf(D.g * 100, 0)} cm`; } else text = 'Cliquez le départ de l\'escalier'; }
   else if (tool === 'stair'){ const t = draw.start ? tempEl(draw.start, cur) : tempEl(cur, null); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); const D = stairDims(t); text = `${STAIR_TYPES[t.st]} · ${D.n} marches de ${nf(D.h * 100, 1)} cm${draw.start ? ` · ${nf(t.rot, 0)}°` : ''}`; if (draw.start) markGroup.add(makeMarker(draw.start, ac)); }
   else if (tool === 'dim') text = previewDim(cur, ac);
   else if (tool === 'vol'){
@@ -6630,7 +6652,7 @@ const PROMPTS = {
   roof:() => defs.roof.mode === 'free' ? (draw.poly?.length ? '<b>Toit (tracé libre)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Toit (tracé libre)</b> : premier point du contour, forme au choix') : defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
   mirror:() => !selIds().length ? '<b>Symétrie</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Symétrie</b> : second point de l\'axe' : '<b>Symétrie</b> : premier point de l\'axe de symétrie',
   cut:() => draw.start ? '<b>Coupe</b> : second point du trait de coupe (on regarde vers la gauche du trait)' : '<b>Coupe</b> : premier point du trait de coupe',
-  stair:() => draw.start ? '<b>Escalier</b> : direction de la montée (clic ou angle)' : '<b>Escalier</b> : point de départ (coin gauche de la première marche ; centre pour un colimaçon)',
+  stair:() => defs.stair.st === 'perso' ? (draw.poly?.length ? '<b>Escalier (tracé libre)</b> : point suivant du parcours (chaque angle crée des marches balancées) ; <kbd>Entrée</kbd> pour terminer' : '<b>Escalier (tracé libre)</b> : cliquez le départ puis les points du parcours') : draw.start ? '<b>Escalier</b> : direction de la montée (clic ou angle)' : '<b>Escalier</b> : point de départ (coin gauche de la première marche ; centre pour un colimaçon)',
   vol:() => draw.ext ? '<b>Forme</b> : montez la souris pour tirer la forme en hauteur, cliquez pour valider (ou tapez la hauteur puis <kbd>Entrée</kbd>)' : (defs.vol.shape === 'circ' ? (draw.start ? '<b>Cercle</b> : rayon (clic ou valeur)' : '<b>Cercle</b> : centre (au sol ou sur une face)') : defs.vol.shape === 'poly' ? (draw.poly?.length ? '<b>Polygone</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Polygone</b> : premier point (au sol ou sur une face)') : (draw.start ? '<b>Rectangle</b> : coin opposé, ou <code>L;l</code>' : '<b>Rectangle</b> : premier coin (au sol ou sur une face)')),
   col:() => '<b>Poteau</b> : position du centre (ou x;y)',
   beam:() => draw.start ? '<b>Poutre</b> : second appui (sous le plancher du niveau)' : '<b>Poutre</b> : premier appui',
@@ -6647,7 +6669,7 @@ const PROMPTS = {
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
-  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= (defs.roof.mode === 'free' ? 3 : 4)) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
+  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= (defs.roof.mode === 'free' ? 3 : 4)) || (tool === 'stair' && (draw.poly?.length || 0) >= 2) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
 function cancelDraw(){ draw.dimPts = null; draw.dimOff = false; draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); dimBarSync(); }
 function setTool(t){
@@ -6707,6 +6729,8 @@ function placePoint(pt){
     if (!draw.base) draw.base = pt; else if (V.len(V.sub(pt, draw.base)) > 0.05){ const A = draw.base; draw.base = null; applyMirror(A, pt); }
   } else if (tool === 'cut'){
     if (!S) draw.start = pt; else if (V.len(V.sub(pt, S)) > 0.1){ const a = S; draw.start = null; addCut(a, pt); return; }
+  } else if (tool === 'stair' && defs.stair.st === 'perso'){
+    draw.poly ??= []; if (!draw.poly.length || V.len(V.sub(pt, draw.poly.at(-1))) > 0.05) draw.poly.push(pt.slice()); updatePreview(); setPrompt();
   } else if (tool === 'stair'){
     if (!S) draw.start = pt; else { addEl(tempEl(S, pt)); draw.start = null; draw.workZ = null; rebuild(); }
   } else if (tool === 'roof' && defs.roof.mode !== 'rect'){
@@ -6848,6 +6872,11 @@ function roofFromPoly(pts){
   if (!isRect || t.free) t.poly = pts.map(q => [rnd(q[0]), rnd(q[1])]);
   roofFitWalls(t); return t;
 }
+function stairFromPath(pts){
+  const t = {kind:'stair', st:'perso', side:defs.stair.side, w:defs.stair.w, mat:defs.stair.mat, lvl:curLvl, off:offFromZ(), rail:true, tremie:true, R:0.8, rot:0, c:pts[0].slice(), path:pts.map(q => [rnd(q[0] - pts[0][0]), rnd(q[1] - pts[0][1])])};
+  stairApplyDesign(t, defs.stair.dsg, defs.stair.sty); t.st = 'perso'; return t;
+}
+function finishStairPath(){ const p = draw.poly || []; if (p.length < 2){ toast('Il faut au moins 2 points (départ et arrivée)'); return; } addEl(stairFromPath(p.slice())); draw.poly = null; draw.workZ = null; updatePreview(); setPrompt(); }
 function addRoof(pts){ const t = roofFromPoly(pts); addEl(t); if (t.free && polyConvexParts(t.poly).length > 1) toast('Contour concave : un toit par partie convexe, avec gouttière à la jonction'); }
 function finishRoofPoly(){ const p = draw.poly || []; if (p.length < (defs.roof.mode === 'free' ? 3 : 4)){ toast(`Il faut au moins ${defs.roof.mode === 'free' ? 3 : 4} points`); return; } addRoof(p.slice()); draw.poly = null; draw.workZ = null; updatePreview(); setPrompt(); }
 
@@ -11974,7 +12003,7 @@ $('#stepSel').addEventListener('change', e => { step = +e.target.value; position
 $('#cmdOk').addEventListener('click', runCmd);
 $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!e.target.value.trim() && tool === 'wall' && draw.start) cancelDraw(); else runCmd(); } else if (e.key === 'Escape'){ e.target.value = ''; e.target.blur(); cancelDraw(); } });
 $('#endBtn').addEventListener('click', cancelDraw);
-$('#closeBtn').addEventListener('click', () => { if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (tool === 'vol' && draw.poly?.length) return finishShapePoly(); if (tool === 'slab' && draw.poly?.length) return finishSlabPoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
+$('#closeBtn').addEventListener('click', () => { if (tool === 'stair' && draw.poly?.length) return finishStairPath(); if (tool === 'roof' && draw.poly?.length) return finishRoofPoly(); if (tool === 'vol' && draw.poly?.length) return finishShapePoly(); if (tool === 'slab' && draw.poly?.length) return finishSlabPoly(); if (draw.chainFirst) placePoint(draw.chainFirst.slice()); });
 
 /* barre d'état : accroches (façon AutoCAD) */
 function syncStatus(){
@@ -12024,6 +12053,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Enter' && tool === 'dim' && dimMode === 'chain' && draw.dimPts?.length >= 2 && !draw.dimOff){ draw.dimOff = true; setPrompt(); updatePreview(); return; }
   if (k === 'Enter' && tool === 'wall' && draw.start){ cancelDraw(); return; }
   if (k === 'Enter' && tool === 'roof' && draw.poly?.length){ finishRoofPoly(); return; }
+  if (k === 'Enter' && tool === 'stair' && draw.poly?.length){ finishStairPath(); return; }
   if (k === 'Enter' && tool === 'vol' && draw.poly?.length >= 3 && !draw.ext){ finishShapePoly(); return; }
   if (k === 'Enter' && tool === 'slab' && draw.poly?.length >= 3){ finishSlabPoly(); return; }
   if (tool !== 'select' && /^[0-9@.,<;\-]$/.test(k)){ e.preventDefault(); const c = $('#cmd'); c.value += k; c.focus(); return; }

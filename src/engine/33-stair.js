@@ -4,13 +4,14 @@
           mat 'bois'|'beton'|'acier', R (rayon du colimaçon), rail (garde-corps / main courante), tremie (trémie auto dans le plancher d'arrivée)}
    Le tracé se construit « à la tortue » : volées droites et quarts tournants à marches rayonnantes (3 par quart). Hauteur de marche
    ≈ 17,5 cm, giron selon Blondel (2h + g ≈ 63 cm). Une trémie est découpée dans le plancher d'arrivée, au-dessus de l'escalier. */
-const STAIR_TYPES = {droit:'Droit', quart:'Quart tournant', demi:'Demi-tournant', tq:'Trois-quarts tournant', helico:'Hélicoïdal (colimaçon)'};
+const STAIR_TYPES = {perso:'Sur tracé libre', droit:'Droit', quart:'Quart tournant', demi:'Demi-tournant', tq:'Trois-quarts tournant', helico:'Hélicoïdal (colimaçon)'};
 const STAIR_MATS = {bois:'Bois (marches 45 mm, limons)', beton:'Béton (paillasse)', acier:'Acier et bois (limon central)'};   // ancien réglage, remplacé par STAIR_STYLES
 function stairH(el){ if (el.H > 0) return el.H; const z0 = lvlZ(el.lvl) + (el.off || 0), nxt = state.levels[el.lvl + 1]; return nxt ? Math.max(0.5, nxt.z - z0) : 2.8; }
 function stairDims(el){
   const H = stairH(el), hT = el.hs > 0.1 ? el.hs : (el.use === 'erp' ? 0.16 : 0.175), n = el.n >= 3 ? el.n | 0 : Math.max(3, Math.round(H / hT)), h = H / n;
   const g = el.g > 0.15 ? el.g : clamp(0.63 - 2 * h, el.use === 'erp' ? 0.28 : 0.24, 0.32);
-  return {H, n, h, g, blondel:2 * h + g};
+  const gp = el.st === 'perso' && el.path?.length >= 2 ? stairPathLen(el.path) / Math.max(1, n - 1) : g;   // tracé libre : giron moyen = longueur du tracé / nombre de marches
+  return {H, n, h, g:gp, blondel:2 * h + gp};
 }
 /* contrôles réglementaires et de confort (habitation : NF P 21-211 et usages ; ERP : arrêté du 25 juin 1980, art. CO 36 et AM ; accessibilité : arrêté du 20 avril 2017) */
 function stairCheck(el){
@@ -45,8 +46,27 @@ function stairTremie(el, slab){
 }
 const rotR = d => [d[1], -d[0]], rotL = d => [-d[1], d[0]];
 /* Marches dans le repère local (montée vers +y, emmarchement sur x ∈ [0, w]) : [{poly, walk:[x,y], outer:[[x,y]…]}] */
+const stairPathLen = P => P.reduce((t, q, i) => i ? t + Math.hypot(q[0] - P[i - 1][0], q[1] - P[i - 1][1]) : 0, 0);
+/* Escalier sur tracé libre : la ligne de foulée (points saisis) est balayée sur la largeur de l'escalier ; les marches sont réparties à égale distance, les angles donnent des marches balancées */
+function stairPathTreads(el, D){
+  const w = el.w || 0.9, P = el.path, right = (el.side || 'd') === 'd', nT = D.n - 1, hw = w / 2;
+  const dirs = P.slice(1).map((q, i) => { const dx = q[0] - P[i][0], dy = q[1] - P[i][1], l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }), cum = [0]; P.slice(1).forEach((q, i) => cum.push(cum[i] + Math.hypot(q[0] - P[i][0], q[1] - P[i][1])));
+  const off = P.map((q, i) => { const d0 = dirs[Math.max(0, i - 1)], d1 = dirs[Math.min(dirs.length - 1, i)], n0 = [d0[1], -d0[0]], n1 = [d1[1], -d1[0]], m = [n0[0] + n1[0], n0[1] + n1[1]], ml = Math.hypot(m[0], m[1]) || 1, k = Math.min(2.5, 2 / (ml * ml) * 1) ;
+    const mm = [m[0] / ml, m[1] / ml], dot = mm[0] * n0[0] + mm[1] * n0[1], f = hw / Math.max(0.4, dot); return {R:[q[0] + mm[0] * f, q[1] + mm[1] * f], L:[q[0] - mm[0] * f, q[1] - mm[1] * f]}; });
+  const at = (s, side) => { let i = 0; while (i < P.length - 2 && s > cum[i + 1]) i++; const t = clamp((s - cum[i]) / ((cum[i + 1] - cum[i]) || 1), 0, 1), a = off[i][side], b = off[i + 1][side]; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; };
+  const Lt = cum.at(-1), out = [];
+  for (let k = 0; k < nT; k++){
+    const s0 = Lt * k / nT, s1 = Lt * (k + 1) / nT, mids = []; cum.forEach((c, i) => { if (c > s0 + 1e-6 && c < s1 - 1e-6) mids.push(i); });
+    const poly = [at(s0, 'L'), at(s0, 'R'), ...mids.map(i => off[i].R), at(s1, 'R'), at(s1, 'L'), ...mids.slice().reverse().map(i => off[i].L)];
+    const c0 = [(at(s0, 'L')[0] + at(s0, 'R')[0]) / 2, (at(s0, 'L')[1] + at(s0, 'R')[1]) / 2], c1 = [(at(s1, 'L')[0] + at(s1, 'R')[0]) / 2, (at(s1, 'L')[1] + at(s1, 'R')[1]) / 2];
+    const sd = right ? 'L' : 'R';
+    out.push({poly, walk:[(c0[0] + c1[0]) / 2, (c0[1] + c1[1]) / 2], outer:[at(s0, sd), at(s1, sd)], inner:[at(s0, right ? 'R' : 'L'), at(s1, right ? 'R' : 'L')], k:k + 1});
+  }
+  return out;
+}
 function stairTreads(el){
   const D = stairDims(el), w = el.w || 0.9, nT = D.n - 1, st = el.st || 'droit', right = (el.side || 'd') === 'd';
+  if (st === 'perso' && el.path?.length >= 2) return stairPathTreads(el, D);
   if (st === 'helico'){
     const R = Math.max(0.6, el.R || 0.8), r0 = 0.08, rw = Math.max(r0 + 0.15, R * 0.62), dA = D.g * 0.92 / rw, out = [];
     for (let i = 0; i < nT; i++){ const a0 = i * dA * (right ? -1 : 1), a1 = (i + 1) * dA * (right ? -1 : 1), P = (r, a) => [r * Math.cos(a), r * Math.sin(a)];
@@ -54,7 +74,7 @@ function stairTreads(el){
       out.push({poly:[P(r0, a0), ...outer, P(r0, a1)], walk:P(rw, (a0 + a1) / 2), outer:[outer[0], outer[5]], k:i + 1}); }
     return out;
   }
-  const turns = {droit:0, quart:1, demi:2, tq:3}[st] ?? 0, pal = !!el.pal && turns > 0, kT = pal ? 1 : 3, rest = Math.max(0, nT - turns * kT); let k = 0;
+  const turns = {droit:0, quart:1, demi:2, tq:3, perso:0}[st] ?? 0, pal = !!el.pal && turns > 0, kT = pal ? 1 : 3, rest = Math.max(0, nT - turns * kT); let k = 0;
   const plan = turns === 0 ? [['f', nT]] : turns === 1 ? [['f', Math.ceil(rest / 2)], ['t'], ['f', Math.floor(rest / 2)]] : turns === 2 ? [['f', Math.ceil(rest / 2)], ['t'], ['t'], ['f', Math.floor(rest / 2)]]
     : (() => { const q = Math.floor(rest / 4), r = rest - q * 4, f = [0, 1, 2, 3].map(x => q + (x < r ? 1 : 0)); return [['f', f[0]], ['t'], ['f', f[1]], ['t'], ['f', f[2]], ['t'], ['f', f[3]]]; })();
   let A = [0, 0], B = [w, 0], d = [0, 1]; const out = [], add = (p, q) => [p[0] + q[0], p[1] + q[1]], mul = (p, s) => [p[0] * s, p[1] * s];
@@ -95,7 +115,8 @@ const STAIR_DESIGNS = [
   D_('Demi-tournant à limons', 'demi', 'lim1', 'barr'), D_('Demi-tournant à palier (en U)', 'demi', 'lim2', 'verre', {pal:true}), D_('Demi-tournant à crémaillère', 'demi', 'crem', 'cable'),
   D_('Demi-tournant béton', 'demi', 'pail', 'plein'), D_('Trois-quarts tournant à limons', 'tq', 'lim1', 'barr'), D_('Trois-quarts à paliers', 'tq', 'lim2', 'main', {pal:true}),
   D_('Hélicoïdal à fût central', 'helico', 'colim', 'barr'), D_('Hélicoïdal et verre', 'helico', 'colim', 'verre'), D_('Hélicoïdal à câbles', 'helico', 'colim', 'cable'),
-  D_('Échelle de meunier (pente raide)', 'droit', 'lim1', 'main', {w:0.6, hs:0.21, g:0.21})];
+  D_('Échelle de meunier (pente raide)', 'droit', 'lim1', 'main', {w:0.6, hs:0.21, g:0.21}),
+  D_('Sur tracé libre (cliquez le parcours)', 'perso', 'lim1', 'barr')];
 const stairStyle = el => STAIR_STYLES.find(x => x.id === el.sty) || STAIR_STYLES.find(x => x.mat === (el.mat || 'bois')) || STAIR_STYLES[0];
 const stairCfg = el => { const d = STAIR_DESIGNS[(el.dsg | 0) - 1]; return d ? d : {st:el.st || 'droit', str:(el.mat === 'beton' ? 'pail' : 'lim1'), balu:'main'}; };
 /* applique un design (et un style) à un escalier : forme, palier, contremarches, emmarchement, hauteur / giron imposés */
