@@ -11648,17 +11648,19 @@ function openExport3D(kind, arg){
       <p class="hint" id="xInfo"></p></div></section></div>
     <footer class="ed-f"><span class="hint"></span><button class="btn" data-close>Annuler</button><button class="btn primary" id="xGo">Exporter</button></footer>`, 'mid');
   const sub = () => { const on = new Set([...d.querySelectorAll('[data-xl]')].filter(c => c.checked).map(c => +c.dataset.xl)); return state.els.filter(e => on.has(e.lvl)); };
-  const withEls = async fn => { const all = state.els, keep = sub(); state.els = keep; try { rebuild(); return await fn(); } finally { state.els = all; rebuild(); } };
+  /* sous-ensemble de niveaux : l'original est restauré dans tous les cas ; les appels sont mis en file (pas de chevauchement aperçu / export) */
+  let chain = Promise.resolve();
+  const withEls = (fn, keep) => { const run = async () => { const all = state.els; state.els = keep || sub(); try { rebuild(); return await fn(); } finally { state.els = all; rebuild(); } }; const r = chain.then(run, run); chain = r.catch(() => {}); return r; };
   let tm; const prev = () => { clearTimeout(tm); tm = setTimeout(async () => {
     const n = sub().length; d.querySelector('#xInfo').textContent = `${n} élément${n > 1 ? 's' : ''} exporté${n > 1 ? 's' : ''}`;
-    try { const b = await withEls(() => captureImage(1)); const u = URL.createObjectURL(b); const el = d.querySelector('#xPrev'); if (el){ el.style.backgroundImage = `url(${u})`; el.textContent = ''; } } catch(e){}
+    try { if (!d.isConnected) return; const b = await withEls(() => captureImage(1), sub()); const u = URL.createObjectURL(b); const el = d.querySelector('#xPrev'); if (el){ el.style.backgroundImage = `url(${u})`; el.textContent = ''; } } catch(e){}
   }, 250); };
   d.addEventListener('change', prev); prev();
   d.querySelector('#xGo').onclick = async () => {
     if (!sub().length) return toast('Sélectionnez au moins un niveau');
     EXPCFG.tex = d.querySelector('#xTex')?.checked ?? true; EXPCFG.glass = d.querySelector('#xGl')?.checked ?? true;
-    const q = +d.querySelector('#xqS')?.value || arg; closeEDlg();
-    await withEls(() => doExport(kind, q)); EXPCFG.tex = EXPCFG.glass = true;
+    const q = +d.querySelector('#xqS')?.value || arg, keep = sub(); closeEDlg();   // la sélection est lue AVANT la fermeture (sinon le modèle exporté est vide)
+    await withEls(() => doExport(kind, q), keep); EXPCFG.tex = EXPCFG.glass = true;
   };
 }
 /* Aperçu en direct du DQE : le document est recalculé à chaque changement d'option */
