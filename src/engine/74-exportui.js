@@ -28,31 +28,55 @@ function openExport3D(kind, arg){
     await withEls(() => doExport(kind, q), keep); EXPCFG.tex = EXPCFG.glass = true;
   };
 }
-/* Aperçu en direct du DQE : le document est recalculé à chaque changement d'option */
-(() => { const orig = openDqeExport;
-  openDqeExport = function(){
-    orig(); const d = document.querySelector('.ed-dlg, dialog[open], .edlg') || document.body, body = document.querySelector('.dqe-x'); if (!body) return;
-    const st0 = {...DQE_STYLE0, ...(state.dqe?.style || {})}, sec2 = body.children[1];
-    const opt = (o, v) => Object.entries(o).map(([k, x]) => `<option value="${k}"${k == v ? ' selected' : ''}>${Array.isArray(x) ? x[0] : x}</option>`).join('');
-    const g = document.createElement('div'); g.className = 'grp'; g.innerHTML = `<h3>Style du PDF</h3><div class="fields">
-      <label class="f"><span>Couleur d'accent</span><span class="in"><input type="color" data-dxs="ac" value="${st0.ac}"></span></label>
-      <label class="f"><span>Couleur du texte et titres</span><span class="in"><input type="color" data-dxs="dk" value="${st0.dk}"></span></label>
-      <label class="f"><span>Police</span><span class="in"><select data-dxs="font">${opt(DQE_FONTS, st0.font)}</select></span></label>
-      <label class="f"><span>Corps (pt)</span><span class="in"><select data-dxs="size">${[8, 9, 9.5, 10, 11, 12].map(v => `<option${v == st0.size ? ' selected' : ''}>${v}</option>`).join('')}</select></span></label>
-      <label class="f"><span>Papier</span><span class="in"><select data-dxs="paper">${opt({A4:'A4', A3:'A3', Letter:'Letter'}, st0.paper)}</select></span></label>
-      <label class="f"><span>Orientation</span><span class="in"><select data-dxs="orient">${opt({auto:'Automatique', portrait:'Portrait', landscape:'Paysage'}, st0.orient)}</select></span></label>
-      <label class="f"><span>Marges (mm)</span><span class="in"><select data-dxs="margin">${[8, 10, 12, 15, 20, 25].map(v => `<option${v == st0.margin ? ' selected' : ''}>${v}</option>`).join('')}</select></span></label>
-      <label class="f"><span>Filigrane</span><span class="in"><input type="text" data-dxs="mark" value="${esc(st0.mark)}" placeholder="ex. PROVISOIRE" style="font-family:var(--f-body)"></span></label></div>
-      <label class="ap-check2"><input type="checkbox" data-dxs="zebra"${st0.zebra ? ' checked' : ''}> Lignes alternées (zébrage)</label>`;
-    if (sec2) sec2.appendChild(g);
-    const readStyle = () => { const o = {}; body.querySelectorAll('[data-dxs]').forEach(c => { const k = c.dataset.dxs; o[k] = c.type === 'checkbox' ? c.checked : (['size', 'margin'].includes(k) ? +c.value : c.value); }); return o; };
-    const box = document.createElement('section'); box.innerHTML = '<div class="grp" style="margin-top:0"><h3>Aperçu</h3><iframe id="dxPrev" style="width:100%;height:420px;border:1px solid var(--line,#ddd);border-radius:8px;background:#fff"></iframe></div>'; body.appendChild(box);
-    body.style.gridTemplateColumns = 'minmax(260px,1fr) minmax(260px,1fr) minmax(300px,1.4fr)'; body.style.display = 'grid'; body.style.gap = '16px';
-    const upd = () => { const o = {}; body.querySelectorAll('[data-dxo]').forEach(c => o[c.dataset.dxo] = c.checked);
-      const off = [...body.querySelectorAll('[data-dxlot]')].filter(c => !c.checked).map(c => c.dataset.dxlot), bak = state.dqe;
-      state.dqe = {...(bak || {}), pu:bak?.pu || {}, opts:o, lotsOff:off, title:body.querySelector('#dxT').value, mo:body.querySelector('#dxMo').value, by:body.querySelector('#dxBy').value, tva:+body.querySelector('#dxTva').value, style:readStyle()};
-      try { body.querySelector('#dxPrev').srcdoc = dqeHTML(); } finally { state.dqe = bak; } };
-    const sv = () => { state.dqe = {...(state.dqe || {}), style:readStyle()}; };
-    body.addEventListener('input', sv); body.addEventListener('change', sv); body.addEventListener('input', upd); body.addEventListener('change', upd); upd();
-  };
-})();
+/* Export du DQE : interface refaite. Format en cartes, sections repliables (document, lots avec montants, colonnes, prix et TVA, style du PDF),
+   aperçu du document recalculé à chaque changement, totaux HT / TVA / TTC en pied. */
+openDqeExport = function(){
+  const items = dqeItems(), groups = dqeGroups(items), D0 = state.dqe || {}, st0 = {...DQE_STYLE0, ...(D0.style || {})};
+  const o0 = {...Object.fromEntries(DQE_OPTS.map(([k, , d]) => [k, d])), ...(D0.opts || {})};
+  const lotsOn = new Set(D0.lotsOff ? groups.map(g => g.code).filter(c => !D0.lotsOff.includes(c)) : groups.map(g => g.code));
+  const fmtE = v => nf(v, 2) + ' €', opt = (o, v) => Object.entries(o).map(([k, x]) => `<option value="${k}"${k == v ? ' selected' : ''}>${Array.isArray(x) ? x[0] : x}</option>`).join('');
+  const FM = {xlsx:['Excel', '.xlsx', 'Tableur : formules, lots en feuilles, prêt à chiffrer'], pdf:['PDF', 'impression', 'Document mis en page : en-tête, lots, totaux'], csv:['CSV', '.csv', 'Données brutes pour un autre logiciel']};
+  const fmt0 = D0.fmt || 'xlsx';
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Métré</span><h3 class="ed-t2">Exporter le DQE</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="dqx"><aside class="dqx-l">
+      <div class="dqx-fm" role="radiogroup" aria-label="Format">${Object.entries(FM).map(([k, [n, ext, sub]]) => `<button type="button" role="radio" data-fmt="${k}" aria-checked="${k === fmt0}"><b>${n}</b><em>${ext}</em><small>${sub}</small></button>`).join('')}</div>
+      <details open class="dqx-s"><summary>Document</summary><div class="fields">
+        <label class="f wide"><span>Titre</span><span class="in"><input id="dxT" type="text" value="${esc(D0.title || 'DQE · ' + state.name)}" style="font-family:var(--f-body)"></span></label>
+        <label class="f"><span>Maître d'ouvrage</span><span class="in"><input id="dxMo" type="text" value="${esc(D0.mo || '')}" style="font-family:var(--f-body)"></span></label>
+        <label class="f"><span>Rédigé par</span><span class="in"><input id="dxBy" type="text" value="${esc(D0.by || '')}" style="font-family:var(--f-body)"></span></label></div>
+        ${state.site?.label ? `<p class="hint">Lieu : ${esc(state.site.label)}</p>` : ''}</details>
+      <details open class="dqx-s"><summary>Lots <em id="dxLn"></em></summary>
+        <div class="dqx-bar"><button type="button" class="chip" data-lotall="1">Tout</button><button type="button" class="chip" data-lotall="0">Aucun</button></div>
+        <div class="dqx-lots">${groups.map(g => `<label class="dqx-lot"><input type="checkbox" data-dxlot="${g.code}"${lotsOn.has(g.code) ? ' checked' : ''}><span><b>${g.code}</b> ${esc(g.name)}</span><em>${g.items.length} art.</em><i>${fmtE(g.total)}</i></label>`).join('')}</div></details>
+      <details class="dqx-s"><summary>Colonnes et contenu</summary><div class="dqx-chips">${DQE_OPTS.map(([k, n]) => `<label class="dqx-chip"><input type="checkbox" data-dxo="${k}"${o0[k] ? ' checked' : ''}><span>${n}</span></label>`).join('')}</div></details>
+      <details class="dqx-s"><summary>Prix et TVA</summary><div class="fields"><label class="f"><span>TVA</span><span class="in"><select id="dxTva">${[20, 10, 5.5, 0].map(t => `<option value="${t}"${(D0.tva ?? 20) == t ? ' selected' : ''}>${nf(t, 1)} %</option>`).join('')}</select></span></label></div>
+        <p class="hint">Les prix unitaires se saisissent dans l'onglet Métré · DQE ; ici on choisit seulement le taux.</p></details>
+      <details class="dqx-s" id="dxStyle"><summary>Style du PDF</summary><div class="fields">
+        <label class="f"><span>Couleur d'accent</span><span class="in"><input type="color" data-dxs="ac" value="${st0.ac}"></span></label>
+        <label class="f"><span>Texte et titres</span><span class="in"><input type="color" data-dxs="dk" value="${st0.dk}"></span></label>
+        <label class="f"><span>Police</span><span class="in"><select data-dxs="font">${opt(DQE_FONTS, st0.font)}</select></span></label>
+        <label class="f"><span>Corps (pt)</span><span class="in"><select data-dxs="size">${[8, 9, 9.5, 10, 11, 12].map(v => `<option${v == st0.size ? ' selected' : ''}>${v}</option>`).join('')}</select></span></label>
+        <label class="f"><span>Papier</span><span class="in"><select data-dxs="paper">${opt({A4:'A4', A3:'A3', Letter:'Letter'}, st0.paper)}</select></span></label>
+        <label class="f"><span>Orientation</span><span class="in"><select data-dxs="orient">${opt({auto:'Automatique', portrait:'Portrait', landscape:'Paysage'}, st0.orient)}</select></span></label>
+        <label class="f"><span>Marges (mm)</span><span class="in"><select data-dxs="margin">${[8, 10, 12, 15, 20, 25].map(v => `<option${v == st0.margin ? ' selected' : ''}>${v}</option>`).join('')}</select></span></label>
+        <label class="f"><span>Filigrane</span><span class="in"><input type="text" data-dxs="mark" value="${esc(st0.mark)}" placeholder="ex. PROVISOIRE" style="font-family:var(--f-body)"></span></label></div>
+        <label class="ap-check2"><input type="checkbox" data-dxs="zebra"${st0.zebra ? ' checked' : ''}> Lignes alternées (zébrage)</label></details>
+    </aside><section class="dqx-r"><div class="dqx-ph"><b>Aperçu</b><span class="hint" id="dxPh"></span></div><iframe id="dxPrev" title="Aperçu du DQE"></iframe></section></div>
+    <footer class="ed-f"><span class="dqx-sum" id="dxSum"></span><button class="btn" data-close>Annuler</button><button class="btn primary" id="dxGo">Exporter</button></footer>`, 'wide');
+  const q = s => d.querySelector(s); let fmt = fmt0;
+  const readStyle = () => { const o = {}; d.querySelectorAll('[data-dxs]').forEach(c => { const k = c.dataset.dxs; o[k] = c.type === 'checkbox' ? c.checked : (['size', 'margin'].includes(k) ? +c.value : c.value); }); return o; };
+  const read = () => { const o = {}; d.querySelectorAll('[data-dxo]').forEach(c => o[c.dataset.dxo] = c.checked);
+    return {...(state.dqe || {}), pu:state.dqe?.pu || {}, opts:o, lotsOff:[...d.querySelectorAll('[data-dxlot]')].filter(c => !c.checked).map(c => c.dataset.dxlot), title:q('#dxT').value.trim(), mo:q('#dxMo').value.trim(), by:q('#dxBy').value.trim(), tva:+q('#dxTva').value, style:readStyle(), fmt}; };
+  const upd = () => {
+    const on = groups.filter(g => d.querySelector(`[data-dxlot="${g.code}"]`)?.checked), ht = on.reduce((t, g) => t + g.total, 0), tva = +q('#dxTva').value, n = on.reduce((t, g) => t + g.items.length, 0);
+    q('#dxLn').textContent = `${on.length}/${groups.length}`; q('#dxSum').innerHTML = `${n} article${n > 1 ? 's' : ''} · <b>HT ${fmtE(ht)}</b> · TVA ${nf(tva, 1)} % ${fmtE(ht * tva / 100)} · <b>TTC ${fmtE(ht * (1 + tva / 100))}</b>`;
+    q('#dxGo').textContent = `Exporter en ${FM[fmt][0]}`; q('#dxStyle').hidden = fmt !== 'pdf';
+    d.querySelectorAll('[data-fmt]').forEach(b => b.setAttribute('aria-checked', b.dataset.fmt === fmt));
+    if (!n){ q('#dxPrev').srcdoc = '<p style="font:14px sans-serif;color:#666;padding:20px">Aucun lot sélectionné : cochez au moins un lot.</p>'; q('#dxGo').disabled = true; return; } q('#dxGo').disabled = false;
+    const bak = state.dqe; state.dqe = read(); try { q('#dxPrev').srcdoc = dqeHTML(); q('#dxPh').textContent = fmt === 'pdf' ? 'tel qu\'imprimé' : 'présentation indicative du contenu exporté'; } catch(e){ q('#dxPh').textContent = 'aperçu indisponible'; } finally { state.dqe = bak; } };
+  let tm; const later = () => { clearTimeout(tm); tm = setTimeout(upd, 160); };
+  d.addEventListener('input', later); d.addEventListener('change', later);
+  d.addEventListener('click', e => { const f = e.target.closest('[data-fmt]'); if (f){ fmt = f.dataset.fmt; upd(); return; } const a = e.target.closest('[data-lotall]'); if (a){ d.querySelectorAll('[data-dxlot]').forEach(c => c.checked = a.dataset.lotall === '1'); upd(); } });
+  q('#dxGo').onclick = () => { state.dqe = read(); save(); closeEDlg(); doExport('dqe', fmt); };
+  upd();
+};
