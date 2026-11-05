@@ -103,7 +103,12 @@ function buildIFC(){
     const eid = E(`IFCSTAIR('${guid()}',$,${ifcS(`Escalier ${el.id}`)},${ifcS(STAIR_TYPES[el.st || 'droit'])},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape(items)},${ifcS(String(el.id))},.NOTDEFINED.)`);
     E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${eid}),${imat(el.mat === 'beton' ? 'beton' : el.mat === 'acier' ? 'acier' : 'chene')})`); st.items.push(eid);
   }
-  for (const el of state.els.filter(e => e.kind !== 'inst' && e.kind !== 'roof' && e.kind !== 'stair')){
+  for (const el of state.els.filter(e => e.kind === 'net')){
+    const st = storeys[el.lvl], rel = lvlZ(el.lvl), pcs = pieces(el).filter(pc => pc.top), items = pcs.map(pc => brep(pc.top, pc.ext, rel)); if (!items.length || !st) continue;
+    const eid = E(`IFCBUILDINGELEMENTPROXY('${guid()}',$,${ifcS(netName(el))},${ifcS(NET_SYS[el.sys]?.n || '')},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape(items)},${ifcS(String(el.id))},.NOTDEFINED.)`);
+    E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${eid}),${imat(pcs[0].mat)})`); st.items.push(eid);
+  }
+  for (const el of state.els.filter(e => e.kind !== 'inst' && e.kind !== 'roof' && e.kind !== 'stair' && e.kind !== 'net')){
     const st = storeys[el.lvl], rel = lvlZ(el.lvl);
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }

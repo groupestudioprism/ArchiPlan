@@ -1083,6 +1083,21 @@ body[data-mode="sec"] .nbtog,body[data-mode="render"] .nbtog{display:none}
 .dqx-chip input:checked+span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}.dqx-chip input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
 .dqx-sum{margin-right:auto;font-size:12.5px;color:var(--mut)}.dqx-sum b{color:var(--ink)}
 @media (max-width:860px){.dqx{grid-template-columns:1fr;height:auto}.dqx-r{min-height:320px}.dqx-l{border-right:0}}
+
+/* Équipements techniques (MEP) */
+.mep-alert{background:#FEF3C7;border:1px solid #F59E0B;color:#78350F;border-radius:8px;padding:10px 12px;margin:0 0 12px;font-size:13px}
+.mep-rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin:10px 0}
+.mep-room{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted,#667)}
+.mep-room.un input{border-color:#F59E0B;background:#FFFBEB}
+.mep-room input{padding:6px 8px;border:1px solid var(--line,#d5d9e0);border-radius:6px;font:inherit;color:var(--ink,#111)}
+.mepx{display:grid;grid-template-columns:230px minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:12px;flex:1;min-height:0;padding:12px 16px}
+.mepx-l{overflow:auto;min-height:0}.mepx-r{display:flex;flex-direction:column;min-height:0;gap:6px}
+.mepx-r canvas{flex:1;min-height:0;height:auto}
+@media (max-width:860px){.mepx{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(320px,1fr);overflow:auto}}
+.mepx-pal{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start}
+.mepx-pal button{padding:4px 6px;font-size:11px;border:1px solid var(--line,#d5d9e0);border-radius:6px;background:var(--panel,#fff);cursor:pointer}
+.mepx-pal button.on{outline:2px solid var(--accent,#2563eb)}
+.mepx canvas{width:100%;border:1px solid var(--line,#d5d9e0);border-radius:8px;background:#fff}
 </style>
 
 <div id="splash" role="status" aria-live="polite">
@@ -4554,8 +4569,8 @@ const MAT_CHIPS = [['isolant', 'Isolants'], ['vapeur', 'Pare-vapeur'], ['porteur
               inst {fam,type,params,host?,t?,c?,rot,lvl,off,flip,mirror} (famille posée ; hébergée dans un mur si host)
    Bibliothèques : base (code) < bibliothèque personnelle (compte, cloud) < bibliothèque du projet. Un élément de bibliothèque
    utilisé par le projet est copié dans state.lib : le projet reste lisible chez un invité qui n'a pas la même bibliothèque. */
-const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Forme', col:'Poteau', inst:'Composant', sk:'Esquisse 3D'};
-const LOT_ORDER = ['Gros œuvre', 'Couverture', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Industrie'];
+const KIND_NAME = {wall:'Mur', slab:'Dalle', roof:'Toiture', stair:'Escalier', vol:'Forme', col:'Poteau', inst:'Composant', sk:'Esquisse 3D', net:'Réseau'};
+const LOT_ORDER = ['Gros œuvre', 'Couverture', 'Second œuvre', 'Menuiseries', 'Mobilier et équipements', 'Plomberie', 'Électricité', 'Ventilation', 'Chauffage', 'Industrie'];
 const DEFAULT_LEVELS = [{n:'RDC', z:0}, {n:'R+1', z:2.8}, {n:'R+2', z:5.6}];
 let USER_LIB = {mats:{}, compos:{}, fams:{}};
 let state, sel = null, multi = [];
@@ -4707,7 +4722,7 @@ const area = poly => { let a = 0; for (let i = 0; i < poly.length; i++){ const p
 function colPoly(c){ const hw = c.w/2, hd = c.d/2; return [[c.c[0]-hw,c.c[1]-hd],[c.c[0]+hw,c.c[1]-hd],[c.c[0]+hw,c.c[1]+hd],[c.c[0]-hw,c.c[1]+hd]]; }
 
 /* ---------- familles ---------- */
-const famLot = F => ({Portes:'Menuiseries', 'Fenêtres':'Menuiseries', Ouvertures:'Menuiseries', Structure:'Gros œuvre', 'Escaliers et garde-corps':'Gros œuvre', Industrie:'Industrie'})[F?.cat] || 'Mobilier et équipements';
+const famLot = F => ({Plomberie:'Plomberie', 'Électricité':'Électricité', Ventilation:'Ventilation', Chauffage:'Chauffage', Portes:'Menuiseries', 'Fenêtres':'Menuiseries', Ouvertures:'Menuiseries', Structure:'Gros œuvre', 'Escaliers et garde-corps':'Gros œuvre', Industrie:'Industrie'})[F?.cat] || 'Mobilier et équipements';
 function famScope(F, el){
   const s = {};
   for (const [k, p] of Object.entries(F.params || {})) s[k] = +p.v;
@@ -4788,6 +4803,7 @@ function wallOpenings(w, els = state.els){
 // Décompose un élément en "pièces" homogènes : un matériau, un contour plan, une base et une hauteur
 function pieces(el, els = state.els){
   if (el.kind === 'sk') return skPieces(el);
+  if (el.kind === 'net') return typeof netPieces === 'function' ? netPieces(el) : [];
   if (el.kind === 'roof') return roofPieces(el);
   if (el.kind === 'stair') return stairPieces(el);
   const z = lvlZ(el.lvl) + (el.off || 0), out = [];
@@ -8886,6 +8902,7 @@ function renderProps(){
       ${joineryProjectCard()}
       ${fireProjectCard()}
       ${checksCard()}
+      ${typeof mepCard === 'function' ? mepCard() : ''}
       <div class="grp"><h3>Niveaux</h3><div class="lvls">${state.levels.map((l, i) => `<div class="lv${i === curLvl ? ' cur' : ''}"><input data-lvn="${i}" value="${esc(l.n)}" aria-label="Nom du niveau"><span class="in"><input data-lvz="${i}" type="number" step="0.01" value="${rnd(l.z)}" aria-label="Altitude"><em>m</em></span>${state.levels.length > 1 ? `<button class="x" data-lvdel="${i}" title="Supprimer le niveau" aria-label="Supprimer le niveau ${esc(l.n)}">×</button>` : ''}</div>`).join('')}</div>
         <div class="btns"><button class="btn" data-act="lvl-add">+ Niveau</button><button class="btn" data-act="levels">Gérer les niveaux…</button></div></div>
       <details class="help"><summary>Aide : saisie précise et raccourcis</summary><div class="grp"><h3>Saisie précise</h3><dl class="syntax">
@@ -8978,6 +8995,8 @@ function renderProps(){
     h += paintFields(el);
     h += `</div><div class="grp"><h3>Quantités</h3><dl class="kv"><dt>Volume</dt><dd>${nf(v, 4)} m³</dd><dt>Masse volumique</dt><dd>${n0(mat(el.mat).rho)} kg/m³</dd><dt>Masse</dt><dd class="big">${nf(m, 1)} kg</dd><dt>Carbone</dt><dd>${n0(m * (mat(el.mat).gwp || 0))} kg CO₂e</dd></dl></div>
       <div class="btns"><button class="btn primary" data-act="mkcomp">Créer un composant…</button><button class="btn" data-act="tool-push">Pousser / Tirer</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+  } else if (el.kind === 'net'){
+    h += netPanel(el);
   } else if (el.kind === 'sk'){
     const n = skN(el.fr), A = Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0);
     h += matSelect('Matériau', 'mat', el.mat) + field('Épaisseur (extrusion)', 'skd', el.d, 'm', '0.005') + selectField('Niveau', 'lvl', lvlOpts(), el.lvl, false) + field('Décalage', 'off', el.off, 'm');
@@ -9201,6 +9220,10 @@ $('#pbody').addEventListener('click', e => {
   else if (act === 'add-opening' && el){ libTab = 'fams'; libPath = ['Fenêtres']; libCat = 'Fenêtres'; activeTab = 'lib'; renderPanel(); toast('Choisissez une porte ou une fenêtre, puis cliquez dans le mur'); }
   else if (act === 'compose' && el) openComposer({id:el.type, apply:el.id});
   else if (act === 'checks') openChecks();
+  else if (act === 'mepAuto') mepStart();
+  else if (act === 'mepNets') mepGenerateNets();
+  else if (act === 'mepClear') mepClear();
+  else if (act === 'mepLib'){ libTab = 'fams'; libPath = ['Électricité']; libCat = 'Électricité'; activeTab = 'lib'; renderPanel(); toast('Choisissez un équipement (électricité, plomberie, ventilation, chauffage) puis cliquez dans le plan'); }
   else if (act === 'addbeam') setTool('beam');
   else if (act === 'insul' && el) openInsulAdjust(el.id);
   else if (act === 'stairGallery' && el) openStairGallery(el.id);
@@ -9914,7 +9937,7 @@ $('#paintFind')?.addEventListener('click', e => { e.preventDefault(); hudPickerF
 /* ============ Arborescence du projet (niveaux → catégories → éléments), menus ⋮, ajustement de l'isolant ============ */
 const treeOpen = new Set(['P', 'L0', 'L0|wall', 'L0|slab', 'L0|roof', 'L0|inst']);
 let treeQuery = '';
-const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['stair', 'Escaliers'], ['col', 'Poteaux'], ['vol', 'Formes et volumes'], ['sk', 'Esquisses 3D'], ['inst', 'Composants et mobilier']];
+const TREE_CATS = [['wall', 'Murs et cloisons'], ['slab', 'Dalles et planchers'], ['roof', 'Toitures'], ['stair', 'Escaliers'], ['col', 'Poteaux'], ['vol', 'Formes et volumes'], ['sk', 'Esquisses 3D'], ['inst', 'Composants et mobilier'], ['net', 'Réseaux (plomberie, électricité, ventilation, chauffage)']];
 const TICON = {
   wall:'M3 7h18v10H3zM3 12h18M9 7v5M15 12v5', slab:'M3 14l9-5 9 5-9 5zM3 14v2l9 5 9-5v-2', roof:'M2 12l10-7 10 7M5 10v10h14V10', stair:'M3 20h5v-4h4v-4h4V8h5M3 20V9', col:'M9 3h6v18H9z', vol:'M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8',
   inst:'M4 11h16v4H4zM6 15v5M18 15v5', open:'M4 4h16v16H4zM12 4v16M4 12h16', door:'M7 21V3h10v18M14 12h.01', lvl:'M3 17h18M3 12h18M3 7h18', proj:'M3 21V9l9-6 9 6v12zM9 21v-7h6v7',
@@ -9927,6 +9950,7 @@ function elName(el){
   if (el.kind === 'inst'){ const F = fam(el.fam); const t = F?.types?.[el.type | 0]?.nom; return `${F?.nom || 'Composant'}${t ? ' · ' + t : ''}`; }
   if (el.kind === 'wall' || el.kind === 'slab' || el.kind === 'roof') return `${KIND_NAME[el.kind]} ${el.id} · ${compo(el.type).nom}`;
   if (el.kind === 'stair') return `Escalier ${el.id} · ${STAIR_TYPES[el.st || 'droit']}`;
+  if (el.kind === 'net') return netName(el);
   return `${el.beam ? 'Poutre' : KIND_NAME[el.kind]} ${el.id} · ${mat(el.mat).nom}`;
 }
 function forcedPerf(el){ return el.forceU > 0 ? {U:el.forceU, R:null} : el.forceR > 0 ? {U:null, R:el.forceR} : null; }
@@ -9937,6 +9961,7 @@ function elMeta(el){
   }
   if (el.kind === 'inst'){ const c = famCut(el); return c ? `${n0(c.w * 100)}×${n0(c.h * 100)}` : ''; }
   if (el.kind === 'col') return `${n0(el.w * 100)}×${n0(el.d * 100)}`;
+  if (el.kind === 'net') return `${nf(netLen(el), 1)} m`;
   if (el.kind === 'stair') return `${stairDims(el).n} m.`;
   if (el.kind === 'sk') return `${nf(Math.abs(area(el.poly)), 1)} m² · ${nf(el.d)} m`;
   if (el.poly) return `${nf(area(el.poly), 1)} m²`; const r = rect(el.p, el.q); return `${nf(r[1][0] - r[0][0], 1)}×${nf(r[2][1] - r[1][1], 1)}`;
@@ -10518,7 +10543,7 @@ const DQE_LOTS = [
   ['01', 'Terrassements – VRD'], ['02', 'Gros œuvre – Maçonnerie'], ['03', 'Charpente – Ossature bois'], ['04', 'Couverture – Étanchéité'],
   ['05', 'Menuiseries extérieures'], ['06', 'Isolation – Plâtrerie – Cloisons'], ['07', 'Menuiseries intérieures'], ['08', 'Revêtements de sols – Chapes'],
   ['09', 'Peinture – Revêtements muraux'], ['10', 'Façades – Bardage – Isolation extérieure'], ['11', 'Serrurerie – Métallerie'], ['12', 'Plomberie – Sanitaires'],
-  ['13', 'Mobilier – Équipements'], ['14', 'Aménagements extérieurs']];
+  ['13', 'Mobilier – Équipements'], ['14', 'Aménagements extérieurs'], ['15', 'Électricité – Courants faibles'], ['16', 'Ventilation – VMC'], ['17', 'Chauffage – Eau chaude sanitaire']];
 const DQE_LOT_NAME = Object.fromEntries(DQE_LOTS);
 const STRUCT_CATS = ['Maçonnerie', 'Béton et mortiers', 'Bois et dérivés'];
 const FINISH_IDS = new Set(['enduit', 'enduitChaux', 'enduitPlatre', 'mortier', 'chape', 'chapeAnhy', 'betonCire']);
@@ -10567,10 +10592,15 @@ const famLotDqe = (F, el) => {
   if (c === 'Escaliers et garde-corps') return /garde/.test(id) ? '11' : '02';
   if (c === 'Structure'){ const m = instSolids(el)[0]?.m; return m === 'acier' || mat(m).cat === 'Métaux' ? '11' : mat(m).cat === 'Bois et dérivés' ? '03' : '02'; }
   if (c === 'Extérieur') return '14';
+  if (c === 'Plomberie') return '12';
+  if (c === 'Électricité') return '15';
+  if (c === 'Ventilation') return '16';
+  if (c === 'Chauffage') return '17';
   return '13';
 };
 const wallLayersHaveInsul = w => compo(w.type).layers.some(([m]) => isInsul(m)) || compo(w.type).lot === 'Gros œuvre';
 function famPrice(F, el){
+  if (F?.price != null) return typeof F.price === 'number' ? F.price : fx(F.price, famScope(F, el));
   const c = famCut(el), a = c ? c.w * c.h : 1, id = el.fam;
   if (F?.cat === 'Fenêtres') return Math.round(id === 'fenetre-fixe' ? 250 + 300 * a : /baie|porte-fenetre/.test(id) ? 600 + 450 * a : 380 + 420 * a);
   if (F?.cat === 'Portes') return /entree/.test(id) ? 1800 : /double/.test(id) ? 650 : 380;
@@ -10667,6 +10697,8 @@ function dqeItems(){
     } else if (el.kind === 'sk'){
       const M = mat(el.mat), v = (Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0)) * el.d, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
       add(`K|${el.mat}`, lot, `Ouvrage sur mesure en ${lc(M.nom)}`, 'esquisse 3D', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
+    } else if (el.kind === 'net'){
+      const S = NET_SYS[el.sys] || NET_SYS.ec, L = netLen(el); if (L > 0) add(`N|${el.sys}|${el.d}`, S.lot, `${S.n} ${S.mat}`, netDetail(el), 'ml', L, el.lvl, netPrice(el), L * (S.kg || 0.2), 0);
     } else if (el.kind === 'inst'){
       const F = fam(el.fam), lot = famLotDqe(F, el); if (!lot) continue;
       const c = famCut(el), t = F?.types?.[el.type | 0]?.nom, sols = instSolids(el), kg = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0), 0), co = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0) * (mat(so.m).gwp || 0), 0);
@@ -11346,7 +11378,12 @@ function buildIFC(){
     const eid = E(`IFCSTAIR('${guid()}',$,${ifcS(`Escalier ${el.id}`)},${ifcS(STAIR_TYPES[el.st || 'droit'])},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape(items)},${ifcS(String(el.id))},.NOTDEFINED.)`);
     E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${eid}),${imat(el.mat === 'beton' ? 'beton' : el.mat === 'acier' ? 'acier' : 'chene')})`); st.items.push(eid);
   }
-  for (const el of state.els.filter(e => e.kind !== 'inst' && e.kind !== 'roof' && e.kind !== 'stair')){
+  for (const el of state.els.filter(e => e.kind === 'net')){
+    const st = storeys[el.lvl], rel = lvlZ(el.lvl), pcs = pieces(el).filter(pc => pc.top), items = pcs.map(pc => brep(pc.top, pc.ext, rel)); if (!items.length || !st) continue;
+    const eid = E(`IFCBUILDINGELEMENTPROXY('${guid()}',$,${ifcS(netName(el))},${ifcS(NET_SYS[el.sys]?.n || '')},$,${E(`IFCLOCALPLACEMENT(${st.pl},${AX})`)},${brepShape(items)},${ifcS(String(el.id))},.NOTDEFINED.)`);
+    E(`IFCRELASSOCIATESMATERIAL('${guid()}',$,$,$,(${eid}),${imat(pcs[0].mat)})`); st.items.push(eid);
+  }
+  for (const el of state.els.filter(e => e.kind !== 'inst' && e.kind !== 'roof' && e.kind !== 'stair' && e.kind !== 'net')){
     const st = storeys[el.lvl], rel = lvlZ(el.lvl);
     let item, ent, matSel, name = `${KIND_NAME[el.kind]} ${el.id}`, desc = '';
     if (el.kind === 'wall'){ const T = wallT(el); item = extrudePoly(wallPoly(el, state.els, -T/2, T/2), (el.off || 0), el.h); ent = 'IFCWALL'; desc = compo(el.type).nom; matSel = lset(el.type + (el.flip ? '-f' : ''), compo(el.type).nom, wallLayers(el)); }
@@ -11952,6 +11989,445 @@ function openTutorial(i = 0){
     <footer class="ed-f"><span class="hint"></span>${i ? '<button class="btn" id="tuP">Précédent</button>' : '<button class="btn" data-close>Passer</button>'}<button class="btn primary" id="tuN">${i < TUTO.length - 1 ? 'Suivant' : 'Terminer'}</button></footer>`, 'mid');
   d.querySelector('#tuN').onclick = () => { closeEDlg(); if (i < TUTO.length - 1) openTutorial(i + 1); else try { localStorage.setItem('ap.tuto', '1'); } catch(e){} };
   const p = d.querySelector('#tuP'); if (p) p.onclick = () => { closeEDlg(); openTutorial(i - 1); };
+}
+
+/* ==== 76-mep.js ==== */
+/* ============ Plomberie · Électricité · Ventilation · Chauffage ============
+   1) Éléments placeables à la main : familles (catégories Électricité, Plomberie, Ventilation, Chauffage) dans la bibliothèque.
+   2) Mode automatique (77-mep-auto.js) : pièces nommées → proposition modifiable en plan → pose ; puis génération des réseaux.
+   3) Réseaux : éléments « net » (polylignes 3D à section carrée équivalente) comptés au DQE et exportés en IFC.
+   Règles (France, repères de pré-dimensionnement, à valider par un bureau d'études / un électricien / un plombier) :
+   - NF C 15-100 : prises par pièce (séjour 1 par 4 m² mini. 5, > 28 m² mini. 7 ; chambre 3 ; cuisine 6 dont 4 au-dessus du plan de travail, 3 si ≤ 4 m² ;
+     autre pièce > 4 m² : 1 ; WC : 0 ; salle d'eau : 1 hors volumes), circuits spécialisés 20 A / 2,5 mm² (four, lave-linge, lave-vaisselle, sèche-linge, chauffe-eau),
+     plaque de cuisson 32 A / 6 mm², éclairage 16 A / 1,5 mm² (8 points max.), prises 16 A / 1,5 mm² (8 max.) ou 20 A / 2,5 mm² (12 max.), 1 interrupteur différentiel 30 mA par rangée
+     (8 circuits max. par différentiel), 20 % de réserve, rangées de 13 modules ; prises à 5 cm mini. et 1,30 m maxi. du sol, interrupteurs à 1,10 m ; hotte à 1,80 m ;
+   - DTU 60.1 / 60.11 : évacuations EU pente ≥ 1 cm/m (2 cm/m retenu), Ø 100 pour WC, Ø 40 pour lavabo, douche, baignoire, évier, lave-linge ; eau chaude et froide espacées de 2 cm ;
+     PER Ø 12 (lavabo, évier, lave-linge, WC) et Ø 16 (douche, baignoire, ballon) ; croisement eau potable / eaux usées : eau potable au-dessus ;
+   - Arrêté du 24 mars 1982 : extraction dans les pièces de service (cuisine 75 à 135 m³/h, salle de bain 15, WC 15), entrées d'air dans les pièces principales, débit total mini. 35 à 120 m³/h ;
+   - Eau chaude : ≈ 50 à 60 l par personne et par jour (ballon 100 l pour 1 à 2 personnes, 150 l pour 2 à 3, 200 l pour 3 à 4, 250 à 300 l au-delà). */
+
+/* ---------- matériaux des réseaux ---------- */
+(() => { const add = (id, nom, col) => { if (!MATS[id]) M(id, nom, 'Verre et plastiques', 950, 0.4, 2000, 1e5, col, 'plain', 2.5); };
+  add('resEF', 'Réseau eau froide (PER bleu)', '#2F7FD6'); add('resECS', 'Réseau eau chaude (PER rouge)', '#D6402F'); add('resEU', 'Évacuation PVC', '#8A7F72');
+  add('resElec', 'Câblage électrique', '#E3A21A'); add('resVMC', 'Gaine de ventilation', '#9AA6B2'); add('resChauf', 'Réseau chauffage (PER)', '#B8476B'); })();
+
+/* ---------- familles ---------- */
+const MEP_CATS = ['Électricité', 'Plomberie', 'Ventilation', 'Chauffage'];
+const MEP_FAMS = (() => {
+  const Z = (n = 0.3) => ({zh:P(n, 'Hauteur d\'installation')});
+  const wall = (o, z, w = 0.08, h = 0.08, m = 'pvc') => ({s:'box', m, x:`-${w / 2}`, y:'-0.012', z:String(z), w:String(w), d:'0.012', h:String(h)});
+  return {
+    'e-prise': {nom:'Prise de courant 2P+T', cat:'Électricité', host:'free', params:Z(0.3), types:[{nom:'16 A', p:{}}, {nom:'20 A', p:{}}], price:28, parts:[wall(0, 'zh'), {s:'box', m:'acierLaque', x:'-0.015', y:'-0.016', z:'zh+0.025', w:'0.03', d:'0.004', h:'0.03'}]},
+    'e-prise-spec': {nom:'Prise spécialisée 20 A (four, lave-linge, lave-vaisselle…)', cat:'Électricité', host:'free', params:Z(0.3), types:[{nom:'20 A', p:{}}], price:42, parts:[wall(0, 'zh', 0.09, 0.09), {s:'box', m:'acierLaque', x:'-0.02', y:'-0.016', z:'zh+0.025', w:'0.04', d:'0.004', h:'0.04'}]},
+    'e-prise32': {nom:'Sortie plaque de cuisson 32 A', cat:'Électricité', host:'free', params:Z(0.12), types:[{nom:'32 A', p:{}}], price:65, parts:[wall(0, 'zh', 0.1, 0.1, 'acierLaque')]},
+    'e-rj45': {nom:'Prise RJ45 / TV', cat:'Électricité', host:'free', params:Z(0.3), types:[{nom:'RJ45', p:{}}], price:34, parts:[wall(0, 'zh', 0.08, 0.08, 'acierLaque')]},
+    'e-inter': {nom:'Interrupteur', cat:'Électricité', host:'free', params:Z(1.1), types:[{nom:'Simple allumage', p:{}}, {nom:'Va-et-vient', p:{}}], price:24, parts:[wall(0, 'zh'), {s:'box', m:'acierLaque', x:'-0.015', y:'-0.016', z:'zh+0.02', w:'0.03', d:'0.004', h:'0.04'}]},
+    'e-lum': {nom:'Luminaire plafonnier', cat:'Électricité', host:'free', params:{hc:P(2.5, 'Hauteur du plafond'), r:P(0.15, 'Rayon')}, types:[{nom:'Plafonnier', p:{}}], price:60, parts:[{s:'cyl', m:'pvc', x:'0', y:'0', z:'hc-0.06', r:'r', h:'0.06'}]},
+    'e-spot': {nom:'Spot encastré', cat:'Électricité', host:'free', params:{hc:P(2.5, 'Hauteur du plafond')}, types:[{nom:'Spot LED', p:{}}], price:22, parts:[{s:'cyl', m:'alu', x:'0', y:'0', z:'hc-0.03', r:'0.045', h:'0.03'}]},
+    'e-applique': {nom:'Applique murale', cat:'Électricité', host:'free', params:Z(1.8), types:[{nom:'Applique', p:{}}], price:55, parts:[{s:'box', m:'alu', x:'-0.1', y:'-0.1', z:'zh', w:'0.2', d:'0.1', h:'0.1'}]},
+    'e-daaf': {nom:'Détecteur avertisseur de fumée (DAAF)', cat:'Électricité', host:'free', params:{hc:P(2.5, 'Hauteur du plafond')}, types:[{nom:'DAAF NF EN 14604', p:{}}], price:25, parts:[{s:'cyl', m:'pvc', x:'0', y:'0', z:'hc-0.04', r:'0.05', h:'0.04'}]},
+    'e-tableau': {nom:'Tableau électrique (GTL)', cat:'Électricité', host:'free', params:{rg:P(3, 'Rangées de 13 modules', ''), zh:P(0.2, 'Hauteur de pose')}, types:[{nom:'Tableau 3 rangées', p:{}}, {nom:'Tableau 2 rangées', p:{rg:2}}, {nom:'Tableau 4 rangées', p:{rg:4}}], price:'250+rg*160',
+      parts:[{s:'box', m:'acierLaque', x:'-0.2', y:'-0.1', z:'zh', w:'0.4', d:'0.1', h:'0.15*rg+0.2'}, {s:'box', m:'alu', x:'-0.2', y:'-0.1', z:'zh+1.8', w:'0.4', d:'0.1', h:'0.2'}]},
+    'p-ballon': {nom:'Chauffe-eau (ballon d\'eau chaude)', cat:'Plomberie', host:'free', params:{V:P(200, 'Volume (l)', 'l'), r:P(0.28, 'Rayon'), h:P(1.5, 'Hauteur')}, price:'450+V*3.5',
+      types:[{nom:'100 l', p:{V:100, r:0.23, h:1.0}}, {nom:'150 l', p:{V:150, r:0.26, h:1.2}}, {nom:'200 l', p:{}}, {nom:'250 l', p:{V:250, r:0.3, h:1.6}}, {nom:'300 l', p:{V:300, r:0.32, h:1.75}}],
+      parts:[{s:'cyl', m:'acierLaque', x:'0', y:'-r', z:'0', r:'r', h:'h'}, {s:'cyl', m:'inox', x:'0', y:'-r', z:'h', r:'r*0.3', h:'0.06'}]},
+    'p-arrivee': {nom:'Arrivée d\'eau (compteur et vanne)', cat:'Plomberie', host:'free', params:Z(0.6), types:[{nom:'Compteur', p:{}}], price:180, parts:[{s:'box', m:'inox', x:'-0.12', y:'-0.12', z:'zh', w:'0.24', d:'0.12', h:'0.18'}]},
+    'p-attente-ll': {nom:'Attente lave-linge / lave-vaisselle', cat:'Plomberie', host:'free', params:Z(0.5), types:[{nom:'Arrivée + évacuation', p:{}}], price:85, parts:[{s:'box', m:'inox', x:'-0.1', y:'-0.06', z:'zh', w:'0.2', d:'0.06', h:'0.12'}]},
+    'v-extraction': {nom:'Bouche d\'extraction VMC', cat:'Ventilation', host:'free', params:{hc:P(2.5, 'Hauteur du plafond'), q:P(15, 'Débit (m³/h)', 'm³/h')}, types:[{nom:'Salle de bain / WC 15 m³/h', p:{}}, {nom:'Cuisine 90 m³/h', p:{q:90}}], price:45, parts:[{s:'cyl', m:'pvc', x:'0', y:'0', z:'hc-0.05', r:'0.075', h:'0.05'}]},
+    'v-entree': {nom:'Entrée d\'air (grille autoréglable)', cat:'Ventilation', host:'free', params:Z(2.2), types:[{nom:'Entrée d\'air 30 m³/h', p:{}}], price:30, parts:[{s:'box', m:'pvc', x:'-0.15', y:'-0.02', z:'zh', w:'0.3', d:'0.02', h:'0.04'}]},
+    'v-caisson': {nom:'Caisson VMC', cat:'Ventilation', host:'free', params:{zh:P(2.5, 'Hauteur de pose')}, types:[{nom:'VMC simple flux hygroréglable', p:{}}, {nom:'VMC double flux', p:{}}], price:'420',
+      parts:[{s:'box', m:'acierLaque', x:'-0.3', y:'-0.2', z:'zh', w:'0.6', d:'0.4', h:'0.3'}]},
+    'c-rad': {nom:'Radiateur', cat:'Chauffage', host:'free', params:{W:P(1000, 'Puissance (W)', 'W'), L:P(0.8, 'Longueur'), h:P(0.6, 'Hauteur')}, price:'90+W*0.18',
+      types:[{nom:'Eau chaude 500 W', p:{W:500, L:0.5}}, {nom:'Eau chaude 1000 W', p:{}}, {nom:'Eau chaude 1500 W', p:{W:1500, L:1.1}}, {nom:'Eau chaude 2000 W', p:{W:2000, L:1.5}}, {nom:'Électrique 1000 W', p:{}}, {nom:'Électrique 1500 W', p:{W:1500, L:1.0}}],
+      parts:[{s:'box', m:'acierLaque', x:'-L/2', y:'-0.1', z:'0.15', w:'L', d:'0.1', h:'h'}]},
+    'c-seche': {nom:'Sèche-serviettes', cat:'Chauffage', host:'free', params:{W:P(750, 'Puissance (W)', 'W')}, types:[{nom:'750 W', p:{}}], price:280, parts:[{s:'box', m:'acierLaque', x:'-0.25', y:'-0.1', z:'0.4', w:'0.5', d:'0.1', h:'1.2'}]},
+    'c-pac': {nom:'Pompe à chaleur / chaudière (générateur)', cat:'Chauffage', host:'free', params:{kW:P(8, 'Puissance (kW)', 'kW')}, price:'3000+kW*600',
+      types:[{nom:'PAC air/eau 8 kW', p:{}}, {nom:'PAC air/eau 12 kW', p:{kW:12}}, {nom:'Chaudière gaz 24 kW', p:{kW:24}}], parts:[{s:'box', m:'acierLaque', x:'-0.3', y:'-0.6', z:'0', w:'0.6', d:'0.6', h:'1.1'}]},
+  };
+})();
+Object.assign(FAMS, MEP_FAMS); MEP_CATS.forEach(c => { if (!FAM_CATS.includes(c)) FAM_CATS.push(c); });
+/* nature d'un composant pour la logique des réseaux */
+const MEP_KIND = {'e-prise':'prise', 'e-prise-spec':'spec', 'e-prise32':'plaque', 'e-rj45':'rj45', 'e-inter':'inter', 'e-lum':'lum', 'e-spot':'spot', 'e-applique':'applique', 'e-tableau':'tableau', 'e-daaf':'daaf',
+  'p-ballon':'ballon', 'p-arrivee':'arrivee', 'p-attente-ll':'ll', wc:'wc', lavabo:'lavabo', douche:'douche', baignoire:'baignoire', cuisine:'cuisine', 'v-extraction':'vext', 'v-entree':'ventree', 'v-caisson':'vmc', 'c-rad':'rad', 'c-seche':'seche', 'c-pac':'pac'};
+const mepKindOf = el => el.kind === 'inst' ? MEP_KIND[el.fam] || null : null;
+const mepEls = () => state.els.filter(e => mepKindOf(e));
+/* points d'eau : [hauteur EF, hauteur ECS (ou null), Ø évacuation, Ø alimentation] */
+const WATER_PTS = {wc:[0.25, null, 100, 12], lavabo:[0.55, 0.55, 40, 12], douche:[1.0, 1.0, 40, 16], baignoire:[0.5, 0.5, 40, 16], cuisine:[0.55, 0.55, 40, 12], ll:[0.5, null, 40, 12]};
+
+/* ---------- réseaux ---------- */
+const NET_SYS = {ef:{n:'Eau froide', mat:'PER', m:'resEF', lot:'12', kg:0.1}, ecs:{n:'Eau chaude sanitaire', mat:'PER', m:'resECS', lot:'12', kg:0.1}, eu:{n:'Évacuation eaux usées', mat:'PVC', m:'resEU', lot:'12', kg:1.2},
+  elec:{n:'Câblage électrique', mat:'cuivre', m:'resElec', lot:'15', kg:0.12}, vmc:{n:'Gaine de ventilation', mat:'acier galvanisé / PVC', m:'resVMC', lot:'16', kg:0.8}, chauf:{n:'Réseau de chauffage', mat:'PER', m:'resChauf', lot:'17', kg:0.15}};
+const netLen = el => (el.pts || []).reduce((t, p, i) => i ? t + Math.hypot(p[0] - el.pts[i - 1][0], p[1] - el.pts[i - 1][1], p[2] - el.pts[i - 1][2]) : 0, 0);
+const netName = el => `${NET_SYS[el.sys]?.n || 'Réseau'}${el.label ? ' · ' + el.label : ''} ${el.sec ? el.sec + ' mm²' : 'Ø' + el.d}`;
+const netDetail = el => el.sec ? `section ${el.sec} mm²${el.label ? ' · ' + el.label : ''}` : `Ø ${el.d} mm`;
+const NET_PRICE = {ef:{12:6.5, 16:8, 20:10, 25:13}, ecs:{12:8, 16:10, 20:12.5, 25:16}, eu:{40:13, 50:15, 100:30}, vmc:{80:9, 125:14, 160:19, 200:26}, chauf:{16:10, 20:13, 25:16}, elec:{1.5:2.5, 2.5:3.4, 6:6.5, 10:9.5}};
+const netPrice = el => { const T = NET_PRICE[el.sys] || {}, k = el.sec || el.d; const keys = Object.keys(T).map(Number).sort((a, b) => a - b); const best = keys.find(x => x >= k) ?? keys.at(-1); return (T[best] ?? 10) * (el.sys === 'vmc' || el.sys === 'eu' ? 1 : 1) + 4.5; };   // + pose (ml)
+function netPieces(el){
+  const S = NET_SYS[el.sys] || NET_SYS.ec || NET_SYS.elec, out = [], d = Math.max(0.03, (el.d || 12) / 1000), P = el.pts || [];
+  for (let i = 0; i + 1 < P.length; i++){
+    const A = P[i], B = P[i + 1], L = Math.hypot(B[0] - A[0], B[1] - A[1], B[2] - A[2]); if (L < 1e-4) continue;
+    const lift = Math.abs(B[2] - A[2]) < L * 0.5 ? d / 2 : 0;
+    const pc = memberPiece({A:[A[0], A[1], A[2] + lift], B:[B[0], B[1], B[2] + lift], w:d, h:d, kind:'net', id:''});
+    out.push({...pc, mat:S.m, lot:({'12':'Plomberie', '15':'Électricité', '16':'Ventilation', '17':'Chauffage'})[S.lot] || 'Plomberie', net:true});
+  }
+  return out;
+}
+function netPanel(el){
+  const S = NET_SYS[el.sys] || {}, L = netLen(el), P = el.pts || [], slope = P.length > 1 && el.sys === 'eu' ? (() => { let h = 0, l = 0; for (let i = 0; i + 1 < P.length; i++){ const dz = P[i][2] - P[i + 1][2], dl = Math.hypot(P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]); if (dl > 0.05 && Math.abs(dz) / dl < 0.2){ h += dz; l += dl; } } return l ? h / l : 0; })() : null;
+  return `<div class="grp"><h3>Réseau</h3><dl class="kv"><dt>Type</dt><dd>${esc(S.n || '')}</dd><dt>Désignation</dt><dd>${esc(el.label || '—')}</dd><dt>${el.sec ? 'Section' : 'Diamètre'}</dt><dd>${el.sec ? el.sec + ' mm²' : 'Ø ' + el.d + ' mm'}</dd>
+    <dt>Longueur développée</dt><dd class="big">${nf(L, 2)} m</dd>${slope != null ? `<dt>Pente moyenne</dt><dd>${nf(slope * 100, 1)} % ${slope * 100 >= 1 ? '(≥ 1 %, conforme)' : '(inférieure à 1 % : à corriger)'}</dd>` : ''}${el.note ? `<dt>Règle</dt><dd>${esc(el.note)}</dd>` : ''}</dl></div>
+    <div class="btns"><button class="btn" data-act="mepNets">Régénérer tous les réseaux</button><button class="btn danger" data-act="del">Supprimer</button></div>`;
+}
+
+/* ---------- carte du panneau Projet ---------- */
+function mepCard(){
+  const n = mepEls().length, nets = state.els.filter(e => e.kind === 'net').length;
+  return `<div class="grp"><h3>Plomberie · Électricité · Ventilation · Chauffage</h3>
+    <p class="hint">${n ? `${n} équipement${n > 1 ? 's' : ''} placé${n > 1 ? 's' : ''}, ${nets} tronçon${nets > 1 ? 's' : ''} de réseau.` : 'Placez les équipements à la main (bibliothèque) ou laissez le site proposer une implantation selon vos pièces.'}</p>
+    <div class="btns tight"><button class="btn primary" data-act="mepAuto">Proposition automatique…</button><button class="btn" data-act="mepLib">Placer à la main</button><button class="btn" data-act="mepNets"${n ? '' : ' disabled'}>Générer les réseaux</button>${nets ? '<button class="btn ghost" data-act="mepClear">Effacer les réseaux</button>' : ''}</div></div>`;
+}
+
+/* ==== 77-mep-auto.js ==== */
+/* ============ Équipements techniques : mode automatique et génération des réseaux ============
+   Pièces nommées → proposition d'implantation (modifiable en plan) → pose des composants → génération des réseaux (voir règles dans 76-mep.js). */
+const mepNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function roomKind(name){
+  const n = mepNorm(name);
+  if (/\b(wc|toilette|toilettes)\b/.test(n)) return 'wc';
+  if (/salle de bain|sdb|salle d.eau|\bsde\b|douche|bain/.test(n)) return 'sdb';
+  if (/buanderie|cellier|lingerie|arriere.cuisine/.test(n)) return 'buanderie';
+  if (/cuisine|cuisinette|kitchen/.test(n)) return 'cuisine';
+  if (/chambre|suite|dortoir/.test(n)) return 'chambre';
+  if (/sejour|salon|salle a manger|\bsam\b|living|piece de vie|piece a vivre/.test(n)) return 'sejour';
+  if (/entree|hall|sas|vestibule/.test(n)) return 'entree';
+  if (/couloir|degagement|circulation|palier|passage/.test(n)) return 'couloir';
+  if (/garage/.test(n)) return 'garage';
+  if (/cave|local tech|chaufferie|atelier|technique/.test(n)) return 'technique';
+  if (/terrasse|balcon|exterieur|jardin|patio|veranda|loggia|auvent/.test(n)) return 'ext';
+  return 'autre';
+}
+const ROOM_KIND_NAME = {sejour:'Séjour', chambre:'Chambre', cuisine:'Cuisine', sdb:'Salle d\'eau', wc:'WC', entree:'Entrée', couloir:'Couloir', buanderie:'Buanderie', garage:'Garage', technique:'Local technique', ext:'Extérieur', autre:'Autre pièce'};
+const ROOM_SUGG = ['Séjour', 'Cuisine', 'Chambre 1', 'Chambre 2', 'Chambre 3', 'Salle de bain', 'Salle d\'eau', 'WC', 'Entrée', 'Couloir', 'Buanderie', 'Cellier', 'Garage', 'Bureau', 'Dressing', 'Local technique'];
+function mepRooms(){
+  const out = [];
+  state.levels.forEach((_, i) => { if (!state.els.some(e => e.kind === 'wall' && e.lvl === i)) return; for (const r of detectRooms(i)) out.push({...r, lvl:i, kind:roomKind(r.name), named:!!state.roomNames?.[r.key]}); });
+  return out;
+}
+/* ---------- géométrie d'une pièce : arêtes, ouvertures, créneaux libres ---------- */
+const dPoly = (p, poly) => { let d = Infinity; for (let i = 0; i < poly.length; i++) d = Math.min(d, segClosest(p, poly[i], poly[(i + 1) % poly.length]).d ?? V.len(V.sub(segClosest(p, poly[i], poly[(i + 1) % poly.length]).pt, p))); return d; };
+function roomEdges(r){
+  const walls = state.els.filter(w => w.kind === 'wall' && w.lvl === r.lvl), ops = state.els.filter(e => e.kind === 'inst' && e.host && state.els.find(w => w.id === e.host)?.lvl === r.lvl);
+  return r.poly.map((a, i) => { const b = r.poly[(i + 1) % r.poly.length], d = V.sub(b, a), L = V.len(d) || 1e-9, u = V.mul(d, 1 / L), nIn = [-u[1], u[0]], m = V.mul(V.add(a, b), .5);
+    let T = 0.2, bd = 1e9; for (const w of walls){ const q = segClosest(m, w.a, w.b), dd = V.len(V.sub(q.pt, m)); if (dd < bd){ bd = dd; T = wallT(w); } }
+    const e = {i, a, b, u, nIn, L, T, f:T / 2, blocked:[[0, 0.25], [L - 0.25, L]], doors:[], wins:[]};
+    for (const o of ops){ const F = fam(o.fam), c = famCut(o), fr = instFrame(o); if (!c || !fr) continue; const rel = V.sub(fr.o, a), t = V.dot(rel, u), sd = V.dot(rel, nIn);
+      if (t < -0.2 || t > L + 0.2 || Math.abs(sd) > T / 2 + 0.25) continue;
+      const iw = F?.cat === 'Portes'; (iw ? e.doors : e.wins).push({t, w:c.w, sill:c.sill, h:c.h}); if (iw || c.sill < 0.9) e.blocked.push([t - c.w / 2 - 0.1, t + c.w / 2 + 0.1]); }
+    return e; });
+}
+const edgePt = (e, t, off = e.f) => V.add(V.add(e.a, V.mul(e.u, t)), V.mul(e.nIn, off));
+const wallRot = e => Math.round((Math.atan2(-e.nIn[1], -e.nIn[0]) * 180 / Math.PI - 90) * 100) / 100;
+function freeIntervals(e, need = 0.3){
+  const B = e.blocked.slice().sort((x, y) => x[0] - y[0]), out = []; let c = 0;
+  for (const [l, h] of B){ if (l - c >= need) out.push([c, l]); c = Math.max(c, h); } if (e.L - c >= need) out.push([c, e.L]); return out;
+}
+function wallSlots(edges, step = 0.7){
+  const out = []; for (const e of edges) for (const [l, h] of freeIntervals(e, 0.3)){ const n = Math.max(1, Math.floor((h - l) / step)); for (let k = 0; k < n; k++) out.push({e, t:l + (h - l) * (k + 0.5) / n}); }
+  return out;
+}
+const spread = (arr, n) => { if (!arr.length || n <= 0) return []; const out = [], used = new Set(); for (let i = 0; i < n; i++){ let k = Math.floor((i + 0.5) * arr.length / n); while (used.has(k) && used.size < arr.length) k = (k + 1) % arr.length; used.add(k); out.push(arr[k]); } return out; };
+function poleOf(poly, margin = 0){ const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]); let best = null, bd = -1;
+  for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.2) for (let y = Math.min(...ys); y <= Math.max(...ys); y += 0.2){ if (!ptInPoly(x, y, poly)) continue; const d = dPoly([x, y], poly); if (d > bd){ bd = d; best = [x, y]; } } return best || polyCentroid(poly); }
+function ceilPoints(poly, n){
+  const c0 = poleOf(poly); if (n <= 1) return [c0]; const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]), cand = [];
+  for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.25) for (let y = Math.min(...ys); y <= Math.max(...ys); y += 0.25) if (ptInPoly(x, y, poly) && dPoly([x, y], poly) > 0.35) cand.push([x, y]);
+  const pts = [c0]; while (pts.length < n && cand.length){ let b = null, bd = -1; for (const p of cand){ const d = Math.min(...pts.map(q => V.len(V.sub(p, q)))); if (d > bd){ bd = d; b = p; } } pts.push(b); }
+  return pts;
+}
+const famYmax = id => { const F = fam(id); if (!F) return 0; try { return Math.max(...famSolids(F, famScope(F, {type:0, params:{}})).map(s => s.c[1] + (s.s === 'box' ? s.d / 2 : s.s === 'cyl' || s.s === 'sph' ? s.r : 0))); } catch(e){ return 0; } };
+const famWidth = id => { const F = fam(id); if (!F) return 0.5; try { const S = famSolids(F, famScope(F, {type:0, params:{}})), xs = S.flatMap(s => [s.c[0] - (s.w ?? s.r * 2) / 2, s.c[0] + (s.w ?? s.r * 2) / 2]); return Math.max(...xs) - Math.min(...xs); } catch(e){ return 0.6; } };
+
+/* ---------- proposition ---------- */
+const MEP_DEF = {sys:{elec:true, plomb:true, vent:true, chauf:true}, occ:0, heat:'eau', light:'mixte', wm2:55, fix:true};
+function mepPropose(O){
+  const rooms = mepRooms().filter(r => r.kind !== 'ext'), items = [], byLvl = {};
+  const nCh = rooms.filter(r => r.kind === 'chambre').length, occ = O.occ > 0 ? O.occ : Math.max(1, nCh + 1);
+  const exist = fid => new Set(state.els.filter(e => e.kind === 'inst' && e.fam === fid && !e.auto).map(e => e.id));
+  const ctx = rooms.map(r => ({r, E:roomEdges(r)}));
+  const add = (r, fam_, o = {}) => items.push({fam:fam_, type:o.type | 0, params:o.params || {}, lvl:r.lvl, c:o.c, rot:o.rot || 0, room:r.key, kind:MEP_KIND[fam_], auto:true});
+  const onWall = (R, fam_, e, t, o = {}) => { const ym = famYmax(fam_); add(R.r, fam_, {...o, c:V.add(edgePt(e, t), V.mul(e.nIn, ym)), rot:wallRot(e)}); };
+  const wallItems = (R, fam_, n, o = {}) => { const S = spread(wallSlots(R.E, o.step || 0.7), n); S.forEach(s => { onWall(R, fam_, s.e, s.t, o); s.e.blocked.push([s.t - 0.2, s.t + 0.2]); }); };
+  const fixture = (R, fam_, o = {}) => { if (!fam(fam_)) return null; const w = (famWidth(fam_) || 0.6) + 0.1, best = R.E.flatMap(e => freeIntervals(e, w).map(([l, h]) => ({e, l, h}))).sort((a, b) => (b.h - b.l) - (a.h - a.l))[0]; if (!best) return null;
+    const t = o.end ? (o.end > 0 ? best.h - w / 2 : best.l + w / 2) : (best.l + best.h) / 2; onWall(R, fam_, best.e, t, o); best.e.blocked.push([t - w / 2, t + w / 2]); return {e:best.e, t}; };
+  const roomsOf = k => ctx.filter(R => R.r.kind === k);
+  const pick = (...ks) => { for (const k of ks){ const R = ctx.find(R => R.r.kind === k && R.r.lvl === 0) || ctx.find(R => R.r.kind === k); if (R) return R; } return ctx[0]; };
+  // appareils sanitaires et cuisine (on ne double pas un appareil déjà dessiné dans la pièce)
+  const has = (R, fid) => state.els.some(e => e.kind === 'inst' && e.fam === fid && !e.auto && ptInPoly(e.c?.[0], e.c?.[1], R.r.poly));
+  if (O.fix) for (const R of ctx){ const k = R.r.kind;
+    if (k === 'wc' && !has(R, 'wc')) fixture(R, 'wc'); if (k === 'sdb'){ if (!has(R, 'lavabo')) fixture(R, 'lavabo', {type:1}); if (!has(R, 'douche')) fixture(R, 'douche'); }
+    if (k === 'cuisine' && !has(R, 'cuisine')) fixture(R, 'cuisine'); }
+  for (const R of ctx){
+    const k = R.r.kind, A = R.r.net, id = R.r.key;
+    if (O.sys.elec){
+      // prises (NF C 15-100)
+      let np = 0, hot = 0;
+      if (k === 'sejour') np = A > 28 ? Math.max(7, Math.ceil(A / 4)) : Math.max(5, Math.ceil(A / 4)); else if (k === 'chambre') np = 3;
+      else if (k === 'cuisine'){ np = A <= 4 ? 3 : 6; hot = np > 3 ? 4 : 2; } else if (k === 'sdb') np = 1; else if (k === 'wc') np = 0; else if (k === 'garage') np = 2; else np = A > 4 ? 1 : 0;
+      wallItems(R, 'e-prise', np - hot, {params:{zh:0.3}}); if (hot) wallItems(R, 'e-prise', hot, {params:{zh:1.05}, step:0.5});
+      if (k === 'cuisine'){ wallItems(R, 'e-prise32', 1, {step:0.5}); wallItems(R, 'e-prise-spec', 2, {step:0.5}); wallItems(R, 'e-prise', 1, {params:{zh:1.8}, step:0.5}); }
+      if ((k === 'buanderie') || (k === 'sdb' && !ctx.some(q => q.r.kind === 'buanderie' && q.r.lvl === R.r.lvl) && !ctx.some(q => q.r.kind === 'cuisine' && q.r.lvl === R.r.lvl && q.r.net > 8))) wallItems(R, 'e-prise-spec', k === 'buanderie' ? 2 : 1, {params:{zh:0.3}, step:0.5});
+      if (k === 'sejour' || k === 'chambre' || (k === 'autre' && /bureau/.test(mepNorm(R.r.name)))) wallItems(R, 'e-rj45', 1, {step:0.5});
+      // éclairage
+      let nl = 1, fL = 'e-lum';
+      const spots = O.light === 'spots' || (O.light === 'mixte' && ['cuisine', 'sdb', 'couloir', 'entree'].includes(k));
+      if (spots){ fL = 'e-spot'; nl = k === 'couloir' || k === 'entree' ? Math.max(1, Math.ceil(A / 2.5)) : Math.max(2, Math.ceil(A / 2.8)); }
+      else if (k === 'couloir') nl = Math.max(1, Math.round(A / 5));
+      for (const c of ceilPoints(R.r.poly, nl)) add(R.r, fL, {c});
+      // interrupteurs : près de chaque porte (va-et-vient si 2 portes)
+      const doors = R.E.flatMap(e => e.doors.map(d => ({e, d})));
+      if (doors.length){ doors.slice(0, 2).forEach(({e, d}, i) => { const lo = d.t - d.w / 2 - 0.2, hi = d.t + d.w / 2 + 0.2, t = hi + 0.1 < e.L - 0.25 ? hi : Math.max(0.3, lo); onWall(R, 'e-inter', e, t, {type:doors.length > 1 ? 1 : 0, params:{zh:1.1}}); e.blocked.push([t - 0.1, t + 0.1]); }); }
+      else wallItems(R, 'e-inter', 1, {params:{zh:1.1}});
+    }
+    if (O.sys.vent){
+      if (['cuisine', 'sdb', 'wc', 'buanderie'].includes(k)) add(R.r, 'v-extraction', {c:poleOf(R.r.poly), type:k === 'cuisine' ? 1 : 0, params:{q:k === 'cuisine' ? (nCh <= 0 ? 75 : [75, 90, 105, 120, 135][Math.min(4, nCh)]) : 15}});
+      if (k === 'sejour' || k === 'chambre'){ const e = R.E.find(e => e.wins.length) || R.E.sort((a, b) => b.L - a.L)[0], t = e.wins[0]?.t ?? e.L / 2; onWall(R, 'v-entree', e, t, {params:{zh:2.25}}); }
+    }
+    if (O.heat !== 'none' && O.sys.chauf){
+      const q = ['sejour', 'chambre', 'cuisine', 'autre', 'sdb', 'buanderie'].includes(k);
+      if (q){ let W = Math.max(500, A * O.wm2 * (k === 'cuisine' ? 0.6 : k === 'sdb' ? 1.4 : 1)); const elec = O.heat === 'elec';
+        if (k === 'sdb') wallItems(R, 'c-seche', 1, {step:0.5});
+        else { const sizes = elec ? [1000, 1500] : [500, 1000, 1500, 2000], mx = sizes.at(-1), n = Math.ceil(W / mx), each = W / n, sz = sizes.find(s => s >= each - 1) || mx, ty = elec ? (sz >= 1500 ? 5 : 4) : sizes.indexOf(sz);
+          const e = R.E.find(e => e.wins.some(w => w.sill < 0.9)) || R.E.slice().sort((a, b) => b.L - a.L)[0], wt = e.wins.find(w => w.sill < 0.9);
+          for (let j = 0; j < n; j++){ const t = wt ? wt.t + (j - (n - 1) / 2) * 1.0 : e.L * (j + 1) / (n + 1); onWall(R, 'c-rad', e, clamp(t, 0.4, e.L - 0.4), {type:ty, params:{W:sz, L:elec ? (sz >= 1500 ? 1.0 : 0.8) : [0.5, 0.8, 1.1, 1.5][ty], zh:0}}); e.blocked.push([t - 0.5, t + 0.5]); } }
+      }
+    }
+  }
+  // éléments uniques : tableau, détecteurs de fumée, VMC, générateur, ballon, arrivée d'eau
+  if (O.sys.elec){
+    const T = pick('entree', 'couloir', 'garage', 'buanderie'); wallItems(T, 'e-tableau', 1, {step:0.4, params:{rg:3}});
+    for (const li of [...new Set(rooms.map(r => r.lvl))]){ const L = ctx.filter(R => R.r.lvl === li), R = L.find(R => R.r.kind === 'couloir') || L.find(R => R.r.kind === 'entree') || L.find(R => R.r.kind === 'sejour') || L[0];
+      if (R && (li === 0 || L.some(q => q.r.kind === 'chambre'))) add(R.r, 'e-daaf', {c:poleOf(R.r.poly)}); }
+  }
+  if (O.sys.vent){ const top = Math.max(...rooms.map(r => r.lvl)), L = ctx.filter(R => R.r.lvl === top), R = L.find(R => ['couloir', 'buanderie', 'wc', 'entree'].includes(R.r.kind)) || L[0]; if (R) add(R.r, 'v-caisson', {c:poleOf(R.r.poly), params:{zh:2.1}}); }
+  if (O.sys.plomb || O.sys.chauf){
+    const S = pick('buanderie', 'technique', 'garage', 'cuisine', 'sdb'), V0 = occ <= 2 ? 0 : occ <= 3 ? 1 : occ <= 4 ? 2 : occ <= 5 ? 3 : 4;
+    if (O.sys.plomb){ wallItems(S, 'p-ballon', 1, {step:0.8, type:Math.min(4, [0, 1, 2, 3, 4][V0]), params:{}}); wallItems(S, 'p-arrivee', 1, {step:0.5}); }
+    const need = items.filter(i => i.kind === 'rad').reduce((t, i) => t + (i.params.W || 1000), 0) + items.filter(i => i.kind === 'seche').length * 750;
+    if (O.sys.chauf && O.heat === 'eau'){ const kW = need / 1000, ty = kW <= 9 ? 0 : kW <= 14 ? 1 : 2; wallItems(S, 'c-pac', 1, {step:0.8, type:ty}); }
+  }
+  items.occ = occ; return items;
+}
+
+/* ---------- fenêtre « Proposition automatique » ---------- */
+const MEP_SYM = {prise:['P', '#2563EB'], spec:['S', '#1D4ED8'], plaque:['C', '#1E3A8A'], rj45:['R', '#0EA5E9'], inter:['I', '#F59E0B'], lum:['L', '#EAB308'], spot:['•', '#EAB308'], applique:['A', '#EAB308'], tableau:['T', '#DC2626'], daaf:['F', '#DC2626'],
+  ballon:['B', '#0891B2'], arrivee:['E', '#0369A1'], ll:['LL', '#0369A1'], wc:['WC', '#0F766E'], lavabo:['LV', '#0F766E'], douche:['D', '#0F766E'], baignoire:['BA', '#0F766E'], cuisine:['CU', '#0F766E'], vext:['X', '#7C3AED'], ventree:['v', '#7C3AED'], vmc:['VMC', '#7C3AED'], rad:['H', '#C2410C'], seche:['H', '#C2410C'], pac:['PAC', '#C2410C']};
+const MEP_LABEL = {prise:'Prise de courant', spec:'Prise spécialisée', plaque:'Plaque de cuisson', rj45:'RJ45 / TV', inter:'Interrupteur', lum:'Plafonnier', spot:'Spot', applique:'Applique', tableau:'Tableau électrique', daaf:'Détecteur de fumée', ballon:'Ballon d\'eau chaude', arrivee:'Arrivée d\'eau', ll:'Attente lave-linge', wc:'WC', lavabo:'Lavabo', douche:'Douche', baignoire:'Baignoire', cuisine:'Cuisine', vext:'Bouche d\'extraction', ventree:'Entrée d\'air', vmc:'Caisson VMC', rad:'Radiateur', seche:'Sèche-serviettes', pac:'Générateur (PAC / chaudière)'};
+const MEP_FAM_OF = Object.fromEntries(Object.entries(MEP_KIND).map(([f, k]) => [k, f]));
+const MEP_WALLKINDS = new Set(['prise', 'spec', 'plaque', 'rj45', 'inter', 'applique', 'tableau', 'ballon', 'arrivee', 'll', 'wc', 'lavabo', 'douche', 'baignoire', 'cuisine', 'ventree', 'rad', 'seche', 'pac']);
+
+function mepStart(){
+  const rooms = mepRooms(); if (!rooms.length){ toast('Dessinez d\'abord des murs fermés : aucune pièce détectée'); return; }
+  const un = rooms.filter(r => !r.named);
+  if (un.length) return openRoomNames(rooms, true);
+  openMepAuto(rooms);
+}
+/* nommer les pièces (la proposition en dépend) */
+function openRoomNames(rooms, thenAuto){
+  const un = rooms.filter(r => !r.named);
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Équipements techniques</span><h3 class="ed-t2">Nommez vos pièces</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body"><section><p class="mep-alert" role="alert"><b>${un.length} pièce${un.length > 1 ? 's ne sont pas renseignées' : ' n\'est pas renseignée'}.</b> La proposition automatique se base sur le nom de chaque pièce (séjour, cuisine, chambre, salle de bain, WC…) : prises, luminaires, ventilation et chauffage n'ont pas les mêmes règles selon la pièce.</p>
+      <datalist id="rmSug">${ROOM_SUGG.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <div class="mep-rooms">${rooms.map((r, i) => `<label class="mep-room${r.named ? '' : ' un'}"><span>${esc(state.levels[r.lvl].n)} · ${nf(r.net, 1)} m²</span><input data-rn="${i}" list="rmSug" value="${r.named ? esc(r.name) : ''}" placeholder="Nom de la pièce (ex. Chambre 1)" style="font-family:var(--f-body)"><em>${r.named ? ROOM_KIND_NAME[r.kind] : ''}</em></label>`).join('')}</div>
+      <p class="hint">Les pièces laissées vides sont traitées comme « Autre pièce » (1 prise et 1 point lumineux).</p></section></div>
+    <footer class="ed-f"><button class="btn" data-close>Annuler</button><button class="btn primary" id="rnGo">Valider les noms et continuer</button></footer>`, 'mid');
+  d.querySelector('#rnGo').onclick = () => { pushHist(); state.roomNames ??= {}; d.querySelectorAll('[data-rn]').forEach(i => { const v = i.value.trim().slice(0, 40), r = rooms[+i.dataset.rn]; if (v) state.roomNames[r.key] = v; }); roomsCache = null; buildLabels(); closeEDlg(); mepStart2(); };
+  function mepStart2(){ openMepAuto(mepRooms()); }
+}
+function openMepAuto(rooms){
+  rooms ??= mepRooms();
+  const O = {...MEP_DEF, sys:{...MEP_DEF.sys}, ...(state.mepOpts || {})}; O.sys = {...MEP_DEF.sys, ...(O.sys || {})};
+  let items = mepPropose(O), lvl = rooms[0]?.lvl ?? 0, tool = 'move', pal = 'prise', sel = -1, drag = null;
+  const lvls = [...new Set(rooms.map(r => r.lvl))];
+  const d = openEDlg(`<header class="ed-h"><div><span class="eyebrow">Plomberie · Électricité · Ventilation · Chauffage</span><h3 class="ed-t2">Proposition d'implantation</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="mepx"><aside class="mepx-l">
+      <div class="grp" style="margin-top:0"><h3>Réseaux à équiper</h3>${[['elec', 'Électricité (NF C 15-100)'], ['plomb', 'Plomberie (eau, évacuations)'], ['vent', 'Ventilation (VMC)'], ['chauf', 'Chauffage']].map(([k, n]) => `<label class="ap-check2"><input type="checkbox" data-sys="${k}"${O.sys[k] ? ' checked' : ''}> ${n}</label>`).join('')}
+        <div class="fields" style="margin-top:6px"><label class="f"><span>Occupants</span><span class="in"><input id="mxOcc" type="number" min="0" max="12" step="1" value="${O.occ || ''}" placeholder="auto"></span></label>
+        <label class="f"><span>Chauffage</span><span class="in"><select id="mxHeat"><option value="eau"${O.heat === 'eau' ? ' selected' : ''}>Eau chaude (PAC)</option><option value="elec"${O.heat === 'elec' ? ' selected' : ''}>Radiateurs électriques</option><option value="none"${O.heat === 'none' ? ' selected' : ''}>Aucun</option></select></span></label>
+        <label class="f"><span>Éclairage</span><span class="in"><select id="mxLight"><option value="mixte"${O.light === 'mixte' ? ' selected' : ''}>Mixte</option><option value="lum"${O.light === 'lum' ? ' selected' : ''}>Plafonniers</option><option value="spots"${O.light === 'spots' ? ' selected' : ''}>Spots</option></select></span></label>
+        <label class="f"><span>Besoin</span><span class="in"><input id="mxW" type="number" min="25" max="120" step="5" value="${O.wm2}"><em>W/m²</em></span></label></div>
+        <label class="ap-check2"><input type="checkbox" id="mxFix"${O.fix ? ' checked' : ''}> Placer aussi WC, lavabo, douche, cuisine</label>
+        <button class="btn" id="mxRe" style="margin-top:6px">Recalculer la proposition</button></div>
+      <div class="grp"><h3>Modifier l'aperçu</h3><div class="seg" id="mxTool">${[['move', 'Déplacer'], ['add', 'Ajouter'], ['del', 'Retirer']].map(([k, n]) => `<button class="${k === tool ? 'on' : ''}" data-mt="${k}">${n}</button>`).join('')}</div>
+        <p class="hint" id="mxHint"></p><div class="mepx-pal" id="mxPal"></div></div>
+    </aside><section class="mepx-r"><div class="mepx-top"><div class="seg" id="mxLv">${lvls.map(l => `<button class="${l === lvl ? 'on' : ''}" data-lv="${l}">${esc(state.levels[l].n)}</button>`).join('')}</div><span class="hint" id="mxSum"></span></div>
+      <canvas id="mxCv" width="900" height="640"></canvas></section></div>
+    <footer class="ed-f"><span class="hint">Les composants posés sont de vrais éléments (comptés au DQE). Les anciens éléments automatiques sont remplacés.</span><button class="btn" data-close>Annuler</button><button class="btn" id="mxPlace">Valider et placer</button><button class="btn primary" id="mxPlaceNets">Valider, placer et générer les réseaux</button></footer>`, 'wide');
+  const q = s => d.querySelector(s), cv = q('#mxCv'), g = cv.getContext('2d'), RL = () => rooms.filter(r => r.lvl === lvl);
+  let X = null;   // transformation monde → écran
+  const fit = () => { const P = RL().flatMap(r => r.poly); if (!P.length) return; const xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs) - 0.5, x1 = Math.max(...xs) + 0.5, y0 = Math.min(...ys) - 0.5, y1 = Math.max(...ys) + 0.5, k = Math.min(cv.width / (x1 - x0), cv.height / (y1 - y0)); X = {k, x0, y1, ox:(cv.width - (x1 - x0) * k) / 2, oy:(cv.height - (y1 - y0) * k) / 2}; };
+  const W2S = p => [X.ox + (p[0] - X.x0) * X.k, X.oy + (X.y1 - p[1]) * X.k], S2W = (sx, sy) => [X.x0 + (sx - X.ox) / X.k, X.y1 - (sy - X.oy) / X.k];
+  const COL = {sejour:'#FDE9C9', chambre:'#DDEBFA', cuisine:'#E6F4D7', sdb:'#D5F0F2', wc:'#D5F0F2', entree:'#EFE3F7', couloir:'#EFE3F7', buanderie:'#E9ECEF', garage:'#E9ECEF', technique:'#E9ECEF', autre:'#F4F4F1'};
+  const draw = () => {
+    fit(); g.clearRect(0, 0, cv.width, cv.height); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+    for (const r of RL()){ g.beginPath(); r.poly.forEach((p, i) => { const s = W2S(p); i ? g.lineTo(s[0], s[1]) : g.moveTo(s[0], s[1]); }); g.closePath(); g.fillStyle = COL[r.kind] || '#F4F4F1'; g.fill(); g.strokeStyle = '#1B2433'; g.lineWidth = 2.5; g.stroke();
+      const c = W2S(polyCentroid(r.poly)); g.fillStyle = 'rgba(17,24,39,.55)'; g.font = '600 13px Inter, sans-serif'; g.textAlign = 'center'; g.fillText(r.name, c[0], c[1] + 4); g.font = '11px Inter, sans-serif'; g.fillText(nf(r.net, 1) + ' m²', c[0], c[1] + 18); }
+    for (const e of state.els) if (e.kind === 'inst' && e.host && !MEP_KIND[e.fam]){ const w = getEl(e.host); if (!w || w.lvl !== lvl) continue; const c = famCut(e), fr = instFrame(e); if (!c || !fr) continue; const u = [Math.cos(fr.ang), Math.sin(fr.ang)], a = W2S(V.sub(fr.o, V.mul(u, c.w / 2))), b = W2S(V.add(fr.o, V.mul(u, c.w / 2))); g.strokeStyle = fam(e.fam)?.cat === 'Portes' ? '#C2410C' : '#2563EB'; g.lineWidth = 4; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+    items.forEach((it, i) => { if (it.lvl !== lvl) return; const [ch, col] = MEP_SYM[it.kind] || ['?', '#666'], s = W2S(it.c), r = ch.length > 1 ? 11 : 8;
+      g.beginPath(); g.arc(s[0], s[1], r, 0, 7); g.fillStyle = col; g.globalAlpha = i === sel ? 1 : 0.88; g.fill(); g.globalAlpha = 1; if (i === sel){ g.lineWidth = 3; g.strokeStyle = '#111'; g.stroke(); }
+      g.fillStyle = '#fff'; g.font = `700 ${ch.length > 2 ? 8 : ch.length > 1 ? 9 : 10}px Inter, sans-serif`; g.textAlign = 'center'; g.fillText(ch, s[0], s[1] + 3.5); });
+  };
+  const kinds = [...new Set(Object.values(MEP_KIND))].filter(k => !['arrivee'].includes(k) || true);
+  const sum = () => { const c = {}; items.forEach(i => c[i.kind] = (c[i.kind] || 0) + 1); q('#mxSum').textContent = `${items.length} éléments · ${items.filter(i => i.kind === 'prise' || i.kind === 'spec' || i.kind === 'plaque').length} prises · ${items.filter(i => i.kind === 'lum' || i.kind === 'spot').length} points lumineux`;
+    q('#mxPal').innerHTML = kinds.filter(k => MEP_LABEL[k]).map(k => { const [ch, col] = MEP_SYM[k]; return `<button class="${k === pal ? 'on' : ''}" data-pk="${k}" title="${MEP_LABEL[k]}"><i style="background:${col}">${ch}</i><span>${MEP_LABEL[k]}</span><em>${c[k] || 0}</em></button>`; }).join('');
+    q('#mxHint').textContent = tool === 'move' ? 'Glissez un symbole pour le déplacer (il se colle au mur le plus proche).' : tool === 'add' ? `Cliquez dans une pièce pour ajouter : ${MEP_LABEL[pal]}.` : 'Cliquez un symbole pour le retirer.'; };
+  const hit = (sx, sy) => { let b = -1, bd = 14; items.forEach((it, i) => { if (it.lvl !== lvl) return; const s = W2S(it.c), dd = Math.hypot(s[0] - sx, s[1] - sy); if (dd < bd){ bd = dd; b = i; } }); return b; };
+  const snapTo = (it, p) => {   // objets muraux : collés au mur de la pièce la plus proche ; plafond : dans la pièce
+    const R = RL().find(r => ptInPoly(p[0], p[1], r.poly)) || RL().slice().sort((a, b) => dPoly(p, a.poly) - dPoly(p, b.poly))[0]; if (!R) return;
+    it.room = R.key;
+    if (MEP_WALLKINDS.has(it.kind)){ const E = roomEdges(R); let best = null, bd = 1e9; for (const e of E){ const c = segClosest(p, e.a, e.b), dd = V.len(V.sub(c.pt, p)); if (dd < bd){ bd = dd; best = {e, t:clamp(c.t * e.L, 0.2, e.L - 0.2)}; } }
+      const ym = famYmax(it.fam); it.c = V.add(edgePt(best.e, best.t), V.mul(best.e.nIn, ym)); it.rot = wallRot(best.e); }
+    else it.c = ptInPoly(p[0], p[1], R.poly) ? p : poleOf(R.poly); };
+  cv.addEventListener('pointerdown', ev => { const r = cv.getBoundingClientRect(), sx = (ev.clientX - r.left) * cv.width / r.width, sy = (ev.clientY - r.top) * cv.height / r.height, h = hit(sx, sy);
+    if (tool === 'del'){ if (h >= 0){ items.splice(h, 1); sel = -1; draw(); sum(); } return; }
+    if (tool === 'add'){ const fid = MEP_FAM_OF[pal], it = {fam:fid, type:0, params:{}, lvl, c:S2W(sx, sy), rot:0, kind:pal, auto:true}; snapTo(it, it.c); if (!it.room) return; items.push(it); sel = items.length - 1; draw(); sum(); return; }
+    sel = h; if (h >= 0){ drag = h; cv.setPointerCapture(ev.pointerId); } draw(); });
+  cv.addEventListener('pointermove', ev => { if (drag == null) return; const r = cv.getBoundingClientRect(); snapTo(items[drag], S2W((ev.clientX - r.left) * cv.width / r.width, (ev.clientY - r.top) * cv.height / r.height)); draw(); });
+  cv.addEventListener('pointerup', () => { drag = null; });
+  d.addEventListener('keydown', ev => { if ((ev.key === 'Delete' || ev.key === 'Backspace') && sel >= 0 && !/INPUT|SELECT/.test(ev.target.tagName)){ items.splice(sel, 1); sel = -1; draw(); sum(); } });
+  d.addEventListener('click', ev => { const t = ev.target.closest('[data-mt]'); if (t){ tool = t.dataset.mt; d.querySelectorAll('[data-mt]').forEach(b => b.classList.toggle('on', b === t)); sum(); return; }
+    const p = ev.target.closest('[data-pk]'); if (p){ pal = p.dataset.pk; tool = 'add'; d.querySelectorAll('[data-mt]').forEach(b => b.classList.toggle('on', b.dataset.mt === 'add')); sum(); return; }
+    const l = ev.target.closest('[data-lv]'); if (l){ lvl = +l.dataset.lv; d.querySelectorAll('[data-lv]').forEach(b => b.classList.toggle('on', b === l)); sel = -1; draw(); } });
+  const readO = () => { d.querySelectorAll('[data-sys]').forEach(c => O.sys[c.dataset.sys] = c.checked); O.occ = +q('#mxOcc').value || 0; O.heat = q('#mxHeat').value; O.light = q('#mxLight').value; O.wm2 = +q('#mxW').value || 55; O.fix = q('#mxFix').checked; state.mepOpts = JSON.parse(JSON.stringify(O)); };
+  q('#mxRe').onclick = () => { readO(); items = mepPropose(O); sel = -1; draw(); sum(); };
+  const place = nets => { readO(); mepApply(items); closeEDlg(); if (nets) mepGenerateNets(); };
+  q('#mxPlace').onclick = () => place(false); q('#mxPlaceNets').onclick = () => place(true);
+  draw(); sum();
+}
+/* pose : remplace les éléments techniques automatiques précédents */
+function mepApply(items){
+  pushHist(); state.isSample = false;
+  const old = new Set(state.els.filter(e => (e.kind === 'inst' && e.auto && MEP_KIND[e.fam]) || (e.kind === 'net' && e.auto)).map(e => e.id)); state.els = state.els.filter(e => !old.has(e.id));
+  for (const it of items) state.els.push({kind:'inst', fam:it.fam, type:it.type | 0, params:{...(it.params || {})}, c:it.c.map(v => Math.round(v * 1000) / 1000), rot:it.rot || 0, lvl:it.lvl, off:0, mirror:false, auto:true, room:it.room, id:state.nextId++});
+  rebuild(); toast(`${items.length} équipement${items.length > 1 ? 's' : ''} placé${items.length > 1 ? 's' : ''}`);
+}
+function mepClear(){ pushHist(); state.els = state.els.filter(e => e.kind !== 'net'); rebuild(); toast('Réseaux effacés'); }
+
+/* ==== 78-mep-nets.js ==== */
+/* ============ Génération des réseaux (eau, évacuations, électricité, ventilation, chauffage) ============
+   À partir des composants techniques placés (à la main ou automatiquement). Cheminements : horizontaux en plancher (eau, chauffage, évacuations)
+   ou sous plafond (câbles, gaines), verticaux dans des gaines techniques ; tracé orthogonal (parallèle aux murs). Règles : voir 76-mep.js. */
+const mepRun = (a, b, z, z2) => { const p = [[a[0], a[1], z]]; if (Math.abs(a[0] - b[0]) > 1e-3 && Math.abs(a[1] - b[1]) > 1e-3) p.push([b[0], a[1], z + (z2 - z) * 0.5]); p.push([b[0], b[1], z2]); return p; };   // L : x puis y
+const lvH = i => { const nx = state.levels[i + 1]; return nx ? nx.z - state.levels[i].z : 2.7; };
+function mepGenerateNets(){
+  const E = mepEls(); if (!E.length){ toast('Placez d\'abord des équipements techniques'); return; }
+  const rooms = mepRooms(), roomOf = e => rooms.find(r => r.lvl === e.lvl && ptInPoly(e.c[0], e.c[1], r.poly)), kindR = e => roomOf(e)?.kind || 'autre';
+  const rep = {warn:[], sys:{}}, nets = [], add = (sys, lvl, pts, d, label, o = {}) => { const p = pts.filter((q, i) => i === 0 || Math.hypot(q[0] - pts[i - 1][0], q[1] - pts[i - 1][1], q[2] - pts[i - 1][2]) > 1e-4); if (p.length < 2) return;
+    nets.push({kind:'net', sys, lvl, pts:p.map(q => q.map(v => Math.round(v * 1000) / 1000)), d, ...(o.sec ? {sec:o.sec} : {}), label, note:o.note || '', auto:true}); };
+  const by = k => E.filter(e => mepKindOf(e) === k), zf = i => lvlZ(i);
+  const zh = e => { const F = fam(e.fam), s = famScope(F, e); return s.zh ?? s.hc ?? 0; };
+  const ceilZ = i => zf(i) + lvH(i) - 0.2;   // cheminement sous plafond (0,05 à 0,30 m du plafond, NF C 15-100)
+  const near = (from, list) => { const out = [], rest = list.slice(); let c = from; while (rest.length){ let bi = 0, bd = 1e9; rest.forEach((e, i) => { const d = Math.abs(e.c[0] - c[0]) + Math.abs(e.c[1] - c[1]); if (d < bd){ bd = d; bi = i; } }); c = rest[bi].c; out.push(rest.splice(bi, 1)[0]); } return out; };
+
+  /* ---------------- Électricité ---------------- */
+  const tab = by('tableau')[0]; let nCirc = 0, kVA = 0, circ = [];
+  if (tab){
+    const T = tab.c, Tz = zf(tab.lvl);
+    const ceilEls = k => by(k), bylvl = list => { const m = {}; list.forEach(e => (m[e.lvl] ??= []).push(e)); return m; };
+    const circuit = (label, sec, amp, els, kind, o = {}) => {
+      if (!els.length) return; let pts = [[T[0], T[1], Tz + 1.8 + (zh(tab) || 0)]], cur = T, lvl = els[0].lvl; const zr0 = ceilZ(tab.lvl);
+      pts.push([T[0], T[1], zr0]); let zr = zr0;
+      for (const e of near(T, els)){ const nz = ceilZ(e.lvl); if (nz !== zr){ pts.push([cur[0], cur[1], zr], [cur[0] === T[0] ? T[0] : cur[0], cur[1], nz]); zr = nz; }
+        const wallDev = !['lum', 'spot', 'daaf', 'vmc', 'vext'].includes(mepKindOf(e)), zd = wallDev ? zf(e.lvl) + (zh(e) || 0.3) : zr + 0.15;
+        pts.push(...mepRun(cur, e.c, zr, zr).slice(1), [e.c[0], e.c[1], zd], [e.c[0], e.c[1], zr]); cur = e.c; }
+      add('elec', lvl, pts, 12, label, {sec, note:`${amp} A · ${sec} mm² · ${els.length} point${els.length > 1 ? 's' : ''}`}); circ.push({label, sec, amp, n:els.length, kind, ...o}); };
+    const chunks = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
+    for (const [li, L] of Object.entries(bylvl([...ceilEls('lum'), ...ceilEls('spot'), ...ceilEls('applique'), ...ceilEls('daaf')]))) chunks(near(T, L), 8).forEach((c, i) => circuit(`Éclairage ${state.levels[li].n} ${i + 1}`, 1.5, 16, c, 'light'));
+    const pr = by('prise'); const kit = pr.filter(e => kindR(e) === 'cuisine'), oth = pr.filter(e => kindR(e) !== 'cuisine');
+    chunks(near(T, kit), 6).forEach((c, i) => circuit(`Prises cuisine ${i + 1}`, 2.5, 20, c, 'plug'));
+    for (const [li, L] of Object.entries(bylvl(oth))) chunks(near(T, L), 12).forEach((c, i) => circuit(`Prises ${state.levels[li].n} ${i + 1}`, 2.5, 20, c, 'plug'));
+    by('plaque').forEach(e => circuit('Plaque de cuisson', 6, 32, [e], 'plaque'));
+    const LBL = ['Four', 'Lave-vaisselle', 'Lave-linge', 'Sèche-linge', 'Congélateur'], sp = by('spec'); let ik = 0;
+    sp.forEach(e => { const k = kindR(e); const l = k === 'cuisine' ? (ik++ % 2 ? 'Lave-vaisselle' : 'Four') : (ik++ % 2 ? 'Sèche-linge' : 'Lave-linge'); circuit(`${l} (circuit spécialisé)`, 2.5, 20, [e], 'spec'); });
+    by('ll').forEach(e => circuit('Lave-linge (circuit spécialisé)', 2.5, 20, [e], 'spec'));
+    by('ballon').forEach(e => circuit('Chauffe-eau', 2.5, 20, [e], 'spec'));
+    by('vmc').forEach(e => circuit('VMC', 1.5, 2, [e], 'vmc'));
+    by('pac').forEach(e => { const kW = famScope(fam(e.fam), e).kW || 8; circuit('Générateur de chauffage', kW > 9 ? 10 : 6, kW > 9 ? 40 : 32, [e], 'pac'); });
+    const rad = by('rad').filter(e => (e.type | 0) >= 4 || mepRadElec()), seche = by('seche');
+    if (rad.length || seche.length){ const all = near(T, [...rad, ...seche]); let acc = [], P = 0; const flush = () => { if (acc.length) circuit(`Chauffage électrique ${circ.filter(c => c.kind === 'heat').length + 1}`, 1.5, 16, acc, 'heat'); acc = []; P = 0; };
+      all.forEach(e => { const w = famScope(fam(e.fam), e).W || 750; if (P + w > 3500) flush(); acc.push(e); P += w; }); flush(); }
+    nCirc = circ.length; const nID = Math.max(2, Math.ceil(nCirc / 8)), mods = Math.ceil((nCirc + nID) * 1.2), rows = Math.max(2, Math.ceil(mods / 13));
+    tab.params = {...(tab.params || {}), rg:rows}; tab.type = rows <= 2 ? 1 : rows === 3 ? 0 : 2;
+    const pw = circ.reduce((t, c) => t + (c.kind === 'plaque' ? 7000 : c.kind === 'light' ? 200 : c.kind === 'heat' ? 3000 : c.kind === 'pac' ? 4000 : c.kind === 'vmc' ? 30 : 1500), 0), shab = rooms.reduce((t, r) => t + r.net, 0);
+    kVA = by('rad').some(e => (e.type | 0) >= 4) ? (shab > 100 ? 15 : 12) : shab < 60 ? 6 : shab < 100 ? 9 : 12;
+    rep.sys.elec = {title:'Électricité', lines:[`${nCirc} circuits : ${circ.filter(c => c.kind === 'light').length} éclairage (1,5 mm², 16 A, 8 points max.), ${circ.filter(c => c.kind === 'plug').length} prises (2,5 mm², 20 A, 12 max. ; 6 max. en cuisine), ${circ.filter(c => !['light', 'plug'].includes(c.kind)).length} spécialisés/dédiés`,
+      `Tableau : ${nID} interrupteurs différentiels 30 mA (8 circuits max. chacun) · ${mods} modules avec 20 % de réserve → ${rows} rangée${rows > 1 ? 's' : ''} de 13 modules (${tab.fam} mis à jour)`, `Puissance à souscrire indicative : ${kVA} kVA`, `Sections : éclairage 1,5 mm² · prises et circuits spécialisés 2,5 mm² · plaque de cuisson 6 mm² (32 A)`]};
+  } else rep.warn.push('Aucun tableau électrique placé : les circuits ne sont pas générés (ajoutez un tableau).');
+
+  /* ---------------- Plomberie ---------------- */
+  const wps = E.filter(e => WATER_PTS[mepKindOf(e)]), src = by('arrivee')[0] || by('ballon')[0], bal = by('ballon')[0];
+  if (wps.length){
+    if (!src) rep.warn.push('Aucune arrivée d\'eau ni ballon : eau froide et chaude non générées.');
+    else { const S = src.c, s0 = zf(src.lvl);
+      if (bal && src !== bal) add('ef', src.lvl, [[S[0], S[1], s0 + 0.6], [S[0], S[1], s0 + 0.1], ...mepRun(S, bal.c, s0 + 0.1, s0 + 0.1).slice(1), [bal.c[0], bal.c[1], s0 + 0.15]], 20, 'Alimentation ballon', {note:'Ø20 PER'});
+      const B = bal ? bal.c : S;
+      for (const e of near(S, wps)){ const k = mepKindOf(e), [hEF, hECS, , dA] = WATER_PTS[k], zr = zf(e.lvl) + 0.1, P = e.c;
+        const up = e.lvl !== src.lvl ? [[S[0], S[1], s0 + 0.1], [S[0], S[1], zr]] : [];
+        add('ef', e.lvl, [[S[0], S[1], s0 + 0.1], ...up.slice(1), ...mepRun(up.length ? S : S, P, zr, zr).slice(up.length ? 0 : 1), [P[0], P[1], zf(e.lvl) + hEF]], dA, `${MEP_LABEL[k]}`, {note:`PER Ø${dA} · eau froide`});
+        if (hECS != null){ const o = 0.05; add('ecs', e.lvl, [[B[0] + o, B[1] + o, zf(bal ? bal.lvl : 0) + 0.15], ...(e.lvl !== (bal?.lvl ?? 0) ? [[B[0] + o, B[1] + o, zr + 0.04]] : []), ...mepRun([B[0] + o, B[1] + o], [P[0] + o, P[1] + o], zr + 0.04, zr + 0.04).slice(1), [P[0] + o, P[1] + o, zf(e.lvl) + hECS]], dA, `${MEP_LABEL[k]}`, {note:`PER Ø${dA} · eau chaude, à 2 cm de l'eau froide minimum`}); } }
+      rep.sys.plomb = {title:'Plomberie (alimentation)', lines:[`${wps.length} points d'eau · PER Ø12 (lavabo, évier, WC, lave-linge) et Ø16 (douche, baignoire, ballon) · eau chaude séparée de l'eau froide`, bal ? `Ballon d'eau chaude : ${famScope(fam(bal.fam), bal).V || 200} l (base : 50 à 60 l par occupant et par jour)` : 'Pas de ballon placé']}; }
+    // évacuations : chute au WC (sinon au premier appareil), pente 2 cm/m (≥ 1 cm/m exigé), collecteur Ø100 vers l'extérieur
+    const stack = (wps.find(e => mepKindOf(e) === 'wc' && e.lvl === 0) || wps.find(e => e.lvl === 0) || wps[0]).c, sl = 0.02, W0 = state.els.filter(w => w.kind === 'wall' && w.lvl === 0);
+    const xs = W0.flatMap(w => [w.a[0], w.b[0]]), ys = W0.flatMap(w => [w.a[1], w.b[1]]);
+    const out = xs.length ? (() => { const d = [[stack[0] - Math.min(...xs), [Math.min(...xs) - 1.5, stack[1]]], [Math.max(...xs) - stack[0], [Math.max(...xs) + 1.5, stack[1]]], [stack[1] - Math.min(...ys), [stack[0], Math.min(...ys) - 1.5]], [Math.max(...ys) - stack[1], [stack[0], Math.max(...ys) + 1.5]]].sort((a, b) => a[0] - b[0]); return d[0][1]; })() : [stack[0] + 3, stack[1]];
+    let zmin = 1e9; const top = Math.max(...wps.map(e => e.lvl));
+    for (const e of wps){ const k = mepKindOf(e), D = WATER_PTS[k][2], P = e.c, z0 = zf(e.lvl) - 0.1, run = mepRun(P, stack, z0, z0), L = Math.abs(P[0] - stack[0]) + Math.abs(P[1] - stack[1]), zEnd = z0 - Math.max(L * sl, 0.01);
+      const pts = [[P[0], P[1], zf(e.lvl) + 0.05], [P[0], P[1], z0], ...mepRun(P, stack, z0, zEnd).slice(1)]; if (D < 100 && L > 4) rep.warn.push(`${MEP_LABEL[k]} : évacuation Ø${D} de ${nf(L, 1)} m (> 4 m) : rapprochez l'appareil de la chute ou passez en Ø50.`);
+      add('eu', e.lvl, pts, D, MEP_LABEL[k], {note:`PVC Ø${D} · pente ${nf(sl * 100, 0)} % (≥ 1 % exigé)${L > 4 && D < 100 ? ' · longueur > 4 m' : ''}`}); if (e.lvl === 0) zmin = Math.min(zmin, zEnd); else zmin = Math.min(zmin, zf(0) - 0.2); }
+    const zc = (isFinite(zmin) ? zmin : zf(0) - 0.2) - 0.05, Lc = Math.abs(out[0] - stack[0]) + Math.abs(out[1] - stack[1]);
+    if (top > 0) add('eu', top, [[stack[0], stack[1], zf(top) - 0.1], [stack[0], stack[1], zc]], 100, 'Chute d\'eaux usées', {note:'PVC Ø100 · chute verticale en gaine technique'});
+    add('eu', 0, [[stack[0], stack[1], zc], ...mepRun(stack, out, zc, zc - Lc * sl).slice(1)], 100, 'Collecteur vers l\'extérieur', {note:`PVC Ø100 · pente ${nf(sl * 100, 0)} % · regard de branchement en limite de bâtiment`});
+    add('eu', top, [[stack[0], stack[1], zf(top) + 0.05], [stack[0], stack[1], zf(top) + lvH(top) + 0.6]], 100, 'Ventilation primaire', {note:'Ø100 prolongée au-dessus de la toiture (DTU 60.11)'});
+    (rep.sys.plomb ??= {title:'Plomberie', lines:[]}).lines.push(`Évacuations : chute Ø100 ${top > 0 ? 'sur ' + (top + 1) + ' niveaux ' : ''}+ collecteur Ø100 à ${nf(sl * 100, 0)} % (minimum réglementaire 1 %), branches Ø40 (lavabo, douche, baignoire, évier, lave-linge) et Ø100 (WC), ventilation primaire Ø100`);
+  }
+
+  /* ---------------- Ventilation ---------------- */
+  const vm = by('vmc')[0], vx = by('vext');
+  if (vx.length && vm){
+    const nPP = rooms.filter(r => ['sejour', 'chambre', 'autre'].includes(r.kind)).length, minTot = [35, 60, 75, 90, 105, 120][clamp(nPP - 1, 0, 5)];
+    let tot = 0; const Zc = zf(vm.lvl) + (famScope(fam(vm.fam), vm).zh || 2.1) + 0.15, Vc = vm.c;
+    for (const e of vx){ const q = famScope(fam(e.fam), e).q || 15, D = q <= 45 ? 80 : q <= 135 ? 125 : 160, zr = zf(e.lvl) + lvH(e.lvl) - 0.1; tot += q;
+      const pts = [[e.c[0], e.c[1], zr], ...mepRun(e.c, Vc, zr, zr).slice(1)]; if (e.lvl !== vm.lvl) pts.push([Vc[0], Vc[1], zr], [Vc[0], Vc[1], Zc]); else pts.push([Vc[0], Vc[1], Zc]);
+      add('vmc', e.lvl, pts, D, `Extraction ${q} m³/h`, {note:`Gaine Ø${D} · ${q} m³/h`}); }
+    const Dr = tot <= 150 ? 125 : tot <= 250 ? 160 : 200; add('vmc', vm.lvl, [[Vc[0], Vc[1], Zc], [Vc[0], Vc[1], zf(Math.max(...vx.map(e => e.lvl), vm.lvl)) + lvH(vm.lvl) + 0.8]], Dr, `Rejet ${tot} m³/h`, {note:`Rejet en toiture Ø${Dr}`});
+    rep.sys.vent = {title:'Ventilation', lines:[`${vx.length} bouches d'extraction · débit total ${tot} m³/h (minimum réglementaire ≈ ${minTot} m³/h pour ${nPP} pièce${nPP > 1 ? 's' : ''} principale${nPP > 1 ? 's' : ''}, arrêté du 24 mars 1982)`, `Gaines Ø80 (salle de bain, WC), Ø125 (cuisine), rejet Ø${Dr} en toiture ; entrées d'air dans les pièces principales : ${by('ventree').length}`]};
+    if (tot < minTot) rep.warn.push(`Débit d'extraction ${tot} m³/h inférieur au minimum ≈ ${minTot} m³/h.`);
+    if (!by('ventree').length) rep.warn.push('Aucune entrée d\'air dans les pièces principales : à prévoir (menuiseries ou murs).');
+  } else if (vx.length) rep.warn.push('Bouches d\'extraction sans caisson VMC : ventilation non générée.');
+
+  /* ---------------- Chauffage hydraulique ---------------- */
+  const gen = by('pac')[0], rads = by('rad').filter(e => (e.type | 0) < 4).concat(by('seche'));
+  if (gen && rads.length && !by('rad').some(e => (e.type | 0) >= 4)){
+    const G = gen.c; let P = 0;
+    for (const e of near(G, rads)){ const zr = zf(e.lvl) + 0.08, w = famScope(fam(e.fam), e).W || 750; P += w;
+      for (const [o, lab] of [[0.03, 'Départ'], [-0.03, 'Retour']]){ const pts = [[G[0] + o, G[1] + o, zf(gen.lvl) + 0.3], ...(e.lvl !== gen.lvl ? [[G[0] + o, G[1] + o, zr]] : [[G[0] + o, G[1] + o, zr]]), ...mepRun([G[0] + o, G[1] + o], [e.c[0] + o, e.c[1] + o], zr, zr).slice(1), [e.c[0] + o, e.c[1] + o, zf(e.lvl) + 0.3]]; add('chauf', e.lvl, pts, 16, `${lab} ${MEP_LABEL[mepKindOf(e)]}`, {note:`PER Ø16 · ${w} W`}); } }
+    const kW = famScope(fam(gen.fam), gen).kW || 8;
+    rep.sys.chauf = {title:'Chauffage', lines:[`${rads.length} émetteurs · ${nf(P / 1000, 1)} kW installés · générateur ${kW} kW ${P / 1000 > kW ? '(INSUFFISANT : choisir un générateur plus puissant)' : '(suffisant)'} · départs et retours PER Ø16`]};
+    if (P / 1000 > kW) rep.warn.push(`Générateur de ${kW} kW inférieur à la puissance installée (${nf(P / 1000, 1)} kW).`);
+  }
+  pushHist(); state.isSample = false; state.els = state.els.filter(e => !(e.kind === 'net' && e.auto));
+  for (const n of nets){ n.id = state.nextId++; state.els.push(n); }
+  rebuild(); toast(`${nets.length} tronçons de réseau générés`); mepReport(rep, nets);
+}
+const mepRadElec = () => false;
+function mepReport(rep, nets){
+  const len = s => nets.filter(n => n.sys === s).reduce((t, n) => t + netLen(n), 0);
+  const rows = Object.entries(NET_SYS).map(([k, S]) => { const l = len(k); return l ? `<tr><td>${S.n}</td><td class="n">${nets.filter(n => n.sys === k).length}</td><td class="n">${nf(l, 1)} m</td></tr>` : ''; }).join('');
+  openEDlg(`<header class="ed-h"><div><span class="eyebrow">Équipements techniques</span><h3 class="ed-t2">Réseaux générés</h3></div><button class="ib ghost" data-close aria-label="Fermer">✕</button></header>
+    <div class="ed-body"><section><table class="tbl"><thead><tr><th>Réseau</th><th class="n">Tronçons</th><th class="n">Longueur</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Aucun réseau généré</td></tr>'}</tbody></table>
+      ${Object.values(rep.sys).map(s => `<div class="grp"><h3>${esc(s.title)}</h3><ul class="warns">${s.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul></div>`).join('')}
+      ${rep.warn.length ? `<div class="grp"><h3>Points d'attention</h3><ul class="warns">${rep.warn.map(l => `<li class="bad">${esc(l)}</li>`).join('')}</ul></div>` : ''}
+      <p class="hint">Cheminements simplifiés (tracé orthogonal, passage à travers les cloisons par fourreaux) : à valider par un bureau d'études, un électricien et un plombier. Les tronçons sont comptés au DQE (lots Plomberie, Électricité, Ventilation, Chauffage).</p></section></div>
+    <footer class="ed-f"><button class="btn primary" data-close>Fermer</button></footer>`, 'mid');
 }
 
 /* ==== 79-wheel.js ==== */

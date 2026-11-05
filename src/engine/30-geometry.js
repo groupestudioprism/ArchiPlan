@@ -48,7 +48,7 @@ const area = poly => { let a = 0; for (let i = 0; i < poly.length; i++){ const p
 function colPoly(c){ const hw = c.w/2, hd = c.d/2; return [[c.c[0]-hw,c.c[1]-hd],[c.c[0]+hw,c.c[1]-hd],[c.c[0]+hw,c.c[1]+hd],[c.c[0]-hw,c.c[1]+hd]]; }
 
 /* ---------- familles ---------- */
-const famLot = F => ({Portes:'Menuiseries', 'Fenêtres':'Menuiseries', Ouvertures:'Menuiseries', Structure:'Gros œuvre', 'Escaliers et garde-corps':'Gros œuvre', Industrie:'Industrie'})[F?.cat] || 'Mobilier et équipements';
+const famLot = F => ({Plomberie:'Plomberie', 'Électricité':'Électricité', Ventilation:'Ventilation', Chauffage:'Chauffage', Portes:'Menuiseries', 'Fenêtres':'Menuiseries', Ouvertures:'Menuiseries', Structure:'Gros œuvre', 'Escaliers et garde-corps':'Gros œuvre', Industrie:'Industrie'})[F?.cat] || 'Mobilier et équipements';
 function famScope(F, el){
   const s = {};
   for (const [k, p] of Object.entries(F.params || {})) s[k] = +p.v;
@@ -129,6 +129,7 @@ function wallOpenings(w, els = state.els){
 // Décompose un élément en "pièces" homogènes : un matériau, un contour plan, une base et une hauteur
 function pieces(el, els = state.els){
   if (el.kind === 'sk') return skPieces(el);
+  if (el.kind === 'net') return typeof netPieces === 'function' ? netPieces(el) : [];
   if (el.kind === 'roof') return roofPieces(el);
   if (el.kind === 'stair') return stairPieces(el);
   const z = lvlZ(el.lvl) + (el.off || 0), out = [];

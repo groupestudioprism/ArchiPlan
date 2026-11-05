@@ -6,7 +6,7 @@ const DQE_LOTS = [
   ['01', 'Terrassements – VRD'], ['02', 'Gros œuvre – Maçonnerie'], ['03', 'Charpente – Ossature bois'], ['04', 'Couverture – Étanchéité'],
   ['05', 'Menuiseries extérieures'], ['06', 'Isolation – Plâtrerie – Cloisons'], ['07', 'Menuiseries intérieures'], ['08', 'Revêtements de sols – Chapes'],
   ['09', 'Peinture – Revêtements muraux'], ['10', 'Façades – Bardage – Isolation extérieure'], ['11', 'Serrurerie – Métallerie'], ['12', 'Plomberie – Sanitaires'],
-  ['13', 'Mobilier – Équipements'], ['14', 'Aménagements extérieurs']];
+  ['13', 'Mobilier – Équipements'], ['14', 'Aménagements extérieurs'], ['15', 'Électricité – Courants faibles'], ['16', 'Ventilation – VMC'], ['17', 'Chauffage – Eau chaude sanitaire']];
 const DQE_LOT_NAME = Object.fromEntries(DQE_LOTS);
 const STRUCT_CATS = ['Maçonnerie', 'Béton et mortiers', 'Bois et dérivés'];
 const FINISH_IDS = new Set(['enduit', 'enduitChaux', 'enduitPlatre', 'mortier', 'chape', 'chapeAnhy', 'betonCire']);
@@ -55,10 +55,15 @@ const famLotDqe = (F, el) => {
   if (c === 'Escaliers et garde-corps') return /garde/.test(id) ? '11' : '02';
   if (c === 'Structure'){ const m = instSolids(el)[0]?.m; return m === 'acier' || mat(m).cat === 'Métaux' ? '11' : mat(m).cat === 'Bois et dérivés' ? '03' : '02'; }
   if (c === 'Extérieur') return '14';
+  if (c === 'Plomberie') return '12';
+  if (c === 'Électricité') return '15';
+  if (c === 'Ventilation') return '16';
+  if (c === 'Chauffage') return '17';
   return '13';
 };
 const wallLayersHaveInsul = w => compo(w.type).layers.some(([m]) => isInsul(m)) || compo(w.type).lot === 'Gros œuvre';
 function famPrice(F, el){
+  if (F?.price != null) return typeof F.price === 'number' ? F.price : fx(F.price, famScope(F, el));
   const c = famCut(el), a = c ? c.w * c.h : 1, id = el.fam;
   if (F?.cat === 'Fenêtres') return Math.round(id === 'fenetre-fixe' ? 250 + 300 * a : /baie|porte-fenetre/.test(id) ? 600 + 450 * a : 380 + 420 * a);
   if (F?.cat === 'Portes') return /entree/.test(id) ? 1800 : /double/.test(id) ? 650 : 380;
@@ -155,6 +160,8 @@ function dqeItems(){
     } else if (el.kind === 'sk'){
       const M = mat(el.mat), v = (Math.abs(area(el.poly)) - (el.holes || []).reduce((s, x) => s + Math.abs(area(x)), 0)) * el.d, kg = v * (M.rho || 0), lot = M.cat === 'Métaux' ? '11' : M.cat === 'Bois et dérivés' ? '03' : M.cat === 'Maçonnerie' || M.cat === 'Béton et mortiers' ? '02' : '13';
       add(`K|${el.mat}`, lot, `Ouvrage sur mesure en ${lc(M.nom)}`, 'esquisse 3D', 'm³', v, el.lvl, M.cat === 'Métaux' ? Math.round((M.rho || 7850) * 4.5) : M.cat === 'Bois et dérivés' ? 1300 : 450, kg, kg * (M.gwp || 0));
+    } else if (el.kind === 'net'){
+      const S = NET_SYS[el.sys] || NET_SYS.ec, L = netLen(el); if (L > 0) add(`N|${el.sys}|${el.d}`, S.lot, `${S.n} ${S.mat}`, netDetail(el), 'ml', L, el.lvl, netPrice(el), L * (S.kg || 0.2), 0);
     } else if (el.kind === 'inst'){
       const F = fam(el.fam), lot = famLotDqe(F, el); if (!lot) continue;
       const c = famCut(el), t = F?.types?.[el.type | 0]?.nom, sols = instSolids(el), kg = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0), 0), co = sols.reduce((s, so) => s + solidVol(so) * (mat(so.m).rho || 0) * (mat(so.m).gwp || 0), 0);
