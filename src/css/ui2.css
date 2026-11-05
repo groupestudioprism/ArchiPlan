@@ -113,3 +113,16 @@ body[data-mode="sec"] .nbtog,body[data-mode="render"] .nbtog{display:none}
 .mepx-pal button.on{outline:2px solid var(--accent,#2563eb)}
 .mepx canvas{width:100%;border:1px solid var(--line,#d5d9e0);border-radius:8px;background:#fff}
 .chk-cat{display:inline-block;margin-right:8px;padding:1px 7px;border-radius:99px;font:600 10px var(--f-body);letter-spacing:.04em;text-transform:uppercase;background:color-mix(in srgb,var(--accent,#2563eb) 14%,transparent);color:var(--accent,#2563eb);vertical-align:2px}
+
+/* Tutoriel interactif */
+.tuto{position:fixed;inset:0;z-index:9000;pointer-events:none}
+.tu-hole{position:fixed;border-radius:10px;box-shadow:0 0 0 9999px rgba(10,16,28,.55);transition:all .25s ease;pointer-events:none}
+.tu-ring{position:fixed;border-radius:10px;border:2px solid #fff;outline:3px solid var(--accent,#2563eb);animation:tuPulse 1.4s ease-in-out infinite;pointer-events:none;transition:all .25s ease}
+@keyframes tuPulse{50%{outline-offset:5px;outline-color:color-mix(in srgb,var(--accent,#2563eb) 40%,transparent)}}
+.tu-card{position:fixed;width:min(340px,calc(100vw - 24px));background:var(--panel,#fff);color:var(--ink,#111);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:14px 16px;pointer-events:auto;transition:left .25s ease,top .25s ease}
+.tu-card h3{margin:6px 0 6px;font-size:16px}.tu-card p{margin:0;font-size:13.5px;line-height:1.55}
+.tu-h{display:flex;justify-content:space-between;align-items:center}.tu-n{font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent,#2563eb)}
+.tu-bar{height:4px;background:var(--line,#ddd);border-radius:4px;margin:12px 0}.tu-bar i{display:block;height:100%;background:var(--accent,#2563eb);border-radius:4px;transition:width .3s}
+.tu-f{display:flex;justify-content:space-between;gap:8px}
+.tu-ar{position:absolute;width:14px;height:14px;background:var(--panel,#fff);transform:rotate(45deg);display:none}
+@media (prefers-reduced-motion:reduce){.tu-ring{animation:none}.tu-hole,.tu-card{transition:none}}
