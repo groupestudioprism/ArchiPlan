@@ -36,6 +36,7 @@ const PrismSettings = (() => {
 .prism-set button,.prism-set label,.prism-set input,.prism-set select{-webkit-tap-highlight-color:transparent}
 .prism-set button:focus,.prism-set input:focus{outline:none}.prism-set button:focus-visible,.prism-set select:focus-visible{outline:2px solid var(--accent,#0B57D0);outline-offset:2px}
 .prism-set .sw input:focus-visible+i{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#0B57D0) 35%,transparent)}
+@keyframes prismOut{to{opacity:0}}@keyframes prismDlgOut{to{opacity:0;transform:translateY(8px) scale(.98)}}.prism-set-bg.out{animation:prismOut .16s ease forwards;pointer-events:none}.prism-set-bg.out .prism-set{animation:prismDlgOut .16s ease forwards}
 @keyframes prismIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes prismPop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 .prism-set .sw.pop i::after{animation:prismPop .28s ease}
@@ -96,8 +97,12 @@ ${C?.scaleSel ? `${C.scaleSel}{zoom:var(--prism-ui,1)}` : ''}`;
       <div class="mid"><nav aria-label="Sections">${parts.map(([t], i) => `<button type="button" data-sec="${i}"${i ? '' : ' class="on"'}>${h(t)}</button>`).join('')}</nav><div class="bd">${parts.map(([t, inner]) => sec(t, inner)).join('')}</div></div></div>`;
   }
   const strip = x => x.replace(/ class="on"| checked| selected(?==|>| )/g, '');
-  function pills(){ dlg.querySelectorAll('.seg').forEach(g => { let pl = g.querySelector('.pill'); if (!pl){ pl = document.createElement('i'); pl.className = 'pill'; g.prepend(pl); }
-    const b = g.querySelector('button.on'); if (b){ pl.style.width = b.offsetWidth + 'px'; pl.style.transform = `translateX(${b.offsetLeft}px)`; } else pl.style.width = '0'; }); }
+  /* pastille glissante des sélecteurs : posée sans transition au premier affichage (plus de glissement depuis la gauche), recalculée si la taille change (police, échelle, fenêtre) */
+  let pillRO = null;
+  function pills(){ dlg.querySelectorAll('.seg').forEach(g => { let pl = g.querySelector('.pill'), fresh = false; if (!pl){ pl = document.createElement('i'); pl.className = 'pill'; pl.style.transition = 'none'; g.prepend(pl); fresh = true; }
+    const b = g.querySelector('button.on'); if (b){ pl.style.width = b.offsetWidth + 'px'; pl.style.transform = `translateX(${b.offsetLeft}px)`; } else pl.style.width = '0';
+    if (fresh) requestAnimationFrame(() => requestAnimationFrame(() => { pl.style.transition = ''; })); });
+    if (!pillRO && window.ResizeObserver){ pillRO = new ResizeObserver(() => { if (dlg && !dlg.hidden){ dlg.querySelectorAll('.seg .pill').forEach(pl => pl.style.transition = 'none'); pills(); requestAnimationFrame(() => dlg.querySelectorAll('.seg .pill').forEach(pl => pl.style.transition = '')); } }); pillRO.observe(dlg); } }
   function wire(){
     dlg.querySelector('.x').onclick = close;
     dlg.querySelectorAll('.seg').forEach(g => g.onclick = e => { const b = e.target.closest('button'); if (!b) return; set(g.dataset.k, b.dataset.v); });
@@ -132,8 +137,8 @@ ${C?.scaleSel ? `${C.scaleSel}{zoom:var(--prism-ui,1)}` : ''}`;
     render();
   }
   function open(){ if (!dlg){ dlg = document.createElement('div'); dlg.className = 'prism-set-bg'; dlg.onclick = e => { if (e.target === dlg) close(); }; document.body.appendChild(dlg); }
-    dlg.hidden = false; dlg._sig = ''; render(); document.addEventListener('keydown', esc, true); }
-  function close(){ if (dlg) dlg.hidden = true; document.removeEventListener('keydown', esc, true); }
+    dlg.classList.remove('out'); dlg.hidden = false; dlg._sig = ''; render(); document.addEventListener('keydown', esc, true); }
+  function close(){ if (dlg){ const d = dlg; d.classList.add('out'); setTimeout(() => { if (d.classList.contains('out')){ d.hidden = true; d.classList.remove('out'); } }, matchMedia('(prefers-reduced-motion:reduce)').matches ? 0 : 160); } document.removeEventListener('keydown', esc, true); }
   function esc(e){ if (e.key === 'Escape'){ e.stopPropagation(); close(); } }
   return {
     init(cfg){ C = cfg; css(); applyUI(); applyTheme(); gearBtns(); },

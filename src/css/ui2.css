@@ -1,8 +1,8 @@
 /* ---- disposition : barres masquables, panneau redimensionnable ---- */
-#app{grid-template-columns:74px minmax(0,1fr) var(--panelW,352px);transition:grid-template-columns .22s cubic-bezier(.3,.9,.3,1)}
+#app{position:relative;grid-template-columns:74px minmax(0,1fr) var(--panelW,352px);transition:grid-template-columns .22s cubic-bezier(.3,.9,.3,1)}
 #app.no-panel{grid-template-columns:74px minmax(0,1fr) 0px}#app.no-tools{grid-template-columns:0px minmax(0,1fr) var(--panelW,352px)}#app.no-panel.no-tools{grid-template-columns:0px minmax(0,1fr) 0px}
 #app.no-panel #panel,#app.no-tools .tools{display:none}
-#app.hide-cmd .cmdin,#app.hide-status .status,#app.hide-vtools .vtools,#app.hide-hud .hud{display:none}
+#app.hide-cmd .cmdin,#app.hide-status .status{display:none}#app.hide-vtools .vtools>:not(.bar-h),#app.hide-hud .hud>:not(.bar-h){display:none}
 .panel{position:relative}
 .panel-res{position:absolute;left:-4px;top:0;bottom:0;width:9px;cursor:col-resize;z-index:5;touch-action:none}
 .panel-res::after{content:"";position:absolute;left:3px;top:50%;width:3px;height:44px;margin-top:-22px;border-radius:3px;background:var(--line);transition:background .15s,height .15s}
@@ -52,3 +52,21 @@
 .spk-r .swt{width:30px;height:30px;border-radius:8px;border:1px solid rgb(0 0 0 / .12)}
 .spk-t b{font-size:14px;white-space:normal;line-height:1.25}.spk-t small{font-size:12px;white-space:normal;line-height:1.35}
 .spk-foot{padding:8px 14px;background:color-mix(in srgb,var(--panel) 92%,var(--line))}
+
+#app.dragging{transition:none!important}
+/* flèches de barre */
+.bar-h{display:grid;place-items:center;width:22px;height:22px;padding:0;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--mut);cursor:pointer;flex:none;pointer-events:auto;box-shadow:var(--shadow-s);transition:background .15s,color .15s,transform .25s cubic-bezier(.3,.9,.3,1),opacity .15s;opacity:.75;z-index:6}
+.bar-h:hover,.bar-h:focus-visible{background:var(--accent-soft);color:var(--accent);opacity:1}
+.bar-h svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s cubic-bezier(.3,.9,.3,1)}
+.bar-h[data-dir=left] svg{transform:rotate(90deg)}.bar-h[data-dir=left].shut svg{transform:rotate(-90deg)}
+.bar-h[data-dir=right] svg{transform:rotate(-90deg)}.bar-h[data-dir=right].shut svg{transform:rotate(90deg)}
+.bar-h[data-dir=up] svg{transform:rotate(180deg)}.bar-h[data-dir=up].shut svg{transform:none}
+.bar-h[data-dir=down].shut svg{transform:rotate(180deg)}
+.bar-tools,.bar-panel{position:absolute;top:50%;margin-top:-22px;width:16px;height:44px;border-radius:8px}
+.bar-tools{left:calc(74px - 8px)}#app.no-tools .bar-tools{left:2px}
+.bar-panel{right:calc(var(--panelHandle,352px) - 8px)}#app.no-panel .bar-panel{right:2px}
+.statrow{display:flex;gap:6px;align-items:center;min-width:0}.statrow .status{flex:1 1 auto}
+.cmdrow>.bar-h{align-self:center}
+.vtools>.bar-h,.hud>.bar-h{align-self:flex-end}.hud>.bar-h{align-self:center}
+@media (max-width:860px){.bar-tools,.bar-panel{display:none}}
+@media (prefers-reduced-motion:reduce){.bar-h,.bar-h svg{transition:none}}

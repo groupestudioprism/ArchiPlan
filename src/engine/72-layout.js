@@ -7,14 +7,14 @@ function applyLayout(){
   const app = $('#app'); if (!app) return;
   const narrow = matchMedia('(max-width:860px)').matches;
   for (const [k] of BARS) app.classList.toggle('hide-' + k, !!LAYOUT.bars[k]);
-  app.style.setProperty('--panelW', Math.round(clamp(LAYOUT.panelW, 260, Math.max(300, innerWidth * 0.6))) + 'px');
+  app.style.setProperty('--panelW', Math.round(clamp(LAYOUT.panelW, 220, Math.max(300, innerWidth * 0.7))) + 'px');
   app.classList.toggle('no-panel', !narrow && !!LAYOUT.bars.panel); app.classList.toggle('no-tools', !narrow && !!LAYOUT.bars.tools);
   const tp = $('#pbody .tree-pane'); if (tp && LAYOUT.treeH) tp.style.maxHeight = tp.style.height = LAYOUT.treeH + 'px';
-  window.dispatchEvent(new Event('resize'));
+  syncBarHandles(); if (!applyLayout.q){ applyLayout.q = requestAnimationFrame(() => { applyLayout.q = 0; window.dispatchEvent(new Event('resize')); }); }
 }
 function layoutMenuHtml(){
-  return `<hr><div class="lbl">Barres affichées</div>${BARS.map(([k, n]) => `<label class="mi"><input type="checkbox" data-bar="${k}"${LAYOUT.bars[k] ? '' : ' checked'}> ${n}</label>`).join('')}
-    <div class="lbl" style="margin-top:6px">Largeur du panneau</div><div class="seg-row">${[[300, 'Étroit'], [352, 'Normal'], [440, 'Large'], [560, 'Très large']].map(([w, n]) => `<button type="button" class="chip${LAYOUT.panelW === w ? ' on' : ''}" data-pw="${w}">${n}</button>`).join('')}</div>`;
+  return `<hr><div class="lbl">Largeur du panneau</div><div class="seg-row">${[[300, 'Étroit'], [352, 'Normal'], [440, 'Large'], [560, 'Très large']].map(([w, n]) => `<button type="button" class="chip${LAYOUT.panelW === w ? ' on' : ''}" data-pw="${w}">${n}</button>`).join('')}</div>
+    <div class="lbl" style="margin-top:6px;font-weight:400;opacity:.8">Les barres se masquent avec la flèche accrochée à chacune d'elles.</div>`;
 }
 document.addEventListener('change', e => { const k = e.target.dataset?.bar; if (!k) return; LAYOUT.bars[k] = !e.target.checked; saveLayout(); applyLayout(); toast(e.target.checked ? 'Barre affichée' : 'Barre masquée (Réglages › Affichage pour la remettre)'); });
 document.addEventListener('click', e => { const b = e.target.closest?.('[data-pw]'); if (!b) return; LAYOUT.panelW = +b.dataset.pw; saveLayout(); applyLayout(); renderViewMenu(); });
@@ -23,9 +23,10 @@ document.addEventListener('click', e => { const b = e.target.closest?.('[data-pw
   const app = $('#app'), panel = $('#panel'); if (!app || !panel) return;
   const h = document.createElement('div'); h.className = 'panel-res'; h.title = 'Glisser pour régler la largeur du panneau (double clic : réinitialiser)'; h.setAttribute('role', 'separator'); h.setAttribute('aria-orientation', 'vertical'); panel.prepend(h);
   let drag = null;
-  h.addEventListener('pointerdown', e => { drag = {x:e.clientX, w:panel.getBoundingClientRect().width}; h.setPointerCapture(e.pointerId); h.classList.add('on'); e.preventDefault(); });
-  h.addEventListener('pointermove', e => { if (!drag) return; LAYOUT.panelW = drag.w + (drag.x - e.clientX); applyLayout(); });
-  h.addEventListener('pointerup', () => { drag = null; h.classList.remove('on'); saveLayout(); });
+  h.addEventListener('pointerdown', e => { drag = {x:e.clientX, w:panel.getBoundingClientRect().width}; h.setPointerCapture(e.pointerId); h.classList.add('on'); app.classList.add('dragging'); e.preventDefault(); });
+  h.addEventListener('pointermove', e => { if (!drag) return; LAYOUT.panelW = Math.max(150, drag.w + (drag.x - e.clientX)); applyLayout(); });
+  const end = () => { if (!drag) return; drag = null; h.classList.remove('on'); app.classList.remove('dragging'); if (LAYOUT.panelW < 200){ LAYOUT.panelW = 352; LAYOUT.bars.panel = true; applyLayout(); } saveLayout(); };   // tiré tout à droite : le panneau se masque
+  h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
   h.addEventListener('dblclick', () => { LAYOUT.panelW = 352; saveLayout(); applyLayout(); });
   h.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){ LAYOUT.panelW += (e.key === 'ArrowLeft' ? 24 : -24); saveLayout(); applyLayout(); } }); h.tabIndex = 0;
 })();
@@ -55,4 +56,25 @@ function tabInk(){ const t = $('.tabs'); if (!t) return; let ink = t.querySelect
   const b = t.querySelector('button[aria-selected="true"]'); if (b){ ink.style.width = b.offsetWidth + 'px'; ink.style.transform = `translateX(${b.offsetLeft}px)`; } }
 new MutationObserver(() => requestAnimationFrame(tabInk)).observe($('.tabs'), {attributes:true, subtree:true, attributeFilter:['aria-selected', 'hidden']});
 window.addEventListener('resize', () => requestAnimationFrame(tabInk));
+
+/* ---- flèches accrochées aux barres : masquer / afficher chaque barre sans passer par le menu Affichage ---- */
+const BAR_ARROWS = {   // clé : [libellé, sens de la flèche quand la barre est visible]
+  tools:['les outils', 'left'], panel:['le panneau', 'right'], cmd:['la ligne de commande', 'down'], status:['les aides au dessin', 'down'], vtools:['les commandes de vue', 'up'], hud:['niveau, matériau, pas', 'up']};
+const barHandles = {};
+function syncBarHandles(){
+  for (const k in barHandles){ const hidden = !!LAYOUT.bars[k], [n, dir] = BAR_ARROWS[k], b = barHandles[k];
+    b.classList.toggle('shut', hidden); b.setAttribute('aria-expanded', !hidden); b.title = (hidden ? 'Afficher ' : 'Masquer ') + n; b.setAttribute('aria-label', b.title); }
+  const app = $('#app'); if (app) app.style.setProperty('--panelHandle', (LAYOUT.bars.panel ? 0 : Math.round(clamp(LAYOUT.panelW, 220, Math.max(300, innerWidth * 0.7)))) + 'px');
+}
+(() => {
+  const app = $('#app'); if (!app) return;
+  const mk = k => { const b = document.createElement('button'); b.type = 'button'; b.className = 'bar-h bar-' + k; b.dataset.dir = BAR_ARROWS[k][1]; b.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>';
+    b.onclick = e => { e.stopPropagation(); LAYOUT.bars[k] = !LAYOUT.bars[k]; saveLayout(); applyLayout(); }; barHandles[k] = b; return b; };
+  app.append(mk('tools'), mk('panel'));
+  const cmdrow = $('.cmdrow'); if (cmdrow) cmdrow.prepend(mk('cmd'));
+  const st = $('.status'); if (st){ const w = document.createElement('div'); w.className = 'statrow'; st.before(w); w.append(mk('status'), st); }
+  const vt = $('.vtools'); if (vt) vt.prepend(mk('vtools'));
+  const hud = $('.hud'); if (hud) hud.prepend(mk('hud'));
+  syncBarHandles();
+})();
 applyLayout(); enhancePanel(); requestAnimationFrame(tabInk);
