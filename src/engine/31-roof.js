@@ -119,7 +119,7 @@ function gableType(el, g){
 }
 const planArea3 = pts => Math.abs(sArea(pts.map(q => [q[0], q[1]])));
 function roofPieces(el){
-  const G = roofGeom(el), C = compo(el.type), c = Math.cos(G.a), out = [], fv = el.frameView;
+  const G = roofGeom(el), C = compo(el.type), c = Math.cos(G.a), out = [], fv = el.frameView, lf = roofLift(el);   // lf : relèvement de la couverture quand la charpente est affichée
   if (!fv) for (const pan of G.pans){
     let dzs = 0, li = 0; const poly = pan.map(q => [q[0], q[1]]);
     for (const [m, e] of C.layers){
@@ -133,9 +133,9 @@ function roofPieces(el){
     const wt = gableType(el, g), WC = compo(wt), T = WC.layers.reduce((s, [, e]) => s + e, 0), o = [-g.dir[0], -g.dir[1]], [A, B, Tp] = g.tri, Hh = Tp[2] - A[2], L = Math.hypot(B[0] - A[0], B[1] - A[1]);
     let s = 0;
     for (const [m, e] of WC.layers){
-      const off = T / 2 - s, top = g.tri.map(q => [q[0] + o[0] * off, q[1] + o[1] * off, q[2]]);
+      const tri5 = lf ? [[A[0], A[1], A[2] - lf], [B[0], B[1], B[2] - lf], B, Tp, A] : g.tri, off = T / 2 - s, top = tri5.map(q => [q[0] + o[0] * off, q[1] + o[1] * off, q[2]]);
       const poly = [[top[0][0], top[0][1]], [top[1][0], top[1][1]], [top[1][0] - o[0] * e, top[1][1] - o[1] * e], [top[0][0] - o[0] * e, top[0][1] - o[1] * e]];
-      out.push({poly, top, ext:[-o[0] * e, -o[1] * e, 0], base:A[2], h:Hh / 2, mat:m, lot:WC.lot || 'Gros œuvre', e, gable:true, area:L * Hh / 2});
+      out.push({poly, top, ext:[-o[0] * e, -o[1] * e, 0], base:A[2] - lf, h:Hh / 2 + lf, mat:m, lot:WC.lot || 'Gros œuvre', e, gable:true, area:L * (Hh / 2 + lf)});   // le pignon descend jusqu'au haut du mur même quand la couverture est relevée
       s += e;
     }
   }
