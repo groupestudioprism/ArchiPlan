@@ -112,3 +112,4 @@ body[data-mode="sec"] .nbtog,body[data-mode="render"] .nbtog{display:none}
 .mepx-pal button{padding:4px 6px;font-size:11px;border:1px solid var(--line,#d5d9e0);border-radius:6px;background:var(--panel,#fff);cursor:pointer}
 .mepx-pal button.on{outline:2px solid var(--accent,#2563eb)}
 .mepx canvas{width:100%;border:1px solid var(--line,#d5d9e0);border-radius:8px;background:#fff}
+.chk-cat{display:inline-block;margin-right:8px;padding:1px 7px;border-radius:99px;font:600 10px var(--f-body);letter-spacing:.04em;text-transform:uppercase;background:color-mix(in srgb,var(--accent,#2563eb) 14%,transparent);color:var(--accent,#2563eb);vertical-align:2px}
