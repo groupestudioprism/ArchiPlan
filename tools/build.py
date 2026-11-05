@@ -37,6 +37,8 @@ HEAD = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">'
         '<meta name="description" content="ARCHIPLAN · Studio Prism : conception de plans et modélisation 3D sur téléphone, tablette et ordinateur.">'
         '<meta name="theme-color" content="#071B55">'
+        '<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"><link rel="icon" type="image/png" sizes="64x64" href="assets/icon-64.png">'
+        '<link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="manifest" href="manifest.webmanifest">'
         '<link rel="preconnect" href="https://www.gstatic.com" crossorigin>'
         '<link rel="preconnect" href="https://firestore.googleapis.com">'
         '<link rel="preconnect" href="https://identitytoolkit.googleapis.com">'
@@ -48,7 +50,7 @@ def main(argv):
     demo = assemble()
     assert demo.count('const FIREBASE_CONFIG = null;') == 1 and f"FIREBASE_VERSION = '{FB}'" in demo
     (ROOT / 'dist').mkdir(exist_ok=True)
-    (ROOT / 'dist' / 'archiplan-demo.html').write_text(demo, encoding='utf-8')
+    (ROOT / 'dist' / 'archiplan-demo.html').write_text(demo.replace('<title>ARCHIPLAN</title>', '<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg"><link rel="icon" type="image/png" sizes="64x64" href="../assets/icon-64.png"><link rel="apple-touch-icon" href="../assets/icon-180.png"><link rel="manifest" href="../manifest.webmanifest"><title>ARCHIPLAN</title>', 1), encoding='utf-8')
     live = HEAD + demo.replace('const FIREBASE_CONFIG = null;', CONFIG).replace('<title>ARCHIPLAN</title>', '<title>ARCHIPLAN · Studio Prism</title>', 1) + '</body></html>\n'
     (ROOT / 'index.html').write_text(live, encoding='utf-8')
     print('index.html', len(live), 'octets · dist/archiplan-demo.html', len(demo), 'octets')

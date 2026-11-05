@@ -1,0 +1,2 @@
+{"name":"ARCHIPLAN · Studio Prism","short_name":"ARCHIPLAN","description":"Conception de plans et modélisation 3D","start_url":"./","scope":"./","display":"standalone","background_color":"#F9FAFA","theme_color":"#071B55","lang":"fr",
+ "icons":[{"src":"assets/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"assets/icon-512.png","sizes":"512x512","type":"image/png"},{"src":"assets/favicon.svg","sizes":"any","type":"image/svg+xml"}]}
