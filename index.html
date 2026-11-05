@@ -3787,7 +3787,7 @@ function wallReport(layers, ctx = 'mur'){
 /* Classement indicatif du U (repères RE2020 / rénovation) */
 /* Repères ajustés au lieu du projet (zone climatique, altitude : voir 65-site.js) */
 function uGradeLimits(ctx){
-  const base = ctx === 'toiture' ? [0.12, 0.17, 0.25] : ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
+  const base = ctx === 'toiture' ? [0.12, 0.17, 0.22] :   /* toiture rénovation : R ≥ 4,4 (rampants) à 4,8 (combles perdus), arrêté du 22 mars 2017 → U ≈ 0,20 à 0,22 */ ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
   let f = 1; try { f = typeof siteFactor === 'function' ? siteFactor() : 1; } catch(e){}
   return base.map(v => Math.round(v * f * 1000) / 1000);
 }
@@ -4647,19 +4647,20 @@ function sample(){
   const P = [[0,0],[10,0],[10,8],[0,8]], W = [];
   for (let i = 0; i < 4; i++) W.push(add({kind:'wall', type:'MUR-EXT-01', a:P[i], b:P[(i+1)%4], h:2.7, lvl:0, off:0.3, flip:false}));
   const c1 = add({kind:'wall', type:'CLO-72', a:[6,0.164], b:[6,7.836], h:2.5, lvl:0, off:0.3, flip:false});
-  add({kind:'wall', type:'CLO-72', a:[0.164,4.6], b:[6,4.6], h:2.5, lvl:0, off:0.3, flip:false});
+  const c2 = add({kind:'wall', type:'CLO-72', a:[0.164,4.6], b:[6,4.6], h:2.5, lvl:0, off:0.3, flip:false});
   add({kind:'inst', fam:'porte-entree', type:1, params:{}, host:W[0], t:3, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'baie-coulissante', type:1, params:{}, host:W[0], t:7.8, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'fenetre-2v', type:1, params:{}, host:W[2], t:3, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'fenetre-1v', type:1, params:{}, host:W[3], t:2.2, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'porte-simple', type:1, params:{}, host:c1, t:2.4, lvl:0, off:0, flip:false, mirror:false});
+  add({kind:'inst', fam:'porte-simple', type:1, params:{}, host:c2, t:4.6, lvl:0, off:0, flip:false, mirror:false});   // porte de la chambre
   add({kind:'inst', fam:'banc-assemblage', type:0, params:{}, c:[8,4.3], rot:0, lvl:0, off:0.3});
   add({kind:'inst', fam:'canape', type:0, params:{}, c:[3,1.4], rot:0, lvl:0, off:0.3});
   add({kind:'inst', fam:'lit', type:2, params:{}, c:[3,5.2], rot:0, lvl:0, off:0.3});
   add({kind:'slab', type:'DAL-BA-20', p:[10.2,2], q:[13.4,6], lvl:0, off:0.04});
-  add({kind:'col', mat:'ba', c:[13.15,2.25], w:0.25, d:0.25, h:2.7, lvl:0, off:0.3});
-  add({kind:'col', mat:'ba', c:[13.15,5.75], w:0.25, d:0.25, h:2.7, lvl:0, off:0.3});
-  add({kind:'vol', mat:'acier', p:[10.2,2], q:[13.4,6], h:0.12, lvl:0, off:3.0});
+  add({kind:'col', mat:'ba', c:[13.15,2.25], w:0.25, d:0.25, h:2.76, lvl:0, off:0.24});   // posés sur la terrasse (dessus à +0,24)
+  add({kind:'col', mat:'ba', c:[13.15,5.75], w:0.25, d:0.25, h:2.76, lvl:0, off:0.24});
+  add({kind:'vol', mat:'bacAcier', p:[10.2,2], q:[13.4,6], h:0.04, lvl:0, off:3.0});   // auvent : couverture en bac acier (et non un bloc d'acier plein)
   return s;
 }
 
@@ -6844,6 +6845,12 @@ function runCmd(){
     inp.value = '';
     if (word === 'ze' || word === 'zoom') return fit();
     if (word === 'u' && !draw.start) return undo();
+    // pendant un tracé : C = fermer le contour, U = annuler le dernier segment (comme AutoCAD)
+    if ((word === 'c' || word === 'clore' || word === 'fermer') && !$('#closeBtn').hidden) return $('#closeBtn').click();
+    if (word === 'u' && draw.start){
+      if (tool === 'wall' && draw.chainN > 0){ const last = state.els[state.els.length - 1]; if (last?.kind === 'wall'){ const a = last.a.slice(); undo(); draw.start = a; draw.chainN--; setPrompt(); toast('Dernier segment annulé'); return; } }
+      cancelDraw(); setPrompt(); return toast('Tracé annulé');
+    }
     if (CMDS[word]) return setTool(CMDS[word]);
     return toast('Commande inconnue. Exemples : MUR, DALLE, TOIT, DEP, CO, RO, PP, ZE');
   }
@@ -6859,7 +6866,7 @@ function runCmd(){
     if ('x' in c) pt = [c.x, c.y]; else { toast('Entrez une position x;y, par exemple 0;0'); return; }
   } else {
     if ('polar' in c){ const a = c.ang * Math.PI / 180; const L = Number.isNaN(c.polar) ? 1 : c.polar; pt = [S[0] + L * Math.cos(a), S[1] + L * Math.sin(a)]; }
-    else if ('x' in c) pt = [S[0] + c.x, S[1] + c.y];
+    else if ('x' in c) pt = c.rel ? [S[0] + c.x, S[1] + c.y] : [c.x, c.y];   // x;y absolu, @x;y relatif au dernier point
     else if ('len' in c){
       if (tool === 'slab' || tool === 'vol' || tool === 'roof'){ toast('Entrez les deux côtés : L;l'); return; }
       let dir = draw.cursor ? V.sub(draw.cursor, S) : [1, 0]; if (V.len(dir) < 1e-6) dir = [1, 0];
@@ -11165,7 +11172,7 @@ function envSummary(E){ if (!E) return ''; return `${E.b.length} bâtiment${E.b.
 
 /* ==== 68-glazing.js ==== */
 /* ============ Surface vitrée : baies (mesurées en tableau) rapportées à la surface habitable ============
-   Repère réglementaire : la RT 2012 (art. 20) impose une surface totale de baies ≥ 1/6 de la surface habitable pour les logements ;
+   Repère réglementaire : la RT 2012 (art. 20) impose une surface totale de baies ≥ 1/6 de la surface habitable pour les logements, exigence reprise par la RE2020 ;
    ce ratio reste le repère usuel d'éclairement naturel en maison individuelle. La surface habitable est estimée d'après les
    planchers (moins l'emprise des murs) ou saisie dans le projet (state.shab). */
 const GLAZ_MIN = 1 / 6;
@@ -11191,11 +11198,14 @@ function glazingReport(){
   const xs = walls.flatMap(w => [w.a[0], w.b[0]]), ys = walls.flatMap(w => [w.a[1], w.b[1]]);
   const cx = xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0, cy = ys.length ? (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
   const by = {N:0, E:0, S:0, O:0}, items = []; let total = 0;
+  const roomsBy = {}, rIn = (lvl, p) => (roomsBy[lvl] ??= (() => { try { return detectRooms(lvl); } catch(e){ return []; } })()).some(r => ptInPoly(p[0], p[1], r.poly));
+  // une baie d'une cloison intérieure (pièce des deux côtés) n'éclaire pas le logement : elle n'est pas comptée
+  const interior = w => { const d = V.sub(w.b, w.a), L = V.len(d) || 1, n = [-d[1] / L, d[0] / L], m = V.mul(V.add(w.a, w.b), 0.5), t = wallT(w) / 2 + 0.25; return rIn(w.lvl, V.add(m, V.mul(n, t))) && rIn(w.lvl, V.sub(m, V.mul(n, t))); };
   for (const el of state.els){
     if (el.kind !== 'inst' || !el.host) continue;
     const F = fam(el.fam), c = famCut(el); if (!F || !c) continue;
     if (!(F.cat === 'Fenêtres' || (F.cat === 'Portes' && glazedDoor(F, el)))) continue;
-    const w = getEl(el.host); if (!w) continue;
+    const w = getEl(el.host); if (!w || interior(w)) continue;
     const a = c.w * c.h, {n} = wallAxis(w), m = [(w.a[0] + w.b[0]) / 2, (w.a[1] + w.b[1]) / 2];
     const out = (m[0] + n[0] - cx) ** 2 + (m[1] + n[1] - cy) ** 2 > (m[0] - n[0] - cx) ** 2 + (m[1] - n[1] - cy) ** 2 ? n : [-n[0], -n[1]];
     const ang = (Math.atan2(out[0], out[1]) * 180 / Math.PI + 360) % 360, o = ang < 45 || ang >= 315 ? 'N' : ang < 135 ? 'E' : ang < 225 ? 'S' : 'O';
@@ -11787,11 +11797,11 @@ applyLayout(); enhancePanel(); requestAnimationFrame(tabInk);
    bâtiment d'après des règles courantes (France) ; chaque problème est expliqué et peut être corrigé un par un :
    - hauteur sous plafond ≥ 2,20 m (décret n° 2002-120, logement décent ; RSD) ;
    - une pièce principale d'au moins 9 m² (même décret) ;
-   - porte : passage libre ≥ 0,83 m, hauteur ≥ 2,04 m (accessibilité, arrêté du 20 avril 2017 ; 0,90 m de vantail) ;
+   - porte : passage libre ≥ 0,83 m, hauteur ≥ 2,04 m (accessibilité des logements neufs, arrêté du 24 décembre 2015 ; 0,90 m de vantail) ;
    - garde-corps / allège ≥ 1,00 m au-dessus de 1 m de chute (NF P 01-012, DTU 36.5) ; allège de fenêtre d'étage ;
    - plancher béton : portée libre max. ≈ 5 m sans appui intermédiaire (dalle pleine 20 cm), poutre h ≈ L/12, poteau élancement ≤ 15 ;
    - murs d'étage appuyés sur un mur, un poteau ou une poutre en dessous (descente de charges) ;
-   - pente de toiture mini. selon la couverture (tuiles ≥ 30 %, ardoise ≥ 22°…) ; escaliers (NF P 21-211 : 2h + g, échappée 1,90 m).
+   - pente de toiture mini. selon la couverture (tuiles ≥ 30 %, ardoise ≥ 22°…) ; escaliers (NF DTU 36.3 et usages : 2h + g, échappée 1,90 m).
    Calculs de pré-dimensionnement, indicatifs : ils ne remplacent ni un bureau d'études structure ni le contrôle technique. */
 function beamEl(a, b, o = {}){
   const w = o.w || 0.2, h = o.h || 0.3, d = V.norm(V.sub(b, a)), n = [-d[1] * w / 2, d[0] * w / 2];
@@ -11825,16 +11835,20 @@ function polyChord(poly, p, horizontal){   // extrémités de la droite (horizon
   if (hits.length < 2) return null; hits.sort((u, v) => u - v); const u = hits[0], v = hits.at(-1); return horizontal ? [[u, p[1]], [v, p[1]]] : [[p[0], u], [p[0], v]];
 }
 /* ---------- règles ---------- */
-const CHECK_REF = {ceil:'Décret n° 2002-120 (logement décent) : hauteur sous plafond ≥ 2,20 m.', room:'Décret n° 2002-120 : au moins une pièce principale de 9 m² minimum.',
-  door:'Arrêté du 20 avril 2017 (accessibilité) : porte ≥ 0,90 m (passage libre ≥ 0,83 m), hauteur ≥ 2,04 m.', sill:'NF P 01-012 / DTU 36.5 : protection de 1,00 m au-dessus d\'une chute de 1 m ; allège de fenêtre d\'étage ≥ 0,90 m.',
+const CHECK_REF = {ceil:'Décret n° 2002-120 (décence d\'un logement loué) : pièce principale de 2,20 m de hauteur sous plafond au moins.', room:'Décret n° 2002-120 : au moins une pièce principale de 9 m² minimum.',
+  door:'Arrêté du 24 décembre 2015 (accessibilité des logements neufs vendus ou loués ; une maison construite pour son propre usage en est dispensée) : porte de 0,90 m (passage libre ≥ 0,83 m).', sill:'NF P 01-012 / DTU 36.5 : protection de 1,00 m au-dessus d\'une chute de 1 m ; allège de fenêtre d\'étage ≥ 0,90 m.',
   span:'Règle de pré-dimensionnement : dalle béton pleine, portée libre ≈ 5 m max. sans appui ; poutre h ≈ L/12 (BAEL / Eurocode 2).', col:'Poteau béton : élancement h / côté ≤ 15 (pré-dimensionnement) ; côté ≥ 0,20 m.',
   load:'Descente de charges : un mur d\'étage s\'appuie sur un mur, un poteau ou une poutre en dessous.', roof:'DTU 40.21/40.11 : pente mini. tuiles 30 % (≈ 17°), ardoises 22° (≈ 40 %).',
-  stair:'NF P 21-211 : 2h + g = 60 à 65 cm, giron ≥ 24 cm, hauteur ≤ 19 cm, échappée 1,90 m.', slab:'Un niveau habité a un plancher : sans dalle, les murs d\'étage ne reposent sur rien.'};
+  stair:'NF DTU 36.3 et usages : 2h + g = 60 à 65 cm, giron ≥ 24 cm, hauteur ≤ 19 cm, échappée 1,90 m.', slab:'Un niveau habité a un plancher : sans dalle, les murs d\'étage ne reposent sur rien.'};
 function runChecks(){
   const out = [], E = state.els, add = (id, lvl, title, detail, ref, fix, els = []) => out.push({id, lvl, title, detail, ref, fix, els, key:id + '|' + els.join(',')});
   const lv = i => state.levels[i]?.n || `Niveau ${i}`;
   // 1. hauteur sous plafond
-  for (const w of E) if (w.kind === 'wall' && w.h < 2.2 - 1e-6 && !w.partition) add('ceil', 'bad', `Mur ${w.id} (${lv(w.lvl)}) : hauteur ${lenTxt(w.h)}`, 'Hauteur sous plafond inférieure à 2,20 m (pièce habitable).', CHECK_REF.ceil, {t:'Porter la hauteur à 2,50 m', run:() => { w.h = 2.5; delete w.top; }}, [w.id]);
+  // seuls les murs qui bordent une pièce détectée comptent (un muret de jardin ou un garde-corps maçonné n'a pas de plafond)
+  const roomsCeil = []; for (let i = 0; i < state.levels.length; i++) try { for (const r of detectRooms(i)) roomsCeil.push({...r, lvl:i}); } catch(e){}
+  const bordersRoom = w => { const d = V.sub(w.b, w.a), L = V.len(d) || 1, n = [-d[1] / L, d[0] / L], m = V.mul(V.add(w.a, w.b), 0.5), t = wallT(w) / 2 + 0.25;
+    return [V.add(m, V.mul(n, t)), V.sub(m, V.mul(n, t))].some(p => roomsCeil.some(r => r.lvl === w.lvl && ptInPoly(p[0], p[1], r.poly))); };
+  for (const w of E) if (w.kind === 'wall' && w.h < 2.2 - 1e-6 && !w.partition && bordersRoom(w)) add('ceil', 'warn', `Mur ${w.id} (${lv(w.lvl)}) : hauteur ${lenTxt(w.h)}`, 'Pièce de moins de 2,20 m de hauteur : elle ne compte pas comme pièce principale d\'un logement loué (2,50 m sont usuels en neuf).', CHECK_REF.ceil, {t:'Porter la hauteur à 2,50 m', run:() => { w.h = 2.5; delete w.top; }}, [w.id]);
   // 2. pièce principale 9 m²
   const rooms = []; for (let i = 0; i < state.levels.length; i++) try { for (const r of detectRooms(i)) rooms.push({...r, lvl:i}); } catch(e){}
   if (rooms.length && !rooms.some(r => r.area >= 9)) add('room', 'warn', 'Aucune pièce de 9 m² ou plus', `La plus grande pièce mesure ${nf(Math.max(...rooms.map(r => r.area)), 1)} m².`, CHECK_REF.room, null);
@@ -11876,7 +11890,7 @@ function runChecks(){
         {t:`Ajouter une poutre de reprise ${n0(sec.w * 100)} × ${n0(sec.h * 100)} cm sous le mur`, run:() => { const lvl = i - 1, zb = lvlZ(i) + (E.find(s => s.kind === 'slab' && s.lvl === i && (s.off || 0) <= 1.2)?.off || 0) - lvlZ(lvl), b = beamEl(w.a, w.b, {lvl, top:zb, h:sec.h, w:Math.max(sec.w, wallT(w))}); b.id = state.nextId++; state.els.push(b); }}, [w.id]); } } }
   // 9. toitures
   for (const r of E) if (r.kind === 'roof' && (r.shape || '2') !== '0'){ const C = compo(r.type), tile = /tuile|ardoise|zinc|bac/i, name = C?.nom || ''; const min = /ardoise/i.test(name) ? 22 : /tuile/i.test(name) ? 17 : /bac|zinc|membrane|v[ée]g[ée]/i.test(name) ? 3 : 5;
-    if ((r.pitch ?? 35) < min - 1e-6 && tile) add('roof', 'warn', `Toiture ${r.id} : pente ${n0(r.pitch)}° pour « ${name} »`, `Pente inférieure au minimum usuel (${min}°) pour cette couverture.`, CHECK_REF.roof, {t:`Passer à ${min + 3}°`, run:() => { r.pitch = min + 3; }}, [r.id]); }
+    if ((r.pitch ?? 35) < min - 1e-6 && tile.test(name)) add('roof', 'warn', `Toiture ${r.id} : pente ${n0(r.pitch)}° pour « ${name} »`, `Pente inférieure au minimum usuel (${min}°) pour cette couverture.`, CHECK_REF.roof, {t:`Passer à ${min + 3}°`, run:() => { r.pitch = min + 3; }}, [r.id]); }
   // 10. escaliers
   for (const s of E) if (s.kind === 'stair'){ const bad = stairCheck(s).checks.filter(c => c.lvl === 'bad'); if (bad.length) add('stair', 'bad', `Escalier ${s.id} : ${bad.length} point${bad.length > 1 ? 's' : ''} bloquant${bad.length > 1 ? 's' : ''}`, bad.map(c => c.t).join(' '), CHECK_REF.stair, {t:'Hauteur, giron et emmarchement automatiques', run:() => { delete s.n; delete s.hs; delete s.g; s.w = Math.max(s.w || 0.9, s.use === 'erp' ? 1.2 : 0.9); }}, [s.id]); }
   return out;
@@ -12043,14 +12057,38 @@ function openTutorial(i = 0){
    3) Réseaux : éléments « net » (polylignes 3D à section carrée équivalente) comptés au DQE et exportés en IFC.
    Règles (France, repères de pré-dimensionnement, à valider par un bureau d'études / un électricien / un plombier) :
    - NF C 15-100 : prises par pièce (séjour 1 par 4 m² mini. 5, > 28 m² mini. 7 ; chambre 3 ; cuisine 6 dont 4 au-dessus du plan de travail, 3 si ≤ 4 m² ;
-     autre pièce > 4 m² : 1 ; WC : 0 ; salle d'eau : 1 hors volumes), circuits spécialisés 20 A / 2,5 mm² (four, lave-linge, lave-vaisselle, sèche-linge, chauffe-eau),
+     autre pièce > 4 m² : 1 ; WC : 0 ; salle d'eau : 1 hors volumes 0 à 2 ; volume 2 = bande de 0,60 m autour de la douche ou de la baignoire), circuits spécialisés 20 A / 2,5 mm² (four, lave-linge, lave-vaisselle, sèche-linge, chauffe-eau),
      plaque de cuisson 32 A / 6 mm², éclairage 16 A / 1,5 mm² (8 points max.), prises 16 A / 1,5 mm² (8 max.) ou 20 A / 2,5 mm² (12 max.), 1 interrupteur différentiel 30 mA par rangée
-     (8 circuits max. par différentiel), 20 % de réserve, rangées de 13 modules ; prises à 5 cm mini. et 1,30 m maxi. du sol, interrupteurs à 1,10 m ; hotte à 1,80 m ;
+     (8 circuits max. par différentiel), 20 % de réserve, rangées de 13 modules ; prises à 5 cm mini. et 1,30 m maxi. du sol, interrupteurs à 1,10 m ; hotte à 1,80 m ; organes de commande du tableau entre 0,90 et 1,80 m du sol ;
+     au moins 2 interrupteurs différentiels 30 mA dont 1 de type A (plaque de cuisson, lave-linge) ; type F conseillé pour une pompe à chaleur (édition 2024) ; DAAF autonomes (à piles) ;
    - DTU 60.1 / 60.11 : évacuations EU pente ≥ 1 cm/m (2 cm/m retenu), Ø 100 pour WC, Ø 40 pour lavabo, douche, baignoire, évier, lave-linge ; eau chaude et froide espacées de 2 cm ;
      PER Ø 12 (lavabo, évier, lave-linge, WC) et Ø 16 (douche, baignoire, ballon) ; croisement eau potable / eaux usées : eau potable au-dessus ;
-   - Arrêté du 24 mars 1982 : extraction dans les pièces de service (cuisine 75 à 135 m³/h, salle de bain 15, WC 15), entrées d'air dans les pièces principales, débit total mini. 35 à 120 m³/h ;
+   - Arrêté du 24 mars 1982 : extraction dans les pièces de service (cuisine 75 à 135 m³/h, salle de bains 15 à 45, WC 15 à 30 selon le nombre de pièces principales), entrées d'air dans les pièces principales, débit total mini. 35 à 105 m³/h (+15 par pièce au-delà de 5) ;
    - Eau chaude : ≈ 50 à 60 l par personne et par jour (ballon 100 l pour 1 à 2 personnes, 150 l pour 2 à 3, 200 l pour 3 à 4, 250 à 300 l au-delà). */
 
+/* nombre minimal de prises de courant (socles 16 A, hors circuits spécialisés et RJ45) — NF C 15-100, partie 10.1.3 (inchangé par l'édition 2024) */
+function mepPrisesMin(kind, A){
+  if (kind === 'sejour') return A > 28 ? Math.max(7, Math.ceil(A / 4)) : Math.max(5, Math.ceil(A / 4));
+  if (kind === 'chambre') return 3;
+  if (kind === 'cuisine') return A <= 4 ? 3 : 6;
+  if (kind === 'wc' || kind === 'ext' || kind === 'garage' || kind === 'buanderie' || kind === 'technique') return 0;
+  return A > 4 ? 1 : 0;   // salle d'eau (hors volumes), entrée, couloir, bureau… de plus de 4 m²
+}
+/* pièces principales (séjour, chambres, bureau) : base des débits de ventilation (arrêté du 24 mars 1982) */
+const mepIsMain = r => r.kind === 'sejour' || r.kind === 'chambre' || (r.kind === 'autre' && /bureau|salle de jeux|salon|etude/.test(mepNorm(r.name)) );
+/* débits d'extraction (m³/h) de l'arrêté du 24 mars 1982, selon le nombre de pièces principales T : cuisine (grand débit), salle de bains, autre salle d'eau, WC unique, WC multiple, total minimal */
+function mepVentFlows(T){ const i = Math.max(0, Math.min(4, (T | 0) - 1));
+  return {cuisine:[75, 90, 105, 120, 135][i], sdb:[15, 15, 30, 30, 45][i], sde:15, wc1:[15, 15, 15, 30, 30][i], wcN:15, tot:[35, 60, 75, 90, 105][i] + (T > 5 ? 15 * (T - 5) : 0)}; }
+/* sol fini et plafond d'un niveau (relatifs à la cote du niveau) : le dallage peut être posé au-dessus du niveau (sol fini à +0,30 par exemple),
+   les équipements et les réseaux partent du sol fini, les cheminements « sous plafond » restent sous le haut des murs */
+function mepFloorOff(lvl){
+  let best = null, ba = 0; for (const s of state.els){ if (s.kind !== 'slab' || s.lvl !== lvl || (s.off || 0) > 1.2 || elUse(s) === 'toiture') continue; let A = 0; try { A = Math.abs(area(volPoly(s))); } catch(e){} if (A > ba){ ba = A; best = s; } }
+  if (!best) return 0; let t = 0; try { t = slabT(best); } catch(e){} return Math.max(0, Math.round(((best.off || 0) + t) * 1000) / 1000);
+}
+function mepCeilH(lvl){
+  const tops = state.els.filter(w => w.kind === 'wall' && w.lvl === lvl && !w.partition && w.h > 1.8).map(w => (w.off || 0) + w.h).sort((a, b) => a - b), nx = state.levels[lvl + 1];
+  const lv = nx ? nx.z - state.levels[lvl].z : 2.7 + mepFloorOff(lvl); return tops.length ? Math.min(lv, tops[Math.floor(tops.length / 2)]) : lv;
+}
 /* ---------- matériaux des réseaux ---------- */
 (() => { const add = (id, nom, col) => { if (!MATS[id]) M(id, nom, 'Verre et plastiques', 950, 0.4, 2000, 1e5, col, 'plain', 2.5); };
   add('resEF', 'Réseau eau froide (PER bleu)', '#2F7FD6'); add('resECS', 'Réseau eau chaude (PER rouge)', '#D6402F'); add('resEU', 'Évacuation PVC', '#8A7F72');
@@ -12071,8 +12109,8 @@ const MEP_FAMS = (() => {
     'e-spot': {nom:'Spot encastré', cat:'Électricité', host:'free', params:{hc:P(2.5, 'Hauteur du plafond')}, types:[{nom:'Spot LED', p:{}}], price:22, parts:[{s:'cyl', m:'alu', x:'0', y:'0', z:'hc-0.03', r:'0.045', h:'0.03'}]},
     'e-applique': {nom:'Applique murale', cat:'Électricité', host:'free', params:Z(1.8), types:[{nom:'Applique', p:{}}], price:55, parts:[{s:'box', m:'alu', x:'-0.1', y:'-0.1', z:'zh', w:'0.2', d:'0.1', h:'0.1'}]},
     'e-daaf': {nom:'Détecteur avertisseur de fumée (DAAF)', cat:'Électricité', host:'free', params:{hc:P(2.5, 'Hauteur du plafond')}, types:[{nom:'DAAF NF EN 14604', p:{}}], price:25, parts:[{s:'cyl', m:'pvc', x:'0', y:'0', z:'hc-0.04', r:'0.05', h:'0.04'}]},
-    'e-tableau': {nom:'Tableau électrique (GTL)', cat:'Électricité', host:'free', params:{rg:P(3, 'Rangées de 13 modules', ''), zh:P(0.2, 'Hauteur de pose')}, types:[{nom:'Tableau 3 rangées', p:{}}, {nom:'Tableau 2 rangées', p:{rg:2}}, {nom:'Tableau 4 rangées', p:{rg:4}}], price:'250+rg*160',
-      parts:[{s:'box', m:'acierLaque', x:'-0.2', y:'-0.1', z:'zh', w:'0.4', d:'0.1', h:'0.15*rg+0.2'}, {s:'box', m:'alu', x:'-0.2', y:'-0.1', z:'zh+1.8', w:'0.4', d:'0.1', h:'0.2'}]},
+    'e-tableau': {nom:'Tableau électrique (GTL)', cat:'Électricité', host:'free', params:{rg:P(3, 'Rangées de 13 modules', ''), zh:P(1.0, 'Hauteur de pose (bas du tableau)')}, types:[{nom:'Tableau 3 rangées', p:{}}, {nom:'Tableau 2 rangées', p:{rg:2}}, {nom:'Tableau 4 rangées', p:{rg:4}}], price:'250+rg*160',
+      parts:[{s:'box', m:'acierLaque', x:'-0.2', y:'-0.1', z:'zh', w:'0.4', d:'0.1', h:'0.15*rg+0.2'}, {s:'box', m:'alu', x:'-0.2', y:'-0.1', z:'zh+0.15*rg+0.3', w:'0.4', d:'0.1', h:'0.2'}]},   /* coffret de communication au-dessus du tableau ; organes de commande entre 0,90 et 1,80 m */
     'p-ballon': {nom:'Chauffe-eau (ballon d\'eau chaude)', cat:'Plomberie', host:'free', params:{V:P(200, 'Volume (l)', 'l'), r:P(0.28, 'Rayon'), h:P(1.5, 'Hauteur')}, price:'450+V*3.5',
       types:[{nom:'100 l', p:{V:100, r:0.23, h:1.0}}, {nom:'150 l', p:{V:150, r:0.26, h:1.2}}, {nom:'200 l', p:{}}, {nom:'250 l', p:{V:250, r:0.3, h:1.6}}, {nom:'300 l', p:{V:300, r:0.32, h:1.75}}],
       parts:[{s:'cyl', m:'acierLaque', x:'0', y:'-r', z:'0', r:'r', h:'h'}, {s:'cyl', m:'inox', x:'0', y:'-r', z:'h', r:'r*0.3', h:'0.06'}]},
@@ -12192,78 +12230,192 @@ function ceilPoints(poly, n){
 const famYmax = id => { const F = fam(id); if (!F) return 0; try { return Math.max(...famSolids(F, famScope(F, {type:0, params:{}})).map(s => s.c[1] + (s.s === 'box' ? s.d / 2 : s.s === 'cyl' || s.s === 'sph' ? s.r : 0))); } catch(e){ return 0; } };
 const famWidth = id => { const F = fam(id); if (!F) return 0.5; try { const S = famSolids(F, famScope(F, {type:0, params:{}})), xs = S.flatMap(s => [s.c[0] - (s.w ?? s.r * 2) / 2, s.c[0] + (s.w ?? s.r * 2) / 2]); return Math.max(...xs) - Math.min(...xs); } catch(e){ return 0.6; } };
 
+/* ---------- obstacles : mobilier, appareils sanitaires, équipements déjà posés (empreintes au sol + hauteurs) ---------- */
+const MEP_ELEC_WALL = new Set(['prise', 'spec', 'plaque', 'rj45', 'inter', 'tableau']);
+const MEP_SMALL = new Set(['prise', 'spec', 'plaque', 'rj45', 'inter', 'applique', 'lum', 'spot', 'daaf', 'vext', 'ventree']);
+const pseudoEl = it => ({kind:'inst', fam:it.fam, type:it.type | 0, params:it.params || {}, c:it.c, rot:it.rot || 0, lvl:it.lvl, off:mepFloorOff(it.lvl), mirror:false});
+/* rectangles (coins en plan + cotes basse et haute, relatives au niveau) des pièces d'une famille posée librement */
+function mepRects(el){
+  let S = []; try { S = instSolids(el); } catch(e){ return []; } const z0L = lvlZ(el.lvl || 0) + mepFloorOff(el.lvl || 0), out = [];   // cotes relatives au sol fini
+  for (const so of S){ let w, d, z0, z1;
+    if (so.s === 'box'){ w = so.w; d = so.d; z0 = so.c[2] - so.h / 2; z1 = so.c[2] + so.h / 2; }
+    else if (so.s === 'cyl' || so.s === 'cone'){ w = d = 2 * so.r; z0 = so.c[2] - (so.h || 0) / 2; z1 = so.c[2] + (so.h || 0) / 2; if (so.ax){ z0 = so.c[2] - so.r; z1 = so.c[2] + so.r; } }
+    else if (so.s === 'sph'){ w = d = 2 * so.r; z0 = so.c[2] - so.r; z1 = so.c[2] + so.r; }
+    else if (so.s === 'ext' && so.pts?.length >= 3){ const a = so.rz || 0, ca = Math.cos(a), sa = Math.sin(a); out.push({pts:so.pts.map(([x, y]) => [so.c[0] + x * ca - y * sa, so.c[1] + x * sa + y * ca]), z0:so.c[2] - so.h / 2 - z0L, z1:so.c[2] + so.h / 2 - z0L, m:so.m, h:so.h}); continue; }
+    else if (so.w && so.d){ w = so.w; d = so.d; z0 = so.c[2] - (so.h || 0.5) / 2; z1 = so.c[2] + (so.h || 0.5) / 2; }
+    else continue;
+    const a = so.rz || 0, ux = [Math.cos(a) * w / 2, Math.sin(a) * w / 2], uy = [-Math.sin(a) * d / 2, Math.cos(a) * d / 2], c = [so.c[0], so.c[1]];
+    out.push({pts:[[c[0] - ux[0] - uy[0], c[1] - ux[1] - uy[1]], [c[0] + ux[0] - uy[0], c[1] + ux[1] - uy[1]], [c[0] + ux[0] + uy[0], c[1] + ux[1] + uy[1]], [c[0] - ux[0] + uy[0], c[1] - ux[1] + uy[1]]], z0:z0 - z0L, z1:z1 - z0L, m:so.m, h:so.h}); }
+  return out;
+}
+const rectDist = (p, pts) => ptInPoly(p[0], p[1], pts) ? 0 : dPoly(p, pts);
+/* toutes les contraintes d'un niveau : obstacles (mobilier et gros équipements) et zones d'eau (douche, baignoire, lavabo, évier) */
+function mepConstraints(lvl, items = []){
+  const obst = [], wet = [], basins = [];
+  const take = (el, kind, src) => { const R = mepRects(el); if (!R.length) return;
+    if (kind === 'douche' || kind === 'baignoire') wet.push(...R.map(r => ({...r, kind, src})));
+    if (kind === 'lavabo') basins.push(...R.map(r => ({...r, kind, src})));
+    if (kind === 'cuisine') basins.push(...R.filter(r => r.m === 'inox' && (r.h || 1) < 0.02).map(r => ({...r, kind:'evier', z1:Math.max(r.z1, 0.9), src})));
+    // receveur de douche, baignoire : obstacle sur toute la hauteur (rien ne se pose au-dessus)
+    obst.push(...R.map(r => ({...r, kind:kind || 'meuble', src, z1:kind === 'douche' || kind === 'baignoire' ? Math.max(r.z1, 2.2) : r.z1}))); };
+  for (const e of state.els) if (e.kind === 'inst' && !e.host && e.lvl === lvl && e.c){ const k = MEP_KIND[e.fam]; if (k && MEP_SMALL.has(k)) continue; if (e.auto && k) continue; take(e, k, e.id); }
+  items.forEach((it, i) => { if (it.lvl !== lvl || MEP_SMALL.has(it.kind)) return; take(pseudoEl(it), it.kind, 'p' + i); });
+  return {obst, wet, basins};
+}
+/* raison pour laquelle un équipement ne peut pas être à cet endroit ('' = autorisé). p : position du composant (au nu du mur pour un objet mural) */
+function mepWhyNot(kind, p, zlo, zhi, C, o = {}){
+  const self = o.self, halfW = o.halfW || 0.05, dir = o.dir, ign = o.ignore || [];
+  const pts = dir ? [p, V.add(p, V.mul(dir, halfW)), V.sub(p, V.mul(dir, halfW))] : [p];
+  if (MEP_ELEC_WALL.has(kind)){
+    for (const r of C.wet) if (r.src !== self && pts.some(q => rectDist(q, r.pts) < 0.6 - 1e-3)) return `${MEP_LABEL[kind]} : interdit à moins de 60 cm d'une ${r.kind === 'douche' ? 'douche' : 'baignoire'} (volumes 1 et 2, NF C 15-100 partie 7-701)`;
+    if (kind !== 'inter' && kind !== 'tableau') for (const r of C.basins) if (r.src !== self && zlo >= r.z1 - 0.05 && pts.some(q => rectDist(q, r.pts) < 0.1)) return `${MEP_LABEL[kind]} : pas au-dessus d'un ${r.kind === 'evier' ? 'évier' : 'lavabo'} (NF C 15-100)`;
+  }
+  if (kind === 'seche') for (const r of C.wet) if (r.src !== self && pts.some(q => rectDist(q, r.pts) < 0.05)) return 'Sèche-serviettes interdit dans la douche ou la baignoire (volume 1) ; classe II admise en volume 2';
+  if (kind === 'tableau'){ for (const r of C.wet) if (r.src !== self && pts.some(q => rectDist(q, r.pts) < 0.6)) return 'Tableau électrique interdit dans une salle d\'eau (hors des volumes 0 à 2 au minimum ; à éviter dans la pièce)'; }
+  for (const r of C.obst){ if (r.src === self || ign.includes(r.kind) || r.z1 <= zlo + 0.02 || r.z0 >= zhi - 0.02) continue;
+    if (pts.some(q => rectDist(q, r.pts) < 0.06)) return r.kind && MEP_KIND[r.kind] !== undefined && r.kind !== 'meuble' ? `Emplacement déjà occupé (${MEP_LABEL[r.kind] || 'équipement'})` : 'Emplacement occupé par un meuble'; }
+  return '';
+}
+/* sorties placées volontairement derrière les meubles de cuisine : plaque 32 A, circuits spécialisés (four, lave-vaisselle), prise de hotte */
+const mepIgnores = (k, zlo) => k === 'plaque' || k === 'spec' || (k === 'prise' && zlo >= 1.7) ? ['cuisine'] : [];
+/* hauteurs occupées par un composant (relatives au niveau) */
+function mepZRange(fam_, params = {}){
+  const F = fam(fam_), k = MEP_KIND[fam_]; let s = {}; try { s = famScope(F, {type:0, params}); } catch(e){}
+  if (k === 'tableau') return [s.zh ?? 1, (s.zh ?? 1) + 0.15 * (s.rg || 3) + 0.5];
+  if (k === 'rad') return [0, 0.8]; if (k === 'seche') return [0.4, 1.6]; if (k === 'ballon') return [0, (s.h || 1.5) + 0.1]; if (k === 'pac') return [0, 1.1];
+  if (['wc', 'lavabo', 'douche', 'baignoire', 'cuisine'].includes(k)) return [0, 2.2];
+  if (k === 'arrivee') return [(s.zh ?? 0.6), (s.zh ?? 0.6) + 0.2];
+  const z = params.zh ?? s.zh ?? 0.3; return [z, z + 0.1];
+}
+/* centre en x (repère local) d'une famille : la cuisine linéaire part de x = 0, les autres sont centrées */
+const famCx = (id, params = {}) => { const F = fam(id); if (!F) return 0; try { const S = famSolids(F, famScope(F, {type:0, params})); const xs = S.flatMap(s => [s.c[0] - (s.w ?? (s.r || 0) * 2) / 2, s.c[0] + (s.w ?? (s.r || 0) * 2) / 2]); return (Math.min(...xs) + Math.max(...xs)) / 2; } catch(e){ return 0; } };
+
 /* ---------- proposition ---------- */
 const MEP_DEF = {sys:{elec:true, plomb:true, vent:true, chauf:true}, occ:0, heat:'eau', light:'mixte', wm2:55, fix:true};
-function mepPropose(O){
-  const rooms = mepRooms().filter(r => r.kind !== 'ext'), items = [], byLvl = {};
-  const nCh = rooms.filter(r => r.kind === 'chambre').length, occ = O.occ > 0 ? O.occ : Math.max(1, nCh + 1);
-  const exist = fid => new Set(state.els.filter(e => e.kind === 'inst' && e.fam === fid && !e.auto).map(e => e.id));
+/* keep : équipements placés ou déplacés par l'utilisateur dans l'aperçu (conservés tels quels, la proposition les complète) */
+function mepPropose(O, keep = [], opt = {}){
+  const rooms = mepRooms().filter(r => r.kind !== 'ext'), items = keep.map(it => ({...it, user:true})), notes = [];
+  const nCh = rooms.filter(r => r.kind === 'chambre').length, occ = O.occ > 0 ? O.occ : Math.max(1, nCh + 1), T = Math.max(1, rooms.filter(mepIsMain).length);
   const ctx = rooms.map(r => ({r, E:roomEdges(r)}));
-  const add = (r, fam_, o = {}) => items.push({fam:fam_, type:o.type | 0, params:o.params || {}, lvl:r.lvl, c:o.c, rot:o.rot || 0, room:r.key, kind:MEP_KIND[fam_], auto:true});
-  const onWall = (R, fam_, e, t, o = {}) => { const ym = famYmax(fam_); add(R.r, fam_, {...o, c:V.add(edgePt(e, t), V.mul(e.nIn, ym)), rot:wallRot(e)}); };
-  const wallItems = (R, fam_, n, o = {}) => { const S = spread(wallSlots(R.E, o.step || 0.7), n); S.forEach(s => { onWall(R, fam_, s.e, s.t, o); s.e.blocked.push([s.t - 0.2, s.t + 0.2]); }); };
-  const fixture = (R, fam_, o = {}) => { if (!fam(fam_)) return null; const w = (famWidth(fam_) || 0.6) + 0.1, best = R.E.flatMap(e => freeIntervals(e, w).map(([l, h]) => ({e, l, h}))).sort((a, b) => (b.h - b.l) - (a.h - a.l))[0]; if (!best) return null;
-    const t = o.end ? (o.end > 0 ? best.h - w / 2 : best.l + w / 2) : (best.l + best.h) / 2; onWall(R, fam_, best.e, t, o); best.e.blocked.push([t - w / 2, t + w / 2]); return {e:best.e, t}; };
-  const roomsOf = k => ctx.filter(R => R.r.kind === k);
+  const CC = {}, cons = lvl => CC[lvl] ??= mepConstraints(lvl, items), dirty = lvl => { delete CC[lvl]; };
+  // équipements déjà là (dessinés à la main dans la maquette, ou posés par l'utilisateur dans l'aperçu)
+  const manual = state.els.filter(e => e.kind === 'inst' && (!e.auto || opt.countAll) && MEP_KIND[e.fam] && e.c).map(e => ({kind:MEP_KIND[e.fam], lvl:e.lvl, c:e.c}));
+  const present = () => [...manual, ...items.filter(i => i.user)];
+  const countIn = (R, kinds) => present().filter(i => kinds.includes(i.kind) && i.lvl === R.r.lvl && ptInPoly(i.c[0], i.c[1], R.r.poly)).length;
+  const anyOf = kind => present().some(i => i.kind === kind);
+  const add = (r, fam_, o = {}) => { const it = {fam:fam_, type:o.type | 0, params:o.params || {}, lvl:r.lvl, c:o.c, rot:o.rot || 0, room:r.key, kind:MEP_KIND[fam_], auto:true}; items.push(it); if (!MEP_SMALL.has(it.kind)) dirty(r.lvl); return it; };
+  const posOn = (fam_, e, t, params = {}) => { const ym = famYmax(fam_), cx = famCx(fam_, params), rot = wallRot(e), a = rot * Math.PI / 180;
+    return {c:V.sub(V.add(edgePt(e, t), V.mul(e.nIn, ym)), [Math.cos(a) * cx, Math.sin(a) * cx]), rot}; };
+  const onWall = (R, fam_, e, t, o = {}) => add(R.r, fam_, {...o, ...posOn(fam_, e, t, o.params)});
+  /* créneaux possibles sur les murs d'une pièce pour un composant de largeur w (hors portes, fenêtres basses, mobilier, volumes de salle d'eau) */
+  const slots = (R, fam_, o = {}) => { const k = MEP_KIND[fam_], w = o.w ?? (MEP_SMALL.has(k) ? 0.1 : (famWidth(fam_) || 0.5)), [zlo, zhi] = o.z || mepZRange(fam_, o.params), C = cons(R.r.lvl), out = [];
+    for (const e of R.E){ if (o.edges && !o.edges.includes(e)) continue;
+      for (const [l, h] of freeIntervals(e, w + 0.1)){ for (let t = l + w / 2 + 0.05; t <= h - w / 2 - 0.05 + 1e-6; t += o.step || 0.1){
+        const p = edgePt(e, t), why = mepWhyNot(k, p, zlo, zhi, C, {halfW:w / 2 + 0.05, dir:e.u, ignore:mepIgnores(k, zlo)});
+        if (!why) out.push({e, t}); } } }
+    return out; };
+  const block = (s, w) => s.e.blocked.push([s.t - w / 2 - 0.05, s.t + w / 2 + 0.05]);
+  const wallItems = (R, fam_, n, o = {}) => { if (n <= 0) return 0; let S = slots(R, fam_, o); const w = MEP_SMALL.has(MEP_KIND[fam_]) ? 0.1 : (famWidth(fam_) || 0.5);
+    // espacer les créneaux retenus (pas plus de un tous les o.step mètres sur un même mur)
+    const pickd = []; for (const s of spread(S, Math.min(n, S.length))){ if (pickd.some(q => q.e === s.e && Math.abs(q.t - s.t) < (o.gap ?? 0.4))) continue; pickd.push(s); }
+    for (const s of pickd){ onWall(R, fam_, s.e, s.t, o); block(s, Math.max(w, 0.3)); }
+    if (pickd.length < n) notes.push(`${R.r.name} : ${n - pickd.length} ${MEP_LABEL[MEP_KIND[fam_]]?.toLowerCase() || 'élément'}${n - pickd.length > 1 ? 's' : ''} sans emplacement libre (mobilier, ouvertures ou volumes de la salle d'eau)`);
+    return pickd.length; };
+  /* appareil posé contre un mur : le plus long créneau libre */
+  const fixture = (R, fam_, o = {}) => { if (!fam(fam_)) return null; const S = slots(R, fam_, {...o, step:0.05}); if (!S.length){ notes.push(`${R.r.name} : pas de place libre pour ${fam(fam_).nom.toLowerCase()}`); return null; }
+    // regrouper en suites continues, garder la plus longue, se placer au centre (ou à une extrémité)
+    const runs = []; for (const s of S){ const r = runs.at(-1); if (r && r.e === s.e && s.t - r.h < 0.051) r.h = s.t; else runs.push({e:s.e, l:s.t, h:s.t}); }
+    const best = runs.sort((a, b) => (b.h - b.l) - (a.h - a.l))[0], t = o.end ? (o.end > 0 ? best.h : best.l) : (best.l + best.h) / 2, w = famWidth(fam_) || 0.6;
+    onWall(R, fam_, best.e, t, o); block({e:best.e, t}, w); return {e:best.e, t}; };
   const pick = (...ks) => { for (const k of ks){ const R = ctx.find(R => R.r.kind === k && R.r.lvl === 0) || ctx.find(R => R.r.kind === k); if (R) return R; } return ctx[0]; };
-  // appareils sanitaires et cuisine (on ne double pas un appareil déjà dessiné dans la pièce)
-  const has = (R, fid) => state.els.some(e => e.kind === 'inst' && e.fam === fid && !e.auto && ptInPoly(e.c?.[0], e.c?.[1], R.r.poly));
+  // 1) appareils sanitaires et cuisine (pas de doublon avec un appareil déjà dessiné dans la pièce)
   if (O.fix) for (const R of ctx){ const k = R.r.kind;
-    if (k === 'wc' && !has(R, 'wc')) fixture(R, 'wc'); if (k === 'sdb'){ if (!has(R, 'lavabo')) fixture(R, 'lavabo', {type:1}); if (!has(R, 'douche')) fixture(R, 'douche'); }
-    if (k === 'cuisine' && !has(R, 'cuisine')) fixture(R, 'cuisine'); }
+    if (k === 'wc' && !countIn(R, ['wc'])) fixture(R, 'wc');
+    if (k === 'sdb'){ if (!countIn(R, ['douche', 'baignoire'])) fixture(R, 'douche', {end:1}); if (!countIn(R, ['lavabo'])) fixture(R, 'lavabo', {type:1}); }
+    if (k === 'cuisine' && !countIn(R, ['cuisine'])) fixture(R, 'cuisine'); }
   for (const R of ctx){
-    const k = R.r.kind, A = R.r.net, id = R.r.key;
-    if (O.sys.elec){
-      // prises (NF C 15-100)
-      let np = 0, hot = 0;
-      if (k === 'sejour') np = A > 28 ? Math.max(7, Math.ceil(A / 4)) : Math.max(5, Math.ceil(A / 4)); else if (k === 'chambre') np = 3;
-      else if (k === 'cuisine'){ np = A <= 4 ? 3 : 6; hot = np > 3 ? 4 : 2; } else if (k === 'sdb') np = 1; else if (k === 'wc') np = 0; else if (k === 'garage') np = 2; else np = A > 4 ? 1 : 0;
-      wallItems(R, 'e-prise', np - hot, {params:{zh:0.3}}); if (hot) wallItems(R, 'e-prise', hot, {params:{zh:1.05}, step:0.5});
-      if (k === 'cuisine'){ wallItems(R, 'e-prise32', 1, {step:0.5}); wallItems(R, 'e-prise-spec', 2, {step:0.5}); wallItems(R, 'e-prise', 1, {params:{zh:1.8}, step:0.5}); }
-      if ((k === 'buanderie') || (k === 'sdb' && !ctx.some(q => q.r.kind === 'buanderie' && q.r.lvl === R.r.lvl) && !ctx.some(q => q.r.kind === 'cuisine' && q.r.lvl === R.r.lvl && q.r.net > 8))) wallItems(R, 'e-prise-spec', k === 'buanderie' ? 2 : 1, {params:{zh:0.3}, step:0.5});
-      if (k === 'sejour' || k === 'chambre' || (k === 'autre' && /bureau/.test(mepNorm(R.r.name)))) wallItems(R, 'e-rj45', 1, {step:0.5});
-      // éclairage
-      let nl = 1, fL = 'e-lum';
-      const spots = O.light === 'spots' || (O.light === 'mixte' && ['cuisine', 'sdb', 'couloir', 'entree'].includes(k));
-      if (spots){ fL = 'e-spot'; nl = k === 'couloir' || k === 'entree' ? Math.max(1, Math.ceil(A / 2.5)) : Math.max(2, Math.ceil(A / 2.8)); }
-      else if (k === 'couloir') nl = Math.max(1, Math.round(A / 5));
-      for (const c of ceilPoints(R.r.poly, nl)) add(R.r, fL, {c});
-      // interrupteurs : près de chaque porte (va-et-vient si 2 portes)
-      const doors = R.E.flatMap(e => e.doors.map(d => ({e, d})));
-      if (doors.length){ doors.slice(0, 2).forEach(({e, d}, i) => { const lo = d.t - d.w / 2 - 0.2, hi = d.t + d.w / 2 + 0.2, t = hi + 0.1 < e.L - 0.25 ? hi : Math.max(0.3, lo); onWall(R, 'e-inter', e, t, {type:doors.length > 1 ? 1 : 0, params:{zh:1.1}}); e.blocked.push([t - 0.1, t + 0.1]); }); }
-      else wallItems(R, 'e-inter', 1, {params:{zh:1.1}});
-    }
-    if (O.sys.vent){
-      if (['cuisine', 'sdb', 'wc', 'buanderie'].includes(k)) add(R.r, 'v-extraction', {c:poleOf(R.r.poly), type:k === 'cuisine' ? 1 : 0, params:{q:k === 'cuisine' ? (nCh <= 0 ? 75 : [75, 90, 105, 120, 135][Math.min(4, nCh)]) : 15}});
-      if (k === 'sejour' || k === 'chambre'){ const e = R.E.find(e => e.wins.length) || R.E.sort((a, b) => b.L - a.L)[0], t = e.wins[0]?.t ?? e.L / 2; onWall(R, 'v-entree', e, t, {params:{zh:2.25}}); }
-    }
-    if (O.heat !== 'none' && O.sys.chauf){
+    const k = R.r.kind, A = R.r.net;
+    // chauffage d'abord : un radiateur a besoin d'un long pan de mur libre, les petits équipements se placent ensuite autour
+    if (O.heat !== 'none' && O.sys.chauf && !countIn(R, ['rad', 'seche'])){
       const q = ['sejour', 'chambre', 'cuisine', 'autre', 'sdb', 'buanderie'].includes(k);
-      if (q){ let W = Math.max(500, A * O.wm2 * (k === 'cuisine' ? 0.6 : k === 'sdb' ? 1.4 : 1)); const elec = O.heat === 'elec';
-        if (k === 'sdb') wallItems(R, 'c-seche', 1, {step:0.5});
+      if (q){ const W = Math.max(500, A * O.wm2 * (k === 'cuisine' ? 0.6 : k === 'sdb' ? 1.4 : 1)), elec = O.heat === 'elec';
+        if (k === 'sdb') wallItems(R, 'c-seche', 1, {step:0.1});
         else { const sizes = elec ? [1000, 1500] : [500, 1000, 1500, 2000], mx = sizes.at(-1), n = Math.ceil(W / mx), each = W / n, sz = sizes.find(s => s >= each - 1) || mx, ty = elec ? (sz >= 1500 ? 5 : 4) : sizes.indexOf(sz);
-          const e = R.E.find(e => e.wins.some(w => w.sill < 0.9)) || R.E.slice().sort((a, b) => b.L - a.L)[0], wt = e.wins.find(w => w.sill < 0.9);
-          for (let j = 0; j < n; j++){ const t = wt ? wt.t + (j - (n - 1) / 2) * 1.0 : e.L * (j + 1) / (n + 1); onWall(R, 'c-rad', e, clamp(t, 0.4, e.L - 0.4), {type:ty, params:{W:sz, L:elec ? (sz >= 1500 ? 1.0 : 0.8) : [0.5, 0.8, 1.1, 1.5][ty], zh:0}}); e.blocked.push([t - 0.5, t + 0.5]); } }
+          const L = elec ? (sz >= 1500 ? 1.0 : 0.8) : [0.5, 0.8, 1.1, 1.5][ty], params = {W:sz, L, zh:0};
+          for (let j = 0; j < n; j++){
+            // 1er choix : sous une fenêtre dont l'allège dépasse le radiateur (allège ≥ 0,85 m) ; jamais devant une porte, une porte-fenêtre ou une baie
+            const all = slots(R, 'c-rad', {w:L, params, step:0.05}), under = all.filter(s => s.e.wins.some(w => w.sill >= 0.85 && Math.abs(s.t - w.t) < Math.max(0.05, (w.w - L) / 2 + 0.02)));
+            const ext = all.filter(s => s.e.wins.length), S = under.length ? under : ext.length ? ext : all;
+            if (!S.length){ notes.push(`${R.r.name} : aucun mur libre pour un radiateur de ${n0(L * 100)} cm (mobilier, ouvertures)`); break; }
+            const s = under.length ? S.sort((a, b) => Math.min(...a.e.wins.map(w => Math.abs(a.t - w.t))) - Math.min(...b.e.wins.map(w => Math.abs(b.t - w.t))))[0] : S[Math.floor(S.length / 2)];
+            onWall(R, 'c-rad', s.e, s.t, {type:ty, params}); block(s, L + 0.3); } }
       }
+    }
+    if (O.sys.elec){
+      // prises (NF C 15-100) : on retire celles déjà posées dans la pièce
+      const np = Math.max(0, mepPrisesMin(k, A) - countIn(R, ['prise'])); let hot = 0;
+      if (k === 'cuisine'){ hot = Math.min(np, A <= 4 ? 2 : 4);
+        // prises du plan de travail : au-dessus du plan, hors de l'évier
+        const kit = items.concat(state.els.filter(e => e.kind === 'inst' && e.fam === 'cuisine')).find(i => i.fam === 'cuisine' && i.lvl === R.r.lvl && ptInPoly(i.c[0], i.c[1], R.r.poly));
+        const edges = kit ? R.E.filter(e => Math.abs(V.dot(V.sub(kit.c, e.a), e.nIn)) < 1.0) : null;
+        const got = wallItems(R, 'e-prise', hot, {params:{zh:1.05}, step:0.15, gap:0.3, edges}); if (got < hot) wallItems(R, 'e-prise', hot - got, {params:{zh:1.05}, step:0.15, gap:0.3}); }
+      wallItems(R, 'e-prise', np - hot, {params:{zh:0.3}});
+      if (k === 'cuisine'){ if (!countIn(R, ['plaque'])) wallItems(R, 'e-prise32', 1, {params:{zh:0.12}, step:0.2}); wallItems(R, 'e-prise-spec', Math.max(0, 2 - countIn(R, ['spec'])), {step:0.2}); wallItems(R, 'e-prise', 1, {params:{zh:1.8}, step:0.2}); }
+      if ((k === 'buanderie') || (k === 'sdb' && !ctx.some(q => q.r.kind === 'buanderie' && q.r.lvl === R.r.lvl) && !ctx.some(q => q.r.kind === 'cuisine' && q.r.lvl === R.r.lvl && q.r.net > 8))) wallItems(R, 'e-prise-spec', Math.max(0, (k === 'buanderie' ? 2 : 1) - countIn(R, ['spec', 'll'])), {params:{zh:0.3}, step:0.2});
+      if ((k === 'sejour' || k === 'chambre' || (k === 'autre' && /bureau/.test(mepNorm(R.r.name)))) && !countIn(R, ['rj45'])) wallItems(R, 'e-rj45', 1, {step:0.2});
+      // éclairage
+      if (!countIn(R, ['lum', 'spot', 'applique'])){ let nl = 1, fL = 'e-lum';
+        const spots = O.light === 'spots' || (O.light === 'mixte' && ['cuisine', 'sdb', 'couloir', 'entree'].includes(k));
+        if (spots){ fL = 'e-spot'; nl = k === 'couloir' || k === 'entree' ? Math.max(1, Math.ceil(A / 2.5)) : Math.max(2, Math.ceil(A / 2.8)); }
+        else if (k === 'couloir') nl = Math.max(1, Math.round(A / 5));
+        for (const c of ceilPoints(R.r.poly, nl)) add(R.r, fL, {c}); }
+      // interrupteurs : côté poignée de chaque porte, sinon de l'autre côté, jamais derrière un meuble (va-et-vient si 2 portes)
+      if (!countIn(R, ['inter'])){ const doors = R.E.flatMap(e => e.doors.map(d => ({e, d}))), C = cons(R.r.lvl); let placed = 0;
+        doors.slice(0, 2).forEach(({e, d}) => { const cand = [d.t + d.w / 2 + 0.2, d.t - d.w / 2 - 0.2].filter(t => t > 0.15 && t < e.L - 0.15);
+          const t = cand.find(t => !mepWhyNot('inter', edgePt(e, t), 1.1, 1.2, C)); if (t == null) return; onWall(R, 'e-inter', e, t, {type:doors.length > 1 ? 1 : 0, params:{zh:1.1}}); e.blocked.push([t - 0.1, t + 0.1]); placed++; });
+        if (!placed) wallItems(R, 'e-inter', 1, {params:{zh:1.1}}); }
+    }
+    if (O.sys.vent){ const F = mepVentFlows(T), nWC = ctx.filter(q => q.r.kind === 'wc').length, nSdb = ctx.filter(q => q.r.kind === 'sdb').length;
+      if (['cuisine', 'sdb', 'wc', 'buanderie'].includes(k) && !countIn(R, ['vext'])){ const first = ctx.find(q => q.r.kind === k) === R;
+        const q = k === 'cuisine' ? F.cuisine : k === 'sdb' ? (first ? F.sdb : F.sde) : k === 'wc' ? (nWC > 1 ? F.wcN : F.wc1) : 15;
+        add(R.r, 'v-extraction', {c:poleOf(R.r.poly), type:k === 'cuisine' ? 1 : 0, params:{q}}); }
+      if ((k === 'sejour' || k === 'chambre') && !countIn(R, ['ventree'])){ const e = R.E.find(e => e.wins.length) || R.E.slice().sort((a, b) => b.L - a.L)[0], t = e.wins[0]?.t ?? e.L / 2; onWall(R, 'v-entree', e, t, {params:{zh:2.25}}); }
     }
   }
   // éléments uniques : tableau, détecteurs de fumée, VMC, générateur, ballon, arrivée d'eau
   if (O.sys.elec){
-    const T = pick('entree', 'couloir', 'garage', 'buanderie'); wallItems(T, 'e-tableau', 1, {step:0.4, params:{rg:3}});
-    for (const li of [...new Set(rooms.map(r => r.lvl))]){ const L = ctx.filter(R => R.r.lvl === li), R = L.find(R => R.r.kind === 'couloir') || L.find(R => R.r.kind === 'entree') || L.find(R => R.r.kind === 'sejour') || L[0];
+    if (!anyOf('tableau')){ const order = ['entree', 'couloir', 'garage', 'buanderie', 'technique', 'sejour'], cands = order.flatMap(k => ctx.filter(R => R.r.kind === k && R.r.lvl === 0)).concat(ctx); let ok = 0;
+      for (const R of cands){ if (wallItems(R, 'e-tableau', 1, {step:0.2, params:{rg:3, zh:1.0}})){ ok = 1; break; } notes.pop(); }
+      if (!ok) notes.push('Tableau électrique : aucun mur libre trouvé'); }
+    for (const li of [...new Set(rooms.map(r => r.lvl))]){ if (present().some(i => i.kind === 'daaf' && i.lvl === li)) continue; const L = ctx.filter(R => R.r.lvl === li), R = L.find(R => R.r.kind === 'couloir') || L.find(R => R.r.kind === 'entree') || L.find(R => R.r.kind === 'sejour') || L[0];
       if (R && (li === 0 || L.some(q => q.r.kind === 'chambre'))) add(R.r, 'e-daaf', {c:poleOf(R.r.poly)}); }
   }
-  if (O.sys.vent){ const top = Math.max(...rooms.map(r => r.lvl)), L = ctx.filter(R => R.r.lvl === top), R = L.find(R => ['couloir', 'buanderie', 'wc', 'entree'].includes(R.r.kind)) || L[0]; if (R) add(R.r, 'v-caisson', {c:poleOf(R.r.poly), params:{zh:2.1}}); }
+  if (O.sys.vent && !anyOf('vmc')){ const top = Math.max(...rooms.map(r => r.lvl)), L = ctx.filter(R => R.r.lvl === top), R = L.find(R => ['couloir', 'buanderie', 'wc', 'entree'].includes(R.r.kind)) || L[0]; if (R) add(R.r, 'v-caisson', {c:poleOf(R.r.poly), params:{zh:2.1}}); }
   if (O.sys.plomb || O.sys.chauf){
-    const S = pick('buanderie', 'technique', 'garage', 'cuisine', 'sdb'), V0 = occ <= 2 ? 0 : occ <= 3 ? 1 : occ <= 4 ? 2 : occ <= 5 ? 3 : 4;
-    if (O.sys.plomb){ wallItems(S, 'p-ballon', 1, {step:0.8, type:Math.min(4, [0, 1, 2, 3, 4][V0]), params:{}}); wallItems(S, 'p-arrivee', 1, {step:0.5}); }
+    const S = pick('buanderie', 'technique', 'garage', 'cuisine', 'sdb'), V0 = Math.max(0, [100, 150, 200, 250, 300].findIndex(v => v >= occ * 55)), V0f = V0 < 0 ? 4 : V0;   // ≈ 55 l par occupant
+    if (O.sys.plomb){ if (!anyOf('ballon')) wallItems(S, 'p-ballon', 1, {step:0.1, type:[100, 150, 200, 250, 300].some(v => v >= occ * 55) ? V0f : 4, params:{}}); if (!anyOf('arrivee')) wallItems(S, 'p-arrivee', 1, {step:0.2, params:{zh:0.6}}); }
     const need = items.filter(i => i.kind === 'rad').reduce((t, i) => t + (i.params.W || 1000), 0) + items.filter(i => i.kind === 'seche').length * 750;
-    if (O.sys.chauf && O.heat === 'eau'){ const kW = need / 1000, ty = kW <= 9 ? 0 : kW <= 14 ? 1 : 2; wallItems(S, 'c-pac', 1, {step:0.8, type:ty}); }
+    if (O.sys.chauf && O.heat === 'eau' && !anyOf('pac')){ const kW = need / 1000, ty = kW <= 9 ? 0 : kW <= 14 ? 1 : 2;
+      if (ty < 2){ // pompe à chaleur air/eau : unité extérieure posée dehors, contre un pan de façade plein, au plus près du local technique
+        const all = rooms.filter(r => r.lvl === 0), outside = q => !all.some(r => ptInPoly(q[0], q[1], r.poly)), cand = [];
+        for (const R of ctx.filter(R => R.r.lvl === 0)) for (const e of R.E){ const mid = edgePt(e, e.L / 2, -e.f - 0.6); if (!outside(mid) || e.L < 1.4 || e.wins.length || e.doors.length) continue;
+          for (const [l, h] of freeIntervals({...e, blocked:[[0, 0.4], [e.L - 0.4, e.L]]}, 1.0)){ const t = (l + h) / 2, p = edgePt(e, t, -e.f); cand.push({e, t, p, d:Math.hypot(p[0] - S.r.poly[0][0], p[1] - S.r.poly[0][1])}); } }
+        cand.sort((a, b) => a.d - b.d); const c = cand[0];
+        if (c){ const ym = famYmax('c-pac'), rot = (wallRot(c.e) + 180) % 360; items.push({fam:'c-pac', type:ty, params:{}, lvl:0, c:V.sub(c.p, V.mul(c.e.nIn, ym)), rot, room:null, kind:'pac', auto:true, outside:true}); }
+        else wallItems(S, 'c-pac', 1, {step:0.1, type:ty}); }
+      else wallItems(S, 'c-pac', 1, {step:0.1, type:ty}); }
   }
-  items.occ = occ; return items;
+  items.occ = occ; items.notes = notes; return items;
 }
-
-/* ---------- fenêtre « Proposition automatique » ---------- */
+/* contrôle d'un équipement déplacé ou ajouté dans l'aperçu : '' si l'emplacement est autorisé, sinon la raison */
+function mepItemProblem(it, items, idx){
+  const k = it.kind, C = mepConstraints(it.lvl, items.filter((_, i) => i !== idx)), [zlo, zhi] = mepZRange(it.fam, it.params);
+  if (MEP_SMALL.has(k) && !MEP_WALLKINDS.has(k)) return '';
+  // objets muraux : point au nu du mur (le composant est décalé de son épaisseur vers la pièce)
+  const a = (it.rot || 0) * Math.PI / 180, inward = [Math.sin(a), -Math.cos(a)], back = V.sub(it.c, V.mul(inward, famYmax(it.fam)));
+  const w = MEP_SMALL.has(k) ? 0.1 : (famWidth(it.fam) || 0.5), cx = famCx(it.fam, it.params), mid = V.add(back, [Math.cos(a) * cx, Math.sin(a) * cx]);
+  return mepWhyNot(k, mid, zlo, zhi, C, {halfW:w / 2, dir:[Math.cos(a), Math.sin(a)], ignore:mepIgnores(k, zlo)});
+}
 const MEP_SYM = {prise:['P', '#2563EB'], spec:['S', '#1D4ED8'], plaque:['C', '#1E3A8A'], rj45:['R', '#0EA5E9'], inter:['I', '#F59E0B'], lum:['L', '#EAB308'], spot:['•', '#EAB308'], applique:['A', '#EAB308'], tableau:['T', '#DC2626'], daaf:['F', '#DC2626'],
   ballon:['B', '#0891B2'], arrivee:['E', '#0369A1'], ll:['LL', '#0369A1'], wc:['WC', '#0F766E'], lavabo:['LV', '#0F766E'], douche:['D', '#0F766E'], baignoire:['BA', '#0F766E'], cuisine:['CU', '#0F766E'], vext:['X', '#7C3AED'], ventree:['v', '#7C3AED'], vmc:['VMC', '#7C3AED'], rad:['H', '#C2410C'], seche:['H', '#C2410C'], pac:['PAC', '#C2410C']};
 const MEP_LABEL = {prise:'Prise de courant', spec:'Prise spécialisée', plaque:'Plaque de cuisson', rj45:'RJ45 / TV', inter:'Interrupteur', lum:'Plafonnier', spot:'Spot', applique:'Applique', tableau:'Tableau électrique', daaf:'Détecteur de fumée', ballon:'Ballon d\'eau chaude', arrivee:'Arrivée d\'eau', ll:'Attente lave-linge', wc:'WC', lavabo:'Lavabo', douche:'Douche', baignoire:'Baignoire', cuisine:'Cuisine', vext:'Bouche d\'extraction', ventree:'Entrée d\'air', vmc:'Caisson VMC', rad:'Radiateur', seche:'Sèche-serviettes', pac:'Générateur (PAC / chaudière)'};
@@ -12302,8 +12454,9 @@ function openMepAuto(rooms){
         <label class="f"><span>Besoin</span><span class="in"><input id="mxW" type="number" min="25" max="120" step="5" value="${O.wm2}"><em>W/m²</em></span></label></div>
         <label class="ap-check2"><input type="checkbox" id="mxFix"${O.fix ? ' checked' : ''}> Placer aussi WC, lavabo, douche, cuisine</label>
         <button class="btn" id="mxRe" style="margin-top:6px">Recalculer la proposition</button></div>
-      <div class="grp"><h3>Modifier l'aperçu</h3><div class="seg" id="mxTool">${[['move', 'Déplacer'], ['add', 'Ajouter'], ['del', 'Retirer']].map(([k, n]) => `<button class="${k === tool ? 'on' : ''}" data-mt="${k}">${n}</button>`).join('')}</div>
-        <p class="hint" id="mxHint"></p><div class="mepx-pal" id="mxPal"></div></div>
+      <div class="grp"><h3>Modifier l'aperçu</h3><div class="seg" id="mxTool" style="flex-wrap:wrap">${[['move', 'Déplacer'], ['add', 'Ajouter'], ['furn', 'Meubles'], ['del', 'Retirer']].map(([k, n]) => `<button class="${k === tool ? 'on' : ''}" data-mt="${k}">${n}</button>`).join('')}</div>
+        <p class="hint" id="mxHint"></p><div class="mepx-pal" id="mxPal"></div><div class="mepx-pal" id="mxFurn" hidden></div><button class="btn" id="mxRot" hidden style="margin-top:6px">Pivoter le meuble de 90°</button>
+        <p class="hint" id="mxNotes" role="status"></p></div>
     </aside><section class="mepx-r"><div class="mepx-top"><div class="seg" id="mxLv">${lvls.map(l => `<button class="${l === lvl ? 'on' : ''}" data-lv="${l}">${esc(state.levels[l].n)}</button>`).join('')}</div><span class="hint" id="mxSum"></span></div>
       <canvas id="mxCv" width="900" height="640"></canvas></section></div>
     <footer class="ed-f"><span class="hint">Les composants posés sont de vrais éléments (comptés au DQE). Les anciens éléments automatiques sont remplacés.</span><button class="btn" data-close>Annuler</button><button class="btn" id="mxPlace">Valider et placer</button><button class="btn primary" id="mxPlaceNets">Valider, placer et générer les réseaux</button></footer>`, 'wide');
@@ -12317,34 +12470,71 @@ function openMepAuto(rooms){
     for (const r of RL()){ g.beginPath(); r.poly.forEach((p, i) => { const s = W2S(p); i ? g.lineTo(s[0], s[1]) : g.moveTo(s[0], s[1]); }); g.closePath(); g.fillStyle = COL[r.kind] || '#F4F4F1'; g.fill(); g.strokeStyle = '#1B2433'; g.lineWidth = 2.5; g.stroke();
       const c = W2S(polyCentroid(r.poly)); g.fillStyle = 'rgba(17,24,39,.55)'; g.font = '600 13px Inter, sans-serif'; g.textAlign = 'center'; g.fillText(r.name, c[0], c[1] + 4); g.font = '11px Inter, sans-serif'; g.fillText(nf(r.net, 1) + ' m²', c[0], c[1] + 18); }
     for (const e of state.els) if (e.kind === 'inst' && e.host && !MEP_KIND[e.fam]){ const w = getEl(e.host); if (!w || w.lvl !== lvl) continue; const c = famCut(e), fr = instFrame(e); if (!c || !fr) continue; const u = [Math.cos(fr.ang), Math.sin(fr.ang)], a = W2S(V.sub(fr.o, V.mul(u, c.w / 2))), b = W2S(V.add(fr.o, V.mul(u, c.w / 2))); g.strokeStyle = fam(e.fam)?.cat === 'Portes' ? '#C2410C' : '#2563EB'; g.lineWidth = 4; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+    // mobilier et appareils de la maquette (empreintes), puis appareils proposés
+    const poly = (pts, fill, stroke) => { g.beginPath(); pts.forEach((p, i) => { const s = W2S(p); i ? g.lineTo(s[0], s[1]) : g.moveTo(s[0], s[1]); }); g.closePath(); g.fillStyle = fill; g.fill(); g.strokeStyle = stroke; g.lineWidth = 1; g.stroke(); };
+    for (const e of furnList()) for (const r of mepRects(e)) if (r.z1 >= 0.05 || ['douche', 'baignoire'].includes(MEP_KIND[e.fam])) poly(r.pts, e.id === fsel ? 'rgba(37,99,235,.28)' : 'rgba(100,110,125,.22)', e.id === fsel ? '#2563EB' : 'rgba(60,70,85,.55)');
+    items.forEach(it => { if (it.lvl !== lvl || MEP_SMALL.has(it.kind)) return; for (const r of mepRects(pseudoEl(it))) if (r.z1 >= 0.05 || it.kind === 'douche' || it.kind === 'baignoire') poly(r.pts, 'rgba(15,118,110,.12)', 'rgba(15,118,110,.45)'); });
+    // volume 2 (60 cm autour de la douche ou de la baignoire) : aucune prise ni interrupteur
+    g.setLineDash([5, 4]); for (const r of mepConstraints(lvl, items).wet){ const xs = r.pts.map(p => p[0]), ys = r.pts.map(p => p[1]), a = W2S([Math.min(...xs) - 0.6, Math.max(...ys) + 0.6]), b = W2S([Math.max(...xs) + 0.6, Math.min(...ys) - 0.6]); g.strokeStyle = 'rgba(8,145,178,.7)'; g.lineWidth = 1.2; g.strokeRect(a[0], a[1], b[0] - a[0], b[1] - a[1]); } g.setLineDash([]);
     items.forEach((it, i) => { if (it.lvl !== lvl) return; const [ch, col] = MEP_SYM[it.kind] || ['?', '#666'], s = W2S(it.c), r = ch.length > 1 ? 11 : 8;
       g.beginPath(); g.arc(s[0], s[1], r, 0, 7); g.fillStyle = col; g.globalAlpha = i === sel ? 1 : 0.88; g.fill(); g.globalAlpha = 1; if (i === sel){ g.lineWidth = 3; g.strokeStyle = '#111'; g.stroke(); }
+      if (it.bad){ g.beginPath(); g.arc(s[0], s[1], r + 4, 0, 7); g.lineWidth = 3; g.strokeStyle = '#DC2626'; g.stroke(); } else if (it.user){ g.beginPath(); g.arc(s[0], s[1], r + 3, 0, 7); g.lineWidth = 1.5; g.strokeStyle = '#111'; g.stroke(); }
       g.fillStyle = '#fff'; g.font = `700 ${ch.length > 2 ? 8 : ch.length > 1 ? 9 : 10}px Inter, sans-serif`; g.textAlign = 'center'; g.fillText(ch, s[0], s[1] + 3.5); });
   };
   const kinds = [...new Set(Object.values(MEP_KIND))].filter(k => !['arrivee'].includes(k) || true);
   const sum = () => { const c = {}; items.forEach(i => c[i.kind] = (c[i.kind] || 0) + 1); q('#mxSum').textContent = `${items.length} éléments · ${items.filter(i => i.kind === 'prise' || i.kind === 'spec' || i.kind === 'plaque').length} prises · ${items.filter(i => i.kind === 'lum' || i.kind === 'spot').length} points lumineux`;
     q('#mxPal').innerHTML = kinds.filter(k => MEP_LABEL[k]).map(k => { const [ch, col] = MEP_SYM[k]; return `<button class="${k === pal ? 'on' : ''}" data-pk="${k}" title="${MEP_LABEL[k]}"><i style="background:${col}">${ch}</i><span>${MEP_LABEL[k]}</span><em>${c[k] || 0}</em></button>`; }).join('');
-    q('#mxHint').textContent = tool === 'move' ? 'Glissez un symbole pour le déplacer (il se colle au mur le plus proche).' : tool === 'add' ? `Cliquez dans une pièce pour ajouter : ${MEP_LABEL[pal]}.` : 'Cliquez un symbole pour le retirer.'; };
+    q('#mxFurn').innerHTML = FURN.map(([f, n]) => `<button class="${f === fpal ? 'on' : ''}" data-fp="${f}"><i style="background:#64748B">${esc(n.slice(0, 2))}</i><span>${esc(n)}</span></button>`).join('');
+    q('#mxFurn').hidden = tool !== 'furn'; q('#mxPal').hidden = tool === 'furn'; q('#mxRot').hidden = !fsel || !getEl(fsel);
+    q('#mxHint').textContent = tool === 'move' ? 'Glissez un symbole ou un meuble pour le déplacer : les équipements se collent au mur le plus proche, un emplacement interdit est refusé. Ce que vous placez ou déplacez est conservé quand la proposition est recalculée.' : tool === 'add' ? `Cliquez dans une pièce pour ajouter : ${MEP_LABEL[pal]}.` : tool === 'furn' ? `Cliquez dans une pièce pour poser : ${FURN.find(f => f[0] === fpal)?.[1] || ''} (contre le mur le plus proche). Le meuble est ajouté à la maquette et la proposition s'adapte.` : 'Cliquez un symbole ou un meuble pour le retirer.';
+    const N = items.notes || [], bad = items.filter(i => i.bad).length; q('#mxNotes').innerHTML = (bad ? `<b style="color:#DC2626">${bad} équipement${bad > 1 ? 's' : ''} à un emplacement interdit.</b> ` : '') + N.slice(0, 6).map(esc).join('<br>'); };
   const hit = (sx, sy) => { let b = -1, bd = 14; items.forEach((it, i) => { if (it.lvl !== lvl) return; const s = W2S(it.c), dd = Math.hypot(s[0] - sx, s[1] - sy); if (dd < bd){ bd = dd; b = i; } }); return b; };
+  const placeOnEdge = (fid, params, e, t) => { const w = MEP_SMALL.has(MEP_KIND[fid]) ? 0.1 : (famWidth(fid) || 0.5), tt = clamp(t, Math.min(e.L / 2, w / 2 + 0.05), Math.max(e.L / 2, e.L - w / 2 - 0.05)), ym = famYmax(fid), cx = famCx(fid, params), rot = wallRot(e), a = rot * Math.PI / 180;
+    return {c:V.sub(V.add(edgePt(e, tt), V.mul(e.nIn, ym)), [Math.cos(a) * cx, Math.sin(a) * cx]), rot}; };
+  const nearestEdge = (R, p) => { let best = null, bd = 1e9; for (const e of roomEdges(R)){ const c = segClosest(p, e.a, e.b), dd = V.len(V.sub(c.pt, p)); if (dd < bd){ bd = dd; best = {e, t:c.t * e.L, d:dd}; } } return best; };
+  const roomAt = p => RL().find(r => ptInPoly(p[0], p[1], r.poly));
   const snapTo = (it, p) => {   // objets muraux : collés au mur de la pièce la plus proche ; plafond : dans la pièce
-    const R = RL().find(r => ptInPoly(p[0], p[1], r.poly)) || RL().slice().sort((a, b) => dPoly(p, a.poly) - dPoly(p, b.poly))[0]; if (!R) return;
+    const R = roomAt(p) || RL().slice().sort((a, b) => dPoly(p, a.poly) - dPoly(p, b.poly))[0]; if (!R) return;
     it.room = R.key;
-    if (MEP_WALLKINDS.has(it.kind)){ const E = roomEdges(R); let best = null, bd = 1e9; for (const e of E){ const c = segClosest(p, e.a, e.b), dd = V.len(V.sub(c.pt, p)); if (dd < bd){ bd = dd; best = {e, t:clamp(c.t * e.L, 0.2, e.L - 0.2)}; } }
-      const ym = famYmax(it.fam); it.c = V.add(edgePt(best.e, best.t), V.mul(best.e.nIn, ym)); it.rot = wallRot(best.e); }
+    if (MEP_WALLKINDS.has(it.kind)){ const b = nearestEdge(R, p); Object.assign(it, placeOnEdge(it.fam, it.params, b.e, b.t)); }
     else it.c = ptInPoly(p[0], p[1], R.poly) ? p : poleOf(R.poly); };
-  cv.addEventListener('pointerdown', ev => { const r = cv.getBoundingClientRect(), sx = (ev.clientX - r.left) * cv.width / r.width, sy = (ev.clientY - r.top) * cv.height / r.height, h = hit(sx, sy);
-    if (tool === 'del'){ if (h >= 0){ items.splice(h, 1); sel = -1; draw(); sum(); } return; }
-    if (tool === 'add'){ const fid = MEP_FAM_OF[pal], it = {fam:fid, type:0, params:{}, lvl, c:S2W(sx, sy), rot:0, kind:pal, auto:true}; snapTo(it, it.c); if (!it.room) return; items.push(it); sel = items.length - 1; draw(); sum(); return; }
-    sel = h; if (h >= 0){ drag = h; cv.setPointerCapture(ev.pointerId); } draw(); });
-  cv.addEventListener('pointermove', ev => { if (drag == null) return; const r = cv.getBoundingClientRect(); snapTo(items[drag], S2W((ev.clientX - r.left) * cv.width / r.width, (ev.clientY - r.top) * cv.height / r.height)); draw(); });
-  cv.addEventListener('pointerup', () => { drag = null; });
-  d.addEventListener('keydown', ev => { if ((ev.key === 'Delete' || ev.key === 'Backspace') && sel >= 0 && !/INPUT|SELECT/.test(ev.target.tagName)){ items.splice(sel, 1); sel = -1; draw(); sum(); } });
+  /* mobilier : éléments réels de la maquette (familles libres hors petits équipements) */
+  const FURN = [['lit', 'Lit'], ['armoire', 'Armoire / placard'], ['canape', 'Canapé'], ['table', 'Table'], ['bureau', 'Bureau'], ['cuisine', 'Cuisine'], ['wc', 'WC'], ['lavabo', 'Lavabo'], ['douche', 'Douche'], ['baignoire', 'Baignoire']].filter(([f]) => fam(f));
+  let fpal = FURN[0]?.[0], fsel = null, fdrag = null, start = null;
+  function furnList(){ return state.els.filter(e => e.kind === 'inst' && !e.host && e.lvl === lvl && e.c && !(MEP_KIND[e.fam] && (MEP_SMALL.has(MEP_KIND[e.fam]) || e.auto))); }
+  const furnAt = p => furnList().filter(e => mepRects(e).some(r => r.z1 >= 0.05 && ptInPoly(p[0], p[1], r.pts))).at(-1);
+  /* meuble lâché près d'un mur : dos plaqué contre le mur, parallèle à lui */
+  const snapFurn = el => { const a = (el.rot || 0) * Math.PI / 180, cx = famCx(el.fam, el.params), ym = famYmax(el.fam), xa = [Math.cos(a), Math.sin(a)], ya = [-Math.sin(a), Math.cos(a)];
+    // centre approché du meuble ; s'il est parallèle à un mur proche, son dos est plaqué contre ce mur (quel que soit le sens de départ)
+    const P = mepRects(el).flatMap(r => r.pts); if (!P.length) return; const mid = [P.reduce((t, p) => t + p[0], 0) / P.length, P.reduce((t, p) => t + p[1], 0) / P.length], R = roomAt(mid) || roomAt(el.c); if (!R) return; const b = nearestEdge(R, mid); if (!b) return;
+    const face = edgePt(b.e, b.t), gap = Math.min(...P.map(p => V.dot(V.sub(p, face), b.e.nIn))); if (gap < 0.5 && Math.abs(V.dot(xa, b.e.u)) > 0.7){ const ps = placeOnEdge(el.fam, el.params, b.e, b.t); el.c = ps.c.map(rnd); el.rot = ps.rot; } };
+  const recalc = () => { items = mepPropose(O, items.filter(i => i.user)); items.forEach((it, i) => { if (it.user) it.bad = mepItemProblem(it, items, i); }); sel = -1; draw(); sum(); };
+  const furnChanged = () => { roomsCache = null; rebuild({noPanel:true}); recalc(); };
+  const ptr = ev => { const r = cv.getBoundingClientRect(); return S2W((ev.clientX - r.left) * cv.width / r.width, (ev.clientY - r.top) * cv.height / r.height); };
+  cv.addEventListener('pointerdown', ev => { const r = cv.getBoundingClientRect(), sx = (ev.clientX - r.left) * cv.width / r.width, sy = (ev.clientY - r.top) * cv.height / r.height, h = hit(sx, sy), p = S2W(sx, sy);
+    if (tool === 'del'){ if (h >= 0){ items.splice(h, 1); sel = -1; draw(); sum(); return; } const f = furnAt(p); if (f){ pushHist(); state.els = state.els.filter(e => e !== f); fsel = null; furnChanged(); } return; }
+    if (tool === 'add'){ const fid = MEP_FAM_OF[pal], it = {fam:fid, type:0, params:{}, lvl, c:p, rot:0, kind:pal, auto:true, user:true}; snapTo(it, it.c); if (!it.room) return;
+      const why = mepItemProblem(it, items, -1); if (why){ toast(why); return; } items.push(it); sel = items.length - 1; draw(); sum(); return; }
+    if (tool === 'furn'){ const R = roomAt(p); if (!R) return toast('Cliquez dans une pièce'); const params = {}, b = nearestEdge(R, p), ym = famYmax(fpal);
+      const ps = b && b.d < ym + 0.9 ? placeOnEdge(fpal, params, b.e, b.t) : {c:p, rot:0};
+      pushHist(); const el = {kind:'inst', fam:fpal, type:0, params, c:ps.c.map(rnd), rot:ps.rot, lvl, off:0, mirror:false, id:state.nextId++}; state.els.push(el); fsel = el.id; furnChanged(); return; }
+    sel = h; if (h >= 0){ drag = h; start = {c:items[h].c.slice(), rot:items[h].rot, room:items[h].room}; cv.setPointerCapture(ev.pointerId); draw(); return; }
+    const f = furnAt(p); fsel = f?.id ?? null; if (f){ fdrag = {el:f, off:V.sub(f.c, p), moved:false}; cv.setPointerCapture(ev.pointerId); } draw(); sum(); });
+  cv.addEventListener('pointermove', ev => { const p = ptr(ev);
+    if (fdrag){ if (!fdrag.moved){ pushHist(); fdrag.moved = true; } fdrag.el.c = V.add(p, fdrag.off).map(rnd); draw(); return; }
+    if (drag == null) return; const it = items[drag]; snapTo(it, p); it.bad = mepItemProblem(it, items, drag); draw(); if (it.bad) q('#mxHint').textContent = it.bad; });
+  cv.addEventListener('pointerup', () => {
+    if (fdrag){ const el = fdrag.el, moved = fdrag.moved; fdrag = null; if (moved){ snapFurn(el); furnChanged(); } return; }
+    if (drag != null){ const it = items[drag]; if (it.bad){ toast(it.bad); Object.assign(it, start); it.bad = ''; } else it.user = true; drag = null; draw(); sum(); } });
+  q('#mxRot').onclick = () => { const el = getEl(fsel); if (!el) return; pushHist(); el.rot = ((el.rot || 0) + 90) % 360; snapFurn(el); furnChanged(); };
+  d.addEventListener('keydown', ev => { if ((ev.key === 'Delete' || ev.key === 'Backspace') && !/INPUT|SELECT/.test(ev.target.tagName)){ if (sel >= 0){ items.splice(sel, 1); sel = -1; draw(); sum(); } else if (fsel && getEl(fsel)){ pushHist(); state.els = state.els.filter(e => e.id !== fsel); fsel = null; furnChanged(); } } });
   d.addEventListener('click', ev => { const t = ev.target.closest('[data-mt]'); if (t){ tool = t.dataset.mt; d.querySelectorAll('[data-mt]').forEach(b => b.classList.toggle('on', b === t)); sum(); return; }
+    const fp = ev.target.closest('[data-fp]'); if (fp){ fpal = fp.dataset.fp; tool = 'furn'; d.querySelectorAll('[data-mt]').forEach(b => b.classList.toggle('on', b.dataset.mt === 'furn')); sum(); return; }
     const p = ev.target.closest('[data-pk]'); if (p){ pal = p.dataset.pk; tool = 'add'; d.querySelectorAll('[data-mt]').forEach(b => b.classList.toggle('on', b.dataset.mt === 'add')); sum(); return; }
     const l = ev.target.closest('[data-lv]'); if (l){ lvl = +l.dataset.lv; d.querySelectorAll('[data-lv]').forEach(b => b.classList.toggle('on', b === l)); sel = -1; draw(); } });
   const readO = () => { d.querySelectorAll('[data-sys]').forEach(c => O.sys[c.dataset.sys] = c.checked); O.occ = +q('#mxOcc').value || 0; O.heat = q('#mxHeat').value; O.light = q('#mxLight').value; O.wm2 = +q('#mxW').value || 55; O.fix = q('#mxFix').checked; state.mepOpts = JSON.parse(JSON.stringify(O)); };
-  q('#mxRe').onclick = () => { readO(); items = mepPropose(O); sel = -1; draw(); sum(); };
-  const place = nets => { readO(); mepApply(items); closeEDlg(); if (nets) mepGenerateNets(); };
+  q('#mxRe').onclick = () => { readO(); recalc(); };
+  const place = nets => { readO(); const bad = items.filter(i => i.bad); if (bad.length){ toast(`${bad.length} équipement${bad.length > 1 ? 's' : ''} à un emplacement interdit : déplacez-le${bad.length > 1 ? 's' : ''} ou retirez-le${bad.length > 1 ? 's' : ''}`); return; } mepApply(items); closeEDlg(); if (nets) mepGenerateNets(); };
   q('#mxPlace').onclick = () => place(false); q('#mxPlaceNets').onclick = () => place(true);
   draw(); sum();
 }
@@ -12352,7 +12542,8 @@ function openMepAuto(rooms){
 function mepApply(items){
   pushHist(); state.isSample = false;
   const old = new Set(state.els.filter(e => (e.kind === 'inst' && e.auto && MEP_KIND[e.fam]) || (e.kind === 'net' && e.auto)).map(e => e.id)); state.els = state.els.filter(e => !old.has(e.id));
-  for (const it of items) state.els.push({kind:'inst', fam:it.fam, type:it.type | 0, params:{...(it.params || {})}, c:it.c.map(v => Math.round(v * 1000) / 1000), rot:it.rot || 0, lvl:it.lvl, off:0, mirror:false, auto:true, room:it.room, id:state.nextId++});
+  for (const it of items){ const fo = mepFloorOff(it.lvl), params = {...(it.params || {})}; if (['lum', 'spot', 'daaf', 'vext'].includes(it.kind) && params.hc == null) params.hc = Math.round((mepCeilH(it.lvl) - fo) * 100) / 100;
+    state.els.push({kind:'inst', fam:it.fam, type:it.type | 0, params, c:it.c.map(v => Math.round(v * 1000) / 1000), rot:it.rot || 0, lvl:it.lvl, off:fo, mirror:false, auto:!it.user, room:it.room, id:state.nextId++}); }   // placé par l'utilisateur (auto:false) : conservé lors des propositions suivantes
   rebuild(); toast(`${items.length} équipement${items.length > 1 ? 's' : ''} placé${items.length > 1 ? 's' : ''}`);
 }
 function mepClear(){ pushHist(); state.els = state.els.filter(e => e.kind !== 'net'); rebuild(); toast('Réseaux effacés'); }
@@ -12362,31 +12553,33 @@ function mepClear(){ pushHist(); state.els = state.els.filter(e => e.kind !== 'n
    À partir des composants techniques placés (à la main ou automatiquement). Cheminements : horizontaux en plancher (eau, chauffage, évacuations)
    ou sous plafond (câbles, gaines), verticaux dans des gaines techniques ; tracé orthogonal (parallèle aux murs). Règles : voir 76-mep.js. */
 const mepRun = (a, b, z, z2) => { const p = [[a[0], a[1], z]]; if (Math.abs(a[0] - b[0]) > 1e-3 && Math.abs(a[1] - b[1]) > 1e-3) p.push([b[0], a[1], z + (z2 - z) * 0.5]); p.push([b[0], b[1], z2]); return p; };   // L : x puis y
-const lvH = i => { const nx = state.levels[i + 1]; return nx ? nx.z - state.levels[i].z : 2.7; };
+const lvH = i => mepCeilH(i);   // hauteur du plafond (haut des murs) au-dessus de la cote du niveau
 function mepGenerateNets(){
   const E = mepEls(); if (!E.length){ toast('Placez d\'abord des équipements techniques'); return; }
   const rooms = mepRooms(), roomOf = e => rooms.find(r => r.lvl === e.lvl && ptInPoly(e.c[0], e.c[1], r.poly)), kindR = e => roomOf(e)?.kind || 'autre';
   const rep = {warn:[], sys:{}}, nets = [], add = (sys, lvl, pts, d, label, o = {}) => { const p = pts.filter((q, i) => i === 0 || Math.hypot(q[0] - pts[i - 1][0], q[1] - pts[i - 1][1], q[2] - pts[i - 1][2]) > 1e-4); if (p.length < 2) return;
     nets.push({kind:'net', sys, lvl, pts:p.map(q => q.map(v => Math.round(v * 1000) / 1000)), d, ...(o.sec ? {sec:o.sec} : {}), label, note:o.note || '', auto:true}); };
-  const by = k => E.filter(e => mepKindOf(e) === k), zf = i => lvlZ(i);
+  const by = k => E.filter(e => mepKindOf(e) === k), zf = i => lvlZ(i) + mepFloorOff(i);   // sol fini
   const zh = e => { const F = fam(e.fam), s = famScope(F, e); return s.zh ?? s.hc ?? 0; };
-  const ceilZ = i => zf(i) + lvH(i) - 0.2;   // cheminement sous plafond (0,05 à 0,30 m du plafond, NF C 15-100)
+  const ceilZ = i => lvlZ(i) + lvH(i) - 0.2;   // cheminement sous plafond (dans le plénum ou les combles), jamais en travers des baies
   const near = (from, list) => { const out = [], rest = list.slice(); let c = from; while (rest.length){ let bi = 0, bd = 1e9; rest.forEach((e, i) => { const d = Math.abs(e.c[0] - c[0]) + Math.abs(e.c[1] - c[1]); if (d < bd){ bd = d; bi = i; } }); c = rest[bi].c; out.push(rest.splice(bi, 1)[0]); } return out; };
 
   /* ---------------- Électricité ---------------- */
   const tab = by('tableau')[0]; let nCirc = 0, kVA = 0, circ = [];
   if (tab){
-    const T = tab.c, Tz = zf(tab.lvl);
+    const T = tab.c, Tz = zf(tab.lvl), roomOfEl = e => rooms.find(r => r.lvl === e.lvl && ptInPoly(e.c[0], e.c[1], r.poly));
     const ceilEls = k => by(k), bylvl = list => { const m = {}; list.forEach(e => (m[e.lvl] ??= []).push(e)); return m; };
     const circuit = (label, sec, amp, els, kind, o = {}) => {
-      if (!els.length) return; let pts = [[T[0], T[1], Tz + 1.8 + (zh(tab) || 0)]], cur = T, lvl = els[0].lvl; const zr0 = ceilZ(tab.lvl);
+      if (!els.length) return; const rg = famScope(fam(tab.fam), tab).rg || 3; let pts = [[T[0], T[1], Tz + (zh(tab) || 1) + 0.15 * rg + 0.2]], cur = T, lvl = els[0].lvl; const zr0 = ceilZ(tab.lvl);
       pts.push([T[0], T[1], zr0]); let zr = zr0;
       for (const e of near(T, els)){ const nz = ceilZ(e.lvl); if (nz !== zr){ pts.push([cur[0], cur[1], zr], [cur[0] === T[0] ? T[0] : cur[0], cur[1], nz]); zr = nz; }
         const wallDev = !['lum', 'spot', 'daaf', 'vmc', 'vext'].includes(mepKindOf(e)), zd = wallDev ? zf(e.lvl) + (zh(e) || 0.3) : zr + 0.15;
         pts.push(...mepRun(cur, e.c, zr, zr).slice(1), [e.c[0], e.c[1], zd], [e.c[0], e.c[1], zr]); cur = e.c; }
-      add('elec', lvl, pts, 12, label, {sec, note:`${amp} A · ${sec} mm² · ${els.length} point${els.length > 1 ? 's' : ''}`}); circ.push({label, sec, amp, n:els.length, kind, ...o}); };
+      const n = o.n ?? els.length; add('elec', lvl, pts, 12, label, {sec, note:`${amp} A · ${sec} mm² · ${n} point${n > 1 ? 's' : ''}`}); circ.push({label, sec, amp, n, kind, ...o}); };
+    /* éclairage : chaque pièce est commandée par ses interrupteurs (le circuit passe par eux) ; les DAAF sont autonomes (à piles), hors circuit */
+    const withSwitches = list => { const out = [], done = new Set(); for (const e of list){ const R = roomOfEl(e); if (R && !done.has(R.key)){ done.add(R.key); out.push(...by('inter').filter(s => s.lvl === e.lvl && ptInPoly(s.c[0], s.c[1], R.poly))); } out.push(e); } return out; };
     const chunks = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
-    for (const [li, L] of Object.entries(bylvl([...ceilEls('lum'), ...ceilEls('spot'), ...ceilEls('applique'), ...ceilEls('daaf')]))) chunks(near(T, L), 8).forEach((c, i) => circuit(`Éclairage ${state.levels[li].n} ${i + 1}`, 1.5, 16, c, 'light'));
+    for (const [li, L] of Object.entries(bylvl([...ceilEls('lum'), ...ceilEls('spot'), ...ceilEls('applique')]))) chunks(near(T, L), 8).forEach((c, i) => circuit(`Éclairage ${state.levels[li].n} ${i + 1}`, 1.5, 16, withSwitches(c), 'light', {n:c.length}));
     const pr = by('prise'); const kit = pr.filter(e => kindR(e) === 'cuisine'), oth = pr.filter(e => kindR(e) !== 'cuisine');
     chunks(near(T, kit), 6).forEach((c, i) => circuit(`Prises cuisine ${i + 1}`, 2.5, 20, c, 'plug'));
     for (const [li, L] of Object.entries(bylvl(oth))) chunks(near(T, L), 12).forEach((c, i) => circuit(`Prises ${state.levels[li].n} ${i + 1}`, 2.5, 20, c, 'plug'));
@@ -12400,12 +12593,17 @@ function mepGenerateNets(){
     const rad = by('rad').filter(e => (e.type | 0) >= 4 || mepRadElec()), seche = by('seche');
     if (rad.length || seche.length){ const all = near(T, [...rad, ...seche]); let acc = [], P = 0; const flush = () => { if (acc.length) circuit(`Chauffage électrique ${circ.filter(c => c.kind === 'heat').length + 1}`, 1.5, 16, acc, 'heat'); acc = []; P = 0; };
       all.forEach(e => { const w = famScope(fam(e.fam), e).W || 750; if (P + w > 3500) flush(); acc.push(e); P += w; }); flush(); }
-    nCirc = circ.length; const nID = Math.max(2, Math.ceil(nCirc / 8)), mods = Math.ceil((nCirc + nID) * 1.2), rows = Math.max(2, Math.ceil(mods / 13));
+    /* protection différentielle 30 mA (NF C 15-100) : selon la surface, 1 (≤ 35 m²), 2 (≤ 100 m²) ou 3 interrupteurs de type AC, plus au moins 1 de type A pour la plaque de cuisson et le lave-linge ;
+       8 circuits au plus par interrupteur différentiel ; type F conseillé pour une pompe à chaleur (édition 2024) */
+    nCirc = circ.length; const shab0 = rooms.reduce((t, r) => t + r.net, 0), isA = c => c.kind === 'plaque' || /Lave-linge/.test(c.label), nA = circ.filter(isA).length, hasPac = circ.some(c => c.kind === 'pac');
+    const idA = Math.max(1, Math.ceil(nA / 8)), idF = hasPac ? 1 : 0, idAC = Math.max(shab0 <= 35 ? 1 : shab0 <= 100 ? 2 : 3, Math.ceil((nCirc - nA - (hasPac ? 1 : 0)) / 8)), nID = idAC + idA + idF;
+    const mods = Math.ceil((nCirc + nID * 2 + 2) * 1.2), rows = Math.max(2, Math.ceil(mods / 13));
     tab.params = {...(tab.params || {}), rg:rows}; tab.type = rows <= 2 ? 1 : rows === 3 ? 0 : 2;
     const pw = circ.reduce((t, c) => t + (c.kind === 'plaque' ? 7000 : c.kind === 'light' ? 200 : c.kind === 'heat' ? 3000 : c.kind === 'pac' ? 4000 : c.kind === 'vmc' ? 30 : 1500), 0), shab = rooms.reduce((t, r) => t + r.net, 0);
     kVA = by('rad').some(e => (e.type | 0) >= 4) ? (shab > 100 ? 15 : 12) : shab < 60 ? 6 : shab < 100 ? 9 : 12;
     rep.sys.elec = {title:'Électricité', lines:[`${nCirc} circuits : ${circ.filter(c => c.kind === 'light').length} éclairage (1,5 mm², 16 A, 8 points max.), ${circ.filter(c => c.kind === 'plug').length} prises (2,5 mm², 20 A, 12 max. ; 6 max. en cuisine), ${circ.filter(c => !['light', 'plug'].includes(c.kind)).length} spécialisés/dédiés`,
-      `Tableau : ${nID} interrupteurs différentiels 30 mA (8 circuits max. chacun) · ${mods} modules avec 20 % de réserve → ${rows} rangée${rows > 1 ? 's' : ''} de 13 modules (${tab.fam} mis à jour)`, `Puissance à souscrire indicative : ${kVA} kVA`, `Sections : éclairage 1,5 mm² · prises et circuits spécialisés 2,5 mm² · plaque de cuisson 6 mm² (32 A)`]};
+      `Tableau : ${nID} interrupteurs différentiels 30 mA : ${idAC} de type AC, ${idA} de type A (au moins un exigé, il protège la plaque de cuisson et le lave-linge)${idF ? ', 1 de type F (pompe à chaleur)' : ''} · 8 circuits au plus par différentiel · ${mods} modules avec 20 % de réserve → ${rows} rangée${rows > 1 ? 's' : ''} de 13 modules, organes de commande entre 0,90 et 1,80 m du sol`,
+      `${by('inter').length} interrupteur${by('inter').length > 1 ? 's' : ''} raccordé${by('inter').length > 1 ? 's' : ''} aux circuits d'éclairage · ${by('daaf').length} détecteur${by('daaf').length > 1 ? 's' : ''} de fumée autonome${by('daaf').length > 1 ? 's' : ''} (à piles, non raccordé${by('daaf').length > 1 ? 's' : ''})${by('rj45').length ? ` · ${by('rj45').length} prise${by('rj45').length > 1 ? 's' : ''} RJ45 à relier au coffret de communication (non tracé)` : ''}`, `Puissance à souscrire indicative : ${kVA} kVA`, `Sections : éclairage 1,5 mm² · prises et circuits spécialisés 2,5 mm² · plaque de cuisson 6 mm² (32 A)`]};
   } else rep.warn.push('Aucun tableau électrique placé : les circuits ne sont pas générés (ajoutez un tableau).');
 
   /* ---------------- Plomberie ---------------- */
@@ -12413,37 +12611,38 @@ function mepGenerateNets(){
   if (wps.length){
     if (!src) rep.warn.push('Aucune arrivée d\'eau ni ballon : eau froide et chaude non générées.');
     else { const S = src.c, s0 = zf(src.lvl);
-      if (bal && src !== bal) add('ef', src.lvl, [[S[0], S[1], s0 + 0.6], [S[0], S[1], s0 + 0.1], ...mepRun(S, bal.c, s0 + 0.1, s0 + 0.1).slice(1), [bal.c[0], bal.c[1], s0 + 0.15]], 20, 'Alimentation ballon', {note:'Ø20 PER'});
+      if (bal && src !== bal) add('ef', src.lvl, [[S[0], S[1], s0 + 0.6], [S[0], S[1], s0 - 0.04], ...mepRun(S, bal.c, s0 - 0.04, s0 - 0.04).slice(1), [bal.c[0], bal.c[1], zf(bal.lvl) + 0.15]], 20, 'Alimentation ballon', {note:'Ø20 PER'});
+      if (!bal && wps.some(e => WATER_PTS[mepKindOf(e)][1] != null)) rep.warn.push('Aucun ballon d\'eau chaude : l\'eau chaude n\'est pas tracée (ajoutez un ballon ou un chauffe-eau).');
       const B = bal ? bal.c : S;
-      for (const e of near(S, wps)){ const k = mepKindOf(e), [hEF, hECS, , dA] = WATER_PTS[k], zr = zf(e.lvl) + 0.1, P = e.c;
-        const up = e.lvl !== src.lvl ? [[S[0], S[1], s0 + 0.1], [S[0], S[1], zr]] : [];
-        add('ef', e.lvl, [[S[0], S[1], s0 + 0.1], ...up.slice(1), ...mepRun(up.length ? S : S, P, zr, zr).slice(up.length ? 0 : 1), [P[0], P[1], zf(e.lvl) + hEF]], dA, `${MEP_LABEL[k]}`, {note:`PER Ø${dA} · eau froide`});
-        if (hECS != null){ const o = 0.05; add('ecs', e.lvl, [[B[0] + o, B[1] + o, zf(bal ? bal.lvl : 0) + 0.15], ...(e.lvl !== (bal?.lvl ?? 0) ? [[B[0] + o, B[1] + o, zr + 0.04]] : []), ...mepRun([B[0] + o, B[1] + o], [P[0] + o, P[1] + o], zr + 0.04, zr + 0.04).slice(1), [P[0] + o, P[1] + o, zf(e.lvl) + hECS]], dA, `${MEP_LABEL[k]}`, {note:`PER Ø${dA} · eau chaude, à 2 cm de l'eau froide minimum`}); } }
+      for (const e of near(S, wps)){ const k = mepKindOf(e), [hEF, hECS, , dA] = WATER_PTS[k], zr = zf(e.lvl) - 0.04, P = e.c;   // PER sous fourreau dans la chape
+        const up = e.lvl !== src.lvl ? [[S[0], S[1], s0 - 0.04], [S[0], S[1], zr]] : [];
+        add('ef', e.lvl, [[S[0], S[1], s0 - 0.04], ...up.slice(1), ...mepRun(up.length ? S : S, P, zr, zr).slice(up.length ? 0 : 1), [P[0], P[1], zf(e.lvl) + hEF]], dA, `${MEP_LABEL[k]}`, {note:`PER Ø${dA} · eau froide`});
+        if (hECS != null && bal){ const o = 0.05; add('ecs', e.lvl, [[B[0] + o, B[1] + o, zf(bal.lvl) + 0.15], [B[0] + o, B[1] + o, zr], ...mepRun([B[0] + o, B[1] + o], [P[0] + o, P[1] + o], zr, zr).slice(1), [P[0] + o, P[1] + o, zf(e.lvl) + hECS]], dA, `${MEP_LABEL[k]}`, {note:`PER Ø${dA} · eau chaude, à 2 cm de l'eau froide minimum`}); } }
       rep.sys.plomb = {title:'Plomberie (alimentation)', lines:[`${wps.length} points d'eau · PER Ø12 (lavabo, évier, WC, lave-linge) et Ø16 (douche, baignoire, ballon) · eau chaude séparée de l'eau froide`, bal ? `Ballon d'eau chaude : ${famScope(fam(bal.fam), bal).V || 200} l (base : 50 à 60 l par occupant et par jour)` : 'Pas de ballon placé']}; }
     // évacuations : chute au WC (sinon au premier appareil), pente 2 cm/m (≥ 1 cm/m exigé), collecteur Ø100 vers l'extérieur
     const stack = (wps.find(e => mepKindOf(e) === 'wc' && e.lvl === 0) || wps.find(e => e.lvl === 0) || wps[0]).c, sl = 0.02, W0 = state.els.filter(w => w.kind === 'wall' && w.lvl === 0);
     const xs = W0.flatMap(w => [w.a[0], w.b[0]]), ys = W0.flatMap(w => [w.a[1], w.b[1]]);
     const out = xs.length ? (() => { const d = [[stack[0] - Math.min(...xs), [Math.min(...xs) - 1.5, stack[1]]], [Math.max(...xs) - stack[0], [Math.max(...xs) + 1.5, stack[1]]], [stack[1] - Math.min(...ys), [stack[0], Math.min(...ys) - 1.5]], [Math.max(...ys) - stack[1], [stack[0], Math.max(...ys) + 1.5]]].sort((a, b) => a[0] - b[0]); return d[0][1]; })() : [stack[0] + 3, stack[1]];
     let zmin = 1e9; const top = Math.max(...wps.map(e => e.lvl));
-    for (const e of wps){ const k = mepKindOf(e), D = WATER_PTS[k][2], P = e.c, z0 = zf(e.lvl) - 0.1, run = mepRun(P, stack, z0, z0), L = Math.abs(P[0] - stack[0]) + Math.abs(P[1] - stack[1]), zEnd = z0 - Math.max(L * sl, 0.01);
-      const pts = [[P[0], P[1], zf(e.lvl) + 0.05], [P[0], P[1], z0], ...mepRun(P, stack, z0, zEnd).slice(1)]; if (D < 100 && L > 4) rep.warn.push(`${MEP_LABEL[k]} : évacuation Ø${D} de ${nf(L, 1)} m (> 4 m) : rapprochez l'appareil de la chute ou passez en Ø50.`);
-      add('eu', e.lvl, pts, D, MEP_LABEL[k], {note:`PVC Ø${D} · pente ${nf(sl * 100, 0)} % (≥ 1 % exigé)${L > 4 && D < 100 ? ' · longueur > 4 m' : ''}`}); if (e.lvl === 0) zmin = Math.min(zmin, zEnd); else zmin = Math.min(zmin, zf(0) - 0.2); }
+    for (const e of wps){ const k = mepKindOf(e), P = e.c, Ld = Math.abs(P[0] - stack[0]) + Math.abs(P[1] - stack[1]), D = WATER_PTS[k][2] < 100 && Ld > 4 ? 50 : WATER_PTS[k][2] /* branche longue (> 4 m) : Ø50 */, z0 = zf(e.lvl) - 0.1, run = mepRun(P, stack, z0, z0), L = Math.abs(P[0] - stack[0]) + Math.abs(P[1] - stack[1]), zEnd = z0 - Math.max(L * sl, 0.01);
+      const pts = [[P[0], P[1], zf(e.lvl) + 0.05], [P[0], P[1], z0], ...mepRun(P, stack, z0, zEnd).slice(1)]; if (D === 50) rep.warn.push(`${MEP_LABEL[k]} : branche d'évacuation de ${nf(L, 1)} m portée en Ø50 ; rapprocher l'appareil de la chute reste préférable.`);
+      add('eu', e.lvl, pts, D, MEP_LABEL[k], {note:`PVC Ø${D} · pente ${nf(sl * 100, 0)} % (≥ 1 % exigé)${D === 50 ? ' · branche longue portée en Ø50' : ''}`}); if (e.lvl === 0) zmin = Math.min(zmin, zEnd); else zmin = Math.min(zmin, zf(0) - 0.2); }
     const zc = (isFinite(zmin) ? zmin : zf(0) - 0.2) - 0.05, Lc = Math.abs(out[0] - stack[0]) + Math.abs(out[1] - stack[1]);
     if (top > 0) add('eu', top, [[stack[0], stack[1], zf(top) - 0.1], [stack[0], stack[1], zc]], 100, 'Chute d\'eaux usées', {note:'PVC Ø100 · chute verticale en gaine technique'});
     add('eu', 0, [[stack[0], stack[1], zc], ...mepRun(stack, out, zc, zc - Lc * sl).slice(1)], 100, 'Collecteur vers l\'extérieur', {note:`PVC Ø100 · pente ${nf(sl * 100, 0)} % · regard de branchement en limite de bâtiment`});
-    add('eu', top, [[stack[0], stack[1], zf(top) + 0.05], [stack[0], stack[1], zf(top) + lvH(top) + 0.6]], 100, 'Ventilation primaire', {note:'Ø100 prolongée au-dessus de la toiture (DTU 60.11)'});
+    add('eu', top, [[stack[0], stack[1], zf(top) + 0.05], [stack[0], stack[1], lvlZ(top) + lvH(top) + 0.6]], 100, 'Ventilation primaire', {note:'Ø100 prolongée au-dessus de la toiture (DTU 60.11)'});
     (rep.sys.plomb ??= {title:'Plomberie', lines:[]}).lines.push(`Évacuations : chute Ø100 ${top > 0 ? 'sur ' + (top + 1) + ' niveaux ' : ''}+ collecteur Ø100 à ${nf(sl * 100, 0)} % (minimum réglementaire 1 %), branches Ø40 (lavabo, douche, baignoire, évier, lave-linge) et Ø100 (WC), ventilation primaire Ø100`);
   }
 
   /* ---------------- Ventilation ---------------- */
   const vm = by('vmc')[0], vx = by('vext');
   if (vx.length && vm){
-    const nPP = rooms.filter(r => ['sejour', 'chambre', 'autre'].includes(r.kind)).length, minTot = [35, 60, 75, 90, 105, 120][clamp(nPP - 1, 0, 5)];
+    const nPP = Math.max(1, rooms.filter(mepIsMain).length), minTot = mepVentFlows(nPP).tot;   // pièces principales : séjour, chambres, bureau
     let tot = 0; const Zc = zf(vm.lvl) + (famScope(fam(vm.fam), vm).zh || 2.1) + 0.15, Vc = vm.c;
-    for (const e of vx){ const q = famScope(fam(e.fam), e).q || 15, D = q <= 45 ? 80 : q <= 135 ? 125 : 160, zr = zf(e.lvl) + lvH(e.lvl) - 0.1; tot += q;
+    for (const e of vx){ const q = famScope(fam(e.fam), e).q || 15, D = q <= 45 ? 80 : q <= 135 ? 125 : 160, zr = lvlZ(e.lvl) + lvH(e.lvl) - 0.1; tot += q;
       const pts = [[e.c[0], e.c[1], zr], ...mepRun(e.c, Vc, zr, zr).slice(1)]; if (e.lvl !== vm.lvl) pts.push([Vc[0], Vc[1], zr], [Vc[0], Vc[1], Zc]); else pts.push([Vc[0], Vc[1], Zc]);
       add('vmc', e.lvl, pts, D, `Extraction ${q} m³/h`, {note:`Gaine Ø${D} · ${q} m³/h`}); }
-    const Dr = tot <= 150 ? 125 : tot <= 250 ? 160 : 200; add('vmc', vm.lvl, [[Vc[0], Vc[1], Zc], [Vc[0], Vc[1], zf(Math.max(...vx.map(e => e.lvl), vm.lvl)) + lvH(vm.lvl) + 0.8]], Dr, `Rejet ${tot} m³/h`, {note:`Rejet en toiture Ø${Dr}`});
+    const Dr = tot <= 150 ? 125 : tot <= 250 ? 160 : 200; add('vmc', vm.lvl, [[Vc[0], Vc[1], Zc], [Vc[0], Vc[1], (() => { const t = Math.max(...vx.map(e => e.lvl), vm.lvl); return lvlZ(t) + lvH(t) + 0.8; })()]], Dr, `Rejet ${tot} m³/h`, {note:`Rejet en toiture Ø${Dr}`});
     rep.sys.vent = {title:'Ventilation', lines:[`${vx.length} bouches d'extraction · débit total ${tot} m³/h (minimum réglementaire ≈ ${minTot} m³/h pour ${nPP} pièce${nPP > 1 ? 's' : ''} principale${nPP > 1 ? 's' : ''}, arrêté du 24 mars 1982)`, `Gaines Ø80 (salle de bain, WC), Ø125 (cuisine), rejet Ø${Dr} en toiture ; entrées d'air dans les pièces principales : ${by('ventree').length}`]};
     if (tot < minTot) rep.warn.push(`Débit d'extraction ${tot} m³/h inférieur au minimum ≈ ${minTot} m³/h.`);
     if (!by('ventree').length) rep.warn.push('Aucune entrée d\'air dans les pièces principales : à prévoir (menuiseries ou murs).');
@@ -12453,12 +12652,20 @@ function mepGenerateNets(){
   const gen = by('pac')[0], rads = by('rad').filter(e => (e.type | 0) < 4).concat(by('seche'));
   if (gen && rads.length && !by('rad').some(e => (e.type | 0) >= 4)){
     const G = gen.c; let P = 0;
-    for (const e of near(G, rads)){ const zr = zf(e.lvl) + 0.08, w = famScope(fam(e.fam), e).W || 750; P += w;
+    for (const e of near(G, rads)){ const zr = zf(e.lvl) - 0.04, w = famScope(fam(e.fam), e).W || 750; P += w;
       for (const [o, lab] of [[0.03, 'Départ'], [-0.03, 'Retour']]){ const pts = [[G[0] + o, G[1] + o, zf(gen.lvl) + 0.3], ...(e.lvl !== gen.lvl ? [[G[0] + o, G[1] + o, zr]] : [[G[0] + o, G[1] + o, zr]]), ...mepRun([G[0] + o, G[1] + o], [e.c[0] + o, e.c[1] + o], zr, zr).slice(1), [e.c[0] + o, e.c[1] + o, zf(e.lvl) + 0.3]]; add('chauf', e.lvl, pts, 16, `${lab} ${MEP_LABEL[mepKindOf(e)]}`, {note:`PER Ø16 · ${w} W`}); } }
     const kW = famScope(fam(gen.fam), gen).kW || 8;
     rep.sys.chauf = {title:'Chauffage', lines:[`${rads.length} émetteurs · ${nf(P / 1000, 1)} kW installés · générateur ${kW} kW ${P / 1000 > kW ? '(INSUFFISANT : choisir un générateur plus puissant)' : '(suffisant)'} · départs et retours PER Ø16`]};
     if (P / 1000 > kW) rep.warn.push(`Générateur de ${kW} kW inférieur à la puissance installée (${nf(P / 1000, 1)} kW).`);
   }
+  /* tronçons hors du bâtiment (arrivée d'eau au compteur, générateur extérieur…) : enterrés hors gel (eau, chauffage ≈ 0,80 m), câbles à 0,50 m sous fourreau */
+  const inside0 = rooms.filter(r => r.lvl === 0 && r.kind !== 'ext'), isIn = q => !inside0.length || inside0.some(r => ptInPoly(q[0], q[1], r.poly) || dPoly(q, r.poly) < 0.4);
+  for (const n of nets){ if (n.lvl !== 0 || !['ef', 'ecs', 'chauf', 'elec'].includes(n.sys)) continue; const zb = lvlZ(0) - (n.sys === 'elec' ? 0.5 : 0.8), P = n.pts, out = [];
+    for (let i = 0; i < P.length; i++){ const q = P[i], qin = isIn(q);
+      if (i){ const pr = P[i - 1], pin = isIn(pr); if (pin !== qin){ let a = 0, b = 1; for (let k = 0; k < 14; k++){ const m = (a + b) / 2, x = [pr[0] + (q[0] - pr[0]) * m, pr[1] + (q[1] - pr[1]) * m]; if (isIn(x) === pin) a = m; else b = m; }
+        const x = [pr[0] + (q[0] - pr[0]) * a, pr[1] + (q[1] - pr[1]) * a].map(v => Math.round(v * 1000) / 1000), zi = pin ? pr[2] : q[2]; out.push(pin ? [x[0], x[1], zi] : [x[0], x[1], zb], pin ? [x[0], x[1], zb] : [x[0], x[1], zi]); } }
+      out.push(qin ? q : [q[0], q[1], zb]); }
+    if (out.some((q, i) => q[2] !== P[i]?.[2] || out.length !== P.length)){ n.pts = out.filter((q, i) => i === 0 || Math.hypot(q[0] - out[i - 1][0], q[1] - out[i - 1][1], q[2] - out[i - 1][2]) > 1e-4); n.note += ` · tronçon extérieur enterré à ${nf(lvlZ(0) - zb, 2)} m${n.sys === 'elec' ? ' sous fourreau rouge' : ' hors gel, grillage avertisseur'}`; } }
   pushHist(); state.isSample = false; state.els = state.els.filter(e => !(e.kind === 'net' && e.auto));
   for (const n of nets){ n.id = state.nextId++; state.els.push(n); }
   rebuild(); toast(`${nets.length} tronçons de réseau générés`); mepReport(rep, nets);
@@ -12479,20 +12686,24 @@ function mepReport(rep, nets){
 /* ============ Vérifications du bâtiment : règles étendues (thermique, incendie, acoustique, accessibilité, ventilation, électricité…) ============
    S'ajoute à runChecks() (73-checks.js). Chaque problème : catégorie, texte de référence, correction proposée (appliquée ou assistée).
    Sources (repères indicatifs, à confirmer par un bureau de contrôle) :
-   - RE2020 (arrêté du 4 août 2021) : baies ≥ 1/6 de la surface habitable ; parois repères Umur ≈ 0,22, toiture ≈ 0,17, plancher bas ≈ 0,20 W/m²K ;
+   - RE2020 (arrêté du 4 août 2021) : baies ≥ 1/6 de la surface habitable (exigence de moyens). La RE2020 ne fixe pas de U par paroi : les valeurs
+     Umur ≈ 0,22, toiture ≈ 0,17, plancher bas ≈ 0,20 W/m²K sont des repères de conception ; en rénovation élément par élément, l'arrêté du
+     3 mai 2007 modifié (22 mars 2017) demande R ≥ 2,9 (murs), 4,4 (rampants), 4,8 m²K/W (combles perdus) ;
    - Incendie : DAAF obligatoire (loi du 9 mars 2010, arrêté du 5 février 2013) ; logement individuel : escalier ≥ 0,80 m ;
-   - Accessibilité : arrêté du 20 avril 2017 (aire de giration Ø 1,50 m, circulations ≥ 0,90 m, WC et pièce d'eau au niveau d'accès) ;
+   - Accessibilité des logements neufs : arrêté du 24 décembre 2015 (aire de rotation Ø 1,50 m, circulations ≥ 0,90 m, WC et salle d'eau dans
+     l'unité de vie) ; une maison construite pour son propre usage en est dispensée (l'arrêté du 20 avril 2017 vise les ERP) ;
    - Ventilation : arrêté du 24 mars 1982 (extraction cuisine, salle de bain, WC ; entrées d'air dans les pièces principales) ;
-   - Électricité NF C 15-100 : séjour ≥ 5 prises (1 par 4 m² au-delà de 20 m²), chambre ≥ 3, cuisine ≥ 6 dont 4 sur plan de travail, salle d'eau ≥ 2, autres ≥ 1,
+   - Électricité NF C 15-100 : séjour 1 prise par 4 m² (5 au moins, 7 au moins au-delà de 28 m²), chambre ≥ 3, cuisine ≥ 6 dont 4 sur plan de travail
+     (3 si ≤ 4 m²), salle d'eau ≥ 1 hors volumes, autre pièce de plus de 4 m² ≥ 1, WC 0,
      un point lumineux par pièce, tableau avec différentiels 30 mA, circuits spécialisés (four, lave-linge, lave-vaisselle) ;
    - Acoustique : une chambre ne partage pas de cloison légère (Rw < 40 dB) avec une pièce humide ou la cuisine ;
-   - Eau chaude : ballon ≈ 50 à 60 l par occupant et par jour (NF C 15-100 / DTU 60.1 pour les réseaux). */
-const CHK_CATS = {struct:'Structure', therm:'Thermique RE2020', fire:'Incendie', ac:'Acoustique', pmr:'Accessibilité', safe:'Sécurité', vent:'Ventilation', elec:'Électricité', eau:'Eau et chauffage', conf:'Confort'};
+   - Eau chaude : ballon ≈ 50 à 60 l par occupant et par jour (repère usuel ; DTU 60.1 pour les réseaux). */
+const CHK_CATS = {struct:'Structure', therm:'Thermique', fire:'Incendie', ac:'Acoustique', pmr:'Accessibilité', safe:'Sécurité', vent:'Ventilation', elec:'Électricité', eau:'Eau et chauffage', conf:'Confort'};
 const chkNear = (p, poly) => { let d = 1e9; for (let i = 0; i < poly.length; i++){ const a = poly[i], b = poly[(i + 1) % poly.length]; d = Math.min(d, V.len(V.sub(segClosest(p, a, b).pt, p))); } return d; };
 function chkAddMissing(roomKey, kinds, n){
   const O = {...MEP_DEF, sys:{...MEP_DEF.sys}, ...(state.mepOpts || {})}; O.sys = {...MEP_DEF.sys, ...(O.sys || {})};
-  const items = mepPropose(O).filter(it => kinds.includes(it.kind) && (roomKey == null || it.room === roomKey)).slice(0, n || 99);
-  for (const it of items) state.els.push({kind:'inst', fam:it.fam, type:it.type | 0, params:{...(it.params || {})}, c:it.c.map(v => Math.round(v * 1000) / 1000), rot:it.rot || 0, lvl:it.lvl, off:0, mirror:false, auto:true, room:it.room, id:state.nextId++});
+  const items = mepPropose(O, [], {countAll:true}).filter(it => kinds.includes(it.kind) && (roomKey == null || it.room === roomKey)).slice(0, n || 99);
+  for (const it of items) state.els.push({kind:'inst', fam:it.fam, type:it.type | 0, params:{...(it.params || {})}, c:it.c.map(v => Math.round(v * 1000) / 1000), rot:it.rot || 0, lvl:it.lvl, off:mepFloorOff(it.lvl), mirror:false, auto:true, room:it.room, id:state.nextId++});
   if (!items.length) throw new Error('rien à ajouter');
 }
 function runChecksExt(){
@@ -12511,10 +12722,10 @@ function runChecksExt(){
   for (const w of E){ if (!(w.kind === 'wall' || w.kind === 'roof') || w.partition) continue; const C = compo(w.type), key = w.kind + w.type; if (seen.has(key)) continue; seen.add(key);
     if (w.kind === 'wall' && !isExtW(w)) continue;
     let U = null; try { U = wallReport(layersInToOut(w), elUse(w)).th.U; } catch(e){ continue; } const g = uGrade(U, elUse(w)), lim = uGradeLimits(elUse(w));
-    if (U > lim[2] + 0.005) add('th-' + key, 'therm', 'bad', `${w.kind === 'roof' ? 'Toiture' : 'Mur'} « ${C.nom || w.type} » : U = ${nf(U, 2)} W/m²K`, `Au-dessus du repère RE2020 « correct » (${nf(lim[2], 2)}) : classe ${g.g}. ${g.t}.`, 'RE2020 : parois courantes en neuf ≈ U ≤ 0,22 (mur), 0,17 (toiture) W/m²K ; niveau rénovation ≤ 0,30 / 0,25.', {...open(() => setTimeout(() => openInsulAdjust(w.id), 0)), t:'Ajuster l\'isolant pour atteindre le niveau visé'}, [w.id]);
-    else if (U > lim[1] + 0.005) add('th-' + key, 'therm', 'warn', `${w.kind === 'roof' ? 'Toiture' : 'Mur'} « ${C.nom || w.type} » : U = ${nf(U, 2)} W/m²K`, `Niveau ${g.g} : correct en rénovation mais en dessous du repère « neuf RE2020 » (${nf(lim[1], 2)}).`, 'RE2020 : repère neuf U ≈ 0,22 (mur), 0,17 (toiture).', {...open(() => setTimeout(() => openInsulAdjust(w.id), 0)), t:'Renforcer l\'isolant'}, [w.id]); }
-  if (shab > 8 && glaz.length){ const ag = glaz.reduce((t, e) => t + glazOf(e), 0);
-    if (ag < shab / 6 - 0.01) add('baies', 'therm', 'warn', `Surface vitrée ${nf(ag, 1)} m² pour ${nf(shab, 0)} m² habitables`, `Moins de 1/6 de la surface habitable (${nf(shab / 6, 1)} m² attendus) : confort lumineux et apports solaires insuffisants.`, 'RE2020 / Code de la construction : baies ≥ 1/6 de la surface habitable.', null, glaz.map(e => e.id).slice(0, 1)); }
+    if (U > lim[2] + 0.005) add('th-' + key, 'therm', 'warn', `${w.kind === 'roof' ? 'Toiture' : 'Mur'} « ${C.nom || w.type} » : U = ${nf(U, 2)} W/m²K`, `Au-dessus du repère « rénovation » (${nf(lim[2], 2)}) : classe ${g.g}. ${g.t}.`, 'Repères de conception (la RE2020 ne fixe pas de U par paroi, elle se vérifie par l\'étude thermique) : neuf ≈ 0,22 (mur), 0,17 (toiture) ; rénovation : arrêté du 22 mars 2017, R ≥ 2,9 (mur) et 4,4 à 4,8 m²K/W (toiture).', {...open(() => setTimeout(() => openInsulAdjust(w.id), 0)), t:'Ajuster l\'isolant pour atteindre le niveau visé'}, [w.id]);
+    else if (U > lim[1] + 0.005) add('th-' + key, 'therm', 'warn', `${w.kind === 'roof' ? 'Toiture' : 'Mur'} « ${C.nom || w.type} » : U = ${nf(U, 2)} W/m²K`, `Niveau ${g.g} : correct en rénovation mais au-dessus du repère « neuf » (${nf(lim[1], 2)}).`, 'Repère de conception en neuf : U ≈ 0,22 (mur), 0,17 (toiture). La RE2020 se vérifie par l\'étude thermique (Bbio, Cep, Ic, DH), pas paroi par paroi.', {...open(() => setTimeout(() => openInsulAdjust(w.id), 0)), t:'Renforcer l\'isolant'}, [w.id]); }
+  if (shab > 8 && glaz.length){ const ag = typeof glazingReport === 'function' ? glazingReport().total : glaz.reduce((t, e) => t + glazOf(e), 0);   // même calcul que la carte « Surface vitrée »
+    if (ag < shab / 6 - 0.01) add('baies', 'therm', 'warn', `Surface vitrée ${nf(ag, 1)} m² pour ${nf(shab, 0)} m² habitables`, `Moins de 1/6 de la surface habitable (${nf(shab / 6, 1)} m² attendus) : confort lumineux et apports solaires insuffisants.`, 'RE2020 (exigence de moyens, reprise de la RT 2012) : surface des baies ≥ 1/6 de la surface habitable.', null, glaz.map(e => e.id).slice(0, 1)); }
   /* ---------- Éclairement naturel et surfaces ---------- */
   for (const r of rooms) if (r.kind === 'sejour' || r.kind === 'chambre' || r.kind === 'cuisine'){
     const win = glaz.some(e => { const f = instFrame(e); return f && chkNear(f.o, r.poly) < 0.45 && e.lvl === r.lvl; });
@@ -12522,17 +12733,17 @@ function runChecksExt(){
     if (r.kind === 'chambre' && r.net < 7 - 1e-6) add('surf', 'conf', 'warn', `${r.name} : ${nf(r.net, 1)} m²`, 'Pièce principale de moins de 7 m².', 'CCH R111-2 : pièces principales ≥ 7 m² (une au moins de 9 m²).', null); }
   /* ---------- Accessibilité (arrêté du 20 avril 2017) ---------- */
   for (const r of rooms.filter(r => r.lvl === 0)){ const [x0, y0, x1, y1] = polyBox(r.poly), a = Math.min(x1 - x0, y1 - y0), box = (x1 - x0) * (y1 - y0), rect = r.net > box * 0.9;
-    if (rect && ['sejour', 'cuisine', 'chambre', 'sdb'].includes(r.kind) && a < 1.5 - 1e-6) add('pmr-g', 'pmr', 'warn', `${r.name} : largeur ${nf(a, 2)} m`, 'Aire de giration Ø 1,50 m impossible au niveau d\'accès.', 'Arrêté du 20 avril 2017 : aire de rotation Ø 1,50 m dans les pièces de vie.', null);
-    if (rect && r.kind === 'couloir' && a < 0.9 - 1e-6) add('pmr-c', 'pmr', 'bad', `${r.name} : largeur ${nf(a, 2)} m`, 'Circulation inférieure à 0,90 m.', 'Arrêté du 20 avril 2017 : circulations ≥ 0,90 m.', null); }
+    if (rect && ['sejour', 'cuisine', 'chambre', 'sdb'].includes(r.kind) && a < 1.5 - 1e-6) add('pmr-g', 'pmr', 'warn', `${r.name} : largeur ${nf(a, 2)} m`, 'Aire de giration Ø 1,50 m impossible au niveau d\'accès.', 'Arrêté du 24 décembre 2015 (logements neufs vendus ou loués) : aire de rotation Ø 1,50 m dans les pièces de l\'unité de vie.', null);
+    if (rect && r.kind === 'couloir' && a < 0.9 - 1e-6) add('pmr-c', 'pmr', 'bad', `${r.name} : largeur ${nf(a, 2)} m`, 'Circulation inférieure à 0,90 m.', 'Arrêté du 24 décembre 2015 : circulations intérieures ≥ 0,90 m.', null); }
   if (rooms.some(r => r.kind === 'wc' || r.kind === 'sdb') || M.length){
-    const wc0 = rooms.some(r => r.lvl === 0 && (r.kind === 'wc' || r.kind === 'sdb')); if (!wc0 && rooms.some(r => r.lvl === 0)) add('pmr-wc', 'pmr', 'warn', 'Aucun WC ou salle d\'eau au niveau d\'accès', 'Un WC et une douche accessibles doivent être possibles au niveau d\'entrée du logement.', 'Arrêté du 20 avril 2017 : WC et pièce d\'eau accessibles au niveau d\'accès.', null); }
+    const wc0 = rooms.some(r => r.lvl === 0 && (r.kind === 'wc' || r.kind === 'sdb')); if (!wc0 && rooms.some(r => r.lvl === 0)) add('pmr-wc', 'pmr', 'warn', 'Aucun WC ou salle d\'eau au niveau d\'accès', 'Un WC et une douche accessibles doivent être possibles au niveau d\'entrée du logement.', 'Arrêté du 24 décembre 2015 : WC et salle d\'eau dans l\'unité de vie au niveau d\'accès (maison vendue ou louée).', null); }
   /* ---------- Incendie et sécurité ---------- */
   const daaf = M.filter(e => mepKindOf(e) === 'daaf').length;
   if (rooms.length && !daaf) add('daaf', 'fire', 'bad', 'Aucun détecteur de fumée (DAAF)', 'Au moins un détecteur autonome avertisseur de fumée est obligatoire dans chaque logement, de préférence dans le dégagement des chambres.', 'Loi du 9 mars 2010 ; arrêté du 5 février 2013 (NF EN 14604).', {t:'Placer un détecteur de fumée', run:() => chkAddMissing(null, ['daaf'], 1)});
-  else if (daaf && state.levels.length > 1){ for (let i = 0; i < state.levels.length; i++) if (rooms.some(r => r.lvl === i && r.kind === 'chambre') && !M.some(e => mepKindOf(e) === 'daaf' && e.lvl === i)) add('daaf' + i, 'fire', 'warn', `${lv(i)} : pas de détecteur de fumée près des chambres`, 'Un détecteur par niveau habité est recommandé.', 'Recommandation DGSCGC : un détecteur par niveau.', {t:'Placer un détecteur à ce niveau', run:() => { const r = rooms.find(r => r.lvl === i && r.kind === 'chambre'), c = polyCentroid(r.poly); state.els.push({kind:'inst', fam:MEP_FAM_OF.daaf, type:0, params:{}, c:c.map(rnd), rot:0, lvl:i, off:0, mirror:false, auto:true, id:state.nextId++}); }}); }
+  else if (daaf && state.levels.length > 1){ for (let i = 0; i < state.levels.length; i++) if (rooms.some(r => r.lvl === i && r.kind === 'chambre') && !M.some(e => mepKindOf(e) === 'daaf' && e.lvl === i)) add('daaf' + i, 'fire', 'warn', `${lv(i)} : pas de détecteur de fumée près des chambres`, 'Un détecteur par niveau habité est recommandé.', 'Recommandation DGSCGC : un détecteur par niveau.', {t:'Placer un détecteur à ce niveau', run:() => { const r = rooms.find(r => r.lvl === i && r.kind === 'chambre'), c = polyCentroid(r.poly); state.els.push({kind:'inst', fam:MEP_FAM_OF.daaf, type:0, params:{hc:Math.round((mepCeilH(i) - mepFloorOff(i)) * 100) / 100}, c:c.map(rnd), rot:0, lvl:i, off:mepFloorOff(i), mirror:false, auto:true, id:state.nextId++}); }}); }
   const hasEntry = E.some(e => e.kind === 'inst' && e.host && e.lvl === 0 && (/^Portes$/.test(fam(e.fam)?.cat || '') || /porte(?!-fen)/.test(e.fam || '')));
   if (state.levels.length && E.some(w => w.kind === 'wall' && w.lvl === 0) && !hasEntry && !E.some(e => e.kind === 'inst' && /porte-fen|baie/.test(e.fam || ''))) add('exit', 'fire', 'bad', 'Aucune porte d\'accès au rez-de-chaussée', 'Le bâtiment doit avoir au moins une issue vers l\'extérieur.', 'CCH R111-13 ; règlement de sécurité contre l\'incendie (habitation).', null);
-  for (const s of E) if (s.kind === 'stair'){ const W = s.w ?? s.width ?? 0; if (W && W < 0.8 - 1e-6) add('st-w', 'fire', 'bad', `Escalier ${s.id} : largeur ${nf(W, 2)} m`, 'Escalier trop étroit pour l\'évacuation.', 'Habitation individuelle : largeur ≥ 0,80 m (0,90 m si collectif).', null, [s.id]); }
+  for (const s of E) if (s.kind === 'stair'){ const W = s.w ?? s.width ?? 0; if (W && W < 0.8 - 1e-6) add('st-w', 'safe', 'warn', `Escalier ${s.id} : largeur ${nf(W, 2)} m`, 'Escalier étroit : passage et évacuation difficiles.', 'Maison individuelle : pas de minimum réglementaire, 0,80 m recommandé (NF DTU 36.3) ; escaliers communs des logements collectifs : 1,00 m.', null, [s.id]); }
   /* ---------- Acoustique : chambre accolée à une pièce bruyante par une cloison légère ---------- */
   const doneAc = new Set();
   for (const w of E) if (w.kind === 'wall' && !w.partition || w.kind === 'wall'){ const d = V.sub(w.b, w.a), L = V.len(d); if (L < 0.8) continue; const u = V.mul(d, 1 / L), n = [-u[1], u[0]], m = V.mul(V.add(w.a, w.b), 0.5), t = wallT(w) / 2 + 0.25;
@@ -12547,15 +12758,14 @@ function runChecksExt(){
   if (rooms.length && !M.length) add('mep0', 'elec', 'warn', 'Aucun équipement technique placé', 'Les prises, l\'éclairage, la ventilation, la plomberie et le chauffage ne peuvent pas être contrôlés : aucun équipement n\'est placé.', 'NF C 15-100 ; arrêté du 24 mars 1982 ; DTU 60.1.', {...open(() => setTimeout(() => mepStart(), 0)), t:'Lancer la proposition automatique'});
   if (rooms.length && M.length){
     if (!M.some(e => mepKindOf(e) === 'tableau')) add('tab', 'elec', 'bad', 'Aucun tableau électrique', 'Toute installation commence par un tableau de répartition avec disjoncteurs et différentiels 30 mA.', 'NF C 15-100 art. 771 : tableau près de l\'entrée.', {t:'Placer un tableau électrique', run:() => chkAddMissing(null, ['tableau'], 1)});
-    const need = {sejour:[5, 'séjour'], chambre:[3, 'chambre'], cuisine:[6, 'cuisine'], sdb:[2, 'salle d\'eau'], buanderie:[2, 'buanderie'], entree:[1, 'entrée'], couloir:[1, 'couloir'], wc:[0, 'WC'], autre:[1, 'pièce']};
-    for (const r of rooms){ const [n0p] = need[r.kind] || [1]; let req = n0p; if (r.kind === 'sejour' && r.net > 20) req = Math.max(5, Math.ceil(r.net / 4)); const pr = has(r, 'prise') + has(r, 'spec') + has(r, 'rj45') * 0;
-      if (pr < req) add('pr', 'elec', 'warn', `${r.name} (${lv(r.lvl)}) : ${pr} prise${pr > 1 ? 's' : ''} pour ${req} exigée${req > 1 ? 's' : ''}`, `NF C 15-100 : ${req} prises de courant minimum dans cette pièce.`, 'NF C 15-100 art. 771.314 : séjour ≥ 5 (1 par 4 m² au-delà de 20 m²), chambre ≥ 3, cuisine ≥ 6, salle d\'eau ≥ 2.', {t:`Ajouter ${req - pr} prise${req - pr > 1 ? 's' : ''}`, run:() => chkAddMissing(r.key, ['prise'], req - pr)}, []);
-      if (r.kind !== 'ext' && !has(r, 'lum') && !has(r, 'spot') && !has(r, 'applique') && r.kind !== 'wc') add('lm', 'elec', 'warn', `${r.name} (${lv(r.lvl)}) : aucun point lumineux`, 'Un point d\'éclairage par pièce est exigé.', 'NF C 15-100 : au moins un point lumineux au plafond ou en applique par pièce.', {t:'Ajouter un luminaire', run:() => chkAddMissing(r.key, ['lum', 'spot', 'applique'], 1)});
-      if (['cuisine', 'sdb', 'wc'].includes(r.kind) && M.some(e => mepKindOf(e) === 'vmc' || mepKindOf(e) === 'vext') && !has(r, 'vext')) add('vx', 'vent', 'bad', `${r.name} : pas de bouche d'extraction`, 'Les pièces humides (cuisine, salle de bain, WC) sont ventilées par extraction mécanique.', 'Arrêté du 24 mars 1982 : débits ≥ 15 m³/h (WC), 15-30 (salle de bain), 20-45 m³/h (cuisine).', {t:'Ajouter une bouche d\'extraction', run:() => chkAddMissing(r.key, ['vext'], 1)});
+    for (const r of rooms){ const req = mepPrisesMin(r.kind, r.net), pr = has(r, 'prise') + has(r, 'spec');
+      if (pr < req) add('pr', 'elec', 'warn', `${r.name} (${lv(r.lvl)}) : ${pr} prise${pr > 1 ? 's' : ''} pour ${req} exigée${req > 1 ? 's' : ''}`, `NF C 15-100 : ${req} prises de courant minimum dans cette pièce.`, 'NF C 15-100 (10.1.3) : séjour 1 par 4 m², 5 au moins (7 au-delà de 28 m²), chambre ≥ 3, cuisine ≥ 6 dont 4 sur le plan de travail (3 si ≤ 4 m²), salle d\'eau ≥ 1 hors volumes, autre pièce de plus de 4 m² ≥ 1.', {t:`Ajouter ${req - pr} prise${req - pr > 1 ? 's' : ''}`, run:() => chkAddMissing(r.key, ['prise'], req - pr)}, []);
+      if (r.kind !== 'ext' && !has(r, 'lum') && !has(r, 'spot') && !has(r, 'applique')) add('lm', 'elec', 'warn', `${r.name} (${lv(r.lvl)}) : aucun point lumineux`, 'Un point d\'éclairage par pièce est exigé.', 'NF C 15-100 : au moins un point lumineux au plafond ou en applique par pièce.', {t:'Ajouter un luminaire', run:() => chkAddMissing(r.key, ['lum', 'spot', 'applique'], 1)});
+      if (['cuisine', 'sdb', 'wc'].includes(r.kind) && M.some(e => mepKindOf(e) === 'vmc' || mepKindOf(e) === 'vext') && !has(r, 'vext')) add('vx', 'vent', 'bad', `${r.name} : pas de bouche d'extraction`, 'Les pièces humides (cuisine, salle de bain, WC) sont ventilées par extraction mécanique.', 'Arrêté du 24 mars 1982 : extraction en cuisine (75 à 135 m³/h en grand débit), salle de bains (15 à 45 m³/h), WC (15 à 30 m³/h) selon le nombre de pièces principales.', {t:'Ajouter une bouche d\'extraction', run:() => chkAddMissing(r.key, ['vext'], 1)});
       else if (['cuisine', 'sdb', 'wc'].includes(r.kind) && !M.some(e => mepKindOf(e) === 'vmc')) add('vx', 'vent', 'bad', `${r.name} : aucune ventilation`, 'Aucun caisson VMC ni bouche d\'extraction dans le bâtiment.', 'Arrêté du 24 mars 1982 : ventilation générale et permanente obligatoire.', {t:'Ajouter caisson VMC et bouche', run:() => chkAddMissing(null, ['vmc'], 1) || chkAddMissing(r.key, ['vext'], 1)});
       if (['sejour', 'chambre'].includes(r.kind) && M.some(e => mepKindOf(e) === 'vmc') && !has(r, 'ventree') && !glaz.some(e => { const f = instFrame(e); return f && e.lvl === r.lvl && chkNear(f.o, r.poly) < 0.45; })) add('ve', 'vent', 'warn', `${r.name} : pas d'entrée d'air`, 'Les pièces principales reçoivent l\'air neuf par des entrées d\'air.', 'Arrêté du 24 mars 1982 : entrées d\'air en pièces principales.', {t:'Ajouter une entrée d\'air', run:() => chkAddMissing(r.key, ['ventree'], 1)}); }
     const hab = rooms.filter(r => ['sejour', 'chambre'].includes(r.kind)).length, occ = Math.max(1, rooms.filter(r => r.kind === 'chambre').length + 1), ball = M.find(e => mepKindOf(e) === 'ballon');
-    if (ball){ const V_ = famScope(fam(ball.fam), ball).V || 200; if (V_ < occ * 55 - 1) add('bal', 'eau', 'warn', `Ballon de ${V_} l pour ${occ} occupants`, `Capacité conseillée ≈ ${Math.ceil(occ * 55 / 50) * 50} l (50 à 60 l par personne et par jour).`, 'NF C 15-100 / DTU 60.1 : dimensionnement du ballon selon les occupants.', null, [ball.id]); }
+    if (ball){ const V_ = famScope(fam(ball.fam), ball).V || 200; if (V_ < occ * 55 - 1) add('bal', 'eau', 'warn', `Ballon de ${V_} l pour ${occ} occupants`, `Capacité conseillée ≈ ${Math.ceil(occ * 55 / 50) * 50} l (50 à 60 l par personne et par jour).`, 'Repère usuel : 50 à 60 l d\'eau chaude par personne et par jour.', null, [ball.id]); }
     if (M.some(e => ['wc', 'lavabo', 'douche', 'baignoire', 'cuisine'].includes(mepKindOf(e))) && !M.some(e => ['arrivee', 'ballon'].includes(mepKindOf(e)))) add('arr', 'eau', 'warn', 'Aucune arrivée d\'eau', 'Les points d\'eau n\'ont pas d\'arrivée d\'eau ni de ballon.', 'DTU 60.1 : alimentation par compteur et réducteur de pression.', {t:'Placer arrivée d\'eau et ballon', run:() => chkAddMissing(null, ['arrivee', 'ballon'], 2)});
   }
   return out;
@@ -12632,7 +12842,7 @@ function setView(v){
   c3.enabled = v === '3d' || v === 'render'; c2.enabled = v === '2d'; c4.enabled = v === 'sec'; renderer.clippingPlanes = v === 'sec' ? secClip() : [];
   if (v !== 'sec') $('#secBar').hidden = true;
   if (typeof buildLevelMarks === 'function') setTimeout(() => { buildLevelMarks(); buildDims(); buildDoorMarks(); }, 0);
-  $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === v));
+  $$('.modes [data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === v));   // boutons seulement (<body> porte aussi data-mode)
   document.body.dataset.mode = v;
   if (v === '2d'){ c2.target.set(c3.target.x, 0, c3.target.z); ortho.position.set(c3.target.x, 200, c3.target.z); c2.update(); }
   if (v === 'render'){ if (tool !== 'select') setTool('select'); if (DISPLAY.style === 'shaded' || DISPLAY.style === 'wire') setStyle('realistic'); activeTab = 'render'; }
@@ -12812,7 +13022,7 @@ window.__apReady = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => { sp.classList.add('done'); setTimeout(() => sp.remove(), 600); }, Math.max(reduce ? 300 : 0, (reduce ? 600 : 2900) - performance.now())); })();
 // Accès de diagnostic (console, tests automatiques) : lecture de l'état et sélection.
-window.APDebug = {search: {ix: el => elIndex(el), q: q => sParseQuery(q), score: (Q, ix) => sScore(Q, ix), run: (q, items, o) => smartSearch(q, items, o), mats: f => searchMats(f), fams: () => searchFams(), compos: k => searchCompos(k), fam: (id, F) => famIndex(id, F)}, look: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, frame: ids => frameEl(ids), hitAt: (x, y) => { const h = paintHit({clientX:x, clientY:y}); return h ? {id:h.id, n:[+h.normal.x.toFixed(2), +h.normal.y.toFixed(2), +h.normal.z.toFixed(2)], p:[+h.point.x.toFixed(2), +h.point.y.toFixed(2), +h.point.z.toFixed(2)], mat:h.obj.userData.mat, coat:!!h.obj.userData.coat} : null; }, coats: () => modelGroup.children.map(g => [g.userData.id, g.children.filter(o => o.userData.coat).map(o => o.userData.mat + (o.userData.tr ? ' ' + JSON.stringify(o.userData.tr) : '')), g.children.filter(o => o.isMesh && !o.userData.coat && o.userData.src && o.userData.src !== o.userData.mat).map(o => o.userData.src + '>' + o.userData.mat)]), roundtrip: () => { const s = migrate(JSON.parse(projectJSON())); return s.els.map(e => ({id:e.id, paint:e.paint, paintOut:e.paintOut, paintIn:e.paintIn, paintUnder:e.paintUnder, paintMap:e.paintMap})).filter(e => e.paint || e.paintOut || e.paintIn || e.paintUnder || e.paintMap); }, matEd: id => openMatEditor(id), paintDefs: () => ({...defs.paint}), uvDbg: id => { const g = modelGroup.children.find(x => x.userData.id === id), out = []; g?.traverse(o => { if (o.isMesh && !o.userData.coat && o.geometry.attributes.uv){ const uv = o.geometry.attributes.uv, P = o.geometry.attributes.position; const N = o.geometry.attributes.normal, side = [...Array(uv.count).keys()].filter(i => Math.abs(N.getY(i)) < 0.5).slice(0, 8); out.push({mat:o.userData.mat, n:uv.count, uv:side.map(i => [+P.getX(i).toFixed(2), +P.getY(i).toFixed(2), +P.getZ(i).toFixed(2), +uv.getX(i).toFixed(3), +uv.getY(i).toFixed(3)])}); } }); return out; }, doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, sk: () => SK, addEl: e => addEl(e), rebuild: () => rebuild(), piecesOf: id => pieces(getEl(id)).length, holesOf: id => slabHoles(getEl(id)), doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
+window.APDebug = {search: {ix: el => elIndex(el), q: q => sParseQuery(q), score: (Q, ix) => sScore(Q, ix), run: (q, items, o) => smartSearch(q, items, o), mats: f => searchMats(f), fams: () => searchFams(), compos: k => searchCompos(k), fam: (id, F) => famIndex(id, F)}, look: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, frame: ids => frameEl(ids), hitAt: (x, y) => { const h = paintHit({clientX:x, clientY:y}); return h ? {id:h.id, n:[+h.normal.x.toFixed(2), +h.normal.y.toFixed(2), +h.normal.z.toFixed(2)], p:[+h.point.x.toFixed(2), +h.point.y.toFixed(2), +h.point.z.toFixed(2)], mat:h.obj.userData.mat, coat:!!h.obj.userData.coat} : null; }, coats: () => modelGroup.children.map(g => [g.userData.id, g.children.filter(o => o.userData.coat).map(o => o.userData.mat + (o.userData.tr ? ' ' + JSON.stringify(o.userData.tr) : '')), g.children.filter(o => o.isMesh && !o.userData.coat && o.userData.src && o.userData.src !== o.userData.mat).map(o => o.userData.src + '>' + o.userData.mat)]), roundtrip: () => { const s = migrate(JSON.parse(projectJSON())); return s.els.map(e => ({id:e.id, paint:e.paint, paintOut:e.paintOut, paintIn:e.paintIn, paintUnder:e.paintUnder, paintMap:e.paintMap})).filter(e => e.paint || e.paintOut || e.paintIn || e.paintUnder || e.paintMap); }, matEd: id => openMatEditor(id), paintDefs: () => ({...defs.paint}), uvDbg: id => { const g = modelGroup.children.find(x => x.userData.id === id), out = []; g?.traverse(o => { if (o.isMesh && !o.userData.coat && o.geometry.attributes.uv){ const uv = o.geometry.attributes.uv, P = o.geometry.attributes.position; const N = o.geometry.attributes.normal, side = [...Array(uv.count).keys()].filter(i => Math.abs(N.getY(i)) < 0.5).slice(0, 8); out.push({mat:o.userData.mat, n:uv.count, uv:side.map(i => [+P.getX(i).toFixed(2), +P.getY(i).toFixed(2), +P.getZ(i).toFixed(2), +uv.getX(i).toFixed(3), +uv.getY(i).toFixed(3)])}); } }); return out; }, doorMarks: () => doorMarks?.children.length || 0, camTo: (px, py, pz, tx, ty, tz) => { persp.position.set(px, pz, -py); c3.target.set(tx, tz, -ty); c3.update(); dirty = true; }, jn: {perf: (...a) => joineryPerf(...a), perfSpec: (...a) => joineryPerfSpec(...a), check: (...a) => joineryCheck(...a), fam: (...a) => joineryFamily(...a)}, sk: () => SK, addEl: e => addEl(e), rebuild: () => rebuild(), piecesOf: id => pieces(getEl(id)).length, holesOf: id => slabHoles(getEl(id)), dimDbg: () => dimGroup.children.map(l => [l.material.type, l.material.color.getHexString(), l.geometry.attributes.position.array.slice(0, 6).map(v => +v.toFixed(2))]), drawState: () => ({start:draw.start, ext:!!draw.ext, host:draw.ext?.host, workZ:draw.workZ, poly:draw.poly}), selMany: ids => { sel = ids[0]; multi = ids.slice(1); applySel(); buildLabels(); renderPanel(); }, roomsDbg: () => [roomGroup.children.length, roomGroup.visible, roomGroup.children[0]?.position.y, roomGroup.children[0]?.geometry.attributes.position.array.slice(0,3)], famCheck: () => Object.entries(libFams()).flatMap(([k, F]) => (F.types || [{}]).map((t, i) => { try { const n = famSolids(F, famScope(F, {type:i, params:{}})).length; return n ? null : k + '#' + i + ' vide'; } catch(e){ return k + '#' + i + ' ' + e.message; } })).filter(Boolean), state: () => state, site: () => terrainGroup.children.map(o => [o.type, o.name, o.position.x, o.position.y, o.position.z, o.visible, o.scale?.x]), sel: () => sel, select: id => select(id), tool: t => setTool(t), view: v => setView(v), snapAt: (x, y) => snap([x, y], {}), style: s => setStyle(s),
   batch(on){ BATCH_ON = !!on; rebuild({noPanel:true}); },
   gl(){ let meshes = 0, lines = 0; scene.traverse(o => { if (o.isMesh && o.visible) meshes++; else if (o.isLineSegments && o.visible) lines++; }); renderFrame(); return {...renderer.info.render, ...renderer.info.memory, meshes, lines}; },
   toScreen(x, y, z = 0){ const v = new THREE.Vector3(x, z, -y).project(cam()), r = renderer.domElement.getBoundingClientRect(); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }};

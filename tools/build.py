@@ -50,7 +50,7 @@ def main(argv):
     demo = assemble()
     assert demo.count('const FIREBASE_CONFIG = null;') == 1 and f"FIREBASE_VERSION = '{FB}'" in demo
     (ROOT / 'dist').mkdir(exist_ok=True)
-    (ROOT / 'dist' / 'archiplan-demo.html').write_text(demo.replace('<title>ARCHIPLAN</title>', '<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg"><link rel="icon" type="image/png" sizes="64x64" href="../assets/icon-64.png"><link rel="apple-touch-icon" href="../assets/icon-180.png"><link rel="manifest" href="../manifest.webmanifest"><title>ARCHIPLAN</title>', 1), encoding='utf-8')
+    (ROOT / 'dist' / 'archiplan-demo.html').write_text('<meta charset="utf-8">' + demo.replace('<title>ARCHIPLAN</title>', '<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg"><link rel="icon" type="image/png" sizes="64x64" href="../assets/icon-64.png"><link rel="apple-touch-icon" href="../assets/icon-180.png"><link rel="manifest" href="../manifest.webmanifest"><title>ARCHIPLAN</title>', 1), encoding='utf-8')
     live = HEAD + demo.replace('const FIREBASE_CONFIG = null;', CONFIG).replace('<title>ARCHIPLAN</title>', '<title>ARCHIPLAN · Studio Prism</title>', 1) + '</body></html>\n'
     (ROOT / 'index.html').write_text(live, encoding='utf-8')
     print('index.html', len(live), 'octets · dist/archiplan-demo.html', len(demo), 'octets')

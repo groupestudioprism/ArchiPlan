@@ -459,6 +459,12 @@ function runCmd(){
     inp.value = '';
     if (word === 'ze' || word === 'zoom') return fit();
     if (word === 'u' && !draw.start) return undo();
+    // pendant un tracé : C = fermer le contour, U = annuler le dernier segment (comme AutoCAD)
+    if ((word === 'c' || word === 'clore' || word === 'fermer') && !$('#closeBtn').hidden) return $('#closeBtn').click();
+    if (word === 'u' && draw.start){
+      if (tool === 'wall' && draw.chainN > 0){ const last = state.els[state.els.length - 1]; if (last?.kind === 'wall'){ const a = last.a.slice(); undo(); draw.start = a; draw.chainN--; setPrompt(); toast('Dernier segment annulé'); return; } }
+      cancelDraw(); setPrompt(); return toast('Tracé annulé');
+    }
     if (CMDS[word]) return setTool(CMDS[word]);
     return toast('Commande inconnue. Exemples : MUR, DALLE, TOIT, DEP, CO, RO, PP, ZE');
   }
@@ -474,7 +480,7 @@ function runCmd(){
     if ('x' in c) pt = [c.x, c.y]; else { toast('Entrez une position x;y, par exemple 0;0'); return; }
   } else {
     if ('polar' in c){ const a = c.ang * Math.PI / 180; const L = Number.isNaN(c.polar) ? 1 : c.polar; pt = [S[0] + L * Math.cos(a), S[1] + L * Math.sin(a)]; }
-    else if ('x' in c) pt = [S[0] + c.x, S[1] + c.y];
+    else if ('x' in c) pt = c.rel ? [S[0] + c.x, S[1] + c.y] : [c.x, c.y];   // x;y absolu, @x;y relatif au dernier point
     else if ('len' in c){
       if (tool === 'slab' || tool === 'vol' || tool === 'roof'){ toast('Entrez les deux côtés : L;l'); return; }
       let dir = draw.cursor ? V.sub(draw.cursor, S) : [1, 0]; if (V.len(dir) < 1e-6) dir = [1, 0];

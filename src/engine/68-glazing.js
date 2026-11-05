@@ -1,5 +1,5 @@
 /* ============ Surface vitrée : baies (mesurées en tableau) rapportées à la surface habitable ============
-   Repère réglementaire : la RT 2012 (art. 20) impose une surface totale de baies ≥ 1/6 de la surface habitable pour les logements ;
+   Repère réglementaire : la RT 2012 (art. 20) impose une surface totale de baies ≥ 1/6 de la surface habitable pour les logements, exigence reprise par la RE2020 ;
    ce ratio reste le repère usuel d'éclairement naturel en maison individuelle. La surface habitable est estimée d'après les
    planchers (moins l'emprise des murs) ou saisie dans le projet (state.shab). */
 const GLAZ_MIN = 1 / 6;
@@ -25,11 +25,14 @@ function glazingReport(){
   const xs = walls.flatMap(w => [w.a[0], w.b[0]]), ys = walls.flatMap(w => [w.a[1], w.b[1]]);
   const cx = xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0, cy = ys.length ? (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
   const by = {N:0, E:0, S:0, O:0}, items = []; let total = 0;
+  const roomsBy = {}, rIn = (lvl, p) => (roomsBy[lvl] ??= (() => { try { return detectRooms(lvl); } catch(e){ return []; } })()).some(r => ptInPoly(p[0], p[1], r.poly));
+  // une baie d'une cloison intérieure (pièce des deux côtés) n'éclaire pas le logement : elle n'est pas comptée
+  const interior = w => { const d = V.sub(w.b, w.a), L = V.len(d) || 1, n = [-d[1] / L, d[0] / L], m = V.mul(V.add(w.a, w.b), 0.5), t = wallT(w) / 2 + 0.25; return rIn(w.lvl, V.add(m, V.mul(n, t))) && rIn(w.lvl, V.sub(m, V.mul(n, t))); };
   for (const el of state.els){
     if (el.kind !== 'inst' || !el.host) continue;
     const F = fam(el.fam), c = famCut(el); if (!F || !c) continue;
     if (!(F.cat === 'Fenêtres' || (F.cat === 'Portes' && glazedDoor(F, el)))) continue;
-    const w = getEl(el.host); if (!w) continue;
+    const w = getEl(el.host); if (!w || interior(w)) continue;
     const a = c.w * c.h, {n} = wallAxis(w), m = [(w.a[0] + w.b[0]) / 2, (w.a[1] + w.b[1]) / 2];
     const out = (m[0] + n[0] - cx) ** 2 + (m[1] + n[1] - cy) ** 2 > (m[0] - n[0] - cx) ** 2 + (m[1] - n[1] - cy) ** 2 ? n : [-n[0], -n[1]];
     const ang = (Math.atan2(out[0], out[1]) * 180 / Math.PI + 360) % 360, o = ang < 45 || ang >= 315 ? 'N' : ang < 135 ? 'E' : ang < 225 ? 'S' : 'O';

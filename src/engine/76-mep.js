@@ -4,14 +4,38 @@
    3) Réseaux : éléments « net » (polylignes 3D à section carrée équivalente) comptés au DQE et exportés en IFC.
    Règles (France, repères de pré-dimensionnement, à valider par un bureau d'études / un électricien / un plombier) :
    - NF C 15-100 : prises par pièce (séjour 1 par 4 m² mini. 5, > 28 m² mini. 7 ; chambre 3 ; cuisine 6 dont 4 au-dessus du plan de travail, 3 si ≤ 4 m² ;
-     autre pièce > 4 m² : 1 ; WC : 0 ; salle d'eau : 1 hors volumes), circuits spécialisés 20 A / 2,5 mm² (four, lave-linge, lave-vaisselle, sèche-linge, chauffe-eau),
+     autre pièce > 4 m² : 1 ; WC : 0 ; salle d'eau : 1 hors volumes 0 à 2 ; volume 2 = bande de 0,60 m autour de la douche ou de la baignoire), circuits spécialisés 20 A / 2,5 mm² (four, lave-linge, lave-vaisselle, sèche-linge, chauffe-eau),
      plaque de cuisson 32 A / 6 mm², éclairage 16 A / 1,5 mm² (8 points max.), prises 16 A / 1,5 mm² (8 max.) ou 20 A / 2,5 mm² (12 max.), 1 interrupteur différentiel 30 mA par rangée
-     (8 circuits max. par différentiel), 20 % de réserve, rangées de 13 modules ; prises à 5 cm mini. et 1,30 m maxi. du sol, interrupteurs à 1,10 m ; hotte à 1,80 m ;
+     (8 circuits max. par différentiel), 20 % de réserve, rangées de 13 modules ; prises à 5 cm mini. et 1,30 m maxi. du sol, interrupteurs à 1,10 m ; hotte à 1,80 m ; organes de commande du tableau entre 0,90 et 1,80 m du sol ;
+     au moins 2 interrupteurs différentiels 30 mA dont 1 de type A (plaque de cuisson, lave-linge) ; type F conseillé pour une pompe à chaleur (édition 2024) ; DAAF autonomes (à piles) ;
    - DTU 60.1 / 60.11 : évacuations EU pente ≥ 1 cm/m (2 cm/m retenu), Ø 100 pour WC, Ø 40 pour lavabo, douche, baignoire, évier, lave-linge ; eau chaude et froide espacées de 2 cm ;
      PER Ø 12 (lavabo, évier, lave-linge, WC) et Ø 16 (douche, baignoire, ballon) ; croisement eau potable / eaux usées : eau potable au-dessus ;
-   - Arrêté du 24 mars 1982 : extraction dans les pièces de service (cuisine 75 à 135 m³/h, salle de bain 15, WC 15), entrées d'air dans les pièces principales, débit total mini. 35 à 120 m³/h ;
+   - Arrêté du 24 mars 1982 : extraction dans les pièces de service (cuisine 75 à 135 m³/h, salle de bains 15 à 45, WC 15 à 30 selon le nombre de pièces principales), entrées d'air dans les pièces principales, débit total mini. 35 à 105 m³/h (+15 par pièce au-delà de 5) ;
    - Eau chaude : ≈ 50 à 60 l par personne et par jour (ballon 100 l pour 1 à 2 personnes, 150 l pour 2 à 3, 200 l pour 3 à 4, 250 à 300 l au-delà). */
 
+/* nombre minimal de prises de courant (socles 16 A, hors circuits spécialisés et RJ45) — NF C 15-100, partie 10.1.3 (inchangé par l'édition 2024) */
+function mepPrisesMin(kind, A){
+  if (kind === 'sejour') return A > 28 ? Math.max(7, Math.ceil(A / 4)) : Math.max(5, Math.ceil(A / 4));
+  if (kind === 'chambre') return 3;
+  if (kind === 'cuisine') return A <= 4 ? 3 : 6;
+  if (kind === 'wc' || kind === 'ext' || kind === 'garage' || kind === 'buanderie' || kind === 'technique') return 0;
+  return A > 4 ? 1 : 0;   // salle d'eau (hors volumes), entrée, couloir, bureau… de plus de 4 m²
+}
+/* pièces principales (séjour, chambres, bureau) : base des débits de ventilation (arrêté du 24 mars 1982) */
+const mepIsMain = r => r.kind === 'sejour' || r.kind === 'chambre' || (r.kind === 'autre' && /bureau|salle de jeux|salon|etude/.test(mepNorm(r.name)) );
+/* débits d'extraction (m³/h) de l'arrêté du 24 mars 1982, selon le nombre de pièces principales T : cuisine (grand débit), salle de bains, autre salle d'eau, WC unique, WC multiple, total minimal */
+function mepVentFlows(T){ const i = Math.max(0, Math.min(4, (T | 0) - 1));
+  return {cuisine:[75, 90, 105, 120, 135][i], sdb:[15, 15, 30, 30, 45][i], sde:15, wc1:[15, 15, 15, 30, 30][i], wcN:15, tot:[35, 60, 75, 90, 105][i] + (T > 5 ? 15 * (T - 5) : 0)}; }
+/* sol fini et plafond d'un niveau (relatifs à la cote du niveau) : le dallage peut être posé au-dessus du niveau (sol fini à +0,30 par exemple),
+   les équipements et les réseaux partent du sol fini, les cheminements « sous plafond » restent sous le haut des murs */
+function mepFloorOff(lvl){
+  let best = null, ba = 0; for (const s of state.els){ if (s.kind !== 'slab' || s.lvl !== lvl || (s.off || 0) > 1.2 || elUse(s) === 'toiture') continue; let A = 0; try { A = Math.abs(area(volPoly(s))); } catch(e){} if (A > ba){ ba = A; best = s; } }
+  if (!best) return 0; let t = 0; try { t = slabT(best); } catch(e){} return Math.max(0, Math.round(((best.off || 0) + t) * 1000) / 1000);
+}
+function mepCeilH(lvl){
+  const tops = state.els.filter(w => w.kind === 'wall' && w.lvl === lvl && !w.partition && w.h > 1.8).map(w => (w.off || 0) + w.h).sort((a, b) => a - b), nx = state.levels[lvl + 1];
+  const lv = nx ? nx.z - state.levels[lvl].z : 2.7 + mepFloorOff(lvl); return tops.length ? Math.min(lv, tops[Math.floor(tops.length / 2)]) : lv;
+}
 /* ---------- matériaux des réseaux ---------- */
 (() => { const add = (id, nom, col) => { if (!MATS[id]) M(id, nom, 'Verre et plastiques', 950, 0.4, 2000, 1e5, col, 'plain', 2.5); };
   add('resEF', 'Réseau eau froide (PER bleu)', '#2F7FD6'); add('resECS', 'Réseau eau chaude (PER rouge)', '#D6402F'); add('resEU', 'Évacuation PVC', '#8A7F72');
@@ -32,8 +56,8 @@ const MEP_FAMS = (() => {
     'e-spot': {nom:'Spot encastré', cat:'Électricité', host:'free', params:{hc:P(2.5, 'Hauteur du plafond')}, types:[{nom:'Spot LED', p:{}}], price:22, parts:[{s:'cyl', m:'alu', x:'0', y:'0', z:'hc-0.03', r:'0.045', h:'0.03'}]},
     'e-applique': {nom:'Applique murale', cat:'Électricité', host:'free', params:Z(1.8), types:[{nom:'Applique', p:{}}], price:55, parts:[{s:'box', m:'alu', x:'-0.1', y:'-0.1', z:'zh', w:'0.2', d:'0.1', h:'0.1'}]},
     'e-daaf': {nom:'Détecteur avertisseur de fumée (DAAF)', cat:'Électricité', host:'free', params:{hc:P(2.5, 'Hauteur du plafond')}, types:[{nom:'DAAF NF EN 14604', p:{}}], price:25, parts:[{s:'cyl', m:'pvc', x:'0', y:'0', z:'hc-0.04', r:'0.05', h:'0.04'}]},
-    'e-tableau': {nom:'Tableau électrique (GTL)', cat:'Électricité', host:'free', params:{rg:P(3, 'Rangées de 13 modules', ''), zh:P(0.2, 'Hauteur de pose')}, types:[{nom:'Tableau 3 rangées', p:{}}, {nom:'Tableau 2 rangées', p:{rg:2}}, {nom:'Tableau 4 rangées', p:{rg:4}}], price:'250+rg*160',
-      parts:[{s:'box', m:'acierLaque', x:'-0.2', y:'-0.1', z:'zh', w:'0.4', d:'0.1', h:'0.15*rg+0.2'}, {s:'box', m:'alu', x:'-0.2', y:'-0.1', z:'zh+1.8', w:'0.4', d:'0.1', h:'0.2'}]},
+    'e-tableau': {nom:'Tableau électrique (GTL)', cat:'Électricité', host:'free', params:{rg:P(3, 'Rangées de 13 modules', ''), zh:P(1.0, 'Hauteur de pose (bas du tableau)')}, types:[{nom:'Tableau 3 rangées', p:{}}, {nom:'Tableau 2 rangées', p:{rg:2}}, {nom:'Tableau 4 rangées', p:{rg:4}}], price:'250+rg*160',
+      parts:[{s:'box', m:'acierLaque', x:'-0.2', y:'-0.1', z:'zh', w:'0.4', d:'0.1', h:'0.15*rg+0.2'}, {s:'box', m:'alu', x:'-0.2', y:'-0.1', z:'zh+0.15*rg+0.3', w:'0.4', d:'0.1', h:'0.2'}]},   /* coffret de communication au-dessus du tableau ; organes de commande entre 0,90 et 1,80 m */
     'p-ballon': {nom:'Chauffe-eau (ballon d\'eau chaude)', cat:'Plomberie', host:'free', params:{V:P(200, 'Volume (l)', 'l'), r:P(0.28, 'Rayon'), h:P(1.5, 'Hauteur')}, price:'450+V*3.5',
       types:[{nom:'100 l', p:{V:100, r:0.23, h:1.0}}, {nom:'150 l', p:{V:150, r:0.26, h:1.2}}, {nom:'200 l', p:{}}, {nom:'250 l', p:{V:250, r:0.3, h:1.6}}, {nom:'300 l', p:{V:300, r:0.32, h:1.75}}],
       parts:[{s:'cyl', m:'acierLaque', x:'0', y:'-r', z:'0', r:'r', h:'h'}, {s:'cyl', m:'inox', x:'0', y:'-r', z:'h', r:'r*0.3', h:'0.06'}]},

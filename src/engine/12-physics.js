@@ -100,7 +100,7 @@ function wallReport(layers, ctx = 'mur'){
 /* Classement indicatif du U (repères RE2020 / rénovation) */
 /* Repères ajustés au lieu du projet (zone climatique, altitude : voir 65-site.js) */
 function uGradeLimits(ctx){
-  const base = ctx === 'toiture' ? [0.12, 0.17, 0.25] : ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
+  const base = ctx === 'toiture' ? [0.12, 0.17, 0.22] :   /* toiture rénovation : R ≥ 4,4 (rampants) à 4,8 (combles perdus), arrêté du 22 mars 2017 → U ≈ 0,20 à 0,22 */ ctx === 'plancherBas' || ctx === 'terrePlein' ? [0.15, 0.20, 0.27] : [0.17, 0.22, 0.30];
   let f = 1; try { f = typeof siteFactor === 'function' ? siteFactor() : 1; } catch(e){}
   return base.map(v => Math.round(v * f * 1000) / 1000);
 }

@@ -2,7 +2,7 @@
 
 Modeleur 3D multi-appareil (téléphone, tablette, ordinateur) pour le bâtiment et l'industrie, compatible avec l'app de réalité augmentée **Archi Vision**. Une app du pôle **Prism App** de Studio Prism.
 
-**En ligne :** https://groupestudioprism.github.io/archiplan/
+**En ligne :** https://archiplan.studio-prism.com/
 
 ## Contenu du dépôt
 
@@ -26,14 +26,15 @@ On modifie `src/`, on lance `python3 tools/build.py`, on enregistre (commit) sur
 - **Simplicité façon SketchUp** : rail d'outils (sélection, déplacer, copier, rotation, mur, dalle, poteau, volume, composant, pousser/tirer, mesure), Pousser/Tirer sur les faces en 3D.
 - **Onglet Projet** : arborescence niveaux → catégories → éléments (couches des parois, ouvertures sous leur mur), masquer / isoler, menu ⋮ par élément (centrer, dupliquer, ajuster l'isolant, composition, supprimer). **Ajuster l'isolant** : couche, matériau, λ, épaisseur, ou objectif U / R (épaisseur calculée), comparaison avant / après, valeurs U ou R forcées (avis technique). La variante est enregistrée dans la bibliothèque du projet.
 - **Affichage** : fond blanc par défaut, couleur réglable, grille, cotes, arêtes, ombres (bouton « Affichage » de la vue).
-- **Bibliothèque** : environ 95 matériaux (λ, ρ, c, μ, carbone A1-A3, motif de rendu), 21 compositions de parois, une trentaine de familles paramétriques (portes, fenêtres, structure, escalier, mobilier, sanitaires, industrie, végétation…). Bibliothèque personnelle dans le cloud (`apLibrary/{uid}`).
+- **Bibliothèque** : environ 95 matériaux (λ, ρ, c, μ, carbone A1-A3, motif de rendu), 21 compositions de parois, plus de 400 familles paramétriques (portes, fenêtres, structure, escalier, mobilier, sanitaires, industrie, végétation, électricité, plomberie, ventilation, chauffage…). Bibliothèque personnelle dans le cloud (`apLibrary/{uid}`).
 - **Compositeur de parois** : couches de l'extérieur vers l'intérieur ; U et R (EN ISO 6946), déphasage, amortissement et capacité intérieure (EN ISO 13786), indice acoustique Rw estimé (loi de masse, masse-ressort-masse), Sd et diagramme de Glaser (condensation, règle du facteur 5), masse et carbone. Calculs de pré-dimensionnement, indicatifs.
 - **Familles** façon Revit : paramètres, types, pièces en formules (`w/2`, `min()`, répétitions `n`, conditions `si`), ouverture dans le mur, familles imbriquées (assemblages).
 - **Rendus** : ombré, matériaux, réaliste (ciel, soleil réglable, ombres), croquis, filaire, rayons X ; captures HD et 4K.
 - **Métré · DQE** : articles rangés automatiquement par lots (01 Terrassements … 14 Aménagements extérieurs) selon le contenu de la maquette (couches des parois, éléments, menuiseries, équipements), prix unitaires indicatifs modifiables (enregistrés dans le projet), export Excel (.xlsx avec formules), PDF ou CSV avec options à cocher (lots, numérotation, quantités, unités, prix, sous-totaux, TVA/TTC, quantités par niveau, masses, carbone, tableau des matériaux, en-tête).
+- **Équipements techniques** (plomberie, électricité, ventilation, chauffage) : proposition d'implantation d'après le nom des pièces, modifiable dans l'aperçu avant la pose (déplacer, ajouter, retirer des équipements ; poser, déplacer, pivoter ou retirer son propre mobilier). Ce que l'utilisateur place est conservé quand la proposition est recalculée. Règles appliquées : NF C 15-100 (nombre de prises, pas de prise ni d'interrupteur à moins de 60 cm d'une douche ou d'une baignoire, pas de prise au-dessus d'un évier ou d'un lavabo, tableau entre 0,90 et 1,80 m, différentiels AC / A / F), radiateurs jamais devant une porte, une porte-fenêtre ou une baie (sous une fenêtre seulement si l'allège dépasse le radiateur), rien derrière un meuble, débits de l'arrêté du 24 mars 1982 selon le nombre de pièces principales. Réseaux générés depuis le sol fini et sous le haut des murs ; tronçons extérieurs enterrés (eau 0,80 m, câbles 0,50 m) ; PAC air/eau posée dehors contre une façade.
 - **Lieu du projet** : adresse (géocodage IGN), zone climatique H1a…H3 et altitude, exposition au bruit (DnT,A,tr visé), repères thermiques adaptés (classes A/B/C/D, R minimaux rénovation et aides), estimation de l'isolement des façades, terrain 3D (relief IGN RGE ALTI, plateforme sous le bâtiment), exporté dans le GLB.
 - **Clés de licence** : activation d'une clé Studio Prism depuis l'écran licence (même procédure que le site).
-- **Exports** (licence) : **GLB pour Archi Vision** (un groupe par niveau, matériaux PBR texturés, métadonnées), IFC4, métré CSV, image PNG, projet JSON, paquet ZIP.
+- **Exports** (licence) : **GLB pour Archi Vision** (un groupe par niveau, matériaux PBR texturés, métadonnées), IFC4, DQE (Excel, PDF, CSV), métré CSV, image PNG, projet `.archiplan`, paquet ZIP.
 
 ## Comptes Studio Prism
 

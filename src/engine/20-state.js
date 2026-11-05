@@ -68,19 +68,20 @@ function sample(){
   const P = [[0,0],[10,0],[10,8],[0,8]], W = [];
   for (let i = 0; i < 4; i++) W.push(add({kind:'wall', type:'MUR-EXT-01', a:P[i], b:P[(i+1)%4], h:2.7, lvl:0, off:0.3, flip:false}));
   const c1 = add({kind:'wall', type:'CLO-72', a:[6,0.164], b:[6,7.836], h:2.5, lvl:0, off:0.3, flip:false});
-  add({kind:'wall', type:'CLO-72', a:[0.164,4.6], b:[6,4.6], h:2.5, lvl:0, off:0.3, flip:false});
+  const c2 = add({kind:'wall', type:'CLO-72', a:[0.164,4.6], b:[6,4.6], h:2.5, lvl:0, off:0.3, flip:false});
   add({kind:'inst', fam:'porte-entree', type:1, params:{}, host:W[0], t:3, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'baie-coulissante', type:1, params:{}, host:W[0], t:7.8, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'fenetre-2v', type:1, params:{}, host:W[2], t:3, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'fenetre-1v', type:1, params:{}, host:W[3], t:2.2, lvl:0, off:0, flip:false, mirror:false});
   add({kind:'inst', fam:'porte-simple', type:1, params:{}, host:c1, t:2.4, lvl:0, off:0, flip:false, mirror:false});
+  add({kind:'inst', fam:'porte-simple', type:1, params:{}, host:c2, t:4.6, lvl:0, off:0, flip:false, mirror:false});   // porte de la chambre
   add({kind:'inst', fam:'banc-assemblage', type:0, params:{}, c:[8,4.3], rot:0, lvl:0, off:0.3});
   add({kind:'inst', fam:'canape', type:0, params:{}, c:[3,1.4], rot:0, lvl:0, off:0.3});
   add({kind:'inst', fam:'lit', type:2, params:{}, c:[3,5.2], rot:0, lvl:0, off:0.3});
   add({kind:'slab', type:'DAL-BA-20', p:[10.2,2], q:[13.4,6], lvl:0, off:0.04});
-  add({kind:'col', mat:'ba', c:[13.15,2.25], w:0.25, d:0.25, h:2.7, lvl:0, off:0.3});
-  add({kind:'col', mat:'ba', c:[13.15,5.75], w:0.25, d:0.25, h:2.7, lvl:0, off:0.3});
-  add({kind:'vol', mat:'acier', p:[10.2,2], q:[13.4,6], h:0.12, lvl:0, off:3.0});
+  add({kind:'col', mat:'ba', c:[13.15,2.25], w:0.25, d:0.25, h:2.76, lvl:0, off:0.24});   // posés sur la terrasse (dessus à +0,24)
+  add({kind:'col', mat:'ba', c:[13.15,5.75], w:0.25, d:0.25, h:2.76, lvl:0, off:0.24});
+  add({kind:'vol', mat:'bacAcier', p:[10.2,2], q:[13.4,6], h:0.04, lvl:0, off:3.0});   // auvent : couverture en bac acier (et non un bloc d'acier plein)
   return s;
 }
 

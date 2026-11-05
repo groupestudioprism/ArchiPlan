@@ -3,11 +3,11 @@
    bâtiment d'après des règles courantes (France) ; chaque problème est expliqué et peut être corrigé un par un :
    - hauteur sous plafond ≥ 2,20 m (décret n° 2002-120, logement décent ; RSD) ;
    - une pièce principale d'au moins 9 m² (même décret) ;
-   - porte : passage libre ≥ 0,83 m, hauteur ≥ 2,04 m (accessibilité, arrêté du 20 avril 2017 ; 0,90 m de vantail) ;
+   - porte : passage libre ≥ 0,83 m, hauteur ≥ 2,04 m (accessibilité des logements neufs, arrêté du 24 décembre 2015 ; 0,90 m de vantail) ;
    - garde-corps / allège ≥ 1,00 m au-dessus de 1 m de chute (NF P 01-012, DTU 36.5) ; allège de fenêtre d'étage ;
    - plancher béton : portée libre max. ≈ 5 m sans appui intermédiaire (dalle pleine 20 cm), poutre h ≈ L/12, poteau élancement ≤ 15 ;
    - murs d'étage appuyés sur un mur, un poteau ou une poutre en dessous (descente de charges) ;
-   - pente de toiture mini. selon la couverture (tuiles ≥ 30 %, ardoise ≥ 22°…) ; escaliers (NF P 21-211 : 2h + g, échappée 1,90 m).
+   - pente de toiture mini. selon la couverture (tuiles ≥ 30 %, ardoise ≥ 22°…) ; escaliers (NF DTU 36.3 et usages : 2h + g, échappée 1,90 m).
    Calculs de pré-dimensionnement, indicatifs : ils ne remplacent ni un bureau d'études structure ni le contrôle technique. */
 function beamEl(a, b, o = {}){
   const w = o.w || 0.2, h = o.h || 0.3, d = V.norm(V.sub(b, a)), n = [-d[1] * w / 2, d[0] * w / 2];
@@ -41,16 +41,20 @@ function polyChord(poly, p, horizontal){   // extrémités de la droite (horizon
   if (hits.length < 2) return null; hits.sort((u, v) => u - v); const u = hits[0], v = hits.at(-1); return horizontal ? [[u, p[1]], [v, p[1]]] : [[p[0], u], [p[0], v]];
 }
 /* ---------- règles ---------- */
-const CHECK_REF = {ceil:'Décret n° 2002-120 (logement décent) : hauteur sous plafond ≥ 2,20 m.', room:'Décret n° 2002-120 : au moins une pièce principale de 9 m² minimum.',
-  door:'Arrêté du 20 avril 2017 (accessibilité) : porte ≥ 0,90 m (passage libre ≥ 0,83 m), hauteur ≥ 2,04 m.', sill:'NF P 01-012 / DTU 36.5 : protection de 1,00 m au-dessus d\'une chute de 1 m ; allège de fenêtre d\'étage ≥ 0,90 m.',
+const CHECK_REF = {ceil:'Décret n° 2002-120 (décence d\'un logement loué) : pièce principale de 2,20 m de hauteur sous plafond au moins.', room:'Décret n° 2002-120 : au moins une pièce principale de 9 m² minimum.',
+  door:'Arrêté du 24 décembre 2015 (accessibilité des logements neufs vendus ou loués ; une maison construite pour son propre usage en est dispensée) : porte de 0,90 m (passage libre ≥ 0,83 m).', sill:'NF P 01-012 / DTU 36.5 : protection de 1,00 m au-dessus d\'une chute de 1 m ; allège de fenêtre d\'étage ≥ 0,90 m.',
   span:'Règle de pré-dimensionnement : dalle béton pleine, portée libre ≈ 5 m max. sans appui ; poutre h ≈ L/12 (BAEL / Eurocode 2).', col:'Poteau béton : élancement h / côté ≤ 15 (pré-dimensionnement) ; côté ≥ 0,20 m.',
   load:'Descente de charges : un mur d\'étage s\'appuie sur un mur, un poteau ou une poutre en dessous.', roof:'DTU 40.21/40.11 : pente mini. tuiles 30 % (≈ 17°), ardoises 22° (≈ 40 %).',
-  stair:'NF P 21-211 : 2h + g = 60 à 65 cm, giron ≥ 24 cm, hauteur ≤ 19 cm, échappée 1,90 m.', slab:'Un niveau habité a un plancher : sans dalle, les murs d\'étage ne reposent sur rien.'};
+  stair:'NF DTU 36.3 et usages : 2h + g = 60 à 65 cm, giron ≥ 24 cm, hauteur ≤ 19 cm, échappée 1,90 m.', slab:'Un niveau habité a un plancher : sans dalle, les murs d\'étage ne reposent sur rien.'};
 function runChecks(){
   const out = [], E = state.els, add = (id, lvl, title, detail, ref, fix, els = []) => out.push({id, lvl, title, detail, ref, fix, els, key:id + '|' + els.join(',')});
   const lv = i => state.levels[i]?.n || `Niveau ${i}`;
   // 1. hauteur sous plafond
-  for (const w of E) if (w.kind === 'wall' && w.h < 2.2 - 1e-6 && !w.partition) add('ceil', 'bad', `Mur ${w.id} (${lv(w.lvl)}) : hauteur ${lenTxt(w.h)}`, 'Hauteur sous plafond inférieure à 2,20 m (pièce habitable).', CHECK_REF.ceil, {t:'Porter la hauteur à 2,50 m', run:() => { w.h = 2.5; delete w.top; }}, [w.id]);
+  // seuls les murs qui bordent une pièce détectée comptent (un muret de jardin ou un garde-corps maçonné n'a pas de plafond)
+  const roomsCeil = []; for (let i = 0; i < state.levels.length; i++) try { for (const r of detectRooms(i)) roomsCeil.push({...r, lvl:i}); } catch(e){}
+  const bordersRoom = w => { const d = V.sub(w.b, w.a), L = V.len(d) || 1, n = [-d[1] / L, d[0] / L], m = V.mul(V.add(w.a, w.b), 0.5), t = wallT(w) / 2 + 0.25;
+    return [V.add(m, V.mul(n, t)), V.sub(m, V.mul(n, t))].some(p => roomsCeil.some(r => r.lvl === w.lvl && ptInPoly(p[0], p[1], r.poly))); };
+  for (const w of E) if (w.kind === 'wall' && w.h < 2.2 - 1e-6 && !w.partition && bordersRoom(w)) add('ceil', 'warn', `Mur ${w.id} (${lv(w.lvl)}) : hauteur ${lenTxt(w.h)}`, 'Pièce de moins de 2,20 m de hauteur : elle ne compte pas comme pièce principale d\'un logement loué (2,50 m sont usuels en neuf).', CHECK_REF.ceil, {t:'Porter la hauteur à 2,50 m', run:() => { w.h = 2.5; delete w.top; }}, [w.id]);
   // 2. pièce principale 9 m²
   const rooms = []; for (let i = 0; i < state.levels.length; i++) try { for (const r of detectRooms(i)) rooms.push({...r, lvl:i}); } catch(e){}
   if (rooms.length && !rooms.some(r => r.area >= 9)) add('room', 'warn', 'Aucune pièce de 9 m² ou plus', `La plus grande pièce mesure ${nf(Math.max(...rooms.map(r => r.area)), 1)} m².`, CHECK_REF.room, null);
@@ -92,7 +96,7 @@ function runChecks(){
         {t:`Ajouter une poutre de reprise ${n0(sec.w * 100)} × ${n0(sec.h * 100)} cm sous le mur`, run:() => { const lvl = i - 1, zb = lvlZ(i) + (E.find(s => s.kind === 'slab' && s.lvl === i && (s.off || 0) <= 1.2)?.off || 0) - lvlZ(lvl), b = beamEl(w.a, w.b, {lvl, top:zb, h:sec.h, w:Math.max(sec.w, wallT(w))}); b.id = state.nextId++; state.els.push(b); }}, [w.id]); } } }
   // 9. toitures
   for (const r of E) if (r.kind === 'roof' && (r.shape || '2') !== '0'){ const C = compo(r.type), tile = /tuile|ardoise|zinc|bac/i, name = C?.nom || ''; const min = /ardoise/i.test(name) ? 22 : /tuile/i.test(name) ? 17 : /bac|zinc|membrane|v[ée]g[ée]/i.test(name) ? 3 : 5;
-    if ((r.pitch ?? 35) < min - 1e-6 && tile) add('roof', 'warn', `Toiture ${r.id} : pente ${n0(r.pitch)}° pour « ${name} »`, `Pente inférieure au minimum usuel (${min}°) pour cette couverture.`, CHECK_REF.roof, {t:`Passer à ${min + 3}°`, run:() => { r.pitch = min + 3; }}, [r.id]); }
+    if ((r.pitch ?? 35) < min - 1e-6 && tile.test(name)) add('roof', 'warn', `Toiture ${r.id} : pente ${n0(r.pitch)}° pour « ${name} »`, `Pente inférieure au minimum usuel (${min}°) pour cette couverture.`, CHECK_REF.roof, {t:`Passer à ${min + 3}°`, run:() => { r.pitch = min + 3; }}, [r.id]); }
   // 10. escaliers
   for (const s of E) if (s.kind === 'stair'){ const bad = stairCheck(s).checks.filter(c => c.lvl === 'bad'); if (bad.length) add('stair', 'bad', `Escalier ${s.id} : ${bad.length} point${bad.length > 1 ? 's' : ''} bloquant${bad.length > 1 ? 's' : ''}`, bad.map(c => c.t).join(' '), CHECK_REF.stair, {t:'Hauteur, giron et emmarchement automatiques', run:() => { delete s.n; delete s.hs; delete s.g; s.w = Math.max(s.w || 0.9, s.use === 'erp' ? 1.2 : 0.9); }}, [s.id]); }
   return out;
