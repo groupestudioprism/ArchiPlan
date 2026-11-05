@@ -1304,10 +1304,10 @@ catch(e){ A.forEach(function(a){try{a.cancel();}catch(x){}}); sp.classList.remov
       <label class="pill" id="topPill" hidden><span>Haut</span><select id="topIn" aria-label="Contrainte haute"><option value="next">Niveau supérieur</option><option value="">Hauteur libre</option><option value="above">Sous l'élément au-dessus</option></select></label>
       <span class="pill paintpill" id="paintPill" hidden><span>Matériau</span><select id="paintMat" aria-label="Matériau à appliquer"></select><button type="button" class="spk-hud" id="paintFind" title="Rechercher un matériau" aria-label="Rechercher un matériau"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button><span>Motif</span><input id="paintScale" type="number" step="0.05" min="0.05" inputmode="decimal" aria-label="Taille du motif en mètres" title="Taille du motif (m) : vide = taille naturelle"><em>m</em><select id="paintRot" aria-label="Rotation du motif" title="Rotation du motif"><option value="0">0°</option><option value="45">45°</option><option value="90">90°</option><option value="135">135°</option></select><button type="button" class="ib pip" id="paintPip" title="Pipette : reprendre le matériau d'une face (ou Alt + clic)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 9-9 3 3-9 9zM13 6l2-2a2.1 2.1 0 013 3l-2 2"/></svg></button></span>
       <label class="pill" id="wallArcPill" hidden><span>Tracé</span><select id="wArcIn" aria-label="Tracé du mur"><option value="">Droit</option><option value="1">Courbe (3 points)</option><option value="r">Pièce (rectangle)</option></select></label>
-      <label class="pill" id="slabModePill" hidden><span>Pose</span><select id="sModeIn" aria-label="Pose de la dalle"><option value="rect">Rectangle</option><option value="room">Sur une pièce</option><option value="walls">Sous tous les murs</option><option value="poly">Contour (point par point)</option><option value="hole">Trou / trémie dans une dalle</option></select></label>
+      <label class="pill" id="slabModePill" hidden><span>Pose</span><select id="sModeIn" aria-label="Pose de la dalle"><option value="rect">Rectangle</option><option value="room">Sur une pièce</option><option value="walls">Sous tous les murs</option><option value="poly">Au tracé (forme libre, point par point)</option><option value="hole">Trou / trémie dans une dalle</option></select></label>
       <label class="pill" id="mirrorPill" hidden><span>Original</span><select id="mKeepIn" aria-label="Garder l'original"><option value="1">Garder (copie)</option><option value="">Déplacer</option></select></label>
       <label class="pill" id="stairPill" hidden><span>Escalier</span><select id="sTypeIn" aria-label="Type d'escalier"><option value="droit">Droit</option><option value="quart">1/4 tournant</option><option value="demi">2/4 tournant</option><option value="tq">3/4 tournant</option><option value="helico">Colimaçon</option></select><select id="sSideIn" aria-label="Sens"><option value="d">à droite</option><option value="g">à gauche</option></select><select id="sMatIn" aria-label="Matériau"><option value="bois">Bois</option><option value="beton">Béton</option><option value="acier">Acier</option></select></label>
-      <label class="pill" id="roofModePill" hidden><span>Tracé</span><select id="rModeIn" aria-label="Tracé du toit"><option value="rect">Rectangle</option><option value="poly">Contour</option><option value="walls">Sur les murs</option></select></label>
+      <label class="pill" id="roofModePill" hidden><span>Tracé</span><select id="rModeIn" aria-label="Tracé du toit"><option value="rect">Rectangle</option><option value="poly">Contour</option><option value="free">Au tracé (forme libre)</option><option value="walls">Sur les murs</option></select></label>
       <label class="pill" id="roofPill" hidden><span>Forme</span><select id="rShapeIn" aria-label="Forme du toit"><option value="2">2 pans</option><option value="4">4 pans</option><option value="1">1 pan</option><option value="0">Plate</option></select><input id="rPitchIn" type="number" min="3" max="70" step="1" aria-label="Pente en degrés" style="width:44px"><em>°</em></label>
       <label class="pill"><span>Pas</span><select id="stepSel" aria-label="Pas de la grille"><option value="0.01">1 cm</option><option value="0.05" selected>5 cm</option><option value="0.1">10 cm</option><option value="0.25">25 cm</option><option value="0.5">50 cm</option><option value="1">1 m</option></select></label>
     </div>
@@ -4848,7 +4848,7 @@ const roofT = el => compo(el.type).layers.reduce((s, [, e]) => s + e, 0);
 const roofBase = el => lvlZ(el.lvl) + (el.off ?? 2.7);
 /* quand la charpente est affichée, la couverture est relevée de la hauteur de charpente : sablière posée sur le haut du mur, chevrons sur la sablière, couverture sur les chevrons */
 const roofLift = el => (el.frameShow || el.frameView) && (el.shape || '2') !== '0' ? frameOpts(el).chev[1] / Math.cos(roofPitch(el) * Math.PI / 180) + frameOpts(el).sabliere[1] : 0;
-const roofWallPoly = el => el.poly && el.poly.length >= 4 ? el.poly.map(q => [q[0], q[1]]) : rect(el.p, el.q);
+const roofWallPoly = el => el.poly && el.poly.length >= (el.free ? 3 : 4) ? el.poly.map(q => [q[0], q[1]]) : rect(el.p, el.q);
 const sArea = p => { let a = 0; for (let i = 0; i < p.length; i++){ const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return a / 2; };
 function ptInPoly(x, y, p){ let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++){ const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
 const isOrtho = p => p.every((q, i) => { const r = p[(i + 1) % p.length]; return Math.abs(q[0] - r[0]) < 1e-6 || Math.abs(q[1] - r[1]) < 1e-6; });
@@ -4935,7 +4935,76 @@ function roofWing(el, R){
   const eave = shape === '0' ? 2 * (u1 - u0 + v1 - v0) : shape === '1' ? (u1 - u0) : 2 * (u1 - u0) + (shape === '4' ? (R.open.u0 ? 0 : v1 - v0) + (R.open.u1 ? 0 : v1 - v0) : 0);
   return {pans:pans.map(clean), gables, ridges, hips, a, tp, zE, zEo, base, Tv, ax, U0, U1, V0, V1, W, vm, u0, u1, v0, v1, eave, R};
 }
+/* ---- Toit sur contour libre (non orthogonal ou concave) : un toit à pans de même pente par partie convexe ----
+   Chaque côté du contour porte un plan (pente uniforme) ; le pan d'un côté est la zone où son plan est le plus bas (équivalent d'un squelette droit).
+   Les contours concaves sont découpés en parties convexes ; les diagonales de découpe n'ont ni débord ni pignon (gouttière entre deux toits accolés). */
+function polyConvexParts(poly){
+  let P = poly.map(q => [q[0], q[1]]); if (sArea(P) < 0) P.reverse();
+  const cr = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const tris = [], idx = P.map((_, i) => i); let guard = 0;
+  while (idx.length > 3 && guard++ < 500){
+    let cut = false;
+    for (let k = 0; k < idx.length; k++){
+      const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length], a = P[i0], b = P[i1], c = P[i2];
+      if (cr(a, b, c) <= 1e-9) continue;
+      if (idx.some(j => j !== i0 && j !== i1 && j !== i2 && ptInTri(P[j], a, b, c))) continue;
+      tris.push([i0, i1, i2]); idx.splice(k, 1); cut = true; break;
+    }
+    if (!cut) break;
+  }
+  if (idx.length === 3) tris.push([idx[0], idx[1], idx[2]]);
+  // fusion gloutonne des triangles voisins tant que le résultat reste convexe (Hertel-Mehlhorn)
+  let parts = tris.map(t => t.slice());
+  const convex = ids => ids.every((_, k) => cr(P[ids[(k + ids.length - 1) % ids.length]], P[ids[k]], P[ids[(k + 1) % ids.length]]) >= -1e-9);
+  let merged = true;
+  while (merged){ merged = false;
+    outer: for (let a = 0; a < parts.length; a++) for (let b = a + 1; b < parts.length; b++){
+      const A = parts[a], B = parts[b];
+      for (let i = 0; i < A.length; i++){ const u = A[i], v = A[(i + 1) % A.length], j = B.findIndex((x, k) => x === v && B[(k + 1) % B.length] === u); if (j < 0) continue;
+        const ring = []; for (let k = 1; k < A.length; k++) ring.push(A[(i + 1 + k) % A.length]);   // A sans l'arête u→v : de v vers u
+        const Ar = []; for (let k = 0; k < A.length; k++) Ar.push(A[(i + 1 + k) % A.length]);       // commence à v, finit à u
+        const Br = []; for (let k = 0; k < B.length; k++) Br.push(B[(j + 1 + k) % B.length]);       // commence à u (B[j]=v → suivant = u), finit à v
+        const m = [...Ar, ...Br.slice(1, -1)];
+        if (convex(m)){ parts[a] = m; parts.splice(b, 1); merged = true; break outer; } }
+    }
+  }
+  return parts.map(ids => ids.map(i => P[i]));
+}
+const ptInTri = (p, a, b, c) => { const s = (u, v, w) => (u[0] - w[0]) * (v[1] - w[1]) - (v[0] - w[0]) * (u[1] - w[1]); const d1 = s(p, a, b), d2 = s(p, b, c), d3 = s(p, c, a); return !((d1 < -1e-9 || d2 < -1e-9 || d3 < -1e-9) && (d1 > 1e-9 || d2 > 1e-9 || d3 > 1e-9)); };
+function clipHalf(poly, n, c){   // garde {p : n·p <= c}
+  const out = []; for (let i = 0; i < poly.length; i++){ const a = poly[i], b = poly[(i + 1) % poly.length], da = n[0] * a[0] + n[1] * a[1] - c, db = n[0] * b[0] + n[1] * b[1] - c;
+    if (da <= 1e-9) out.push(a); if ((da < -1e-9 && db > 1e-9) || (da > 1e-9 && db < -1e-9)){ const t = da / (da - db); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } }
+  return out;
+}
+function freeRoofGeom(el){
+  const ov = Math.max(0, el.ov ?? 0.4), a = roofPitch(el) * Math.PI / 180, tp = Math.tan(a), base0 = roofBase(el), lift = roofLift(el), base = base0 + lift, Tv = roofT(el) / Math.cos(a), zE = base + Tv;
+  const wp = roofWallPoly(el), flat = (el.shape || '2') === '0', parts = polyConvexParts(wp);
+  const key = q => q[0].toFixed(3) + ',' + q[1].toFixed(3), wallEdges = new Set(); wp.forEach((q, i) => { const r = wp[(i + 1) % wp.length]; wallEdges.add(key(q) + '>' + key(r)); wallEdges.add(key(r) + '>' + key(q)); });
+  const pans = [], ridges = [], hips = []; let eave = 0;
+  for (const C of parts){
+    const L = C.map((q, i) => { const r = C[(i + 1) % C.length], dx = r[0] - q[0], dy = r[1] - q[1], len = Math.hypot(dx, dy) || 1, n = [dy / len, -dx / len];   // normale sortante (contour antihoraire)
+      const real = wallEdges.has(key(q) + '>' + key(r)); return {n, c:n[0] * q[0] + n[1] * q[1], o:real ? ov : 0, real, len}; });
+    eave += L.reduce((t, e) => t + (e.real ? e.len + (e.o ? 0 : 0) : 0), 0);
+    let E = [[-1e5, -1e5], [1e5, -1e5], [1e5, 1e5], [-1e5, 1e5]]; for (const e of L) E = clipHalf(E, e.n, e.c + e.o);
+    if (E.length < 3) continue;
+    if (flat){ pans.push(E.map(q => [q[0], q[1], zE])); continue; }
+    L.forEach((e, i) => {
+      let R = E; for (let j = 0; j < L.length && R.length >= 3; j++){ if (j === i) continue; const f = L[j];   // plan i plus bas que plan j : (nj − ni)·p <= cj − ci
+        const n = [f.n[0] - e.n[0], f.n[1] - e.n[1]], len = Math.hypot(n[0], n[1]); if (len < 1e-9) continue; R = clipHalf(R, [n[0] / len, n[1] / len], (f.c - e.c) / len); }
+      if (R.length < 3) return;
+      const z = q => zE + tp * (e.c - (e.n[0] * q[0] + e.n[1] * q[1]));
+      pans.push(R.map(q => [q[0], q[1], z(q)]));
+    });
+  }
+  // arêtes communes entre pans : faîtage (horizontale) ou arêtier (inclinée) ; les noues entre parties sont des gouttières
+  const seen = new Map(); for (const pan of pans) pan.forEach((q, i) => { const r = pan[(i + 1) % pan.length], k1 = key(q) + '|' + key(r), k2 = key(r) + '|' + key(q); if (seen.has(k2)){ const [A, B] = seen.get(k2); const ez = Math.min(zE - ov * tp + 1e-3, zE + 1e-3);
+    if (Math.hypot(A[0] - B[0], A[1] - B[1]) > 0.02 && Math.max(A[2], B[2]) > zE + 0.02){ (Math.abs(A[2] - B[2]) < 1e-3 ? ridges : hips).push([A, B]); } } else seen.set(k1, [q, r]); });
+  const xs = wp.map(q => q[0]), ys = wp.map(q => q[1]);
+  return {free:true, wings:[], a, tp, pans:pans.map(p => p.filter((q, i) => i === 0 || Math.hypot(q[0] - p[i - 1][0], q[1] - p[i - 1][1]) > 1e-6)), gables:[], ridges, hips, eaveLen:eave + ov * 8, wall:wp, base, base0, zE, Tv,
+    outline:[[Math.min(...xs) - ov, Math.min(...ys) - ov], [Math.max(...xs) + ov, Math.min(...ys) - ov], [Math.max(...xs) + ov, Math.max(...ys) + ov], [Math.min(...xs) - ov, Math.max(...ys) + ov]], ax:true};
+}
 function roofGeom(el){
+  if (el.free || (el.poly && el.poly.length >= 3 && !isOrtho(roofWallPoly(el)))) return freeRoofGeom(el);
   const wings = roofRects(el).map(R => roofWing(el, R)), a = roofPitch(el) * Math.PI / 180, ov = Math.max(0, el.ov ?? 0.4), wall = roofWallPoly(el);
   const xs = wall.map(q => q[0]), ys = wall.map(q => q[1]);
   return {wings, a, ax:wings[0]?.ax ?? true, pans:wings.flatMap(w => w.pans), gables:wings.flatMap(w => w.gables), ridges:wings.flatMap(w => w.ridges), hips:wings.flatMap(w => w.hips),
@@ -5058,7 +5127,7 @@ function planeOf(P){ // z = a x + b y + c d'après 3 points du pan
 }
 function roofFrame(el){
   const O = frameOpts(el); if (O.mode === 'none' || (el.shape || '2') === '0') return [];
-  const G = roofGeom(el), out = [], off = new Set(O.off || []);
+  const G = roofGeom(el), out = [], off = new Set(O.off || []); if (G.free) return out;   // charpente non générée pour un contour libre
   const add = (kind, A, B, sec) => { const id = `${kind}:${A.map(v => v.toFixed(2)).join(',')}:${B.map(v => v.toFixed(2)).join(',')}`; out.push({id, kind, A, B, w:sec[0], h:sec[1], off:off.has(id)}); };
   for (const W of G.wings){
     const P = (u, v, z) => W.ax ? [u, v, z] : [v, u, z], und = z => z - W.Tv;   // sous-face de la couverture
@@ -6388,9 +6457,9 @@ function updatePreview(){
   else if (tool === 'roof' && defs.roof.mode === 'walls'){
     const o = wallsOutline(curLvl); if (o){ const t = roofFromPoly(o); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); text = 'Cliquez pour poser la toiture sur les murs du niveau'; } else text = 'Aucun mur sur ce niveau';
   }
-  else if (tool === 'roof' && defs.roof.mode === 'poly' && draw.poly?.length){
+  else if (tool === 'roof' && (defs.roof.mode === 'poly' || defs.roof.mode === 'free') && draw.poly?.length){
     const pts = [...draw.poly, cur]; for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); markGroup.add(makeMarker(draw.poly[0], ac));
-    if (pts.length >= 3){ markGroup.add(lineObj(cur, draw.poly[0], ac, null, true)); if (pts.length >= 4){ const t = roofFromPoly(pts); try { for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); } catch(e){} } }
+    if (pts.length >= 3){ markGroup.add(lineObj(cur, draw.poly[0], ac, null, true)); if (pts.length >= (defs.roof.mode === 'free' ? 3 : 4)){ const t = roofFromPoly(pts); try { for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); } catch(e){} } }
     const d = V.sub(cur, draw.poly[draw.poly.length - 1]); text = `${nf(V.len(d))} m · ${draw.poly.length} point${draw.poly.length > 1 ? 's' : ''}`;
   }
   else if (S){
@@ -6558,7 +6627,7 @@ const PROMPTS = {
   select:() => 'Sélection : cliquez un élément (Maj pour en ajouter). Clic droit : déplacer la vue, ou tourner autour de l\'élément sélectionné.',
   wall:() => defs.wall.rect ? (draw.start ? '<b>Pièce</b> : coin opposé (ou <code>L;l</code>)' : '<b>Pièce</b> : premier coin de la pièce (4 murs d\'un coup)') : defs.wall.arc ? (draw.arcB ? '<b>Mur courbe</b> : un point de la courbe (sa flèche)' : draw.start ? '<b>Mur courbe</b> : point d\'arrivée' : '<b>Mur courbe</b> : point de départ') : draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
   slab:() => defs.slab.mode === 'poly' ? (draw.poly?.length ? '<b>Dalle (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Dalle (contour)</b> : premier point du contour') : defs.slab.mode === 'hole' ? (draw.start ? '<b>Trou</b> : coin opposé du trou' : '<b>Trou / trémie</b> : premier coin, dans la dalle à percer') : defs.slab.mode === 'room' ? '<b>Dalle sur une pièce</b> : cliquez dans la pièce (la dalle suit son contour exact)' : defs.slab.mode === 'walls' ? '<b>Dalle sous les murs</b> : cliquez pour poser la dalle sur le contour des murs' : draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
-  roof:() => defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
+  roof:() => defs.roof.mode === 'free' ? (draw.poly?.length ? '<b>Toit (tracé libre)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Toit (tracé libre)</b> : premier point du contour, forme au choix') : defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
   mirror:() => !selIds().length ? '<b>Symétrie</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Symétrie</b> : second point de l\'axe' : '<b>Symétrie</b> : premier point de l\'axe de symétrie',
   cut:() => draw.start ? '<b>Coupe</b> : second point du trait de coupe (on regarde vers la gauche du trait)' : '<b>Coupe</b> : premier point du trait de coupe',
   stair:() => draw.start ? '<b>Escalier</b> : direction de la montée (clic ou angle)' : '<b>Escalier</b> : point de départ (coin gauche de la première marche ; centre pour un colimaçon)',
@@ -6578,7 +6647,7 @@ const PROMPTS = {
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
-  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
+  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= (defs.roof.mode === 'free' ? 3 : 4)) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
 function cancelDraw(){ draw.dimPts = null; draw.dimOff = false; draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); dimBarSync(); }
 function setTool(t){
@@ -6775,11 +6844,12 @@ function roofFromPoly(pts){
   const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
   const t = {kind:'roof', type:defs.roof.type, p:[Math.min(...xs), Math.min(...ys)], q:[Math.max(...xs), Math.max(...ys)], lvl:curLvl, off:rnd(offFromZ() + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov, onWalls:true};
   const isRect = pts.length === 4 && isOrtho(pts);
-  if (!isRect) t.poly = pts.map(q => [rnd(q[0]), rnd(q[1])]);
+  if (defs.roof.mode === 'free' || !isOrtho(pts)) t.free = true;   // contour libre : pans calculés sur la forme exacte
+  if (!isRect || t.free) t.poly = pts.map(q => [rnd(q[0]), rnd(q[1])]);
   roofFitWalls(t); return t;
 }
-function addRoof(pts){ const t = roofFromPoly(pts); addEl(t); if (t.poly && !isOrtho(t.poly)) toast('Contour non orthogonal : la toiture couvre son rectangle englobant'); }
-function finishRoofPoly(){ const p = draw.poly || []; if (p.length < 4){ toast('Il faut au moins 4 points'); return; } addRoof(p.slice()); draw.poly = null; draw.workZ = null; updatePreview(); setPrompt(); }
+function addRoof(pts){ const t = roofFromPoly(pts); addEl(t); if (t.free && polyConvexParts(t.poly).length > 1) toast('Contour concave : un toit par partie convexe, avec gouttière à la jonction'); }
+function finishRoofPoly(){ const p = draw.poly || []; if (p.length < (defs.roof.mode === 'free' ? 3 : 4)){ toast(`Il faut au moins ${defs.roof.mode === 'free' ? 3 : 4} points`); return; } addRoof(p.slice()); draw.poly = null; draw.workZ = null; updatePreview(); setPrompt(); }
 
 /* ==== 51-design.js ==== */
 /* ============ Conception plus pratique ============
@@ -11489,7 +11559,7 @@ function ctxGroundItems(){
 /* tracé en cours */
 function ctxDrawItems(){
   const items = [];
-  if (draw.poly?.length >= 4) items.push({label:'Terminer la toiture', onClick:finishRoofPoly});
+  if (draw.poly?.length >= (defs.roof.mode === 'free' ? 3 : 4)) items.push({label:'Terminer la toiture', onClick:finishRoofPoly});
   items.push({label:tool === 'wall' && draw.chainN ? 'Terminer la chaîne de murs' : 'Annuler le tracé', hint:'Échap', danger:!(tool === 'wall' && draw.chainN), onClick:() => { cancelDraw(); syncHud(); }});
   if (tool !== 'select') items.push({label:'Outil Sélection', hint:'V', onClick:() => setTool('select')});
   return {items, title:'Tracé en cours'};

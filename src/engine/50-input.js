@@ -160,9 +160,9 @@ function updatePreview(){
   else if (tool === 'roof' && defs.roof.mode === 'walls'){
     const o = wallsOutline(curLvl); if (o){ const t = roofFromPoly(o); for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); text = 'Cliquez pour poser la toiture sur les murs du niveau'; } else text = 'Aucun mur sur ce niveau';
   }
-  else if (tool === 'roof' && defs.roof.mode === 'poly' && draw.poly?.length){
+  else if (tool === 'roof' && (defs.roof.mode === 'poly' || defs.roof.mode === 'free') && draw.poly?.length){
     const pts = [...draw.poly, cur]; for (let i = 0; i + 1 < pts.length; i++) markGroup.add(lineObj(pts[i], pts[i + 1], ac)); markGroup.add(makeMarker(draw.poly[0], ac));
-    if (pts.length >= 3){ markGroup.add(lineObj(cur, draw.poly[0], ac, null, true)); if (pts.length >= 4){ const t = roofFromPoly(pts); try { for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); } catch(e){} } }
+    if (pts.length >= 3){ markGroup.add(lineObj(cur, draw.poly[0], ac, null, true)); if (pts.length >= (defs.roof.mode === 'free' ? 3 : 4)){ const t = roofFromPoly(pts); try { for (const pc of pieces(t)) previewGroup.add(pieceMesh(pc, true)); } catch(e){} } }
     const d = V.sub(cur, draw.poly[draw.poly.length - 1]); text = `${nf(V.len(d))} m · ${draw.poly.length} point${draw.poly.length > 1 ? 's' : ''}`;
   }
   else if (S){
@@ -330,7 +330,7 @@ const PROMPTS = {
   select:() => 'Sélection : cliquez un élément (Maj pour en ajouter). Clic droit : déplacer la vue, ou tourner autour de l\'élément sélectionné.',
   wall:() => defs.wall.rect ? (draw.start ? '<b>Pièce</b> : coin opposé (ou <code>L;l</code>)' : '<b>Pièce</b> : premier coin de la pièce (4 murs d\'un coup)') : defs.wall.arc ? (draw.arcB ? '<b>Mur courbe</b> : un point de la courbe (sa flèche)' : draw.start ? '<b>Mur courbe</b> : point d\'arrivée' : '<b>Mur courbe</b> : point de départ') : draw.start ? '<b>Mur</b> : point suivant, longueur, ou <code>longueur&lt;angle</code>' : '<b>Mur</b> : premier point (ou x;y)',
   slab:() => defs.slab.mode === 'poly' ? (draw.poly?.length ? '<b>Dalle (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Dalle (contour)</b> : premier point du contour') : defs.slab.mode === 'hole' ? (draw.start ? '<b>Trou</b> : coin opposé du trou' : '<b>Trou / trémie</b> : premier coin, dans la dalle à percer') : defs.slab.mode === 'room' ? '<b>Dalle sur une pièce</b> : cliquez dans la pièce (la dalle suit son contour exact)' : defs.slab.mode === 'walls' ? '<b>Dalle sous les murs</b> : cliquez pour poser la dalle sur le contour des murs' : draw.start ? '<b>Dalle</b> : coin opposé, ou <code>L;l</code>' : '<b>Dalle</b> : premier coin (ou x;y)',
-  roof:() => defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
+  roof:() => defs.roof.mode === 'free' ? (draw.poly?.length ? '<b>Toit (tracé libre)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer' : '<b>Toit (tracé libre)</b> : premier point du contour, forme au choix') : defs.roof.mode === 'walls' ? '<b>Toit sur les murs</b> : cliquez dans le modèle pour poser la toiture sur le contour des murs du niveau' : defs.roof.mode === 'poly' ? (draw.poly?.length ? `<b>Toit (contour)</b> : point suivant ; cliquez le premier point ou <kbd>Entrée</kbd> pour fermer` : '<b>Toit (contour)</b> : premier angle du contour des murs (côtés parallèles aux axes)') : draw.start ? '<b>Toit</b> : coin opposé du contour des murs, ou <code>L;l</code>' : '<b>Toit</b> : premier coin du contour des murs (ou x;y) · forme, pente et débord dans la barre et les propriétés',
   mirror:() => !selIds().length ? '<b>Symétrie</b> : sélectionnez d\'abord les éléments' : draw.base ? '<b>Symétrie</b> : second point de l\'axe' : '<b>Symétrie</b> : premier point de l\'axe de symétrie',
   cut:() => draw.start ? '<b>Coupe</b> : second point du trait de coupe (on regarde vers la gauche du trait)' : '<b>Coupe</b> : premier point du trait de coupe',
   stair:() => draw.start ? '<b>Escalier</b> : direction de la montée (clic ou angle)' : '<b>Escalier</b> : point de départ (coin gauche de la première marche ; centre pour un colimaçon)',
@@ -350,7 +350,7 @@ const PROMPTS = {
 function setPrompt(){
   $('#prompt').innerHTML = forTouch(PROMPTS[tool]());
   $('#endBtn').hidden = !((tool === 'wall' && draw.start) || (tool === 'copy' && draw.base));
-  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= 4) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
+  $('#closeBtn').hidden = !((tool === 'wall' && draw.chainN >= 2 && draw.chainFirst && !V.eq(draw.chainFirst, draw.start || [1e9, 1e9])) || (tool === 'roof' && (draw.poly?.length || 0) >= (defs.roof.mode === 'free' ? 3 : 4)) || ((tool === 'vol' || tool === 'slab') && (draw.poly?.length || 0) >= 3));
 }
 function cancelDraw(){ draw.dimPts = null; draw.dimOff = false; draw.ext = null; draw.dimB = null; draw.arcB = null; draw.poly = null; draw.start = null; draw.chainFirst = null; draw.chainN = 0; draw.snap = null; draw.base = null; draw.copies = 0; draw.workZ = null; draw.track = []; updatePreview(); setPrompt(); dimBarSync(); }
 function setTool(t){
@@ -547,8 +547,9 @@ function roofFromPoly(pts){
   const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
   const t = {kind:'roof', type:defs.roof.type, p:[Math.min(...xs), Math.min(...ys)], q:[Math.max(...xs), Math.max(...ys)], lvl:curLvl, off:rnd(offFromZ() + defs.roof.h), shape:defs.roof.shape, pitch:defs.roof.pitch, ov:defs.roof.ov, onWalls:true};
   const isRect = pts.length === 4 && isOrtho(pts);
-  if (!isRect) t.poly = pts.map(q => [rnd(q[0]), rnd(q[1])]);
+  if (defs.roof.mode === 'free' || !isOrtho(pts)) t.free = true;   // contour libre : pans calculés sur la forme exacte
+  if (!isRect || t.free) t.poly = pts.map(q => [rnd(q[0]), rnd(q[1])]);
   roofFitWalls(t); return t;
 }
-function addRoof(pts){ const t = roofFromPoly(pts); addEl(t); if (t.poly && !isOrtho(t.poly)) toast('Contour non orthogonal : la toiture couvre son rectangle englobant'); }
-function finishRoofPoly(){ const p = draw.poly || []; if (p.length < 4){ toast('Il faut au moins 4 points'); return; } addRoof(p.slice()); draw.poly = null; draw.workZ = null; updatePreview(); setPrompt(); }
+function addRoof(pts){ const t = roofFromPoly(pts); addEl(t); if (t.free && polyConvexParts(t.poly).length > 1) toast('Contour concave : un toit par partie convexe, avec gouttière à la jonction'); }
+function finishRoofPoly(){ const p = draw.poly || []; if (p.length < (defs.roof.mode === 'free' ? 3 : 4)){ toast(`Il faut au moins ${defs.roof.mode === 'free' ? 3 : 4} points`); return; } addRoof(p.slice()); draw.poly = null; draw.workZ = null; updatePreview(); setPrompt(); }

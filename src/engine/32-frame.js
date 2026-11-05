@@ -21,7 +21,7 @@ function planeOf(P){ // z = a x + b y + c d'après 3 points du pan
 }
 function roofFrame(el){
   const O = frameOpts(el); if (O.mode === 'none' || (el.shape || '2') === '0') return [];
-  const G = roofGeom(el), out = [], off = new Set(O.off || []);
+  const G = roofGeom(el), out = [], off = new Set(O.off || []); if (G.free) return out;   // charpente non générée pour un contour libre
   const add = (kind, A, B, sec) => { const id = `${kind}:${A.map(v => v.toFixed(2)).join(',')}:${B.map(v => v.toFixed(2)).join(',')}`; out.push({id, kind, A, B, w:sec[0], h:sec[1], off:off.has(id)}); };
   for (const W of G.wings){
     const P = (u, v, z) => W.ax ? [u, v, z] : [v, u, z], und = z => z - W.Tv;   // sous-face de la couverture

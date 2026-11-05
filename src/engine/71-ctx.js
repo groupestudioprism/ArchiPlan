@@ -134,7 +134,7 @@ function ctxGroundItems(){
 /* tracé en cours */
 function ctxDrawItems(){
   const items = [];
-  if (draw.poly?.length >= 4) items.push({label:'Terminer la toiture', onClick:finishRoofPoly});
+  if (draw.poly?.length >= (defs.roof.mode === 'free' ? 3 : 4)) items.push({label:'Terminer la toiture', onClick:finishRoofPoly});
   items.push({label:tool === 'wall' && draw.chainN ? 'Terminer la chaîne de murs' : 'Annuler le tracé', hint:'Échap', danger:!(tool === 'wall' && draw.chainN), onClick:() => { cancelDraw(); syncHud(); }});
   if (tool !== 'select') items.push({label:'Outil Sélection', hint:'V', onClick:() => setTool('select')});
   return {items, title:'Tracé en cours'};

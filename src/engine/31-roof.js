@@ -13,7 +13,7 @@ const roofT = el => compo(el.type).layers.reduce((s, [, e]) => s + e, 0);
 const roofBase = el => lvlZ(el.lvl) + (el.off ?? 2.7);
 /* quand la charpente est affichée, la couverture est relevée de la hauteur de charpente : sablière posée sur le haut du mur, chevrons sur la sablière, couverture sur les chevrons */
 const roofLift = el => (el.frameShow || el.frameView) && (el.shape || '2') !== '0' ? frameOpts(el).chev[1] / Math.cos(roofPitch(el) * Math.PI / 180) + frameOpts(el).sabliere[1] : 0;
-const roofWallPoly = el => el.poly && el.poly.length >= 4 ? el.poly.map(q => [q[0], q[1]]) : rect(el.p, el.q);
+const roofWallPoly = el => el.poly && el.poly.length >= (el.free ? 3 : 4) ? el.poly.map(q => [q[0], q[1]]) : rect(el.p, el.q);
 const sArea = p => { let a = 0; for (let i = 0; i < p.length; i++){ const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return a / 2; };
 function ptInPoly(x, y, p){ let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++){ const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
 const isOrtho = p => p.every((q, i) => { const r = p[(i + 1) % p.length]; return Math.abs(q[0] - r[0]) < 1e-6 || Math.abs(q[1] - r[1]) < 1e-6; });
@@ -100,7 +100,76 @@ function roofWing(el, R){
   const eave = shape === '0' ? 2 * (u1 - u0 + v1 - v0) : shape === '1' ? (u1 - u0) : 2 * (u1 - u0) + (shape === '4' ? (R.open.u0 ? 0 : v1 - v0) + (R.open.u1 ? 0 : v1 - v0) : 0);
   return {pans:pans.map(clean), gables, ridges, hips, a, tp, zE, zEo, base, Tv, ax, U0, U1, V0, V1, W, vm, u0, u1, v0, v1, eave, R};
 }
+/* ---- Toit sur contour libre (non orthogonal ou concave) : un toit à pans de même pente par partie convexe ----
+   Chaque côté du contour porte un plan (pente uniforme) ; le pan d'un côté est la zone où son plan est le plus bas (équivalent d'un squelette droit).
+   Les contours concaves sont découpés en parties convexes ; les diagonales de découpe n'ont ni débord ni pignon (gouttière entre deux toits accolés). */
+function polyConvexParts(poly){
+  let P = poly.map(q => [q[0], q[1]]); if (sArea(P) < 0) P.reverse();
+  const cr = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const tris = [], idx = P.map((_, i) => i); let guard = 0;
+  while (idx.length > 3 && guard++ < 500){
+    let cut = false;
+    for (let k = 0; k < idx.length; k++){
+      const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length], a = P[i0], b = P[i1], c = P[i2];
+      if (cr(a, b, c) <= 1e-9) continue;
+      if (idx.some(j => j !== i0 && j !== i1 && j !== i2 && ptInTri(P[j], a, b, c))) continue;
+      tris.push([i0, i1, i2]); idx.splice(k, 1); cut = true; break;
+    }
+    if (!cut) break;
+  }
+  if (idx.length === 3) tris.push([idx[0], idx[1], idx[2]]);
+  // fusion gloutonne des triangles voisins tant que le résultat reste convexe (Hertel-Mehlhorn)
+  let parts = tris.map(t => t.slice());
+  const convex = ids => ids.every((_, k) => cr(P[ids[(k + ids.length - 1) % ids.length]], P[ids[k]], P[ids[(k + 1) % ids.length]]) >= -1e-9);
+  let merged = true;
+  while (merged){ merged = false;
+    outer: for (let a = 0; a < parts.length; a++) for (let b = a + 1; b < parts.length; b++){
+      const A = parts[a], B = parts[b];
+      for (let i = 0; i < A.length; i++){ const u = A[i], v = A[(i + 1) % A.length], j = B.findIndex((x, k) => x === v && B[(k + 1) % B.length] === u); if (j < 0) continue;
+        const ring = []; for (let k = 1; k < A.length; k++) ring.push(A[(i + 1 + k) % A.length]);   // A sans l'arête u→v : de v vers u
+        const Ar = []; for (let k = 0; k < A.length; k++) Ar.push(A[(i + 1 + k) % A.length]);       // commence à v, finit à u
+        const Br = []; for (let k = 0; k < B.length; k++) Br.push(B[(j + 1 + k) % B.length]);       // commence à u (B[j]=v → suivant = u), finit à v
+        const m = [...Ar, ...Br.slice(1, -1)];
+        if (convex(m)){ parts[a] = m; parts.splice(b, 1); merged = true; break outer; } }
+    }
+  }
+  return parts.map(ids => ids.map(i => P[i]));
+}
+const ptInTri = (p, a, b, c) => { const s = (u, v, w) => (u[0] - w[0]) * (v[1] - w[1]) - (v[0] - w[0]) * (u[1] - w[1]); const d1 = s(p, a, b), d2 = s(p, b, c), d3 = s(p, c, a); return !((d1 < -1e-9 || d2 < -1e-9 || d3 < -1e-9) && (d1 > 1e-9 || d2 > 1e-9 || d3 > 1e-9)); };
+function clipHalf(poly, n, c){   // garde {p : n·p <= c}
+  const out = []; for (let i = 0; i < poly.length; i++){ const a = poly[i], b = poly[(i + 1) % poly.length], da = n[0] * a[0] + n[1] * a[1] - c, db = n[0] * b[0] + n[1] * b[1] - c;
+    if (da <= 1e-9) out.push(a); if ((da < -1e-9 && db > 1e-9) || (da > 1e-9 && db < -1e-9)){ const t = da / (da - db); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } }
+  return out;
+}
+function freeRoofGeom(el){
+  const ov = Math.max(0, el.ov ?? 0.4), a = roofPitch(el) * Math.PI / 180, tp = Math.tan(a), base0 = roofBase(el), lift = roofLift(el), base = base0 + lift, Tv = roofT(el) / Math.cos(a), zE = base + Tv;
+  const wp = roofWallPoly(el), flat = (el.shape || '2') === '0', parts = polyConvexParts(wp);
+  const key = q => q[0].toFixed(3) + ',' + q[1].toFixed(3), wallEdges = new Set(); wp.forEach((q, i) => { const r = wp[(i + 1) % wp.length]; wallEdges.add(key(q) + '>' + key(r)); wallEdges.add(key(r) + '>' + key(q)); });
+  const pans = [], ridges = [], hips = []; let eave = 0;
+  for (const C of parts){
+    const L = C.map((q, i) => { const r = C[(i + 1) % C.length], dx = r[0] - q[0], dy = r[1] - q[1], len = Math.hypot(dx, dy) || 1, n = [dy / len, -dx / len];   // normale sortante (contour antihoraire)
+      const real = wallEdges.has(key(q) + '>' + key(r)); return {n, c:n[0] * q[0] + n[1] * q[1], o:real ? ov : 0, real, len}; });
+    eave += L.reduce((t, e) => t + (e.real ? e.len + (e.o ? 0 : 0) : 0), 0);
+    let E = [[-1e5, -1e5], [1e5, -1e5], [1e5, 1e5], [-1e5, 1e5]]; for (const e of L) E = clipHalf(E, e.n, e.c + e.o);
+    if (E.length < 3) continue;
+    if (flat){ pans.push(E.map(q => [q[0], q[1], zE])); continue; }
+    L.forEach((e, i) => {
+      let R = E; for (let j = 0; j < L.length && R.length >= 3; j++){ if (j === i) continue; const f = L[j];   // plan i plus bas que plan j : (nj − ni)·p <= cj − ci
+        const n = [f.n[0] - e.n[0], f.n[1] - e.n[1]], len = Math.hypot(n[0], n[1]); if (len < 1e-9) continue; R = clipHalf(R, [n[0] / len, n[1] / len], (f.c - e.c) / len); }
+      if (R.length < 3) return;
+      const z = q => zE + tp * (e.c - (e.n[0] * q[0] + e.n[1] * q[1]));
+      pans.push(R.map(q => [q[0], q[1], z(q)]));
+    });
+  }
+  // arêtes communes entre pans : faîtage (horizontale) ou arêtier (inclinée) ; les noues entre parties sont des gouttières
+  const seen = new Map(); for (const pan of pans) pan.forEach((q, i) => { const r = pan[(i + 1) % pan.length], k1 = key(q) + '|' + key(r), k2 = key(r) + '|' + key(q); if (seen.has(k2)){ const [A, B] = seen.get(k2); const ez = Math.min(zE - ov * tp + 1e-3, zE + 1e-3);
+    if (Math.hypot(A[0] - B[0], A[1] - B[1]) > 0.02 && Math.max(A[2], B[2]) > zE + 0.02){ (Math.abs(A[2] - B[2]) < 1e-3 ? ridges : hips).push([A, B]); } } else seen.set(k1, [q, r]); });
+  const xs = wp.map(q => q[0]), ys = wp.map(q => q[1]);
+  return {free:true, wings:[], a, tp, pans:pans.map(p => p.filter((q, i) => i === 0 || Math.hypot(q[0] - p[i - 1][0], q[1] - p[i - 1][1]) > 1e-6)), gables:[], ridges, hips, eaveLen:eave + ov * 8, wall:wp, base, base0, zE, Tv,
+    outline:[[Math.min(...xs) - ov, Math.min(...ys) - ov], [Math.max(...xs) + ov, Math.min(...ys) - ov], [Math.max(...xs) + ov, Math.max(...ys) + ov], [Math.min(...xs) - ov, Math.max(...ys) + ov]], ax:true};
+}
 function roofGeom(el){
+  if (el.free || (el.poly && el.poly.length >= 3 && !isOrtho(roofWallPoly(el)))) return freeRoofGeom(el);
   const wings = roofRects(el).map(R => roofWing(el, R)), a = roofPitch(el) * Math.PI / 180, ov = Math.max(0, el.ov ?? 0.4), wall = roofWallPoly(el);
   const xs = wall.map(q => q[0]), ys = wall.map(q => q[1]);
   return {wings, a, ax:wings[0]?.ax ?? true, pans:wings.flatMap(w => w.pans), gables:wings.flatMap(w => w.gables), ridges:wings.flatMap(w => w.ridges), hips:wings.flatMap(w => w.hips),
