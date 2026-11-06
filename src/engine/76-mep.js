@@ -21,6 +21,10 @@ function mepPrisesMin(kind, A){
   if (kind === 'wc' || kind === 'ext' || kind === 'garage' || kind === 'buanderie' || kind === 'technique') return 0;
   return A > 4 ? 1 : 0;   // salle d'eau (hors volumes), entrée, couloir, bureau… de plus de 4 m²
 }
+/* prises de communication RJ45 (NF C 15-100, 10.1.3.6) : 2 juxtaposées dans le séjour, puis 1 par autre pièce principale ;
+   au total 2 au moins (≤ 35 m²), 3 (≤ 100 m²) ou 4 (au-delà), câblées en étoile depuis le coffret de communication de la GTL, chacune près d'une prise de courant */
+const mepRj45Min = (kind, shab) => kind === 'sejour' ? 2 : 0;
+const mepRj45Total = shab => shab <= 35 ? 2 : shab <= 100 ? 3 : 4;
 /* pièces principales (séjour, chambres, bureau) : base des débits de ventilation (arrêté du 24 mars 1982) */
 const mepIsMain = r => r.kind === 'sejour' || r.kind === 'chambre' || (r.kind === 'autre' && /bureau|salle de jeux|salon|etude/.test(mepNorm(r.name)) );
 /* débits d'extraction (m³/h) de l'arrêté du 24 mars 1982, selon le nombre de pièces principales T : cuisine (grand débit), salle de bains, autre salle d'eau, WC unique, WC multiple, total minimal */
@@ -39,7 +43,7 @@ function mepCeilH(lvl){
 /* ---------- matériaux des réseaux ---------- */
 (() => { const add = (id, nom, col) => { if (!MATS[id]) M(id, nom, 'Verre et plastiques', 950, 0.4, 2000, 1e5, col, 'plain', 2.5); };
   add('resEF', 'Réseau eau froide (PER bleu)', '#2F7FD6'); add('resECS', 'Réseau eau chaude (PER rouge)', '#D6402F'); add('resEU', 'Évacuation PVC', '#8A7F72');
-  add('resElec', 'Câblage électrique', '#E3A21A'); add('resVMC', 'Gaine de ventilation', '#9AA6B2'); add('resChauf', 'Réseau chauffage (PER)', '#B8476B'); })();
+  add('resElec', 'Câblage électrique', '#E3A21A'); add('resVMC', 'Gaine de ventilation', '#9AA6B2'); add('resChauf', 'Réseau chauffage (PER)', '#B8476B'); add('resCom', 'Câblage de communication', '#0EA5E9'); })();
 
 /* ---------- familles ---------- */
 const MEP_CATS = ['Électricité', 'Plomberie', 'Ventilation', 'Chauffage'];
@@ -86,11 +90,11 @@ const WATER_PTS = {wc:[0.25, null, 100, 12], lavabo:[0.55, 0.55, 40, 12], douche
 
 /* ---------- réseaux ---------- */
 const NET_SYS = {ef:{n:'Eau froide', mat:'PER', m:'resEF', lot:'12', kg:0.1}, ecs:{n:'Eau chaude sanitaire', mat:'PER', m:'resECS', lot:'12', kg:0.1}, eu:{n:'Évacuation eaux usées', mat:'PVC', m:'resEU', lot:'12', kg:1.2},
-  elec:{n:'Câblage électrique', mat:'cuivre', m:'resElec', lot:'15', kg:0.12}, vmc:{n:'Gaine de ventilation', mat:'acier galvanisé / PVC', m:'resVMC', lot:'16', kg:0.8}, chauf:{n:'Réseau de chauffage', mat:'PER', m:'resChauf', lot:'17', kg:0.15}};
+  elec:{n:'Câblage électrique', mat:'cuivre', m:'resElec', lot:'15', kg:0.12}, com:{n:'Câblage de communication', mat:'cuivre catégorie 6 (grade 2TV)', m:'resCom', lot:'15', kg:0.05}, vmc:{n:'Gaine de ventilation', mat:'acier galvanisé / PVC', m:'resVMC', lot:'16', kg:0.8}, chauf:{n:'Réseau de chauffage', mat:'PER', m:'resChauf', lot:'17', kg:0.15}};
 const netLen = el => (el.pts || []).reduce((t, p, i) => i ? t + Math.hypot(p[0] - el.pts[i - 1][0], p[1] - el.pts[i - 1][1], p[2] - el.pts[i - 1][2]) : 0, 0);
-const netName = el => `${NET_SYS[el.sys]?.n || 'Réseau'}${el.label ? ' · ' + el.label : ''} ${el.sec ? el.sec + ' mm²' : 'Ø' + el.d}`;
-const netDetail = el => el.sec ? `section ${el.sec} mm²${el.label ? ' · ' + el.label : ''}` : `Ø ${el.d} mm`;
-const NET_PRICE = {ef:{12:6.5, 16:8, 20:10, 25:13}, ecs:{12:8, 16:10, 20:12.5, 25:16}, eu:{40:13, 50:15, 100:30}, vmc:{80:9, 125:14, 160:19, 200:26}, chauf:{16:10, 20:13, 25:16}, elec:{1.5:2.5, 2.5:3.4, 6:6.5, 10:9.5}};
+const netName = el => `${NET_SYS[el.sys]?.n || 'Réseau'}${el.label ? ' · ' + el.label : ''} ${el.sys === 'com' ? 'cat. 6' : el.sec ? el.sec + ' mm²' : 'Ø' + el.d}`;
+const netDetail = el => el.sys === 'com' ? `câble 4 paires catégorie 6 sous conduit Ø${el.d}${el.label ? ' · ' + el.label : ''}` : el.sec ? `section ${el.sec} mm²${el.label ? ' · ' + el.label : ''}` : `Ø ${el.d} mm`;
+const NET_PRICE = {ef:{12:6.5, 16:8, 20:10, 25:13}, ecs:{12:8, 16:10, 20:12.5, 25:16}, eu:{40:13, 50:15, 100:30}, vmc:{80:9, 125:14, 160:19, 200:26}, chauf:{16:10, 20:13, 25:16}, elec:{1.5:2.5, 2.5:3.4, 6:6.5, 10:9.5}, com:{20:2.8}};
 const netPrice = el => { const T = NET_PRICE[el.sys] || {}, k = el.sec || el.d; const keys = Object.keys(T).map(Number).sort((a, b) => a - b); const best = keys.find(x => x >= k) ?? keys.at(-1); return (T[best] ?? 10) * (el.sys === 'vmc' || el.sys === 'eu' ? 1 : 1) + 4.5; };   // + pose (ml)
 function netPieces(el){
   const S = NET_SYS[el.sys] || NET_SYS.ec || NET_SYS.elec, out = [], d = Math.max(0.03, (el.d || 12) / 1000), P = el.pts || [];

@@ -48,11 +48,22 @@ function mepGenerateNets(){
     const idA = Math.max(1, Math.ceil(nA / 8)), idF = hasPac ? 1 : 0, idAC = Math.max(shab0 <= 35 ? 1 : shab0 <= 100 ? 2 : 3, Math.ceil((nCirc - nA - (hasPac ? 1 : 0)) / 8)), nID = idAC + idA + idF;
     const mods = Math.ceil((nCirc + nID * 2 + 2) * 1.2), rows = Math.max(2, Math.ceil(mods / 13));
     tab.params = {...(tab.params || {}), rg:rows}; tab.type = rows <= 2 ? 1 : rows === 3 ? 0 : 2;
+    /* communication : un câble par prise RJ45, en étoile depuis le coffret de communication (au-dessus du tableau, dans la GTL), sous conduit Ø20 */
+    const rj = by('rj45'), Cz = Tz + (zh(tab) || 1) + 0.15 * rows + 0.35; let comL = 0;
+    near(T, rj).forEach((e, i) => { const zr0 = ceilZ(tab.lvl), zr = ceilZ(e.lvl), pts = [[T[0], T[1], Cz], [T[0], T[1], zr0]]; if (zr !== zr0) pts.push([T[0], T[1], zr]);
+      pts.push(...mepRun(T, e.c, zr, zr).slice(1), [e.c[0], e.c[1], zf(e.lvl) + (zh(e) || 0.3)]);
+      const L = pts.reduce((t, p, k) => k ? t + Math.hypot(p[0] - pts[k - 1][0], p[1] - pts[k - 1][1], p[2] - pts[k - 1][2]) : 0, 0); comL = Math.max(comL, L);
+      add('com', e.lvl, pts.map(p => [p[0] + 0.04, p[1] + 0.04, p[2]]), 20, `RJ45 ${i + 1} (${roomOfEl(e)?.name || state.levels[e.lvl].n})`, {note:`câble 4 paires catégorie 6, grade 2TV · ${nf(L, 1)} m`}); });
+    const shabC = rooms.reduce((t, r) => t + r.net, 0), needC = mepRj45Total(shabC);
+    if (rj.length) rep.comLine = [`${rj.length} prise${rj.length > 1 ? 's' : ''} RJ45 câblée${rj.length > 1 ? 's' : ''} en étoile depuis le coffret de communication (grade 2TV, au-dessus du tableau) · câble le plus long ${nf(comL, 1)} m`];
+    if (rj.length < needC) rep.warn.push(`Communication : ${rj.length} prise${rj.length > 1 ? 's' : ''} RJ45 pour ${needC} exigées (NF C 15-100 : 2 dans le séjour, ${needC} au total pour ${n0(shabC)} m²).`);
+    if (comL > 45) rep.warn.push(`Communication : un câble RJ45 mesure ${nf(comL, 1)} m ; au-delà d'environ 45 m le débit baisse, rapprochez le coffret.`);
     const pw = circ.reduce((t, c) => t + (c.kind === 'plaque' ? 7000 : c.kind === 'light' ? 200 : c.kind === 'heat' ? 3000 : c.kind === 'pac' ? 4000 : c.kind === 'vmc' ? 30 : 1500), 0), shab = rooms.reduce((t, r) => t + r.net, 0);
     kVA = by('rad').some(e => (e.type | 0) >= 4) ? (shab > 100 ? 15 : 12) : shab < 60 ? 6 : shab < 100 ? 9 : 12;
     rep.sys.elec = {title:'Électricité', lines:[`${nCirc} circuits : ${circ.filter(c => c.kind === 'light').length} éclairage (1,5 mm², 16 A, 8 points max.), ${circ.filter(c => c.kind === 'plug').length} prises (2,5 mm², 20 A, 12 max. ; 6 max. en cuisine), ${circ.filter(c => !['light', 'plug'].includes(c.kind)).length} spécialisés/dédiés`,
       `Tableau : ${nID} interrupteurs différentiels 30 mA : ${idAC} de type AC, ${idA} de type A (au moins un exigé, il protège la plaque de cuisson et le lave-linge)${idF ? ', 1 de type F (pompe à chaleur)' : ''} · 8 circuits au plus par différentiel · ${mods} modules avec 20 % de réserve → ${rows} rangée${rows > 1 ? 's' : ''} de 13 modules, organes de commande entre 0,90 et 1,80 m du sol`,
-      `${by('inter').length} interrupteur${by('inter').length > 1 ? 's' : ''} raccordé${by('inter').length > 1 ? 's' : ''} aux circuits d'éclairage · ${by('daaf').length} détecteur${by('daaf').length > 1 ? 's' : ''} de fumée autonome${by('daaf').length > 1 ? 's' : ''} (à piles, non raccordé${by('daaf').length > 1 ? 's' : ''})${by('rj45').length ? ` · ${by('rj45').length} prise${by('rj45').length > 1 ? 's' : ''} RJ45 à relier au coffret de communication (non tracé)` : ''}`, `Puissance à souscrire indicative : ${kVA} kVA`, `Sections : éclairage 1,5 mm² · prises et circuits spécialisés 2,5 mm² · plaque de cuisson 6 mm² (32 A)`]};
+      `${by('inter').length} interrupteur${by('inter').length > 1 ? 's' : ''} raccordé${by('inter').length > 1 ? 's' : ''} aux circuits d'éclairage · ${by('daaf').length} détecteur${by('daaf').length > 1 ? 's' : ''} de fumée autonome${by('daaf').length > 1 ? 's' : ''} (à piles, non raccordé${by('daaf').length > 1 ? 's' : ''})`, `Puissance à souscrire indicative : ${kVA} kVA`, `Sections : éclairage 1,5 mm² · prises et circuits spécialisés 2,5 mm² · plaque de cuisson 6 mm² (32 A)`]};
+    if (rep.comLine) rep.sys.com = {title:'Communication', lines:rep.comLine};
   } else rep.warn.push('Aucun tableau électrique placé : les circuits ne sont pas générés (ajoutez un tableau).');
 
   /* ---------------- Plomberie ---------------- */

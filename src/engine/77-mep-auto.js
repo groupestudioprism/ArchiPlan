@@ -154,6 +154,13 @@ function mepPropose(O, keep = [], opt = {}){
     const runs = []; for (const s of S){ const r = runs.at(-1); if (r && r.e === s.e && s.t - r.h < 0.051) r.h = s.t; else runs.push({e:s.e, l:s.t, h:s.t}); }
     const best = runs.sort((a, b) => (b.h - b.l) - (a.h - a.l))[0], t = o.end ? (o.end > 0 ? best.h : best.l) : (best.l + best.h) / 2, w = famWidth(fam_) || 0.6;
     onWall(R, fam_, best.e, t, o); block({e:best.e, t}, w); return {e:best.e, t}; };
+  /* point de plafond libre : à 0,30 m au moins des murs et 0,50 m des autres éléments de plafond (luminaires, bouches, détecteurs), au plus près du centre */
+  const CEIL = new Set(['lum', 'spot', 'daaf', 'vext', 'vmc']);
+  const ceilFree = r => { const c0 = poleOf(r.poly), others = items.concat(manual).filter(i => CEIL.has(i.kind) && i.lvl === r.lvl).map(i => i.c), xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]); let best = null, bd = 1e9;
+    for (let x = Math.min(...xs) + 0.3; x <= Math.max(...xs) - 0.3 + 1e-6; x += 0.1) for (let y = Math.min(...ys) + 0.3; y <= Math.max(...ys) - 0.3 + 1e-6; y += 0.1){ const q = [x, y];
+      if (!ptInPoly(x, y, r.poly) || dPoly(q, r.poly) < 0.3) continue; const m = Math.min(0.5, ...others.map(o => Math.hypot(o[0] - x, o[1] - y)));
+      const d = (0.5 - m) * 100 + Math.hypot(x - c0[0], y - c0[1]); if (d < bd){ bd = d; best = q; } }   // d'abord s'écarter des autres éléments (jusqu'à 0,50 m), ensuite rester près du centre
+    return best || c0; };
   const pick = (...ks) => { for (const k of ks){ const R = ctx.find(R => R.r.kind === k && R.r.lvl === 0) || ctx.find(R => R.r.kind === k); if (R) return R; } return ctx[0]; };
   // 1) appareils sanitaires et cuisine (pas de doublon avec un appareil déjà dessiné dans la pièce)
   if (O.fix) for (const R of ctx){ const k = R.r.kind;
@@ -189,7 +196,12 @@ function mepPropose(O, keep = [], opt = {}){
       wallItems(R, 'e-prise', np - hot, {params:{zh:0.3}});
       if (k === 'cuisine'){ if (!countIn(R, ['plaque'])) wallItems(R, 'e-prise32', 1, {params:{zh:0.12}, step:0.2}); wallItems(R, 'e-prise-spec', Math.max(0, 2 - countIn(R, ['spec'])), {step:0.2}); wallItems(R, 'e-prise', 1, {params:{zh:1.8}, step:0.2}); }
       if ((k === 'buanderie') || (k === 'sdb' && !ctx.some(q => q.r.kind === 'buanderie' && q.r.lvl === R.r.lvl) && !ctx.some(q => q.r.kind === 'cuisine' && q.r.lvl === R.r.lvl && q.r.net > 8))) wallItems(R, 'e-prise-spec', Math.max(0, (k === 'buanderie' ? 2 : 1) - countIn(R, ['spec', 'll'])), {params:{zh:0.3}, step:0.2});
-      if ((k === 'sejour' || k === 'chambre' || (k === 'autre' && /bureau/.test(mepNorm(R.r.name)))) && !countIn(R, ['rj45'])) wallItems(R, 'e-rj45', 1, {step:0.2});
+      // prises RJ45 : 2 juxtaposées dans le séjour, 1 par autre pièce principale ; chacune à côté d'une prise de courant de la pièce
+      const wantRj = mepIsMain(R.r) ? Math.max(0, (k === 'sejour' ? 2 : 1) - countIn(R, ['rj45'])) : 0;
+      if (wantRj){ const want = wantRj, S = slots(R, 'e-rj45', {step:0.1, w:want === 2 ? 0.2 : 0.1}), plugs = items.filter(i => i.kind === 'prise' && i.room === R.r.key && i.params.zh < 0.5).concat(manual.filter(i => i.kind === 'prise' && i.lvl === R.r.lvl && ptInPoly(i.c[0], i.c[1], R.r.poly)));
+        const dPl = s => plugs.length ? Math.min(...plugs.map(p => Math.hypot(edgePt(s.e, s.t)[0] - p.c[0], edgePt(s.e, s.t)[1] - p.c[1]))) : 0, best = S.filter(s => dPl(s) > 0.12).sort((a, b) => dPl(a) - dPl(b))[0] || S[0];
+        if (!best) notes.push(`${R.r.name} : pas de place libre pour une prise RJ45`);
+        else { for (let j = 0; j < want; j++) onWall(R, 'e-rj45', best.e, best.t + (j - (want - 1) / 2) * 0.09, {params:{zh:0.3}}); block(best, 0.1 * want + 0.1); } }
       // éclairage
       if (!countIn(R, ['lum', 'spot', 'applique'])){ let nl = 1, fL = 'e-lum';
         const spots = O.light === 'spots' || (O.light === 'mixte' && ['cuisine', 'sdb', 'couloir', 'entree'].includes(k));
@@ -205,7 +217,7 @@ function mepPropose(O, keep = [], opt = {}){
     if (O.sys.vent){ const F = mepVentFlows(T), nWC = ctx.filter(q => q.r.kind === 'wc').length, nSdb = ctx.filter(q => q.r.kind === 'sdb').length;
       if (['cuisine', 'sdb', 'wc', 'buanderie'].includes(k) && !countIn(R, ['vext'])){ const first = ctx.find(q => q.r.kind === k) === R;
         const q = k === 'cuisine' ? F.cuisine : k === 'sdb' ? (first ? F.sdb : F.sde) : k === 'wc' ? (nWC > 1 ? F.wcN : F.wc1) : 15;
-        add(R.r, 'v-extraction', {c:poleOf(R.r.poly), type:k === 'cuisine' ? 1 : 0, params:{q}}); }
+        add(R.r, 'v-extraction', {c:ceilFree(R.r), type:k === 'cuisine' ? 1 : 0, params:{q}}); }
       if ((k === 'sejour' || k === 'chambre') && !countIn(R, ['ventree'])){ const e = R.E.find(e => e.wins.length) || R.E.slice().sort((a, b) => b.L - a.L)[0], t = e.wins[0]?.t ?? e.L / 2; onWall(R, 'v-entree', e, t, {params:{zh:2.25}}); }
     }
   }
@@ -215,9 +227,9 @@ function mepPropose(O, keep = [], opt = {}){
       for (const R of cands){ if (wallItems(R, 'e-tableau', 1, {step:0.2, params:{rg:3, zh:1.0}})){ ok = 1; break; } notes.pop(); }
       if (!ok) notes.push('Tableau électrique : aucun mur libre trouvé'); }
     for (const li of [...new Set(rooms.map(r => r.lvl))]){ if (present().some(i => i.kind === 'daaf' && i.lvl === li)) continue; const L = ctx.filter(R => R.r.lvl === li), R = L.find(R => R.r.kind === 'couloir') || L.find(R => R.r.kind === 'entree') || L.find(R => R.r.kind === 'sejour') || L[0];
-      if (R && (li === 0 || L.some(q => q.r.kind === 'chambre'))) add(R.r, 'e-daaf', {c:poleOf(R.r.poly)}); }
+      if (R && (li === 0 || L.some(q => q.r.kind === 'chambre'))) add(R.r, 'e-daaf', {c:ceilFree(R.r)}); }
   }
-  if (O.sys.vent && !anyOf('vmc')){ const top = Math.max(...rooms.map(r => r.lvl)), L = ctx.filter(R => R.r.lvl === top), R = L.find(R => ['couloir', 'buanderie', 'wc', 'entree'].includes(R.r.kind)) || L[0]; if (R) add(R.r, 'v-caisson', {c:poleOf(R.r.poly), params:{zh:2.1}}); }
+  if (O.sys.vent && !anyOf('vmc')){ const top = Math.max(...rooms.map(r => r.lvl)), L = ctx.filter(R => R.r.lvl === top), R = L.find(R => ['couloir', 'buanderie', 'wc', 'entree'].includes(R.r.kind)) || L[0]; if (R) add(R.r, 'v-caisson', {c:ceilFree(R.r), params:{zh:2.1}}); }
   if (O.sys.plomb || O.sys.chauf){
     const S = pick('buanderie', 'technique', 'garage', 'cuisine', 'sdb'), V0 = Math.max(0, [100, 150, 200, 250, 300].findIndex(v => v >= occ * 55)), V0f = V0 < 0 ? 4 : V0;   // ≈ 55 l par occupant
     if (O.sys.plomb){ if (!anyOf('ballon')) wallItems(S, 'p-ballon', 1, {step:0.1, type:[100, 150, 200, 250, 300].some(v => v >= occ * 55) ? V0f : 4, params:{}}); if (!anyOf('arrivee')) wallItems(S, 'p-arrivee', 1, {step:0.2, params:{zh:0.6}}); }

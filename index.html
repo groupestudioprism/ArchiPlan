@@ -12074,6 +12074,10 @@ function mepPrisesMin(kind, A){
   if (kind === 'wc' || kind === 'ext' || kind === 'garage' || kind === 'buanderie' || kind === 'technique') return 0;
   return A > 4 ? 1 : 0;   // salle d'eau (hors volumes), entrée, couloir, bureau… de plus de 4 m²
 }
+/* prises de communication RJ45 (NF C 15-100, 10.1.3.6) : 2 juxtaposées dans le séjour, puis 1 par autre pièce principale ;
+   au total 2 au moins (≤ 35 m²), 3 (≤ 100 m²) ou 4 (au-delà), câblées en étoile depuis le coffret de communication de la GTL, chacune près d'une prise de courant */
+const mepRj45Min = (kind, shab) => kind === 'sejour' ? 2 : 0;
+const mepRj45Total = shab => shab <= 35 ? 2 : shab <= 100 ? 3 : 4;
 /* pièces principales (séjour, chambres, bureau) : base des débits de ventilation (arrêté du 24 mars 1982) */
 const mepIsMain = r => r.kind === 'sejour' || r.kind === 'chambre' || (r.kind === 'autre' && /bureau|salle de jeux|salon|etude/.test(mepNorm(r.name)) );
 /* débits d'extraction (m³/h) de l'arrêté du 24 mars 1982, selon le nombre de pièces principales T : cuisine (grand débit), salle de bains, autre salle d'eau, WC unique, WC multiple, total minimal */
@@ -12092,7 +12096,7 @@ function mepCeilH(lvl){
 /* ---------- matériaux des réseaux ---------- */
 (() => { const add = (id, nom, col) => { if (!MATS[id]) M(id, nom, 'Verre et plastiques', 950, 0.4, 2000, 1e5, col, 'plain', 2.5); };
   add('resEF', 'Réseau eau froide (PER bleu)', '#2F7FD6'); add('resECS', 'Réseau eau chaude (PER rouge)', '#D6402F'); add('resEU', 'Évacuation PVC', '#8A7F72');
-  add('resElec', 'Câblage électrique', '#E3A21A'); add('resVMC', 'Gaine de ventilation', '#9AA6B2'); add('resChauf', 'Réseau chauffage (PER)', '#B8476B'); })();
+  add('resElec', 'Câblage électrique', '#E3A21A'); add('resVMC', 'Gaine de ventilation', '#9AA6B2'); add('resChauf', 'Réseau chauffage (PER)', '#B8476B'); add('resCom', 'Câblage de communication', '#0EA5E9'); })();
 
 /* ---------- familles ---------- */
 const MEP_CATS = ['Électricité', 'Plomberie', 'Ventilation', 'Chauffage'];
@@ -12139,11 +12143,11 @@ const WATER_PTS = {wc:[0.25, null, 100, 12], lavabo:[0.55, 0.55, 40, 12], douche
 
 /* ---------- réseaux ---------- */
 const NET_SYS = {ef:{n:'Eau froide', mat:'PER', m:'resEF', lot:'12', kg:0.1}, ecs:{n:'Eau chaude sanitaire', mat:'PER', m:'resECS', lot:'12', kg:0.1}, eu:{n:'Évacuation eaux usées', mat:'PVC', m:'resEU', lot:'12', kg:1.2},
-  elec:{n:'Câblage électrique', mat:'cuivre', m:'resElec', lot:'15', kg:0.12}, vmc:{n:'Gaine de ventilation', mat:'acier galvanisé / PVC', m:'resVMC', lot:'16', kg:0.8}, chauf:{n:'Réseau de chauffage', mat:'PER', m:'resChauf', lot:'17', kg:0.15}};
+  elec:{n:'Câblage électrique', mat:'cuivre', m:'resElec', lot:'15', kg:0.12}, com:{n:'Câblage de communication', mat:'cuivre catégorie 6 (grade 2TV)', m:'resCom', lot:'15', kg:0.05}, vmc:{n:'Gaine de ventilation', mat:'acier galvanisé / PVC', m:'resVMC', lot:'16', kg:0.8}, chauf:{n:'Réseau de chauffage', mat:'PER', m:'resChauf', lot:'17', kg:0.15}};
 const netLen = el => (el.pts || []).reduce((t, p, i) => i ? t + Math.hypot(p[0] - el.pts[i - 1][0], p[1] - el.pts[i - 1][1], p[2] - el.pts[i - 1][2]) : 0, 0);
-const netName = el => `${NET_SYS[el.sys]?.n || 'Réseau'}${el.label ? ' · ' + el.label : ''} ${el.sec ? el.sec + ' mm²' : 'Ø' + el.d}`;
-const netDetail = el => el.sec ? `section ${el.sec} mm²${el.label ? ' · ' + el.label : ''}` : `Ø ${el.d} mm`;
-const NET_PRICE = {ef:{12:6.5, 16:8, 20:10, 25:13}, ecs:{12:8, 16:10, 20:12.5, 25:16}, eu:{40:13, 50:15, 100:30}, vmc:{80:9, 125:14, 160:19, 200:26}, chauf:{16:10, 20:13, 25:16}, elec:{1.5:2.5, 2.5:3.4, 6:6.5, 10:9.5}};
+const netName = el => `${NET_SYS[el.sys]?.n || 'Réseau'}${el.label ? ' · ' + el.label : ''} ${el.sys === 'com' ? 'cat. 6' : el.sec ? el.sec + ' mm²' : 'Ø' + el.d}`;
+const netDetail = el => el.sys === 'com' ? `câble 4 paires catégorie 6 sous conduit Ø${el.d}${el.label ? ' · ' + el.label : ''}` : el.sec ? `section ${el.sec} mm²${el.label ? ' · ' + el.label : ''}` : `Ø ${el.d} mm`;
+const NET_PRICE = {ef:{12:6.5, 16:8, 20:10, 25:13}, ecs:{12:8, 16:10, 20:12.5, 25:16}, eu:{40:13, 50:15, 100:30}, vmc:{80:9, 125:14, 160:19, 200:26}, chauf:{16:10, 20:13, 25:16}, elec:{1.5:2.5, 2.5:3.4, 6:6.5, 10:9.5}, com:{20:2.8}};
 const netPrice = el => { const T = NET_PRICE[el.sys] || {}, k = el.sec || el.d; const keys = Object.keys(T).map(Number).sort((a, b) => a - b); const best = keys.find(x => x >= k) ?? keys.at(-1); return (T[best] ?? 10) * (el.sys === 'vmc' || el.sys === 'eu' ? 1 : 1) + 4.5; };   // + pose (ml)
 function netPieces(el){
   const S = NET_SYS[el.sys] || NET_SYS.ec || NET_SYS.elec, out = [], d = Math.max(0.03, (el.d || 12) / 1000), P = el.pts || [];
@@ -12327,6 +12331,13 @@ function mepPropose(O, keep = [], opt = {}){
     const runs = []; for (const s of S){ const r = runs.at(-1); if (r && r.e === s.e && s.t - r.h < 0.051) r.h = s.t; else runs.push({e:s.e, l:s.t, h:s.t}); }
     const best = runs.sort((a, b) => (b.h - b.l) - (a.h - a.l))[0], t = o.end ? (o.end > 0 ? best.h : best.l) : (best.l + best.h) / 2, w = famWidth(fam_) || 0.6;
     onWall(R, fam_, best.e, t, o); block({e:best.e, t}, w); return {e:best.e, t}; };
+  /* point de plafond libre : à 0,30 m au moins des murs et 0,50 m des autres éléments de plafond (luminaires, bouches, détecteurs), au plus près du centre */
+  const CEIL = new Set(['lum', 'spot', 'daaf', 'vext', 'vmc']);
+  const ceilFree = r => { const c0 = poleOf(r.poly), others = items.concat(manual).filter(i => CEIL.has(i.kind) && i.lvl === r.lvl).map(i => i.c), xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]); let best = null, bd = 1e9;
+    for (let x = Math.min(...xs) + 0.3; x <= Math.max(...xs) - 0.3 + 1e-6; x += 0.1) for (let y = Math.min(...ys) + 0.3; y <= Math.max(...ys) - 0.3 + 1e-6; y += 0.1){ const q = [x, y];
+      if (!ptInPoly(x, y, r.poly) || dPoly(q, r.poly) < 0.3) continue; const m = Math.min(0.5, ...others.map(o => Math.hypot(o[0] - x, o[1] - y)));
+      const d = (0.5 - m) * 100 + Math.hypot(x - c0[0], y - c0[1]); if (d < bd){ bd = d; best = q; } }   // d'abord s'écarter des autres éléments (jusqu'à 0,50 m), ensuite rester près du centre
+    return best || c0; };
   const pick = (...ks) => { for (const k of ks){ const R = ctx.find(R => R.r.kind === k && R.r.lvl === 0) || ctx.find(R => R.r.kind === k); if (R) return R; } return ctx[0]; };
   // 1) appareils sanitaires et cuisine (pas de doublon avec un appareil déjà dessiné dans la pièce)
   if (O.fix) for (const R of ctx){ const k = R.r.kind;
@@ -12362,7 +12373,12 @@ function mepPropose(O, keep = [], opt = {}){
       wallItems(R, 'e-prise', np - hot, {params:{zh:0.3}});
       if (k === 'cuisine'){ if (!countIn(R, ['plaque'])) wallItems(R, 'e-prise32', 1, {params:{zh:0.12}, step:0.2}); wallItems(R, 'e-prise-spec', Math.max(0, 2 - countIn(R, ['spec'])), {step:0.2}); wallItems(R, 'e-prise', 1, {params:{zh:1.8}, step:0.2}); }
       if ((k === 'buanderie') || (k === 'sdb' && !ctx.some(q => q.r.kind === 'buanderie' && q.r.lvl === R.r.lvl) && !ctx.some(q => q.r.kind === 'cuisine' && q.r.lvl === R.r.lvl && q.r.net > 8))) wallItems(R, 'e-prise-spec', Math.max(0, (k === 'buanderie' ? 2 : 1) - countIn(R, ['spec', 'll'])), {params:{zh:0.3}, step:0.2});
-      if ((k === 'sejour' || k === 'chambre' || (k === 'autre' && /bureau/.test(mepNorm(R.r.name)))) && !countIn(R, ['rj45'])) wallItems(R, 'e-rj45', 1, {step:0.2});
+      // prises RJ45 : 2 juxtaposées dans le séjour, 1 par autre pièce principale ; chacune à côté d'une prise de courant de la pièce
+      const wantRj = mepIsMain(R.r) ? Math.max(0, (k === 'sejour' ? 2 : 1) - countIn(R, ['rj45'])) : 0;
+      if (wantRj){ const want = wantRj, S = slots(R, 'e-rj45', {step:0.1, w:want === 2 ? 0.2 : 0.1}), plugs = items.filter(i => i.kind === 'prise' && i.room === R.r.key && i.params.zh < 0.5).concat(manual.filter(i => i.kind === 'prise' && i.lvl === R.r.lvl && ptInPoly(i.c[0], i.c[1], R.r.poly)));
+        const dPl = s => plugs.length ? Math.min(...plugs.map(p => Math.hypot(edgePt(s.e, s.t)[0] - p.c[0], edgePt(s.e, s.t)[1] - p.c[1]))) : 0, best = S.filter(s => dPl(s) > 0.12).sort((a, b) => dPl(a) - dPl(b))[0] || S[0];
+        if (!best) notes.push(`${R.r.name} : pas de place libre pour une prise RJ45`);
+        else { for (let j = 0; j < want; j++) onWall(R, 'e-rj45', best.e, best.t + (j - (want - 1) / 2) * 0.09, {params:{zh:0.3}}); block(best, 0.1 * want + 0.1); } }
       // éclairage
       if (!countIn(R, ['lum', 'spot', 'applique'])){ let nl = 1, fL = 'e-lum';
         const spots = O.light === 'spots' || (O.light === 'mixte' && ['cuisine', 'sdb', 'couloir', 'entree'].includes(k));
@@ -12378,7 +12394,7 @@ function mepPropose(O, keep = [], opt = {}){
     if (O.sys.vent){ const F = mepVentFlows(T), nWC = ctx.filter(q => q.r.kind === 'wc').length, nSdb = ctx.filter(q => q.r.kind === 'sdb').length;
       if (['cuisine', 'sdb', 'wc', 'buanderie'].includes(k) && !countIn(R, ['vext'])){ const first = ctx.find(q => q.r.kind === k) === R;
         const q = k === 'cuisine' ? F.cuisine : k === 'sdb' ? (first ? F.sdb : F.sde) : k === 'wc' ? (nWC > 1 ? F.wcN : F.wc1) : 15;
-        add(R.r, 'v-extraction', {c:poleOf(R.r.poly), type:k === 'cuisine' ? 1 : 0, params:{q}}); }
+        add(R.r, 'v-extraction', {c:ceilFree(R.r), type:k === 'cuisine' ? 1 : 0, params:{q}}); }
       if ((k === 'sejour' || k === 'chambre') && !countIn(R, ['ventree'])){ const e = R.E.find(e => e.wins.length) || R.E.slice().sort((a, b) => b.L - a.L)[0], t = e.wins[0]?.t ?? e.L / 2; onWall(R, 'v-entree', e, t, {params:{zh:2.25}}); }
     }
   }
@@ -12388,9 +12404,9 @@ function mepPropose(O, keep = [], opt = {}){
       for (const R of cands){ if (wallItems(R, 'e-tableau', 1, {step:0.2, params:{rg:3, zh:1.0}})){ ok = 1; break; } notes.pop(); }
       if (!ok) notes.push('Tableau électrique : aucun mur libre trouvé'); }
     for (const li of [...new Set(rooms.map(r => r.lvl))]){ if (present().some(i => i.kind === 'daaf' && i.lvl === li)) continue; const L = ctx.filter(R => R.r.lvl === li), R = L.find(R => R.r.kind === 'couloir') || L.find(R => R.r.kind === 'entree') || L.find(R => R.r.kind === 'sejour') || L[0];
-      if (R && (li === 0 || L.some(q => q.r.kind === 'chambre'))) add(R.r, 'e-daaf', {c:poleOf(R.r.poly)}); }
+      if (R && (li === 0 || L.some(q => q.r.kind === 'chambre'))) add(R.r, 'e-daaf', {c:ceilFree(R.r)}); }
   }
-  if (O.sys.vent && !anyOf('vmc')){ const top = Math.max(...rooms.map(r => r.lvl)), L = ctx.filter(R => R.r.lvl === top), R = L.find(R => ['couloir', 'buanderie', 'wc', 'entree'].includes(R.r.kind)) || L[0]; if (R) add(R.r, 'v-caisson', {c:poleOf(R.r.poly), params:{zh:2.1}}); }
+  if (O.sys.vent && !anyOf('vmc')){ const top = Math.max(...rooms.map(r => r.lvl)), L = ctx.filter(R => R.r.lvl === top), R = L.find(R => ['couloir', 'buanderie', 'wc', 'entree'].includes(R.r.kind)) || L[0]; if (R) add(R.r, 'v-caisson', {c:ceilFree(R.r), params:{zh:2.1}}); }
   if (O.sys.plomb || O.sys.chauf){
     const S = pick('buanderie', 'technique', 'garage', 'cuisine', 'sdb'), V0 = Math.max(0, [100, 150, 200, 250, 300].findIndex(v => v >= occ * 55)), V0f = V0 < 0 ? 4 : V0;   // ≈ 55 l par occupant
     if (O.sys.plomb){ if (!anyOf('ballon')) wallItems(S, 'p-ballon', 1, {step:0.1, type:[100, 150, 200, 250, 300].some(v => v >= occ * 55) ? V0f : 4, params:{}}); if (!anyOf('arrivee')) wallItems(S, 'p-arrivee', 1, {step:0.2, params:{zh:0.6}}); }
@@ -12599,11 +12615,22 @@ function mepGenerateNets(){
     const idA = Math.max(1, Math.ceil(nA / 8)), idF = hasPac ? 1 : 0, idAC = Math.max(shab0 <= 35 ? 1 : shab0 <= 100 ? 2 : 3, Math.ceil((nCirc - nA - (hasPac ? 1 : 0)) / 8)), nID = idAC + idA + idF;
     const mods = Math.ceil((nCirc + nID * 2 + 2) * 1.2), rows = Math.max(2, Math.ceil(mods / 13));
     tab.params = {...(tab.params || {}), rg:rows}; tab.type = rows <= 2 ? 1 : rows === 3 ? 0 : 2;
+    /* communication : un câble par prise RJ45, en étoile depuis le coffret de communication (au-dessus du tableau, dans la GTL), sous conduit Ø20 */
+    const rj = by('rj45'), Cz = Tz + (zh(tab) || 1) + 0.15 * rows + 0.35; let comL = 0;
+    near(T, rj).forEach((e, i) => { const zr0 = ceilZ(tab.lvl), zr = ceilZ(e.lvl), pts = [[T[0], T[1], Cz], [T[0], T[1], zr0]]; if (zr !== zr0) pts.push([T[0], T[1], zr]);
+      pts.push(...mepRun(T, e.c, zr, zr).slice(1), [e.c[0], e.c[1], zf(e.lvl) + (zh(e) || 0.3)]);
+      const L = pts.reduce((t, p, k) => k ? t + Math.hypot(p[0] - pts[k - 1][0], p[1] - pts[k - 1][1], p[2] - pts[k - 1][2]) : 0, 0); comL = Math.max(comL, L);
+      add('com', e.lvl, pts.map(p => [p[0] + 0.04, p[1] + 0.04, p[2]]), 20, `RJ45 ${i + 1} (${roomOfEl(e)?.name || state.levels[e.lvl].n})`, {note:`câble 4 paires catégorie 6, grade 2TV · ${nf(L, 1)} m`}); });
+    const shabC = rooms.reduce((t, r) => t + r.net, 0), needC = mepRj45Total(shabC);
+    if (rj.length) rep.comLine = [`${rj.length} prise${rj.length > 1 ? 's' : ''} RJ45 câblée${rj.length > 1 ? 's' : ''} en étoile depuis le coffret de communication (grade 2TV, au-dessus du tableau) · câble le plus long ${nf(comL, 1)} m`];
+    if (rj.length < needC) rep.warn.push(`Communication : ${rj.length} prise${rj.length > 1 ? 's' : ''} RJ45 pour ${needC} exigées (NF C 15-100 : 2 dans le séjour, ${needC} au total pour ${n0(shabC)} m²).`);
+    if (comL > 45) rep.warn.push(`Communication : un câble RJ45 mesure ${nf(comL, 1)} m ; au-delà d'environ 45 m le débit baisse, rapprochez le coffret.`);
     const pw = circ.reduce((t, c) => t + (c.kind === 'plaque' ? 7000 : c.kind === 'light' ? 200 : c.kind === 'heat' ? 3000 : c.kind === 'pac' ? 4000 : c.kind === 'vmc' ? 30 : 1500), 0), shab = rooms.reduce((t, r) => t + r.net, 0);
     kVA = by('rad').some(e => (e.type | 0) >= 4) ? (shab > 100 ? 15 : 12) : shab < 60 ? 6 : shab < 100 ? 9 : 12;
     rep.sys.elec = {title:'Électricité', lines:[`${nCirc} circuits : ${circ.filter(c => c.kind === 'light').length} éclairage (1,5 mm², 16 A, 8 points max.), ${circ.filter(c => c.kind === 'plug').length} prises (2,5 mm², 20 A, 12 max. ; 6 max. en cuisine), ${circ.filter(c => !['light', 'plug'].includes(c.kind)).length} spécialisés/dédiés`,
       `Tableau : ${nID} interrupteurs différentiels 30 mA : ${idAC} de type AC, ${idA} de type A (au moins un exigé, il protège la plaque de cuisson et le lave-linge)${idF ? ', 1 de type F (pompe à chaleur)' : ''} · 8 circuits au plus par différentiel · ${mods} modules avec 20 % de réserve → ${rows} rangée${rows > 1 ? 's' : ''} de 13 modules, organes de commande entre 0,90 et 1,80 m du sol`,
-      `${by('inter').length} interrupteur${by('inter').length > 1 ? 's' : ''} raccordé${by('inter').length > 1 ? 's' : ''} aux circuits d'éclairage · ${by('daaf').length} détecteur${by('daaf').length > 1 ? 's' : ''} de fumée autonome${by('daaf').length > 1 ? 's' : ''} (à piles, non raccordé${by('daaf').length > 1 ? 's' : ''})${by('rj45').length ? ` · ${by('rj45').length} prise${by('rj45').length > 1 ? 's' : ''} RJ45 à relier au coffret de communication (non tracé)` : ''}`, `Puissance à souscrire indicative : ${kVA} kVA`, `Sections : éclairage 1,5 mm² · prises et circuits spécialisés 2,5 mm² · plaque de cuisson 6 mm² (32 A)`]};
+      `${by('inter').length} interrupteur${by('inter').length > 1 ? 's' : ''} raccordé${by('inter').length > 1 ? 's' : ''} aux circuits d'éclairage · ${by('daaf').length} détecteur${by('daaf').length > 1 ? 's' : ''} de fumée autonome${by('daaf').length > 1 ? 's' : ''} (à piles, non raccordé${by('daaf').length > 1 ? 's' : ''})`, `Puissance à souscrire indicative : ${kVA} kVA`, `Sections : éclairage 1,5 mm² · prises et circuits spécialisés 2,5 mm² · plaque de cuisson 6 mm² (32 A)`]};
+    if (rep.comLine) rep.sys.com = {title:'Communication', lines:rep.comLine};
   } else rep.warn.push('Aucun tableau électrique placé : les circuits ne sont pas générés (ajoutez un tableau).');
 
   /* ---------------- Plomberie ---------------- */
@@ -12758,8 +12785,11 @@ function runChecksExt(){
   if (rooms.length && !M.length) add('mep0', 'elec', 'warn', 'Aucun équipement technique placé', 'Les prises, l\'éclairage, la ventilation, la plomberie et le chauffage ne peuvent pas être contrôlés : aucun équipement n\'est placé.', 'NF C 15-100 ; arrêté du 24 mars 1982 ; DTU 60.1.', {...open(() => setTimeout(() => mepStart(), 0)), t:'Lancer la proposition automatique'});
   if (rooms.length && M.length){
     if (!M.some(e => mepKindOf(e) === 'tableau')) add('tab', 'elec', 'bad', 'Aucun tableau électrique', 'Toute installation commence par un tableau de répartition avec disjoncteurs et différentiels 30 mA.', 'NF C 15-100 art. 771 : tableau près de l\'entrée.', {t:'Placer un tableau électrique', run:() => chkAddMissing(null, ['tableau'], 1)});
+    { const shab = rooms.reduce((t, r) => t + r.net, 0), need = mepRj45Total(shab), got = M.filter(e => mepKindOf(e) === 'rj45').length;
+      if (got < need && rooms.some(r => r.kind === 'sejour' && has(r, 'rj45') >= 2)) add('rjT', 'elec', 'warn', `${got} prise${got > 1 ? 's' : ''} RJ45 pour ${need} exigées`, `Logement de ${n0(shab)} m² : ${need} prises de communication au moins.`, 'NF C 15-100 : 2 (≤ 35 m²), 3 (≤ 100 m²) ou 4 (> 100 m²) prises RJ45, dont 2 dans le séjour.', null); }
     for (const r of rooms){ const req = mepPrisesMin(r.kind, r.net), pr = has(r, 'prise') + has(r, 'spec');
       if (pr < req) add('pr', 'elec', 'warn', `${r.name} (${lv(r.lvl)}) : ${pr} prise${pr > 1 ? 's' : ''} pour ${req} exigée${req > 1 ? 's' : ''}`, `NF C 15-100 : ${req} prises de courant minimum dans cette pièce.`, 'NF C 15-100 (10.1.3) : séjour 1 par 4 m², 5 au moins (7 au-delà de 28 m²), chambre ≥ 3, cuisine ≥ 6 dont 4 sur le plan de travail (3 si ≤ 4 m²), salle d\'eau ≥ 1 hors volumes, autre pièce de plus de 4 m² ≥ 1.', {t:`Ajouter ${req - pr} prise${req - pr > 1 ? 's' : ''}`, run:() => chkAddMissing(r.key, ['prise'], req - pr)}, []);
+      if (r.kind === 'sejour' && has(r, 'rj45') < 2) add('rj', 'elec', 'warn', `${r.name} (${lv(r.lvl)}) : ${has(r, 'rj45')} prise RJ45 pour 2 exigées`, 'Le séjour reçoit 2 prises de communication juxtaposées, près d\'une prise de courant.', 'NF C 15-100 (prises de communication) : 2 RJ45 dans le séjour, 2 / 3 / 4 au total selon la surface (≤ 35, ≤ 100, > 100 m²), câblage en étoile depuis le coffret de communication.', {t:`Ajouter ${2 - has(r, 'rj45')} prise${2 - has(r, 'rj45') > 1 ? 's' : ''} RJ45`, run:() => chkAddMissing(r.key, ['rj45'], 2 - has(r, 'rj45'))});
       if (r.kind !== 'ext' && !has(r, 'lum') && !has(r, 'spot') && !has(r, 'applique')) add('lm', 'elec', 'warn', `${r.name} (${lv(r.lvl)}) : aucun point lumineux`, 'Un point d\'éclairage par pièce est exigé.', 'NF C 15-100 : au moins un point lumineux au plafond ou en applique par pièce.', {t:'Ajouter un luminaire', run:() => chkAddMissing(r.key, ['lum', 'spot', 'applique'], 1)});
       if (['cuisine', 'sdb', 'wc'].includes(r.kind) && M.some(e => mepKindOf(e) === 'vmc' || mepKindOf(e) === 'vext') && !has(r, 'vext')) add('vx', 'vent', 'bad', `${r.name} : pas de bouche d'extraction`, 'Les pièces humides (cuisine, salle de bain, WC) sont ventilées par extraction mécanique.', 'Arrêté du 24 mars 1982 : extraction en cuisine (75 à 135 m³/h en grand débit), salle de bains (15 à 45 m³/h), WC (15 à 30 m³/h) selon le nombre de pièces principales.', {t:'Ajouter une bouche d\'extraction', run:() => chkAddMissing(r.key, ['vext'], 1)});
       else if (['cuisine', 'sdb', 'wc'].includes(r.kind) && !M.some(e => mepKindOf(e) === 'vmc')) add('vx', 'vent', 'bad', `${r.name} : aucune ventilation`, 'Aucun caisson VMC ni bouche d\'extraction dans le bâtiment.', 'Arrêté du 24 mars 1982 : ventilation générale et permanente obligatoire.', {t:'Ajouter caisson VMC et bouche', run:() => chkAddMissing(null, ['vmc'], 1) || chkAddMissing(r.key, ['vext'], 1)});
