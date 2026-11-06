@@ -9,3 +9,4 @@ node_modules/
 dist/
 firebase/firestore.rules
 .claude/
+__pycache__/
