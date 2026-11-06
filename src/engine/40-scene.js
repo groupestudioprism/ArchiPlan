@@ -62,7 +62,7 @@ const nbrHidden = el => !nbrOff && !planOn() && ((DISPLAY.up3 === false && el.lv
 /* Réglages d'affichage (enregistrés par appareil) */
 const DISPLAY = {style:'shaded', sunAz:215, sunEl:42, exposure:1.0, shadows:true, edges:true, bg:'', grid:true, dims:true};
 try { Object.assign(DISPLAY, JSON.parse(localStorage.getItem('ap.display') || '{}')); } catch(e){}
-const STYLES = {shaded:'Ombré', textured:'Matériaux', realistic:'Réaliste', sketch:'Croquis', wire:'Filaire', xray:'Rayons X'};
+const STYLES = {shaded:'Ombré', textured:'Matériaux', realistic:'Réaliste', sketch:'Croquis', wire:'Filaire', xray:'Rayons X', mep:'Réseaux'};
 const isDarkUI = () => (cssVar('--panel') || '#fff').toLowerCase() !== '#ffffff';
 const bgColor = () => DISPLAY.bg || (isDarkUI() ? '#16191E' : '#FFFFFF');
 const bgLight = () => new THREE.Color(bgColor()).getHSL({}).l > 0.5;
@@ -132,12 +132,19 @@ let matCache = {};
 const edgeMat = new THREE.LineBasicMaterial({color:0x24324F, transparent:true, opacity:0.55});
 const selEdgeMat = new THREE.LineBasicMaterial({color:0xE2861B});
 const ghostMat = new THREE.MeshStandardMaterial({color:0x0877B9, transparent:true, opacity:0.35, depthWrite:false});
+/* vue « Réseaux » : tout est estompé sauf les réseaux et les appareils qui s'y raccordent (sanitaires, émetteurs, appareillage…) */
+const mepViewOn = () => DISPLAY.style === 'mep' && !planOn() && view !== 'sec';
+const mepViewKeep = el => el.kind === 'net' || !!mepKindOf(el);
+const mepGhostMats = {};
+const mepGhostMat = id => mepGhostMats[id] ??= new THREE.MeshLambertMaterial({color:new THREE.Color(mat(id).color).lerp(new THREE.Color(0xffffff), 0.35), transparent:true, opacity:0.1, depthWrite:false});
+function mepGhostGroup(g){ g.userData.mepGhost = true;
+  g.traverse(o => { if (o.isMesh){ o.material = mepGhostMat(o.userData.mat); o.userData.mepGhost = true; o.castShadow = false; o.receiveShadow = false; o.renderOrder = 1; } else if (o.isLine || o.isLineSegments) o.visible = false; }); }
 const ghostEdge = new THREE.LineBasicMaterial({color:0x0877B9});
 const hoverMat = new THREE.MeshBasicMaterial({color:0x1F89C5, transparent:true, opacity:0.18, depthWrite:false, side:THREE.DoubleSide});
 const PLAN_LIGHT = {wall:0.08, col:0.08, slab:0.84, vol:0.55, inst:0.72, host:0.35};
 const planOn = () => view === '2d';
 function matFor(id, selected, light = 0, tr = null){
-  const plan = planOn(), sec = view === 'sec', st = plan ? 'plan' : sec ? 'shaded' : DISPLAY.style, key = (sec ? 'sec|' : '') + st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '') + (tr && (tr.s || tr.r) ? '|t' + (tr.s || '') + '|' + (tr.r || 0) : '');
+  const plan = planOn(), sec = view === 'sec', st = plan ? 'plan' : sec || DISPLAY.style === 'mep' ? 'shaded' : DISPLAY.style, key = (sec ? 'sec|' : '') + st + '|' + id + (selected ? '|s' : '') + (plan ? '|' + light : '') + (tr && (tr.s || tr.r) ? '|t' + (tr.s || '') + '|' + (tr.r || 0) : '');
   if (matCache[key]) return matCache[key];
   const m = mat(id); let M;
   const transp = m.opacity != null && m.opacity < 1;
@@ -341,9 +348,9 @@ function applyThemeToScene(){
     skyUpdate(); scene.environment = envTex; scene.background = skyTex; scene.backgroundBlurriness = 0.03; scene.environmentIntensity = 1.0;
   } else { scene.environment = null; scene.background = new THREE.Color(bgColor()); }
   vpEl.style.setProperty('--vp', bgColor()); vpEl.classList.toggle('dark-bg', !bgLight());
-  groundReal.visible = real && DISPLAY.ground === true; groundShadow.visible = (!real || DISPLAY.ground !== true) && !plan && st !== 'wire' && st !== 'xray';   // le disque d'herbe est une option (désactivée par défaut) : plus d'élément fantôme
+  groundReal.visible = real && DISPLAY.ground === true; groundShadow.visible = (!real || DISPLAY.ground !== true) && !plan && st !== 'wire' && st !== 'xray' && st !== 'mep';   // le disque d'herbe est une option (désactivée par défaut) : plus d'élément fantôme
   renderer.toneMappingExposure = real ? DISPLAY.exposure : 1.0;
-  renderer.shadowMap.enabled = DISPLAY.shadows && st !== 'wire' && st !== 'xray' && !planOn();
+  renderer.shadowMap.enabled = DISPLAY.shadows && st !== 'wire' && st !== 'xray' && st !== 'mep' && !planOn();
   hemi.intensity = real ? 0.3 : st === 'sketch' ? 1.6 : 1.0;
   groundShadow.material.opacity = real ? 0.34 : 0.16; sun.shadow.radius = real ? 3 : 1;
   sun.color.set(real ? 0xFFF1DC : 0xffffff); sun.intensity = real ? 3.2 : st === 'sketch' ? 0.6 : 1.9;
@@ -393,7 +400,8 @@ function rebuild(opts = {}){
       for (const pc of pieces(el)){ const m = pieceMesh(pc, false, light, cw, pieceFinish(el, pc)); m.name = `${g.name}-${pc.mat}`; m.userData.archiplan = {materiau:mat(pc.mat).nom, lot:pc.lot, epaisseur:pc.e ?? null}; g.add(m); }
       if (!plan) for (const pc of paintCoats(el)){ const m = pieceMesh(pc, false, light, true, {m:pc.mat, tr:pc.tr}); m.name = `${g.name}-revetement`; m.userData.coat = true; g.add(m); }
       if (cw) try { g.add(wallEdgeLines(el)); } catch(e){ console.warn('arêtes du mur', e); } }
-    if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g); // au-dessus du plan de coupe : contour en tirets
+    if (plan && new THREE.Box3().setFromObject(g).min.y > cutZ) overhead(g);
+    if (mepViewOn() && !mepViewKeep(el)) mepGhostGroup(g); // au-dessus du plan de coupe : contour en tirets
     if (isB){ g.userData.below = true; g.userData.id = -1; belowGroup.add(g); } else modelGroup.add(g);
   }
   geoBuilding = false; geoCachePrune();
@@ -413,7 +421,7 @@ function applySel(){
   const set = new Set([sel, ...multi].filter(Boolean));
   for (const g of modelGroup.children){
     const on = set.has(g.userData.id);
-    g.traverse(o => { if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0, o.userData.tr || null); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
+    g.traverse(o => { if (o.isMesh && o.userData.mepGhost) return; if (o.isMesh) o.material = matFor(o.userData.mat, on, o.userData.light || 0, o.userData.tr || null); if (o.userData.isEdge) o.material = on ? selEdgeMat : edgeMat; });
   }
   batchLive(set); dirty = true;
 }

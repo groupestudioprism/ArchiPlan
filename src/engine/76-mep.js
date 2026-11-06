@@ -42,7 +42,7 @@ function mepCeilH(lvl){
 }
 /* ---------- matériaux des réseaux ---------- */
 (() => { const add = (id, nom, col) => { if (!MATS[id]) M(id, nom, 'Verre et plastiques', 950, 0.4, 2000, 1e5, col, 'plain', 2.5); };
-  add('resEF', 'Réseau eau froide (PER bleu)', '#2F7FD6'); add('resECS', 'Réseau eau chaude (PER rouge)', '#D6402F'); add('resEU', 'Évacuation PVC', '#8A7F72');
+  add('resEF', 'Réseau eau froide (PER bleu)', '#2F7FD6'); add('resECS', 'Réseau eau chaude (PER rouge)', '#D6402F'); add('resEU', 'Évacuation PVC', '#8A7F72'); add('resEV', 'Évacuation eaux vannes PVC', '#6B5A48');
   add('resElec', 'Câblage électrique', '#E3A21A'); add('resVMC', 'Gaine de ventilation', '#9AA6B2'); add('resChauf', 'Réseau chauffage (PER)', '#B8476B'); add('resCom', 'Câblage de communication', '#0EA5E9'); })();
 
 /* ---------- familles ---------- */
@@ -89,12 +89,12 @@ const mepEls = () => state.els.filter(e => mepKindOf(e));
 const WATER_PTS = {wc:[0.25, null, 100, 12], lavabo:[0.55, 0.55, 40, 12], douche:[1.0, 1.0, 40, 16], baignoire:[0.5, 0.5, 40, 16], cuisine:[0.55, 0.55, 40, 12], ll:[0.5, null, 40, 12]};
 
 /* ---------- réseaux ---------- */
-const NET_SYS = {ef:{n:'Eau froide', mat:'PER', m:'resEF', lot:'12', kg:0.1}, ecs:{n:'Eau chaude sanitaire', mat:'PER', m:'resECS', lot:'12', kg:0.1}, eu:{n:'Évacuation eaux usées', mat:'PVC', m:'resEU', lot:'12', kg:1.2},
+const NET_SYS = {ef:{n:'Eau froide', mat:'PER', m:'resEF', lot:'12', kg:0.1}, ecs:{n:'Eau chaude sanitaire', mat:'PER', m:'resECS', lot:'12', kg:0.1}, eu:{n:'Évacuation eaux usées', mat:'PVC', m:'resEU', lot:'12', kg:1.2}, ev:{n:'Évacuation eaux vannes', mat:'PVC', m:'resEV', lot:'12', kg:1.2},
   elec:{n:'Câblage électrique', mat:'cuivre', m:'resElec', lot:'15', kg:0.12}, com:{n:'Câblage de communication', mat:'cuivre catégorie 6 (grade 2TV)', m:'resCom', lot:'15', kg:0.05}, vmc:{n:'Gaine de ventilation', mat:'acier galvanisé / PVC', m:'resVMC', lot:'16', kg:0.8}, chauf:{n:'Réseau de chauffage', mat:'PER', m:'resChauf', lot:'17', kg:0.15}};
 const netLen = el => (el.pts || []).reduce((t, p, i) => i ? t + Math.hypot(p[0] - el.pts[i - 1][0], p[1] - el.pts[i - 1][1], p[2] - el.pts[i - 1][2]) : 0, 0);
 const netName = el => `${NET_SYS[el.sys]?.n || 'Réseau'}${el.label ? ' · ' + el.label : ''} ${el.sys === 'com' ? 'cat. 6' : el.sec ? el.sec + ' mm²' : 'Ø' + el.d}`;
 const netDetail = el => el.sys === 'com' ? `câble 4 paires catégorie 6 sous conduit Ø${el.d}${el.label ? ' · ' + el.label : ''}` : el.sec ? `section ${el.sec} mm²${el.label ? ' · ' + el.label : ''}` : `Ø ${el.d} mm`;
-const NET_PRICE = {ef:{12:6.5, 16:8, 20:10, 25:13}, ecs:{12:8, 16:10, 20:12.5, 25:16}, eu:{40:13, 50:15, 100:30}, vmc:{80:9, 125:14, 160:19, 200:26}, chauf:{16:10, 20:13, 25:16}, elec:{1.5:2.5, 2.5:3.4, 6:6.5, 10:9.5}, com:{20:2.8}};
+const NET_PRICE = {ef:{12:6.5, 16:8, 20:10, 25:13}, ecs:{12:8, 16:10, 20:12.5, 25:16}, eu:{40:13, 50:15, 100:30}, ev:{100:30}, vmc:{80:9, 125:14, 160:19, 200:26}, chauf:{16:10, 20:13, 25:16}, elec:{1.5:2.5, 2.5:3.4, 6:6.5, 10:9.5}, com:{20:2.8}};
 const netPrice = el => { const T = NET_PRICE[el.sys] || {}, k = el.sec || el.d; const keys = Object.keys(T).map(Number).sort((a, b) => a - b); const best = keys.find(x => x >= k) ?? keys.at(-1); return (T[best] ?? 10) * (el.sys === 'vmc' || el.sys === 'eu' ? 1 : 1) + 4.5; };   // + pose (ml)
 function netPieces(el){
   const S = NET_SYS[el.sys] || NET_SYS.ec || NET_SYS.elec, out = [], d = Math.max(0.03, (el.d || 12) / 1000), P = el.pts || [];
@@ -107,7 +107,7 @@ function netPieces(el){
   return out;
 }
 function netPanel(el){
-  const S = NET_SYS[el.sys] || {}, L = netLen(el), P = el.pts || [], slope = P.length > 1 && el.sys === 'eu' ? (() => { let h = 0, l = 0; for (let i = 0; i + 1 < P.length; i++){ const dz = P[i][2] - P[i + 1][2], dl = Math.hypot(P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]); if (dl > 0.05 && Math.abs(dz) / dl < 0.2){ h += dz; l += dl; } } return l ? h / l : 0; })() : null;
+  const S = NET_SYS[el.sys] || {}, L = netLen(el), P = el.pts || [], slope = P.length > 1 && (el.sys === 'eu' || el.sys === 'ev') ? (() => { let h = 0, l = 0; for (let i = 0; i + 1 < P.length; i++){ const dz = P[i][2] - P[i + 1][2], dl = Math.hypot(P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]); if (dl > 0.05 && Math.abs(dz) / dl < 0.2){ h += dz; l += dl; } } return l ? h / l : 0; })() : null;
   return `<div class="grp"><h3>Réseau</h3><dl class="kv"><dt>Type</dt><dd>${esc(S.n || '')}</dd><dt>Désignation</dt><dd>${esc(el.label || '—')}</dd><dt>${el.sec ? 'Section' : 'Diamètre'}</dt><dd>${el.sec ? el.sec + ' mm²' : 'Ø ' + el.d + ' mm'}</dd>
     <dt>Longueur développée</dt><dd class="big">${nf(L, 2)} m</dd>${slope != null ? `<dt>Pente moyenne</dt><dd>${nf(slope * 100, 1)} % ${slope * 100 >= 1 ? '(≥ 1 %, conforme)' : '(inférieure à 1 % : à corriger)'}</dd>` : ''}${el.note ? `<dt>Règle</dt><dd>${esc(el.note)}</dd>` : ''}</dl></div>
     <div class="btns"><button class="btn" data-act="mepNets">Régénérer tous les réseaux</button><button class="btn danger" data-act="del">Supprimer</button></div>`;

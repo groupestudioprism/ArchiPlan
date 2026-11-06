@@ -101,7 +101,7 @@ a.ap-link{text-decoration:none}
 [class^="sw-"]{width:16px;height:16px;border-radius:4px;display:inline-block;flex:none;border:1px solid rgb(0 0 0 / .18)}
 .sw-shaded{background:linear-gradient(135deg,#C9D3DC,#8C99A6)}.sw-textured{background:repeating-linear-gradient(0deg,#C47A52 0 4px,#E3D7C6 4px 5px)}
 .sw-realistic{background:linear-gradient(180deg,#7FB0E0,#E9EEF2 60%,#8FA27A 60%)}.sw-sketch{background:#fff;box-shadow:inset 0 0 0 1.5px #1B2333}
-.sw-wire{background:linear-gradient(45deg,transparent 45%,#0877B9 45% 55%,transparent 55%),linear-gradient(-45deg,transparent 45%,#0877B9 45% 55%,transparent 55%),#fff}.sw-xray{background:#9FC4E2;opacity:.6}
+.sw-wire{background:linear-gradient(45deg,transparent 45%,#0877B9 45% 55%,transparent 55%),linear-gradient(-45deg,transparent 45%,#0877B9 45% 55%,transparent 55%),#fff}.sw-xray{background:#9FC4E2;opacity:.6}.sw-mep{background:linear-gradient(90deg,transparent 30%,#2F7FD6 30% 42%,transparent 42% 58%,#D6402F 58% 70%,transparent 70%),linear-gradient(0deg,transparent 44%,#E0A100 44% 56%,transparent 56%),#EEF3F8}
 .badge{position:absolute;left:12px;bottom:12px;font-size:11px;color:var(--mut);background:color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-family:var(--f-mono)}
 .compass{position:absolute;right:14px;bottom:12px;width:44px;height:44px;opacity:.9;pointer-events:none}.compass #cmpG{transform-origin:22px 22px;transform-box:view-box;transition:none}
 .compass circle{fill:color-mix(in srgb,var(--panel) 88%,transparent);stroke:var(--line)}.compass .nn{fill:#C0392B}.compass .ns{fill:var(--mut);opacity:.55}.compass text{font:700 8px var(--f-body);fill:var(--ink)}
